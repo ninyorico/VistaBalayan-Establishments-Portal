@@ -19,26 +19,11 @@ import StaffAIInsights from "./pages/staff/AIInsights";
 import Profile from "./pages/staff/Profile";
 import NotFound from "./pages/NotFound";
 import ManageListing from "./pages/staff/ManageListing";
-import TourismHome from "./pages/public/TourismHome";
 
 export const router = createBrowserRouter([
-  // Public Routes (No login required)
-  {
-    path: "/",
-    Component: TourismHome,  // Public tourism website - home page
-  },
-  {
-    path: "/explore",
-    Component: TourismHome,  // Alias for the tourism page
-  },
-
-  // Admin Login
-  {
-    path: "/admin/login",
-    Component: Login,
-  },
-
-  // Officer Routes (Admin System)
+  { path: "/", element: <Navigate to="/admin/login" replace /> },
+  { path: "/explore", element: <Navigate to="/admin/login" replace /> },
+  { path: "/admin/login", Component: Login },
   {
     path: "/officer",
     element: (
@@ -58,8 +43,6 @@ export const router = createBrowserRouter([
       { path: "settings", Component: Settings },
     ],
   },
-
-  // Staff Routes (Admin System)
   {
     path: "/staff",
     element: (
@@ -78,10 +61,5 @@ export const router = createBrowserRouter([
       { path: "manage-listing", Component: ManageListing },
     ],
   },
-
-  // 404 - Not Found
-  {
-    path: "*",
-    Component: NotFound,
-  },
+  { path: "*", Component: NotFound },
 ]);
