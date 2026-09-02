@@ -401,7 +401,7 @@ export default function NotificationCenter({ role }: NotificationCenterProps) {
       </button>
 
       {open && (
-        <div className="fixed left-1/2 top-20 z-50 w-[calc(100vw-1.5rem)] max-w-sm -translate-x-1/2 overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-2xl shadow-slate-950/15 max-h-[calc(100svh-6rem)] sm:absolute sm:left-auto sm:right-0 sm:top-auto sm:mt-2 sm:w-[min(92vw,24rem)] sm:max-w-none sm:translate-x-0 sm:max-h-none" data-mobile-centered-notifications="true">
+        <div className="fixed left-1/2 top-20 z-50 w-[calc(100vw-1.5rem)] max-w-sm -translate-x-1/2 overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-2xl shadow-slate-950/15 max-h-[calc(100svh-6rem)] sm:absolute sm:left-0 sm:right-auto sm:top-auto sm:mt-2 sm:w-[min(92vw,24rem)] sm:max-w-none sm:translate-x-0 sm:max-h-none" data-mobile-centered-notifications="desktop-left-aligned-mobile-centered">
           <div className="flex items-center justify-between gap-3 border-b border-[#D9E2EC] px-4 py-3">
             <div>
               <h3 className="text-sm font-semibold text-[#0F172A]">Notifications</h3>

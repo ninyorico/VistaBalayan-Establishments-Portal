@@ -42,7 +42,7 @@ const monthLabel = (dateValue?: string | null) => {
   if (!dateValue) return "No date";
   const date = new Date(dateValue);
   if (Number.isNaN(date.getTime())) return dateValue.slice(0, 7);
-  return date.toLocaleString("default", { month: "short" });
+  return date.toLocaleString("default", { month: "long" });
 };
 
 const toNumber = (value?: number | null) => Number(value || 0);
