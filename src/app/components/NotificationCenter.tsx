@@ -120,6 +120,19 @@ export default function NotificationCenter({ role }: NotificationCenterProps) {
     setLoading(true);
     setError(null);
 
+    const nowIso = new Date().toISOString();
+    const recentCutoffIso = new Date(Date.now() - 7 * 86_400_000).toISOString();
+    const readIds = getLocalReadIds(user.id);
+    const countOf = (...responses: Array<{ count: number | null }>) => responses.reduce((total, response) => total + (response.count || 0), 0);
+    const newestCreatedAt = (...rows: Array<Array<{ created_at?: string | null }> | null | undefined>) => {
+      const values = rows
+        .flatMap((items) => items || [])
+        .map((item) => item.created_at || "")
+        .filter(Boolean)
+        .sort((a, b) => new Date(b).getTime() - new Date(a).getTime());
+      return values[0] || nowIso;
+    };
+
     const { data: persisted, error: persistedError } = await supabase
       .from("notifications")
       .select("id,user_id,title,message,type,is_read,read_at,action_path,created_at")
@@ -127,7 +140,8 @@ export default function NotificationCenter({ role }: NotificationCenterProps) {
       .limit(20);
 
     if (persistedError) {
-      setError(persistedError.message);
+      console.warn("Could not load persisted notifications:", persistedError.message);
+      setError("Saved notifications are unavailable, but live reminders are still shown.");
       setDbNotifications([]);
     } else {
       setDbNotifications(((persisted || []) as DbNotification[]).map((notification) => ({
@@ -137,7 +151,7 @@ export default function NotificationCenter({ role }: NotificationCenterProps) {
         message: notification.message,
         type: notification.type || "info",
         actionPath: notification.action_path || (role === "municipal_officer" ? "/officer/report-monitoring" : "/staff/submission-history"),
-        createdAt: notification.created_at || new Date().toISOString(),
+        createdAt: notification.created_at || nowIso,
         isRead: Boolean(notification.is_read),
       })));
     }
@@ -146,104 +160,174 @@ export default function NotificationCenter({ role }: NotificationCenterProps) {
     const dynamic: AppNotification[] = [];
 
     if (role === "municipal_officer") {
-      const [pendingVisitor, pendingAccommodation, holdVisitor, holdAccommodation, recommendations] = await Promise.all([
-        supabase.from("visitor_reports").select("id", { count: "exact", head: true }).eq("status", "pending"),
-        supabase.from("accommodation_reports").select("id", { count: "exact", head: true }).eq("status", "pending"),
-        supabase.from("visitor_reports").select("id", { count: "exact", head: true }).eq("status", "on_hold"),
-        supabase.from("accommodation_reports").select("id", { count: "exact", head: true }).eq("status", "on_hold"),
-        supabase.from("ai_recommendations").select("id", { count: "exact", head: true }).gte("created_at", monthStart),
+      const [
+        pendingVisitor,
+        pendingAccommodation,
+        holdVisitor,
+        holdAccommodation,
+        recommendations,
+        recentEstablishments,
+        pendingEstablishments,
+        recentReviews,
+      ] = await Promise.all([
+        supabase.from("visitor_reports").select("id,created_at", { count: "exact" }).in("status", ["pending", "under_review"]).order("created_at", { ascending: false }).limit(1),
+        supabase.from("accommodation_reports").select("id,created_at", { count: "exact" }).in("status", ["pending", "under_review"]).order("created_at", { ascending: false }).limit(1),
+        supabase.from("visitor_reports").select("id,created_at", { count: "exact" }).eq("status", "on_hold").order("created_at", { ascending: false }).limit(1),
+        supabase.from("accommodation_reports").select("id,created_at", { count: "exact" }).eq("status", "on_hold").order("created_at", { ascending: false }).limit(1),
+        supabase.from("ai_recommendations").select("id,created_at", { count: "exact" }).gte("created_at", monthStart).order("created_at", { ascending: false }).limit(1),
+        supabase.from("establishments").select("id,name,created_at", { count: "exact" }).gte("created_at", recentCutoffIso).order("created_at", { ascending: false }).limit(3),
+        supabase.from("establishments").select("id,name,created_at", { count: "exact" }).eq("status", "pending").order("created_at", { ascending: false }).limit(3),
+        supabase.from("establishment_rating_reviews").select("establishment_id,created_at", { count: "exact" }).gte("created_at", recentCutoffIso).order("created_at", { ascending: false }).limit(1),
       ]);
 
-      const pendingTotal = (pendingVisitor.count || 0) + (pendingAccommodation.count || 0);
-      const holdTotal = (holdVisitor.count || 0) + (holdAccommodation.count || 0);
+      const pendingTotal = countOf(pendingVisitor, pendingAccommodation);
+      const holdTotal = countOf(holdVisitor, holdAccommodation);
+      const recentEstablishmentCount = recentEstablishments.count || 0;
+      const pendingEstablishmentCount = pendingEstablishments.count || 0;
+      const reviewCount = recentReviews.count || 0;
+
       if (pendingTotal > 0) {
         dynamic.push({
-          id: `officer-pending-${pendingTotal}`,
+          id: `officer-pending-${pendingTotal}-${newestCreatedAt(pendingVisitor.data, pendingAccommodation.data)}`,
           source: "system",
           title: "Reports awaiting review",
-          message: `${pendingTotal} establishment report${pendingTotal === 1 ? "" : "s"} need officer action.`,
+          message: `${pendingTotal} report${pendingTotal === 1 ? "" : "s"} need officer review.`,
           type: "warning",
           actionPath: "/officer/report-monitoring",
-          createdAt: new Date().toISOString(),
+          createdAt: newestCreatedAt(pendingVisitor.data, pendingAccommodation.data),
           isRead: false,
         });
       }
       if (holdTotal > 0) {
         dynamic.push({
-          id: `officer-hold-${holdTotal}`,
+          id: `officer-hold-${holdTotal}-${newestCreatedAt(holdVisitor.data, holdAccommodation.data)}`,
           source: "system",
           title: "Reports on hold",
           message: `${holdTotal} flagged report${holdTotal === 1 ? "" : "s"} need manual verification.`,
           type: "warning",
           actionPath: "/officer/report-monitoring",
-          createdAt: new Date().toISOString(),
+          createdAt: newestCreatedAt(holdVisitor.data, holdAccommodation.data),
+          isRead: false,
+        });
+      }
+      if (pendingEstablishmentCount > 0) {
+        const names = (pendingEstablishments.data || []).map((item: any) => item.name).filter(Boolean).slice(0, 2).join(", ");
+        dynamic.push({
+          id: `officer-establishments-pending-${pendingEstablishmentCount}-${newestCreatedAt(pendingEstablishments.data)}`,
+          source: "system",
+          title: "Establishments need review",
+          message: `${pendingEstablishmentCount} establishment${pendingEstablishmentCount === 1 ? "" : "s"} awaiting approval${names ? `: ${names}` : ""}.`,
+          type: "warning",
+          actionPath: "/officer/establishments",
+          createdAt: newestCreatedAt(pendingEstablishments.data),
+          isRead: false,
+        });
+      } else if (recentEstablishmentCount > 0) {
+        const names = (recentEstablishments.data || []).map((item: any) => item.name).filter(Boolean).slice(0, 2).join(", ");
+        dynamic.push({
+          id: `officer-establishments-new-${recentEstablishmentCount}-${newestCreatedAt(recentEstablishments.data)}`,
+          source: "system",
+          title: "New establishment registered",
+          message: `${recentEstablishmentCount} establishment${recentEstablishmentCount === 1 ? "" : "s"} added in the last 7 days${names ? `: ${names}` : ""}.`,
+          type: "info",
+          actionPath: "/officer/establishments",
+          createdAt: newestCreatedAt(recentEstablishments.data),
+          isRead: false,
+        });
+      }
+      if (reviewCount > 0) {
+        dynamic.push({
+          id: `officer-reviews-${reviewCount}-${newestCreatedAt(recentReviews.data)}`,
+          source: "system",
+          title: "New visitor reviews",
+          message: `${reviewCount} review${reviewCount === 1 ? "" : "s"} posted in the last 7 days.`,
+          type: "info",
+          actionPath: "/officer/establishments",
+          createdAt: newestCreatedAt(recentReviews.data),
           isRead: false,
         });
       }
       if ((recommendations.count || 0) > 0) {
         dynamic.push({
-          id: `officer-ai-${recommendations.count}`,
+          id: `officer-ai-${recommendations.count}-${newestCreatedAt(recommendations.data)}`,
           source: "system",
           title: "AI insights updated",
           message: `${recommendations.count} recommendation${recommendations.count === 1 ? "" : "s"} available for this month.`,
           type: "ai",
           actionPath: "/officer/ai-insights",
-          createdAt: new Date().toISOString(),
+          createdAt: newestCreatedAt(recommendations.data),
           isRead: false,
         });
       }
       dynamic.push(deadlineNotification(role));
     } else {
       const canSubmitAccommodation = Boolean(profile?.establishment_id);
-      const [pendingVisitor, pendingAccommodation, approvedVisitor, approvedAccommodation] = await Promise.all([
-        supabase.from("visitor_reports").select("id", { count: "exact", head: true }).eq("status", "pending"),
-        supabase.from("accommodation_reports").select("id", { count: "exact", head: true }).eq("status", "pending"),
-        supabase.from("visitor_reports").select("id", { count: "exact", head: true }).eq("status", "approved").gte("created_at", monthStart),
-        supabase.from("accommodation_reports").select("id", { count: "exact", head: true }).eq("status", "approved").gte("created_at", monthStart),
-      ]);
+      if (profile?.establishment_id) {
+        const [pendingVisitor, pendingAccommodation, approvedVisitor, approvedAccommodation, onHoldVisitor, onHoldAccommodation] = await Promise.all([
+          supabase.from("visitor_reports").select("id,created_at", { count: "exact" }).eq("establishment_id", profile.establishment_id).eq("status", "pending").order("created_at", { ascending: false }).limit(1),
+          supabase.from("accommodation_reports").select("id,created_at", { count: "exact" }).eq("establishment_id", profile.establishment_id).eq("status", "pending").order("created_at", { ascending: false }).limit(1),
+          supabase.from("visitor_reports").select("id,created_at", { count: "exact" }).eq("establishment_id", profile.establishment_id).eq("status", "approved").gte("created_at", monthStart).order("created_at", { ascending: false }).limit(1),
+          supabase.from("accommodation_reports").select("id,created_at", { count: "exact" }).eq("establishment_id", profile.establishment_id).eq("status", "approved").gte("created_at", monthStart).order("created_at", { ascending: false }).limit(1),
+          supabase.from("visitor_reports").select("id,created_at", { count: "exact" }).eq("establishment_id", profile.establishment_id).eq("status", "on_hold").order("created_at", { ascending: false }).limit(1),
+          supabase.from("accommodation_reports").select("id,created_at", { count: "exact" }).eq("establishment_id", profile.establishment_id).eq("status", "on_hold").order("created_at", { ascending: false }).limit(1),
+        ]);
 
-      const pendingTotal = (pendingVisitor.count || 0) + (pendingAccommodation.count || 0);
-      const approvedTotal = (approvedVisitor.count || 0) + (approvedAccommodation.count || 0);
-      if (pendingTotal > 0) {
-        dynamic.push({
-          id: `staff-pending-${pendingTotal}`,
-          source: "system",
-          title: "Submitted reports pending",
-          message: `${pendingTotal} report${pendingTotal === 1 ? "" : "s"} are still waiting for officer review.`,
-          type: "report",
-          actionPath: "/staff/submission-history",
-          createdAt: new Date().toISOString(),
-          isRead: false,
-        });
-      }
-      if (approvedTotal > 0) {
-        dynamic.push({
-          id: `staff-approved-${approvedTotal}`,
-          source: "system",
-          title: "Reports approved this month",
-          message: `${approvedTotal} submitted report${approvedTotal === 1 ? "" : "s"} were approved this month.`,
-          type: "success",
-          actionPath: "/staff/submission-history",
-          createdAt: new Date().toISOString(),
-          isRead: false,
-        });
+        const pendingTotal = countOf(pendingVisitor, pendingAccommodation);
+        const approvedTotal = countOf(approvedVisitor, approvedAccommodation);
+        const onHoldTotal = countOf(onHoldVisitor, onHoldAccommodation);
+        if (pendingTotal > 0) {
+          dynamic.push({
+            id: `staff-pending-${profile.establishment_id}-${pendingTotal}-${newestCreatedAt(pendingVisitor.data, pendingAccommodation.data)}`,
+            source: "system",
+            title: "Submitted reports pending",
+            message: `${pendingTotal} report${pendingTotal === 1 ? "" : "s"} from your establishment are waiting for officer review.`,
+            type: "report",
+            actionPath: "/staff/submission-history",
+            createdAt: newestCreatedAt(pendingVisitor.data, pendingAccommodation.data),
+            isRead: false,
+          });
+        }
+        if (onHoldTotal > 0) {
+          dynamic.push({
+            id: `staff-hold-${profile.establishment_id}-${onHoldTotal}-${newestCreatedAt(onHoldVisitor.data, onHoldAccommodation.data)}`,
+            source: "system",
+            title: "Report needs attention",
+            message: `${onHoldTotal} submitted report${onHoldTotal === 1 ? "" : "s"} from your establishment are on hold for verification.`,
+            type: "warning",
+            actionPath: "/staff/submission-history",
+            createdAt: newestCreatedAt(onHoldVisitor.data, onHoldAccommodation.data),
+            isRead: false,
+          });
+        }
+        if (approvedTotal > 0) {
+          dynamic.push({
+            id: `staff-approved-${profile.establishment_id}-${approvedTotal}-${newestCreatedAt(approvedVisitor.data, approvedAccommodation.data)}`,
+            source: "system",
+            title: "Reports approved this month",
+            message: `${approvedTotal} report${approvedTotal === 1 ? "" : "s"} from your establishment were approved this month.`,
+            type: "success",
+            actionPath: "/staff/submission-history",
+            createdAt: newestCreatedAt(approvedVisitor.data, approvedAccommodation.data),
+            isRead: false,
+          });
+        }
       }
       dynamic.push(deadlineNotification(role, canSubmitAccommodation));
       dynamic.push({
-        id: "staff-listing-reminder",
+        id: `staff-listing-reminder-${profile?.establishment_id || user.id}`,
         source: "system",
         title: "Keep your public listing updated",
         message: "Review photos, contact details, amenities, and exact map pin for visitors.",
         type: "info",
         actionPath: "/staff/manage-listing",
-        createdAt: new Date().toISOString(),
+        createdAt: nowIso,
         isRead: false,
       });
     }
 
-    setSystemNotifications(dynamic.map((item) => ({ ...item, isRead: localReadIds.has(item.id) })));
+    setSystemNotifications(dynamic.map((item) => ({ ...item, isRead: readIds.has(item.id) })));
     setLoading(false);
-  }, [localReadIds, profile?.establishment_id, role, user?.id]);
+  }, [profile?.establishment_id, role, user?.id]);
 
   useEffect(() => {
     loadNotifications();
@@ -259,8 +343,12 @@ export default function NotificationCenter({ role }: NotificationCenterProps) {
   useEffect(() => {
     if (!user?.id) return;
     const channel = supabase
-      .channel(`notifications-${user.id}`)
+      .channel(`notifications-live-${user.id}`)
       .on("postgres_changes", { event: "*", schema: "public", table: "notifications", filter: `user_id=eq.${user.id}` }, loadNotifications)
+      .on("postgres_changes", { event: "*", schema: "public", table: "visitor_reports" }, loadNotifications)
+      .on("postgres_changes", { event: "*", schema: "public", table: "accommodation_reports" }, loadNotifications)
+      .on("postgres_changes", { event: "*", schema: "public", table: "establishments" }, loadNotifications)
+      .on("postgres_changes", { event: "*", schema: "public", table: "establishment_ratings" }, loadNotifications)
       .subscribe();
     return () => {
       supabase.removeChannel(channel);
@@ -335,7 +423,10 @@ export default function NotificationCenter({ role }: NotificationCenterProps) {
                 <Loader2 className="h-4 w-4 animate-spin" /> Loading notifications…
               </div>
             )}
-            {!loading && error && (
+            {!loading && error && notifications.length > 0 && (
+              <div className="border-b border-amber-100 bg-amber-50 px-4 py-2 text-xs text-amber-700">{error}</div>
+            )}
+            {!loading && error && notifications.length === 0 && (
               <div className="px-4 py-4 text-sm text-rose-600">Could not load notifications: {error}</div>
             )}
             {!loading && !error && notifications.length === 0 && (
@@ -345,7 +436,7 @@ export default function NotificationCenter({ role }: NotificationCenterProps) {
                 <p className="mt-1 text-xs text-slate-500">New report activity and reminders will appear here.</p>
               </div>
             )}
-            {!loading && !error && notifications.map((notification) => {
+            {!loading && notifications.map((notification) => {
               const style = typeStyles[notification.type] || typeStyles.info;
               const Icon = notification.type === "ai" ? Sparkles : notification.type === "report" ? FileText : Clock;
               return (
