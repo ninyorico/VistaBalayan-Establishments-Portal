@@ -152,6 +152,11 @@ export default function Analytics() {
     return Array.from(residenceMap.entries()).map(([residence, visitors]) => ({ residence, visitors }));
   }, [approvedVisitorReports]);
 
+  const bestVisitorMonth = visitorTrendData.reduce(
+    (best, current) => (current.visitors > best.visitors ? current : best),
+    { month: "No data", visitors: 0, male: 0, female: 0 }
+  );
+
   const averageOccupancy = calculateAverageAccommodationOccupancy(approvedAccommodationReports);
   const totalCheckIns = approvedAccommodationReports.reduce((sum, report) => sum + toNumber(report.total_check_ins), 0);
   const totalGuestNights = approvedAccommodationReports.reduce((sum, report) => sum + toNumber(report.total_guest_nights), 0);
@@ -172,6 +177,11 @@ export default function Analytics() {
       .slice(-6)
       .map(([, value]) => value);
   }, [approvedAccommodationReports]);
+
+  const bestAccommodationMonth = accommodationTrendData.reduce(
+    (best, current) => (current.checkIns > best.checkIns ? current : best),
+    { month: "No data", checkIns: 0, guestNights: 0 }
+  );
 
   if (loading) {
     return <LoadingState label="Loading establishment analytics" />;
@@ -214,6 +224,22 @@ export default function Analytics() {
           </div>
 
           <div className="rounded-lg border border-gray-200 bg-white p-6 shadow-sm">
+            <h3 className="mb-4 text-lg font-semibold text-gray-900">Monthly Guest Overview</h3>
+            <ResponsiveContainer width="100%" height={350}>
+              <BarChart data={visitorTrendData}>
+                <CartesianGrid strokeDasharray="3 3" />
+                <XAxis dataKey="month" />
+                <YAxis allowDecimals={false} />
+                <Tooltip />
+                <Legend />
+                <Bar dataKey="visitors" fill="#0E5A72" name="Total Visitors" />
+                <Bar dataKey="male" fill="#38bdf8" name="Male" />
+                <Bar dataKey="female" fill="#a78bfa" name="Female" />
+              </BarChart>
+            </ResponsiveContainer>
+          </div>
+
+          <div className="rounded-lg border border-gray-200 bg-white p-6 shadow-sm">
             <h3 className="mb-4 text-lg font-semibold text-gray-900">Visitor Demographics by Residence</h3>
             <ResponsiveContainer width="100%" height={350}>
               <BarChart data={residenceData}>
@@ -225,6 +251,14 @@ export default function Analytics() {
                 <Bar dataKey="visitors" fill="#0E5A72" name="Visitors" />
               </BarChart>
             </ResponsiveContainer>
+          </div>
+
+          <div className="rounded-lg border border-[#0E5A72]/20 bg-gradient-to-br from-cyan-50 to-emerald-50 p-6" data-resort-best-performing-month="visitor-demographics">
+            <h4 className="mb-2 font-semibold text-[#0B2530]">Best Performing Month</h4>
+            <p className="mb-1 text-3xl font-bold text-[#0B2530]">{bestVisitorMonth.month}</p>
+            <p className="text-sm text-[#0E5A72]">
+              {bestVisitorMonth.visitors.toLocaleString()} visitors · {bestVisitorMonth.male.toLocaleString()} male · {bestVisitorMonth.female.toLocaleString()} female
+            </p>
           </div>
         </>
       )}
@@ -250,6 +284,14 @@ export default function Analytics() {
                 <Bar dataKey="guestNights" fill="#8b5cf6" name="Guest Nights" />
               </BarChart>
             </ResponsiveContainer>
+          </div>
+
+          <div className="rounded-lg border border-blue-200 bg-gradient-to-br from-blue-50 to-blue-100 p-6">
+            <h4 className="mb-2 font-semibold text-blue-900">Best Performing Month</h4>
+            <p className="mb-1 text-3xl font-bold text-blue-900">{bestAccommodationMonth.month}</p>
+            <p className="text-sm text-blue-700">
+              {bestAccommodationMonth.checkIns.toLocaleString()} check-ins · {bestAccommodationMonth.guestNights.toLocaleString()} guest nights
+            </p>
           </div>
         </>
       )}
