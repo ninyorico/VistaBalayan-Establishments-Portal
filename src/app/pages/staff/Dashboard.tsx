@@ -41,6 +41,10 @@ export default function StaffDashboard() {
     monthlyOccupancyRate: "0.00",
     averageGuestPerRoom: "0.00",
   });
+  const [visitorMetrics, setVisitorMetrics] = useState({
+    visitorCount: 0,
+    monthlyArrivals: 0,
+  });
   const [recentSubmissions, setRecentSubmissions] = useState<any[]>([]);
 
   useEffect(() => {
@@ -89,6 +93,11 @@ export default function StaffDashboard() {
 
       const now = new Date();
       const currentMonthKey = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`;
+      const visitorReports = visitorData || [];
+      const totalVisitorCount = visitorReports.reduce((sum, report) => sum + Number(report.total_guests || 0), 0);
+      const monthlyArrivals = visitorReports
+        .filter((report) => (report.report_date || report.created_at || "").startsWith(currentMonthKey))
+        .reduce((sum, report) => sum + Number(report.total_guests || 0), 0);
       const hotelReports = accommodationData || [];
       const currentMonthHotelReports = hotelReports.filter((report) =>
         (report.report_date || "").startsWith(currentMonthKey)
@@ -107,6 +116,11 @@ export default function StaffDashboard() {
             ? (monthlyOccupancyRates.reduce((sum, rate) => sum + rate, 0) / monthlyOccupancyRates.length).toFixed(2)
             : "0.00",
         averageGuestPerRoom: totalOccupiedRooms > 0 ? (totalGuestNights / totalOccupiedRooms).toFixed(2) : "0.00",
+      });
+
+      setVisitorMetrics({
+        visitorCount: totalVisitorCount,
+        monthlyArrivals,
       });
 
       setStats({
@@ -138,6 +152,11 @@ export default function StaffDashboard() {
     { title: "Average Guest Night", value: hotelMetrics.averageGuestNight, subtitle: "nights per guest", icon: Moon, tone: "bg-sky-50 text-sky-700 ring-sky-100" },
     { title: "Average Room Occupancy Rate", value: `${hotelMetrics.monthlyOccupancyRate}%`, subtitle: "monthly average", icon: Percent, tone: "bg-violet-50 text-violet-700 ring-violet-100" },
     { title: "Average Guest Per Room", value: hotelMetrics.averageGuestPerRoom, subtitle: "guests per room", icon: UsersRound, tone: "bg-emerald-50 text-emerald-700 ring-emerald-100" },
+  ];
+
+  const visitorPerformanceStats = [
+    { title: "Visitor Count", value: visitorMetrics.visitorCount.toLocaleString(), subtitle: "total submitted visitors", icon: UsersRound, tone: "bg-emerald-50 text-emerald-700 ring-emerald-100" },
+    { title: "Monthly Arrivals", value: visitorMetrics.monthlyArrivals.toLocaleString(), subtitle: "current month visitors", icon: Calendar, tone: "bg-sky-50 text-sky-700 ring-sky-100" },
   ];
 
   if (loading) {
@@ -205,6 +224,16 @@ export default function StaffDashboard() {
           <MetricCard key={stat.title} label={stat.title} value={stat.value} icon={stat.icon} tone={stat.tone} compact />
         ))}
       </section>
+
+      {showVisitorForm && (
+        <PanelCard title="Resort visitor analytics" description="Visitor totals computed from your submitted resort reports." className="p-0">
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2" data-resort-dashboard-visitors="visitor-count-monthly-arrivals">
+            {visitorPerformanceStats.map((stat) => (
+              <MetricCard key={stat.title} label={stat.title} value={stat.value} helper={stat.subtitle} icon={stat.icon} tone={stat.tone} className="bg-[#f8fbf8] shadow-none" />
+            ))}
+          </div>
+        </PanelCard>
+      )}
 
       {showAccommodationForm && (
         <PanelCard title="Hotel analytics" description="Computed from your submitted hotel accommodation reports." className="p-0">
