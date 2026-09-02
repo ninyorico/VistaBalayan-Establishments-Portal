@@ -699,14 +699,14 @@ export default function AccommodationMonitoring({ embedded = false }: { embedded
               >
                 <div className="min-w-[860px] sm:min-w-[980px]">
                   <div className="grid grid-cols-[14%_17%_12%_13%_13%_12%_10%_9%] border-b border-gray-200 bg-white shadow-[0_1px_0_rgba(148,163,184,0.35)]" data-accommodation-records-table-modal="phone-fixed-header">
-                    <div className="px-2 py-2 text-left text-[10px] font-semibold uppercase tracking-wider text-gray-600 sm:px-4 sm:text-xs">Date</div>
-                    <div className="px-2 py-2 text-left text-[10px] font-semibold uppercase tracking-wider text-gray-600 sm:px-4 sm:text-xs">Month</div>
-                    <div className="px-2 py-2 text-left text-[10px] font-semibold uppercase tracking-wider text-gray-600 sm:px-4 sm:text-xs">Total Rooms</div>
-                    <div className="px-2 py-2 text-left text-[10px] font-semibold uppercase tracking-wider text-gray-600 sm:px-4 sm:text-xs">Reported Rooms</div>
-                    <div className="px-2 py-2 text-left text-[10px] font-semibold uppercase tracking-wider text-gray-600 sm:px-4 sm:text-xs">Occupied Rooms</div>
-                    <div className="px-2 py-2 text-left text-[10px] font-semibold uppercase tracking-wider text-gray-600 sm:px-4 sm:text-xs">Avg Occupancy</div>
-                    <div className="px-2 py-2 text-left text-[10px] font-semibold uppercase tracking-wider text-gray-600 sm:px-4 sm:text-xs">Guests</div>
-                    <div className="px-2 py-2 text-left text-[10px] font-semibold uppercase tracking-wider text-gray-600 sm:px-4 sm:text-xs">Guest Nights</div>
+                    <div className="flex min-h-10 items-center justify-center px-2 py-2 text-center text-[10px] font-semibold uppercase leading-tight tracking-wider text-gray-600 sm:min-h-0 sm:px-4 sm:text-xs">Date</div>
+                    <div className="flex min-h-10 items-center justify-center px-2 py-2 text-center text-[10px] font-semibold uppercase leading-tight tracking-wider text-gray-600 sm:min-h-0 sm:px-4 sm:text-xs">Month</div>
+                    <div className="flex min-h-10 items-center justify-center px-2 py-2 text-center text-[10px] font-semibold uppercase leading-tight tracking-wider text-gray-600 sm:min-h-0 sm:px-4 sm:text-xs">Total Rooms</div>
+                    <div className="flex min-h-10 items-center justify-center px-2 py-2 text-center text-[10px] font-semibold uppercase leading-tight tracking-wider text-gray-600 sm:min-h-0 sm:px-4 sm:text-xs">Reported Rooms</div>
+                    <div className="flex min-h-10 items-center justify-center px-2 py-2 text-center text-[10px] font-semibold uppercase leading-tight tracking-wider text-gray-600 sm:min-h-0 sm:px-4 sm:text-xs">Occupied Rooms</div>
+                    <div className="flex min-h-10 items-center justify-center px-2 py-2 text-center text-[10px] font-semibold uppercase leading-tight tracking-wider text-gray-600 sm:min-h-0 sm:px-4 sm:text-xs">Avg Occupancy</div>
+                    <div className="flex min-h-10 items-center justify-center px-2 py-2 text-center text-[10px] font-semibold uppercase leading-tight tracking-wider text-gray-600 sm:min-h-0 sm:px-4 sm:text-xs">Guests</div>
+                    <div className="flex min-h-10 items-center justify-center px-2 py-2 text-center text-[10px] font-semibold uppercase leading-tight tracking-wider text-gray-600 sm:min-h-0 sm:px-4 sm:text-xs">Guest Nights</div>
                   </div>
                   <div className="max-h-[48dvh] divide-y divide-gray-100 overflow-y-auto overflow-x-hidden overscroll-y-contain [-webkit-overflow-scrolling:touch] sm:max-h-[54vh]">
                     {selectedAccommodationGroup.records.map((record) => (
