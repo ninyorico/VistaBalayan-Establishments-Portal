@@ -379,15 +379,15 @@ export default function VisitorMonitoring({ embedded = false }: { embedded?: boo
                     <col className="w-[17%]" />
                     <col className="w-[15%]" />
                   </colgroup>
-                  <thead className="sticky top-0 z-20 border-b border-gray-200 bg-white shadow-[0_1px_0_rgba(148,163,184,0.35)]">
+                  <thead className="bg-white">
                     <tr>
-                      <th className="px-2 py-2 text-left text-[10px] font-semibold uppercase tracking-wider text-gray-600 sm:px-4 sm:text-xs">Date</th>
-                      <th className="px-2 py-2 text-left text-[10px] font-semibold uppercase tracking-wider text-gray-600 sm:px-4 sm:text-xs">Guest/Group</th>
-                      <th className="px-2 py-2 text-left text-[10px] font-semibold uppercase tracking-wider text-gray-600 sm:px-4 sm:text-xs">Male</th>
-                      <th className="px-2 py-2 text-left text-[10px] font-semibold uppercase tracking-wider text-gray-600 sm:px-4 sm:text-xs">Female</th>
-                      <th className="px-2 py-2 text-left text-[10px] font-semibold uppercase tracking-wider text-gray-600 sm:px-4 sm:text-xs">Total</th>
-                      <th className="px-2 py-2 text-left text-[10px] font-semibold uppercase tracking-wider text-gray-600 sm:px-4 sm:text-xs">Residence</th>
-                      <th className="px-2 py-2 text-left text-[10px] font-semibold uppercase tracking-wider text-gray-600 sm:px-4 sm:text-xs">Location</th>
+                      <th className="sticky top-0 z-30 border-b border-gray-200 bg-white px-2 py-2 text-left text-[10px] font-semibold uppercase tracking-wider text-gray-600 shadow-[0_1px_0_rgba(148,163,184,0.35)] sm:px-4 sm:text-xs">Date</th>
+                      <th className="sticky top-0 z-30 border-b border-gray-200 bg-white px-2 py-2 text-left text-[10px] font-semibold uppercase tracking-wider text-gray-600 shadow-[0_1px_0_rgba(148,163,184,0.35)] sm:px-4 sm:text-xs">Guest/Group</th>
+                      <th className="sticky top-0 z-30 border-b border-gray-200 bg-white px-2 py-2 text-left text-[10px] font-semibold uppercase tracking-wider text-gray-600 shadow-[0_1px_0_rgba(148,163,184,0.35)] sm:px-4 sm:text-xs">Male</th>
+                      <th className="sticky top-0 z-30 border-b border-gray-200 bg-white px-2 py-2 text-left text-[10px] font-semibold uppercase tracking-wider text-gray-600 shadow-[0_1px_0_rgba(148,163,184,0.35)] sm:px-4 sm:text-xs">Female</th>
+                      <th className="sticky top-0 z-30 border-b border-gray-200 bg-white px-2 py-2 text-left text-[10px] font-semibold uppercase tracking-wider text-gray-600 shadow-[0_1px_0_rgba(148,163,184,0.35)] sm:px-4 sm:text-xs">Total</th>
+                      <th className="sticky top-0 z-30 border-b border-gray-200 bg-white px-2 py-2 text-left text-[10px] font-semibold uppercase tracking-wider text-gray-600 shadow-[0_1px_0_rgba(148,163,184,0.35)] sm:px-4 sm:text-xs">Residence</th>
+                      <th className="sticky top-0 z-30 border-b border-gray-200 bg-white px-2 py-2 text-left text-[10px] font-semibold uppercase tracking-wider text-gray-600 shadow-[0_1px_0_rgba(148,163,184,0.35)] sm:px-4 sm:text-xs">Location</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-gray-100">
