@@ -1,4 +1,5 @@
-import { TrendingUp, BarChart3 } from "lucide-react";
+import { useEffect, useMemo, useState } from "react";
+import { BarChart3, TrendingUp, UsersRound, Calendar, PieChart, Percent } from "lucide-react";
 import {
   LineChart,
   Line,
@@ -11,143 +12,247 @@ import {
   Legend,
   ResponsiveContainer,
 } from "recharts";
+import { supabase } from "../../../lib/supabase";
+import { calculateAverageAccommodationOccupancy } from "../../../lib/reportMetrics";
+import { canSubmitAccommodationReport, canSubmitVisitorReport } from "../../../lib/establishmentReportForms";
+import { LoadingState, MetricCard } from "../../components/vista/PolishedShell";
 
-const establishmentTrends = [
-  { month: "Jan", visitors: 385, occupancy: 75 },
-  { month: "Feb", visitors: 412, occupancy: 78 },
-  { month: "Mar", visitors: 523, occupancy: 82 },
-  { month: "Apr", visitors: 608, occupancy: 87 },
-  { month: "May", visitors: 695, occupancy: 91 },
-];
+type VisitorReport = {
+  id: string;
+  report_date: string | null;
+  created_at?: string | null;
+  total_guests?: number | null;
+  total_male?: number | null;
+  total_female?: number | null;
+  residence_type?: string | null;
+  status?: string | null;
+};
 
-const performanceMetrics = [
-  { metric: "Visitor Growth", value: 14, trend: "up" },
-  { metric: "Occupancy Rate", value: 91, trend: "up" },
-];
+type AccommodationReport = {
+  id: string;
+  report_date: string | null;
+  total_rooms?: number | null;
+  total_occupied_rooms?: number | null;
+  total_check_ins?: number | null;
+  total_guest_nights?: number | null;
+  status?: string | null;
+};
 
-const monthlyData = [
-  { month: "Jan", guests: 385, guestNights: 370 },
-  { month: "Feb", guests: 412, guestNights: 395 },
-  { month: "Mar", guests: 523, guestNights: 502 },
-  { month: "Apr", guests: 608, guestNights: 583 },
-  { month: "May", guests: 695, guestNights: 667 },
-];
+const monthLabel = (dateValue?: string | null) => {
+  if (!dateValue) return "No date";
+  const date = new Date(dateValue);
+  if (Number.isNaN(date.getTime())) return dateValue.slice(0, 7);
+  return date.toLocaleString("default", { month: "short" });
+};
+
+const toNumber = (value?: number | null) => Number(value || 0);
 
 export default function Analytics() {
+  const [loading, setLoading] = useState(true);
+  const [establishment, setEstablishment] = useState<any>(null);
+  const [visitorReports, setVisitorReports] = useState<VisitorReport[]>([]);
+  const [accommodationReports, setAccommodationReports] = useState<AccommodationReport[]>([]);
+
+  useEffect(() => {
+    loadAnalytics();
+  }, []);
+
+  const loadAnalytics = async () => {
+    setLoading(true);
+
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) {
+      window.location.href = "/";
+      return;
+    }
+
+    const { data: profile } = await supabase
+      .from("profiles")
+      .select("id, establishment_id")
+      .eq("id", user.id)
+      .maybeSingle();
+
+    if (!profile?.establishment_id) {
+      setLoading(false);
+      return;
+    }
+
+    const { data: establishmentData } = await supabase
+      .from("establishments")
+      .select("name,type,total_rooms")
+      .eq("id", profile.establishment_id)
+      .maybeSingle();
+
+    setEstablishment(establishmentData);
+
+    const [visitorResult, accommodationResult] = await Promise.all([
+      supabase
+        .from("visitor_reports")
+        .select("id, report_date, created_at, total_guests, total_male, total_female, residence_type, status")
+        .eq("establishment_id", profile.establishment_id)
+        .order("report_date", { ascending: true }),
+      supabase
+        .from("accommodation_reports")
+        .select("id, report_date, total_rooms, total_occupied_rooms, total_check_ins, total_guest_nights, status")
+        .eq("establishment_id", profile.establishment_id)
+        .order("report_date", { ascending: true }),
+    ]);
+
+    setVisitorReports(visitorResult.data || []);
+    setAccommodationReports(accommodationResult.data || []);
+    setLoading(false);
+  };
+
+  const showVisitorAnalytics = canSubmitVisitorReport(establishment);
+  const showAccommodationAnalytics = canSubmitAccommodationReport(establishment);
+  const approvedVisitorReports = visitorReports.filter((report) => (report.status || "pending") === "approved");
+  const approvedAccommodationReports = accommodationReports.filter((report) => (report.status || "pending") === "approved");
+
+  const currentMonthKey = new Date().toISOString().slice(0, 7);
+  const totalVisitors = approvedVisitorReports.reduce((sum, report) => sum + toNumber(report.total_guests), 0);
+  const currentMonthVisitors = approvedVisitorReports
+    .filter((report) => (report.report_date || report.created_at || "").startsWith(currentMonthKey))
+    .reduce((sum, report) => sum + toNumber(report.total_guests), 0);
+  const totalMale = approvedVisitorReports.reduce((sum, report) => sum + toNumber(report.total_male), 0);
+  const totalFemale = approvedVisitorReports.reduce((sum, report) => sum + toNumber(report.total_female), 0);
+  const totalDemographics = totalMale + totalFemale;
+  const demographicKpi =
+    totalDemographics === 0
+      ? "No data"
+      : totalFemale >= totalMale
+        ? `${Math.round((totalFemale / totalDemographics) * 100)}% Female`
+        : `${Math.round((totalMale / totalDemographics) * 100)}% Male`;
+
+  const visitorTrendData = useMemo(() => {
+    const monthMap = new Map<string, { month: string; visitors: number; male: number; female: number }>();
+
+    approvedVisitorReports.forEach((report) => {
+      const key = (report.report_date || report.created_at || "No date").slice(0, 7);
+      const current = monthMap.get(key) || { month: monthLabel(report.report_date || report.created_at), visitors: 0, male: 0, female: 0 };
+      current.visitors += toNumber(report.total_guests);
+      current.male += toNumber(report.total_male);
+      current.female += toNumber(report.total_female);
+      monthMap.set(key, current);
+    });
+
+    return Array.from(monthMap.entries())
+      .sort(([a], [b]) => a.localeCompare(b))
+      .slice(-6)
+      .map(([, value]) => value);
+  }, [approvedVisitorReports]);
+
+  const residenceData = useMemo(() => {
+    const residenceMap = new Map<string, number>();
+
+    approvedVisitorReports.forEach((report) => {
+      const label = report.residence_type || "Unspecified";
+      residenceMap.set(label, (residenceMap.get(label) || 0) + toNumber(report.total_guests));
+    });
+
+    return Array.from(residenceMap.entries()).map(([residence, visitors]) => ({ residence, visitors }));
+  }, [approvedVisitorReports]);
+
+  const averageOccupancy = calculateAverageAccommodationOccupancy(approvedAccommodationReports);
+  const totalCheckIns = approvedAccommodationReports.reduce((sum, report) => sum + toNumber(report.total_check_ins), 0);
+  const totalGuestNights = approvedAccommodationReports.reduce((sum, report) => sum + toNumber(report.total_guest_nights), 0);
+
+  const accommodationTrendData = useMemo(() => {
+    const monthMap = new Map<string, { month: string; checkIns: number; guestNights: number }>();
+
+    approvedAccommodationReports.forEach((report) => {
+      const key = (report.report_date || "No date").slice(0, 7);
+      const current = monthMap.get(key) || { month: monthLabel(report.report_date), checkIns: 0, guestNights: 0 };
+      current.checkIns += toNumber(report.total_check_ins);
+      current.guestNights += toNumber(report.total_guest_nights);
+      monthMap.set(key, current);
+    });
+
+    return Array.from(monthMap.entries())
+      .sort(([a], [b]) => a.localeCompare(b))
+      .slice(-6)
+      .map(([, value]) => value);
+  }, [approvedAccommodationReports]);
+
+  if (loading) {
+    return <LoadingState label="Loading establishment analytics" />;
+  }
+
   return (
-    <div className="space-y-6">
+    <div className="space-y-6" data-staff-resort-analytics="visitor-counts-demographics-no-occupancy">
       <div>
-        <h1 className="text-3xl font-bold text-gray-900">
-          Establishment Analytics
-        </h1>
-        <p className="text-gray-600 mt-1">
-          Track your establishment's performance and trends
+        <h1 className="text-3xl font-bold text-gray-900">Establishment Analytics</h1>
+        <p className="mt-1 text-gray-600">
+          Track {establishment?.name || "your establishment"} performance from approved submitted reports.
         </p>
       </div>
 
-      {/* Performance Metrics */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        {performanceMetrics.map((metric, index) => (
-          <div
-            key={index}
-            className="bg-white rounded-lg shadow-sm border border-gray-200 p-6"
-          >
-            <p className="text-sm text-gray-600 mb-1">{metric.metric}</p>
-            <div className="flex items-center justify-between">
-              <p className="text-3xl font-bold text-gray-900">
-                {metric.value}
-                {metric.metric.includes("Rate") || metric.metric.includes("Visitors")
-                  ? "%"
-                  : metric.metric.includes("Satisfaction")
-                  ? "/5"
-                  : "%"}
-              </p>
-              <TrendingUp
-                className={`w-6 h-6 ${
-                  metric.trend === "up"
-                    ? "text-green-600"
-                    : metric.trend === "down"
-                    ? "text-red-600"
-                    : "text-gray-600"
-                }`}
-              />
-            </div>
+      {showVisitorAnalytics && (
+        <>
+          <div className="grid grid-cols-1 gap-6 md:grid-cols-3">
+            <MetricCard label="Visitor Count" value={totalVisitors.toLocaleString()} helper="approved visitor reports" icon={UsersRound} tone="bg-emerald-50 text-emerald-700 ring-emerald-100" />
+            <MetricCard label="Monthly Arrivals" value={currentMonthVisitors.toLocaleString()} helper="current month visitors" icon={Calendar} tone="bg-sky-50 text-sky-700 ring-sky-100" />
+            <MetricCard label="Demographics" value={demographicKpi} helper={`${totalMale.toLocaleString()} male · ${totalFemale.toLocaleString()} female`} icon={PieChart} tone="bg-violet-50 text-violet-700 ring-violet-100" />
           </div>
-        ))}
-      </div>
 
-      {/* Visitor & Occupancy Trends */}
-      <div key="visitor-occupancy-card" className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-        <div className="flex items-center gap-2 mb-4">
-          <BarChart3 className="w-5 h-5 text-blue-600" />
-          <h3 className="text-lg font-semibold text-gray-900">
-            Visitor & Occupancy Trends
-          </h3>
-        </div>
-        <ResponsiveContainer width="100%" height={350}>
-          <LineChart data={establishmentTrends}>
-            <CartesianGrid strokeDasharray="3 3" />
-            <XAxis dataKey="month" />
-            <YAxis yAxisId="left" />
-            <YAxis yAxisId="right" orientation="right" />
-            <Tooltip />
-            <Legend />
-            <Line
-              key="visitors-line"
-              yAxisId="left"
-              type="monotone"
-              dataKey="visitors"
-              stroke="#3b82f6"
-              strokeWidth={2}
-              name="Visitors"
-            />
-            <Line
-              key="occupancy-line"
-              yAxisId="right"
-              type="monotone"
-              dataKey="occupancy"
-              stroke="#8b5cf6"
-              strokeWidth={2}
-              name="Occupancy %"
-            />
-          </LineChart>
-        </ResponsiveContainer>
-      </div>
+          <div className="rounded-lg border border-gray-200 bg-white p-6 shadow-sm">
+            <div className="mb-4 flex items-center gap-2">
+              <BarChart3 className="h-5 w-5 text-[#0E5A72]" />
+              <h3 className="text-lg font-semibold text-gray-900">Visitor Count Trends</h3>
+            </div>
+            <ResponsiveContainer width="100%" height={350}>
+              <LineChart data={visitorTrendData}>
+                <CartesianGrid strokeDasharray="3 3" />
+                <XAxis dataKey="month" />
+                <YAxis allowDecimals={false} />
+                <Tooltip />
+                <Legend />
+                <Line type="monotone" dataKey="visitors" stroke="#0E5A72" strokeWidth={2} name="Visitors" />
+                <Line type="monotone" dataKey="male" stroke="#38bdf8" strokeWidth={2} name="Male" />
+                <Line type="monotone" dataKey="female" stroke="#a78bfa" strokeWidth={2} name="Female" />
+              </LineChart>
+            </ResponsiveContainer>
+          </div>
 
-      {/* Guest Analysis */}
-      <div key="monthly-performance-card" className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-        <h3 className="text-lg font-semibold text-gray-900 mb-4">
-          Monthly Guest Overview
-        </h3>
-        <ResponsiveContainer width="100%" height={350}>
-          <BarChart data={monthlyData}>
-            <CartesianGrid strokeDasharray="3 3" />
-            <XAxis dataKey="month" />
-            <YAxis />
-            <Tooltip />
-            <Legend />
-            <Bar
-              key="guests-bar"
-              dataKey="guests"
-              fill="#3b82f6"
-              name="Total Guests"
-            />
-            <Bar
-              key="guest-nights-bar"
-              dataKey="guestNights"
-              fill="#8b5cf6"
-              name="Guest Nights"
-            />
-          </BarChart>
-        </ResponsiveContainer>
-      </div>
+          <div className="rounded-lg border border-gray-200 bg-white p-6 shadow-sm">
+            <h3 className="mb-4 text-lg font-semibold text-gray-900">Visitor Demographics by Residence</h3>
+            <ResponsiveContainer width="100%" height={350}>
+              <BarChart data={residenceData}>
+                <CartesianGrid strokeDasharray="3 3" />
+                <XAxis dataKey="residence" />
+                <YAxis allowDecimals={false} />
+                <Tooltip />
+                <Legend />
+                <Bar dataKey="visitors" fill="#0E5A72" name="Visitors" />
+              </BarChart>
+            </ResponsiveContainer>
+          </div>
+        </>
+      )}
 
-      {/* Key Insights */}
-      <div className="bg-gradient-to-br from-blue-50 to-blue-100 rounded-lg border border-blue-200 p-6">
-        <h4 className="font-semibold text-blue-900 mb-2">Best Performing Month</h4>
-        <p className="text-3xl font-bold text-blue-900 mb-1">May 2026</p>
-        <p className="text-sm text-blue-700">695 visitors, 91% occupancy</p>
-      </div>
+      {showAccommodationAnalytics && (
+        <>
+          <div className="grid grid-cols-1 gap-6 md:grid-cols-3">
+            <MetricCard label="Average Occupancy Rate" value={`${averageOccupancy.toFixed(1)}%`} helper="approved accommodation reports" icon={Percent} tone="bg-violet-50 text-violet-700 ring-violet-100" />
+            <MetricCard label="Total Check-ins" value={totalCheckIns.toLocaleString()} helper="approved accommodation reports" icon={UsersRound} tone="bg-emerald-50 text-emerald-700 ring-emerald-100" />
+            <MetricCard label="Guest Nights" value={totalGuestNights.toLocaleString()} helper="approved accommodation reports" icon={TrendingUp} tone="bg-sky-50 text-sky-700 ring-sky-100" />
+          </div>
+
+          <div className="rounded-lg border border-gray-200 bg-white p-6 shadow-sm">
+            <h3 className="mb-4 text-lg font-semibold text-gray-900">Monthly Guest Overview</h3>
+            <ResponsiveContainer width="100%" height={350}>
+              <BarChart data={accommodationTrendData}>
+                <CartesianGrid strokeDasharray="3 3" />
+                <XAxis dataKey="month" />
+                <YAxis allowDecimals={false} />
+                <Tooltip />
+                <Legend />
+                <Bar dataKey="checkIns" fill="#0E5A72" name="Check-ins" />
+                <Bar dataKey="guestNights" fill="#8b5cf6" name="Guest Nights" />
+              </BarChart>
+            </ResponsiveContainer>
+          </div>
+        </>
+      )}
     </div>
   );
 }

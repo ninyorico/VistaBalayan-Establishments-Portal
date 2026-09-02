@@ -44,6 +44,8 @@ export default function StaffDashboard() {
   const [visitorMetrics, setVisitorMetrics] = useState({
     visitorCount: 0,
     monthlyArrivals: 0,
+    totalMale: 0,
+    totalFemale: 0,
   });
   const [recentSubmissions, setRecentSubmissions] = useState<any[]>([]);
 
@@ -81,7 +83,7 @@ export default function StaffDashboard() {
 
       const { data: visitorData } = await supabase
         .from("visitor_reports")
-        .select("id, report_date, created_at, status, total_guests")
+        .select("id, report_date, created_at, status, total_guests, total_male, total_female")
         .eq("submitted_by", profileData.id);
 
       const { data: accommodationData } = await supabase
@@ -95,6 +97,8 @@ export default function StaffDashboard() {
       const currentMonthKey = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`;
       const visitorReports = visitorData || [];
       const totalVisitorCount = visitorReports.reduce((sum, report) => sum + Number(report.total_guests || 0), 0);
+      const totalMale = visitorReports.reduce((sum, report) => sum + Number(report.total_male || 0), 0);
+      const totalFemale = visitorReports.reduce((sum, report) => sum + Number(report.total_female || 0), 0);
       const monthlyArrivals = visitorReports
         .filter((report) => (report.report_date || report.created_at || "").startsWith(currentMonthKey))
         .reduce((sum, report) => sum + Number(report.total_guests || 0), 0);
@@ -121,6 +125,8 @@ export default function StaffDashboard() {
       setVisitorMetrics({
         visitorCount: totalVisitorCount,
         monthlyArrivals,
+        totalMale,
+        totalFemale,
       });
 
       setStats({
@@ -154,9 +160,18 @@ export default function StaffDashboard() {
     { title: "Average Guest Per Room", value: hotelMetrics.averageGuestPerRoom, subtitle: "guests per room", icon: UsersRound, tone: "bg-emerald-50 text-emerald-700 ring-emerald-100" },
   ];
 
+  const totalDemographicCount = visitorMetrics.totalMale + visitorMetrics.totalFemale;
+  const dominantDemographic =
+    totalDemographicCount === 0
+      ? "No data"
+      : visitorMetrics.totalFemale >= visitorMetrics.totalMale
+        ? `${Math.round((visitorMetrics.totalFemale / totalDemographicCount) * 100)}% Female`
+        : `${Math.round((visitorMetrics.totalMale / totalDemographicCount) * 100)}% Male`;
+
   const visitorPerformanceStats = [
     { title: "Visitor Count", value: visitorMetrics.visitorCount.toLocaleString(), subtitle: "total submitted visitors", icon: UsersRound, tone: "bg-emerald-50 text-emerald-700 ring-emerald-100" },
     { title: "Monthly Arrivals", value: visitorMetrics.monthlyArrivals.toLocaleString(), subtitle: "current month visitors", icon: Calendar, tone: "bg-sky-50 text-sky-700 ring-sky-100" },
+    { title: "Demographics", value: dominantDemographic, subtitle: `${visitorMetrics.totalMale.toLocaleString()} male · ${visitorMetrics.totalFemale.toLocaleString()} female`, icon: UsersRound, tone: "bg-violet-50 text-violet-700 ring-violet-100" },
   ];
 
   if (loading) {
@@ -227,7 +242,7 @@ export default function StaffDashboard() {
 
       {showVisitorForm && (
         <PanelCard title="Resort visitor analytics" description="Visitor totals computed from your submitted resort reports." className="p-0">
-          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2" data-resort-dashboard-visitors="visitor-count-monthly-arrivals">
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-3" data-resort-dashboard-visitors="visitor-count-monthly-arrivals-demographics">
             {visitorPerformanceStats.map((stat) => (
               <MetricCard key={stat.title} label={stat.title} value={stat.value} helper={stat.subtitle} icon={stat.icon} tone={stat.tone} className="bg-[#f8fbf8] shadow-none" />
             ))}
