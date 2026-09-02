@@ -401,7 +401,7 @@ export default function NotificationCenter({ role }: NotificationCenterProps) {
       </button>
 
       {open && (
-        <div className="absolute right-0 z-50 mt-2 w-[min(92vw,24rem)] overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-2xl shadow-slate-950/15">
+        <div className="fixed inset-x-3 top-24 z-50 max-h-[calc(100svh-7rem)] overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-2xl shadow-slate-950/15 sm:absolute sm:inset-x-auto sm:right-0 sm:top-auto sm:mt-2 sm:w-[min(92vw,24rem)] sm:max-h-none" data-mobile-safe-notifications="true">
           <div className="flex items-center justify-between gap-3 border-b border-[#D9E2EC] px-4 py-3">
             <div>
               <h3 className="text-sm font-semibold text-[#0F172A]">Notifications</h3>
