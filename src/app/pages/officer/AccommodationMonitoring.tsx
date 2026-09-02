@@ -1,5 +1,5 @@
-import { Fragment, useState, useEffect, useMemo } from "react";
-import { ChevronDown, ChevronRight, Download, Search, TrendingUp } from "lucide-react";
+import { Fragment, useState, useEffect, useMemo, useRef, type TouchEvent } from "react";
+import { ChevronDown, ChevronRight, Download, Search, TrendingUp, X } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "../../../lib/supabase";
 import { datestampedFilename, downloadCsv } from "../../../lib/exportCsv";
@@ -28,6 +28,35 @@ export default function AccommodationMonitoring({ embedded = false }: { embedded
   const [specificMonth, setSpecificMonth] = useState("");
   const [establishmentTotalRooms, setEstablishmentTotalRooms] = useState(0);
   const [expandedEstablishments, setExpandedEstablishments] = useState<Set<string>>(new Set());
+  const [selectedAccommodationGroupKey, setSelectedAccommodationGroupKey] = useState<string | null>(null);
+  const tableTouchRef = useRef<{ x: number; y: number; lastX: number; axis: "x" | "y" | null }>({
+    x: 0,
+    y: 0,
+    lastX: 0,
+    axis: null,
+  });
+
+  const handleTableTouchStart = (event: TouchEvent<HTMLDivElement>) => {
+    const touch = event.touches[0];
+    tableTouchRef.current = { x: touch.clientX, y: touch.clientY, lastX: touch.clientX, axis: null };
+  };
+
+  const handleTableTouchMove = (event: TouchEvent<HTMLDivElement>) => {
+    const touch = event.touches[0];
+    const state = tableTouchRef.current;
+    const deltaX = touch.clientX - state.x;
+    const deltaY = touch.clientY - state.y;
+
+    if (!state.axis && Math.max(Math.abs(deltaX), Math.abs(deltaY)) > 8) {
+      state.axis = Math.abs(deltaX) > Math.abs(deltaY) ? "x" : "y";
+    }
+
+    if (state.axis === "x") {
+      event.preventDefault();
+      event.currentTarget.scrollLeft += state.lastX - touch.clientX;
+      state.lastX = touch.clientX;
+    }
+  };
 
   // Summary statistics
   const [summaryStats, setSummaryStats] = useState({
@@ -301,6 +330,11 @@ export default function AccommodationMonitoring({ embedded = false }: { embedded
     });
   };
 
+  const selectedAccommodationGroup = useMemo(
+    () => groupedRecords.find((group) => group.key === selectedAccommodationGroupKey) || null,
+    [groupedRecords, selectedAccommodationGroupKey]
+  );
+
   const monthLabel = specificMonth
     ? new Date(`${specificMonth}-01T00:00:00`).toLocaleString("default", { month: "long", year: "numeric" })
     : "all available months";
@@ -449,24 +483,23 @@ export default function AccommodationMonitoring({ embedded = false }: { embedded
       <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
         <div className="border-b border-gray-200 bg-gray-50 px-6 py-4">
           <h2 className="font-semibold text-gray-900">Accommodation records by establishment</h2>
-          <p className="mt-1 text-sm text-gray-600">Click an establishment to expand and view the full {monthLabel} record.</p>
+          <p className="mt-1 text-sm text-gray-600">Tap an establishment on phone to open the full {monthLabel} record in a table modal. Desktop rows still expand inline.</p>
         </div>
         <div className="space-y-3 p-4 sm:hidden">
           {groupedRecords.length > 0 ? (
             groupedRecords.map((group) => {
-              const isExpanded = expandedEstablishments.has(group.key);
               return (
                 <div key={group.key} className="rounded-2xl border border-gray-200 bg-white shadow-sm">
                   <button
                     type="button"
                     className="w-full p-4 text-left"
-                    onClick={() => toggleEstablishment(group.key)}
-                    aria-expanded={isExpanded}
+                    onClick={() => setSelectedAccommodationGroupKey(group.key)}
+                    aria-label={`Open ${group.establishment} accommodation records`}
                   >
                     <div className="flex items-start justify-between gap-3">
                       <div className="min-w-0">
                         <div className="flex items-center gap-2">
-                          {isExpanded ? <ChevronDown className="h-4 w-4 shrink-0 text-gray-500" /> : <ChevronRight className="h-4 w-4 shrink-0 text-gray-500" />}
+                          <ChevronRight className="h-4 w-4 shrink-0 text-gray-500" />
                           <p className="truncate font-semibold text-gray-900">{group.establishment}</p>
                         </div>
                         <p className="mt-1 text-xs text-gray-500">{group.records.length} record(s) • {Array.from(group.monthNames).join(", ")}</p>
@@ -497,30 +530,7 @@ export default function AccommodationMonitoring({ embedded = false }: { embedded
                       </div>
                     </div>
                   </button>
-                  {isExpanded && (
-                    <div className="border-t border-gray-200 bg-slate-50 p-3">
-                      <div className="max-h-72 space-y-3 overflow-y-auto overscroll-contain pr-1">
-                        {group.records.map((record) => (
-                          <div key={record.id} className="rounded-xl border border-gray-200 bg-white p-3 text-sm">
-                            <div className="flex items-start justify-between gap-2">
-                              <div>
-                                <p className="font-semibold text-gray-900">{record.date}</p>
-                                <p className="text-xs text-gray-500">{record.month}</p>
-                              </div>
-                              <span className="rounded-full bg-green-50 px-2 py-1 text-xs font-medium text-green-700">{record.avgOccupancy.toFixed(1)}%</span>
-                            </div>
-                            <div className="mt-3 grid grid-cols-2 gap-2 text-xs">
-                              <p><span className="text-gray-500">Total rooms:</span> <span className="font-medium text-gray-900">{record.totalRooms}</span></p>
-                              <p><span className="text-gray-500">Reported:</span> <span className="font-medium text-gray-900">{record.reportedRooms}</span></p>
-                              <p><span className="text-gray-500">Occupied:</span> <span className="font-medium text-gray-900">{record.occupiedRooms}</span></p>
-                              <p><span className="text-gray-500">Guests:</span> <span className="font-medium text-blue-600">{record.totalGuests}</span></p>
-                              <p className="col-span-2"><span className="text-gray-500">Guest nights:</span> <span className="font-medium text-gray-900">{record.guestNights}</span></p>
-                            </div>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  )}
+
                 </div>
               );
             })
@@ -639,6 +649,85 @@ export default function AccommodationMonitoring({ embedded = false }: { embedded
           </table>
         </div>
       </div>
+
+      {selectedAccommodationGroup && (
+        <div className="fixed inset-0 z-[100] flex items-end justify-center bg-slate-950/60 p-0 backdrop-blur-sm sm:items-center sm:p-4" onClick={() => setSelectedAccommodationGroupKey(null)}>
+          <div className="max-h-[90dvh] w-full overflow-hidden rounded-t-2xl bg-white shadow-2xl sm:max-w-6xl sm:rounded-2xl" onClick={(event) => event.stopPropagation()}>
+            <div className="flex items-start justify-between gap-4 border-b border-gray-200 bg-gray-50 px-4 py-4 sm:px-6">
+              <div className="min-w-0">
+                <p className="text-xs font-semibold uppercase tracking-wider text-blue-600">Hotel accommodation records</p>
+                <h3 className="mt-1 truncate text-lg font-semibold text-gray-900 sm:text-xl">{selectedAccommodationGroup.establishment}</h3>
+                <p className="mt-1 text-xs text-gray-600 sm:text-sm">{selectedAccommodationGroup.records.length} record(s) for {monthLabel}</p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setSelectedAccommodationGroupKey(null)}
+                className="rounded-full p-2 text-gray-500 transition hover:bg-gray-200 hover:text-gray-900"
+                aria-label="Close accommodation records modal"
+              >
+                <X className="h-5 w-5" />
+              </button>
+            </div>
+
+            <div className="grid grid-cols-3 gap-2 border-b border-gray-100 px-4 py-3 text-center sm:grid-cols-4 sm:px-6">
+              <div className="rounded-lg bg-green-50 px-3 py-2">
+                <p className="text-[10px] font-medium uppercase tracking-wide text-green-700 sm:text-xs">Avg Occupancy</p>
+                <p className="text-lg font-bold text-green-700 sm:text-2xl">{selectedAccommodationGroup.avgOccupancy.toFixed(1)}%</p>
+              </div>
+              <div className="rounded-lg bg-blue-50 px-3 py-2">
+                <p className="text-[10px] font-medium uppercase tracking-wide text-blue-700 sm:text-xs">Guests</p>
+                <p className="text-lg font-bold text-blue-700 sm:text-2xl">{selectedAccommodationGroup.totalGuests}</p>
+              </div>
+              <div className="rounded-lg bg-purple-50 px-3 py-2">
+                <p className="text-[10px] font-medium uppercase tracking-wide text-purple-700 sm:text-xs">Guest Nights</p>
+                <p className="text-lg font-bold text-purple-700 sm:text-2xl">{selectedAccommodationGroup.guestNights}</p>
+              </div>
+              <div className="hidden rounded-lg bg-teal-50 px-3 py-2 sm:block">
+                <p className="text-[10px] font-medium uppercase tracking-wide text-teal-700 sm:text-xs">Avg Guest/Room</p>
+                <p className="text-lg font-bold text-teal-700 sm:text-2xl">{selectedAccommodationGroup.avgGuestsPerRoom.toFixed(2)}</p>
+              </div>
+            </div>
+
+            <div className="px-0 pb-[calc(env(safe-area-inset-bottom)+1rem)] sm:px-6 sm:py-6">
+              <div className="px-4 py-2 text-[11px] font-medium text-gray-500 sm:hidden">
+                Swipe sideways to see all table columns.
+              </div>
+              <div
+                className="overflow-x-auto overscroll-x-contain touch-auto [-webkit-overflow-scrolling:touch]"
+                onTouchStart={handleTableTouchStart}
+                onTouchMove={handleTableTouchMove}
+              >
+                <div className="min-w-[860px] sm:min-w-[980px]">
+                  <div className="grid grid-cols-[14%_17%_12%_13%_13%_12%_10%_9%] border-b border-gray-200 bg-white shadow-[0_1px_0_rgba(148,163,184,0.35)]" data-accommodation-records-table-modal="phone-fixed-header">
+                    <div className="px-2 py-2 text-left text-[10px] font-semibold uppercase tracking-wider text-gray-600 sm:px-4 sm:text-xs">Date</div>
+                    <div className="px-2 py-2 text-left text-[10px] font-semibold uppercase tracking-wider text-gray-600 sm:px-4 sm:text-xs">Month</div>
+                    <div className="px-2 py-2 text-left text-[10px] font-semibold uppercase tracking-wider text-gray-600 sm:px-4 sm:text-xs">Total Rooms</div>
+                    <div className="px-2 py-2 text-left text-[10px] font-semibold uppercase tracking-wider text-gray-600 sm:px-4 sm:text-xs">Reported Rooms</div>
+                    <div className="px-2 py-2 text-left text-[10px] font-semibold uppercase tracking-wider text-gray-600 sm:px-4 sm:text-xs">Occupied Rooms</div>
+                    <div className="px-2 py-2 text-left text-[10px] font-semibold uppercase tracking-wider text-gray-600 sm:px-4 sm:text-xs">Avg Occupancy</div>
+                    <div className="px-2 py-2 text-left text-[10px] font-semibold uppercase tracking-wider text-gray-600 sm:px-4 sm:text-xs">Guests</div>
+                    <div className="px-2 py-2 text-left text-[10px] font-semibold uppercase tracking-wider text-gray-600 sm:px-4 sm:text-xs">Guest Nights</div>
+                  </div>
+                  <div className="max-h-[48dvh] divide-y divide-gray-100 overflow-y-auto overflow-x-hidden overscroll-y-contain [-webkit-overflow-scrolling:touch] sm:max-h-[54vh]">
+                    {selectedAccommodationGroup.records.map((record) => (
+                      <div key={record.id} className="grid grid-cols-[14%_17%_12%_13%_13%_12%_10%_9%] align-top">
+                        <div className="break-words px-2 py-2 text-[11px] text-gray-600 sm:px-4 sm:py-3 sm:text-sm">{record.date}</div>
+                        <div className="break-words px-2 py-2 text-[11px] text-gray-600 sm:px-4 sm:py-3 sm:text-sm">{record.month}</div>
+                        <div className="px-2 py-2 text-[11px] text-gray-900 sm:px-4 sm:py-3 sm:text-sm">{record.totalRooms}</div>
+                        <div className="px-2 py-2 text-[11px] text-gray-900 sm:px-4 sm:py-3 sm:text-sm">{record.reportedRooms}</div>
+                        <div className="px-2 py-2 text-[11px] font-medium text-gray-900 sm:px-4 sm:py-3 sm:text-sm">{record.occupiedRooms}</div>
+                        <div className="px-2 py-2 text-[11px] font-medium text-green-700 sm:px-4 sm:py-3 sm:text-sm">{record.avgOccupancy.toFixed(1)}%</div>
+                        <div className="px-2 py-2 text-[11px] font-medium text-blue-600 sm:px-4 sm:py-3 sm:text-sm">{record.totalGuests}</div>
+                        <div className="px-2 py-2 text-[11px] text-gray-900 sm:px-4 sm:py-3 sm:text-sm">{record.guestNights}</div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
