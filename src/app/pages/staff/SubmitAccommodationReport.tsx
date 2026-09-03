@@ -1,11 +1,11 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router";
-import { Save, Send, Settings, AlertTriangle } from "lucide-react";
+import { Save, Send, Settings, AlertTriangle, Plus, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "../../../lib/supabase";
 import { calculateAccommodationOccupancy } from "../../../lib/reportMetrics";
 import { canSubmitAccommodationReport } from "../../../lib/establishmentReportForms";
-import { DEFAULT_ROOM_CONFIG, getRoomConfigFromAmenities } from "../../../lib/establishmentRoomConfig";
+import { DEFAULT_ROOM_CONFIG, getRoomConfigFromAmenities, normalizeRoomConfig, setRoomConfigInAmenities, type EstablishmentRoomConfig } from "../../../lib/establishmentRoomConfig";
 
 interface RoomOccupancy {
   roomType: string;
@@ -32,8 +32,9 @@ export default function SubmitAccommodationReport() {
   const [error, setError] = useState<string | null>(null);
   const [establishmentName, setEstablishmentName] = useState("Loading...");
   const [showRoomSetup, setShowRoomSetup] = useState(false);
-  const [tempRoomCounts, setTempRoomCounts] = useState<Record<string, number>>({});
-  const [roomTypes, setRoomTypes] = useState(DEFAULT_ROOM_CONFIG);
+  const [tempRoomConfig, setTempRoomConfig] = useState<EstablishmentRoomConfig[]>(DEFAULT_ROOM_CONFIG);
+  const [roomTypes, setRoomTypes] = useState<EstablishmentRoomConfig[]>(DEFAULT_ROOM_CONFIG);
+  const [establishmentAmenities, setEstablishmentAmenities] = useState<string>("");
   const [submitting, setSubmitting] = useState(false);
 
   const getTodayDate = () => {
@@ -102,16 +103,13 @@ export default function SubmitAccommodationReport() {
       return;
     }
 
+    setEstablishmentAmenities(typeof est.amenities === "string" ? est.amenities : "");
     const officerRoomConfig = getRoomConfigFromAmenities(est.amenities);
     const savedConfig = loadRoomConfig(profileData.establishment_id);
-    setRoomTypes(officerRoomConfig);
-    setTempRoomCounts(
-      officerRoomConfig.reduce<Record<string, number>>((counts, room) => {
-        counts[room.code] = savedConfig[room.code] ?? room.count ?? 0;
-        return counts;
-      }, {})
-    );
-    setRoomData(buildRoomData(officerRoomConfig, savedConfig));
+    const effectiveRoomConfig = mergeRoomConfig(officerRoomConfig, savedConfig);
+    setRoomTypes(effectiveRoomConfig);
+    setTempRoomConfig(effectiveRoomConfig);
+    setRoomData(buildRoomData(effectiveRoomConfig));
 
     setLoadingProfile(false);
   };
@@ -121,17 +119,39 @@ export default function SubmitAccommodationReport() {
 
   const loadRoomConfig = (establishmentId?: string) => {
     const saved = localStorage.getItem(roomConfigStorageKey(establishmentId));
-    if (saved) {
+    if (!saved) return null;
+
+    try {
       return JSON.parse(saved);
+    } catch {
+      return null;
     }
-    return {};
   };
 
-  const buildRoomData = (rooms = roomTypes, savedConfig: Record<string, number> = {}) =>
+  const mergeRoomConfig = (
+    baseRooms: EstablishmentRoomConfig[],
+    savedConfig: unknown
+  ): EstablishmentRoomConfig[] => {
+    if (Array.isArray(savedConfig)) {
+      return normalizeRoomConfig(savedConfig);
+    }
+
+    if (savedConfig && typeof savedConfig === "object") {
+      const savedCounts = savedConfig as Record<string, number>;
+      return baseRooms.map((room) => ({
+        ...room,
+        count: Math.max(0, Number(savedCounts[room.code] ?? room.count ?? 0) || 0),
+      }));
+    }
+
+    return normalizeRoomConfig(baseRooms);
+  };
+
+  const buildRoomData = (rooms = roomTypes) =>
     rooms.map((room) => ({
       roomType: room.type,
       roomCode: room.code,
-      numberOfRooms: savedConfig[room.code] ?? room.count ?? 0,
+      numberOfRooms: room.count ?? 0,
       occupied: 0,
       checkIns: 0,
       guestNights: 0,
@@ -144,18 +164,78 @@ export default function SubmitAccommodationReport() {
     0
   );
 
-  const saveRoomConfiguration = () => {
-    const config: Record<string, number> = {};
-    roomTypes.forEach((room) => {
-      config[room.code] = tempRoomCounts[room.code] || 0;
-    });
+  const updateTempRoomConfig = (index: number, field: keyof EstablishmentRoomConfig, value: string) => {
+    setTempRoomConfig((rooms) =>
+      rooms.map((room, i) => {
+        if (i !== index) return room;
+        if (field === "count") {
+          return { ...room, count: parseNonNegativeInteger(value) };
+        }
+        const nextValue = field === "code" ? value.toUpperCase() : value;
+        return { ...room, [field]: nextValue };
+      })
+    );
+  };
+
+  const addRoomConfigRow = () => {
+    setTempRoomConfig((rooms) => [
+      ...rooms,
+      { type: "", code: `R${rooms.length + 1}`, count: 0 },
+    ]);
+  };
+
+  const removeRoomConfigRow = (index: number) => {
+    setTempRoomConfig((rooms) => (rooms.length > 1 ? rooms.filter((_, i) => i !== index) : rooms));
+  };
+
+  const saveRoomConfiguration = async () => {
+    const config = normalizeRoomConfig(tempRoomConfig);
+    const duplicatedCode = config.find((room, index) =>
+      config.some((other, otherIndex) => otherIndex !== index && other.code === room.code)
+    );
+
+    if (duplicatedCode) {
+      toast.error(`Room type code ${duplicatedCode.code} is duplicated. Please use unique codes.`);
+      return;
+    }
+
+    const nextTotalRooms = config.reduce((sum, room) => sum + Number(room.count || 0), 0);
+    const nextAmenities = setRoomConfigInAmenities(establishmentAmenities, config);
+
     localStorage.setItem(roomConfigStorageKey(profile?.establishment_id), JSON.stringify(config));
 
+    if (profile?.establishment_id) {
+      const { error } = await supabase
+        .from("establishments")
+        .update({
+          amenities: nextAmenities,
+          total_rooms: nextTotalRooms,
+          updated_at: new Date(),
+        })
+        .eq("id", profile.establishment_id);
+
+      if (error) {
+        toast.error("Could not save room configuration to the establishment record: " + error.message);
+        return;
+      }
+
+      setEstablishmentAmenities(nextAmenities);
+    }
+
+    setRoomTypes(config);
+    setTempRoomConfig(config);
     setRoomData(
-      roomData.map((room) => ({
-        ...room,
-        numberOfRooms: config[room.roomCode] || 0,
-      }))
+      config.map((room) => {
+        const existing = roomData.find((currentRoom) => currentRoom.roomCode === room.code);
+        return {
+          roomType: room.type,
+          roomCode: room.code,
+          numberOfRooms: room.count || 0,
+          occupied: existing?.occupied || 0,
+          checkIns: existing?.checkIns || 0,
+          guestNights: existing?.guestNights || 0,
+        };
+      })
     );
 
     setShowRoomSetup(false);
@@ -343,45 +423,70 @@ export default function SubmitAccommodationReport() {
 
       {/* Room Setup Modal */}
       {showRoomSetup && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-end sm:items-center justify-center z-50 p-3 sm:p-4">
-          <div className="bg-white rounded-t-2xl sm:rounded-lg shadow-xl max-w-2xl w-full max-h-[92vh] overflow-y-auto">
-            <div className="p-4 sm:p-6 border-b border-gray-200">
+        <div className="fixed inset-0 z-50 flex items-end justify-center overflow-hidden bg-black bg-opacity-50 p-2 sm:items-center sm:p-4" data-room-config-mobile-scroll="body-owned">
+          <div className="flex max-h-[calc(100dvh-1rem)] w-full max-w-2xl flex-col overflow-hidden rounded-t-2xl bg-white shadow-xl sm:max-h-[92vh] sm:rounded-lg">
+            <div className="shrink-0 border-b border-gray-200 p-4 sm:p-6">
               <h2 className="text-xl sm:text-2xl font-bold text-gray-900">Room Configuration</h2>
               <p className="text-gray-600 mt-1">
-                Set the number of rooms for each room type. This will be saved for future reports.
+                Set each room name, room type/code, and number of rooms. This will be saved for future reports.
               </p>
             </div>
 
-            <div className="p-4 sm:p-6">
+            <div className="min-h-0 flex-1 overflow-y-auto overscroll-y-contain p-4 sm:p-6 [-webkit-overflow-scrolling:touch]">
+              <div className="mb-4 flex items-center justify-between gap-3">
+                <p className="text-sm font-medium text-gray-700">Editable hotel room setup</p>
+                <button
+                  type="button"
+                  onClick={addRoomConfigRow}
+                  className="inline-flex shrink-0 items-center gap-1 rounded-lg bg-blue-50 px-3 py-2 text-sm font-medium text-blue-700 hover:bg-blue-100"
+                >
+                  <Plus className="h-4 w-4" /> Add Room
+                </button>
+              </div>
               <div className="space-y-4">
-                {roomTypes.map((room) => (
-                  <div key={room.code} className="grid grid-cols-1 gap-4 p-4 border border-gray-200 rounded-lg sm:grid-cols-[1fr_auto] sm:items-center">
-                    <div className="flex min-w-0 items-center gap-3 sm:gap-4">
-                      <span className="px-3 py-1 bg-gray-100 rounded font-mono text-sm font-semibold">
-                        {room.code}
-                      </span>
-                      <div className="min-w-0">
-                        <p className="font-medium text-gray-900">{room.type}</p>
-                        <p className="text-sm text-gray-500">Room Type</p>
-                      </div>
+                {tempRoomConfig.map((room, index) => (
+                  <div key={`${room.code}-${index}`} className="grid grid-cols-1 gap-3 rounded-lg border border-gray-200 p-4 sm:grid-cols-[1fr_130px_110px_auto] sm:items-end">
+                    <div className="min-w-0">
+                      <label className="mb-1 block text-sm font-medium text-gray-700">Room Name</label>
+                      <input
+                        type="text"
+                        value={room.type}
+                        onChange={(e) => updateTempRoomConfig(index, "type", e.target.value)}
+                        className="block w-full min-w-0 rounded-lg border border-gray-300 px-3 py-2 text-sm"
+                        placeholder="e.g. Deluxe"
+                      />
                     </div>
-                    <div className="grid grid-cols-1 gap-2 sm:flex sm:items-center">
-                      <label className="text-sm font-medium text-gray-700">Number of Rooms</label>
+                    <div className="min-w-0">
+                      <label className="mb-1 block text-sm font-medium text-gray-700">Room Type</label>
+                      <input
+                        type="text"
+                        value={room.code}
+                        onChange={(e) => updateTempRoomConfig(index, "code", e.target.value)}
+                        className="block w-full min-w-0 rounded-lg border border-gray-300 px-3 py-2 text-sm uppercase"
+                        placeholder="Code"
+                      />
+                    </div>
+                    <div className="min-w-0">
+                      <label className="mb-1 block text-sm font-medium text-gray-700">Rooms</label>
                       <input
                         type="text"
                         inputMode="numeric"
                         pattern="[0-9]*"
-                        value={numericInputValue(tempRoomCounts[room.code] || 0)}
-                        onChange={(e) =>
-                          setTempRoomCounts({
-                            ...tempRoomCounts,
-                            [room.code]: parseNonNegativeInteger(e.target.value),
-                          })
-                        }
-                        className="block w-full min-w-0 max-w-full sm:w-24 px-3 py-2 border border-gray-300 rounded-lg"
+                        value={numericInputValue(room.count || 0)}
+                        onChange={(e) => updateTempRoomConfig(index, "count", e.target.value)}
+                        className="block w-full min-w-0 rounded-lg border border-gray-300 px-3 py-2 text-sm"
                         placeholder="0"
                       />
                     </div>
+                    <button
+                      type="button"
+                      onClick={() => removeRoomConfigRow(index)}
+                      className="inline-flex h-10 items-center justify-center rounded-lg px-3 py-2 text-red-600 hover:bg-red-50 disabled:cursor-not-allowed disabled:opacity-40"
+                      aria-label="Remove room"
+                      disabled={tempRoomConfig.length <= 1}
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </button>
                   </div>
                 ))}
               </div>
@@ -389,12 +494,12 @@ export default function SubmitAccommodationReport() {
               <div className="mt-6 p-4 bg-blue-50 border border-blue-200 rounded-lg">
                 <p className="text-sm text-blue-800">
                   <strong>Total Rooms:</strong>{" "}
-                  {Object.values(tempRoomCounts).reduce((sum, count) => sum + Number(count || 0), 0)}
+                  {tempRoomConfig.reduce((sum, room) => sum + Number(room.count || 0), 0)}
                 </p>
               </div>
             </div>
 
-            <div className="p-4 sm:p-6 border-t border-gray-200 grid grid-cols-1 gap-3 sm:flex sm:justify-end">
+            <div className="shrink-0 p-4 sm:p-6 border-t border-gray-200 grid grid-cols-1 gap-3 sm:flex sm:justify-end">
               <button
                 onClick={() => setShowRoomSetup(false)}
                 className="px-6 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200"
