@@ -1,10 +1,15 @@
 import { useEffect, useState } from 'react'
-import { AlertTriangle, Info, CheckCircle, Brain, Loader2, RefreshCw } from 'lucide-react'
+import { AlertTriangle, Loader2 } from 'lucide-react'
 import { supabase } from '../../../lib/supabase'
 import { geminiService } from '../../../services/geminiService'
-import { cleanAiText, formatConfidence, splitAiRecommendation } from '../../../lib/aiText'
 import { calculateAverageAccommodationOccupancy } from '../../../lib/reportMetrics'
-import { AiFormattedText } from '../../components/AiFormattedText'
+import {
+  AiAnomalyCard,
+  AiEmptyState,
+  AiInsightsShell,
+  AiRecommendationCard,
+  AiSectionCard,
+} from '../../components/vista/AiInsightsDesign'
 
 interface Anomaly {
   id: string
@@ -257,178 +262,42 @@ const loadCachedData = async (estId: string) => {
   }
 
   return (
-    <div className="space-y-6">
-      <div className="flex justify-between items-center">
-        <div>
-          <h1 className="text-3xl font-bold text-gray-900">AI Insights</h1>
-          <p className="text-gray-600 mt-1">
-            AI-powered recommendations and service gap tracking for {establishmentName || 'your establishment'}
-          </p>
-        </div>
-        <button
-          onClick={refreshData}
-          disabled={refreshing}
-          className="px-4 py-2 bg-[#1CA7C9] text-white rounded-lg hover:bg-[#0F4C75] transition flex items-center gap-2"
-        >
-          {refreshing ? <Loader2 className="w-4 h-4 animate-spin" /> : <RefreshCw className="w-4 h-4" />}
-          {refreshing ? 'Refreshing...' : 'Refresh Analysis'}
-        </button>
-      </div>
-
-      {/* AI Status Card */}
-      <div className="bg-gradient-to-r from-purple-600 to-blue-600 text-white rounded-lg shadow-sm p-6">
-        <div className="flex items-center gap-4">
-          <div className="w-16 h-16 bg-white/20 backdrop-blur-sm rounded-lg flex items-center justify-center">
-            <Brain className="w-8 h-8" />
-          </div>
-          <div>
-            <h2 className="text-2xl font-bold mb-1">AI Analysis Active</h2>
-            <p className="text-purple-100">
-              Monitoring {establishmentName} data for insights, service gaps, and operational challenges
-            </p>
-          </div>
-        </div>
-      </div>
-
-      {/* Service Gaps / Operational Challenges */}
-      <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4 sm:p-6">
-        <div className="flex items-start justify-between gap-3 mb-3">
-          <div className="flex items-center gap-2">
-            <AlertTriangle className="w-5 h-5 text-orange-600" />
-            <h3 className="text-base font-semibold leading-snug text-gray-900 sm:text-lg">Service Gaps or Operational Challenges</h3>
-          </div>
-          <span className="shrink-0 rounded-full bg-yellow-100 px-2.5 py-1 text-xs font-medium leading-tight text-yellow-700 sm:px-3 sm:text-sm">
-            {anomalies.filter((a) => a.severity === "medium" || a.severity === "high").length} Active
-          </span>
-        </div>
+    <AiInsightsShell
+      subtitle={`Recommendation review and service-gap tracking for ${establishmentName || 'your establishment'}.`}
+      refreshing={refreshing}
+      onRefresh={refreshData}
+    >
+      <AiSectionCard
+        title="Service gaps"
+        countLabel={`${anomalies.filter((a) => a.severity === "medium" || a.severity === "high").length} Active`}
+        icon={<AlertTriangle className="size-5 text-amber-600" />}
+      >
         <div className="space-y-3">
           {anomalies.length > 0 ? (
             anomalies.map((anomaly) => (
-              <div
-                key={anomaly.id}
-                className={`border-l-4 rounded-lg p-3.5 sm:p-4 ${
-                  anomaly.severity === "high"
-                    ? "border-red-500 bg-red-50"
-                    : anomaly.severity === "medium"
-                    ? "border-yellow-500 bg-yellow-50"
-                    : "border-blue-500 bg-blue-50"
-                }`}
-              >
-                <div className="space-y-2" data-ai-card-layout="full-width-mobile">
-                  <div className="flex min-w-0 items-start justify-between gap-3">
-                    <div className="flex min-w-0 items-start gap-2.5">
-                    <AlertTriangle
-                      className={`w-4 h-4 mt-0.5 shrink-0 ${
-                        anomaly.severity === "high"
-                          ? "text-red-600"
-                          : anomaly.severity === "medium"
-                          ? "text-yellow-600"
-                          : "text-blue-600"
-                      }`}
-                    />
-                      <div className="min-w-0 flex-1">
-                        <div className="mb-1 flex flex-wrap items-center gap-1.5">
-                        <h4 className="text-base font-semibold leading-snug text-gray-900">
-                          {anomaly.anomaly_type}
-                        </h4>
-                        <span
-                          className={`px-2 py-0.5 rounded text-xs font-medium ${
-                            anomaly.severity === "high"
-                              ? "bg-red-200 text-red-800"
-                              : anomaly.severity === "medium"
-                              ? "bg-yellow-200 text-yellow-800"
-                              : "bg-blue-200 text-blue-800"
-                          }`}
-                        >
-                          {anomaly.severity}
-                        </span>
-                      </div>
-                    </div>
-                    </div>
-                    <p className="shrink-0 whitespace-nowrap text-xs text-gray-500">
-                      {new Date(anomaly.detected_at).toLocaleDateString()}
-                    </p>
-                  </div>
-                  <div className="pl-6 sm:pl-6">
-                    <p className="mb-2 text-justify text-sm leading-5 text-gray-700 hyphens-auto indent-5" data-ai-text-spacing="justified-even-indent">
-                      <AiFormattedText text={anomaly.description} />
-                    </p>
-                    {anomaly.recommendation && (
-                      <div className="mt-2 rounded-md bg-white/70 px-3 py-2 text-justify text-sm leading-5 text-gray-700 ring-1 ring-black/5 hyphens-auto" data-ai-action-note="justified-even">
-                        <span className="font-semibold text-gray-800">Recommendation:</span> <AiFormattedText text={anomaly.recommendation} tone="action" />
-                      </div>
-                    )}
-                  </div>
-                </div>
-              </div>
+              <AiAnomalyCard key={anomaly.id} {...anomaly} establishments={{ name: establishmentName || 'Your establishment' }} />
             ))
           ) : (
-            <div className="flex items-center gap-3 p-4 bg-green-50 border border-green-200 rounded-lg">
-              <CheckCircle className="w-5 h-5 text-green-600" />
-              <p className="text-sm text-green-800">
-                No service gaps or operational challenges detected. Your data quality is excellent!
-              </p>
-            </div>
+            <AiEmptyState variant="gaps" />
           )}
         </div>
-      </div>
+      </AiSectionCard>
 
-      {/* AI-Powered Recommendations */}
-      <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4 sm:p-6">
-        <div className="flex items-center gap-2 mb-4">
-          <Info className="w-5 h-5 text-purple-600" />
-          <h3 className="text-lg font-semibold text-gray-900">
-            AI-Powered Recommendations
-          </h3>
-        </div>
+      <AiSectionCard
+        title="Recommended actions"
+        countLabel={`${insights.length} Ready`}
+        icon={<span className="size-2.5 rounded-full bg-[#1CA7C9] shadow-[0_0_0_6px_rgba(28,167,201,0.12)]" />}
+      >
         <div className="grid grid-cols-1 gap-3 lg:grid-cols-2">
           {insights.length > 0 ? (
-            insights.map((insight) => {
-              const { summary, action } = splitAiRecommendation(insight.description, insight.recommended_action)
-              const confidence = formatConfidence(insight.confidence_score)
-
-              return (
-              <div
-                key={insight.id}
-                className="border border-gray-200 rounded-lg p-3.5 sm:p-4 hover:shadow-md transition" data-ai-card-layout="aligned-mobile"
-              >
-                <div className="mb-2 flex items-start justify-between gap-2">
-                  <h4 className="min-w-0 flex-1 text-base font-semibold leading-snug text-gray-900">{cleanAiText(insight.title)}</h4>
-                  <span
-                    className={`px-2 py-0.5 rounded text-xs font-medium ${
-                      insight.impact === "high"
-                        ? "bg-purple-100 text-purple-700"
-                        : "bg-blue-100 text-blue-700"
-                    }`}
-                  >
-                    {insight.impact} impact
-                  </span>
-                </div>
-                <p className="mb-2 text-justify text-sm leading-5 text-gray-600 hyphens-auto indent-5" data-ai-text-spacing="justified-even-indent"><AiFormattedText text={summary} /></p>
-                {action && (
-                  <p className="mb-3 rounded-md bg-slate-50 px-3 py-2 text-justify text-sm leading-5 text-gray-800 hyphens-auto" data-ai-action-note="justified-even">
-                    <strong className="font-semibold">Action:</strong> <AiFormattedText text={action} tone="action" />
-                  </p>
-                )}
-                <div className="flex items-center justify-between gap-3">
-                  <span className="text-xs text-gray-500 font-medium">
-                    {cleanAiText(insight.category)}
-                  </span>
-                  {confidence && (
-                    <span className="text-xs text-gray-400">
-                      {confidence}
-                    </span>
-                  )}
-                </div>
-              </div>
-            )})
+            insights.map((insight) => <AiRecommendationCard key={insight.id} {...insight} />)
           ) : (
-            <div className="col-span-2 text-center py-8 text-gray-500">
-              No recommendations available. Click "Refresh Analysis" to generate insights for your establishment.
+            <div className="lg:col-span-2">
+              <AiEmptyState variant="recommendations" />
             </div>
           )}
         </div>
-      </div>
-    </div>
+      </AiSectionCard>
+    </AiInsightsShell>
   )
 }
