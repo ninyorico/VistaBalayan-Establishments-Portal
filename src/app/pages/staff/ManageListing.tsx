@@ -525,8 +525,8 @@ export default function ManageListing() {
   return (
     <main className="w-full max-w-full overflow-x-hidden" data-manage-listing-redesign="shadcn-taste-editorial">
       <div className="space-y-5 sm:space-y-7" data-manage-listing-hero-removed="true">
-        <section className="grid grid-cols-1 gap-3 lg:grid-cols-3" data-manage-listing-bento="dense-3x2-no-empty-cells">
-          <Card className="group overflow-hidden rounded-[1.5rem] border-slate-200 bg-slate-950 text-white shadow-sm lg:col-span-2">
+        <section className="grid grid-cols-1 gap-3" data-manage-listing-profile-card-only="true">
+          <Card className="group overflow-hidden rounded-[1.5rem] border-slate-200 bg-slate-950 text-white shadow-sm">
             <CardContent className="relative p-5 sm:p-6">
               <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_20%_10%,rgba(28,167,201,0.42),transparent_32%),radial-gradient(circle_at_90%_10%,rgba(148,163,184,0.24),transparent_28%)]" />
               <div className="relative flex items-start gap-4">
@@ -546,29 +546,13 @@ export default function ManageListing() {
             </CardContent>
           </Card>
 
-          <Card className="rounded-[1.5rem] border-slate-200 bg-white/90 shadow-sm backdrop-blur">
-            <CardContent className="grid grid-cols-3 gap-2 p-4 sm:p-5 lg:grid-cols-1">
-              <div className="rounded-2xl bg-slate-50 p-3">
-                <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-slate-400">Photos</p>
-                <p className="mt-2 text-sm font-bold text-slate-900">{images.length} published</p>
-              </div>
-              <div className="rounded-2xl bg-cyan-50 p-3">
-                <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-cyan-700/60">Pin</p>
-                <p className="mt-2 text-sm font-bold text-cyan-950">{hasExactCoordinates ? 'Ready' : 'Unset'}</p>
-              </div>
-              <div className="rounded-2xl bg-amber-50 p-3">
-                <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-amber-700/60">Type</p>
-                <p className="mt-2 truncate text-sm font-bold text-amber-950">{formData.type || 'Listing'}</p>
-              </div>
-            </CardContent>
-          </Card>
         </section>
 
         <div className="grid grid-cols-1 gap-5 lg:grid-cols-[minmax(0,1.45fr)_minmax(320px,0.75fr)]">
           <div className="space-y-5">
             <Card className="overflow-hidden rounded-[1.5rem] border-slate-200 bg-white shadow-sm">
               <CardHeader className="border-b border-slate-100 bg-slate-50/70 px-4 py-4 sm:px-6">
-                <CardTitle className="text-xl font-black tracking-[-0.025em] text-slate-950">Listing essentials</CardTitle>
+                <CardTitle className="text-xl font-black tracking-[-0.025em] text-slate-950">Public listing details</CardTitle>
               </CardHeader>
               <CardContent className="space-y-4 px-4 py-5 sm:px-6">
                 <div className="grid gap-4 sm:grid-cols-[1.1fr_0.9fr]">

@@ -108,7 +108,7 @@ export function AiInsightsShell({
           </div>
         </section>
 
-        <section className="grid grid-cols-1 gap-3 lg:grid-cols-[1.15fr_0.85fr]" data-ai-bento-grid="dense-2x2-no-empty-cells">
+        <section className="grid grid-cols-1 gap-3" data-ai-summary-card-only="true">
           <Card className="group relative overflow-hidden rounded-[1.5rem] border-slate-200 bg-slate-950 text-white shadow-sm transition-transform duration-500 hover:-translate-y-0.5">
             <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_20%_10%,rgba(28,167,201,0.42),transparent_32%),radial-gradient(circle_at_90%_10%,rgba(148,163,184,0.24),transparent_28%)]" />
             <CardContent className="relative grid gap-4 p-5 sm:grid-cols-[auto_1fr] sm:p-6">
@@ -125,22 +125,6 @@ export function AiInsightsShell({
             </CardContent>
           </Card>
 
-          <Card className="rounded-[1.5rem] border-slate-200 bg-white/90 shadow-sm backdrop-blur">
-            <CardContent className="grid grid-cols-3 gap-2 p-4 sm:p-5">
-              <div className="rounded-2xl bg-slate-50 p-3">
-                <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-slate-400">Style</p>
-                <p className="mt-2 text-sm font-bold text-slate-900">Editorial cards</p>
-              </div>
-              <div className="rounded-2xl bg-cyan-50 p-3">
-                <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-cyan-700/60">Model</p>
-                <p className="mt-2 text-sm font-bold text-cyan-950">Gemini</p>
-              </div>
-              <div className="rounded-2xl bg-amber-50 p-3">
-                <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-amber-700/60">Mode</p>
-                <p className="mt-2 text-sm font-bold text-amber-950">Review-ready</p>
-              </div>
-            </CardContent>
-          </Card>
         </section>
 
         {children}
