@@ -524,34 +524,7 @@ export default function ManageListing() {
 
   return (
     <main className="w-full max-w-full overflow-x-hidden" data-manage-listing-redesign="shadcn-taste-editorial">
-      <div className="space-y-5 sm:space-y-7">
-        <section className="relative overflow-hidden rounded-[1.75rem] border border-slate-200/80 bg-[radial-gradient(circle_at_top_left,rgba(28,167,201,0.18),transparent_34%),linear-gradient(135deg,#ffffff_0%,#f8fbfc_52%,#eef8fa_100%)] p-4 shadow-sm sm:p-6 lg:p-7">
-          <div className="pointer-events-none absolute -right-16 -top-20 h-52 w-52 rounded-full bg-cyan-200/35 blur-3xl" />
-          <div className="pointer-events-none absolute -bottom-24 left-1/4 h-48 w-48 rounded-full bg-slate-200/50 blur-3xl" />
-          <div className="relative flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
-            <div className="max-w-4xl">
-              <div className="mb-3 inline-flex items-center gap-2 rounded-full border border-slate-200 bg-white/80 px-3 py-1 text-xs font-medium tracking-[0.18em] text-slate-500 shadow-sm backdrop-blur">
-                <span className="h-1.5 w-1.5 rounded-full bg-[#1CA7C9]" />
-                PUBLIC LISTING STUDIO
-              </div>
-              <h1 className="max-w-5xl text-[clamp(2.25rem,7vw,4.65rem)] font-black leading-[0.92] tracking-[-0.06em] text-slate-950">
-                Shape how visitors see your stay.
-              </h1>
-              <p className="mt-3 max-w-2xl text-base leading-7 text-slate-600 sm:text-lg">
-                Keep the public tourism card precise: clean details, gallery-ready photos, and an exact visitor pin without exposing backend clutter.
-              </p>
-            </div>
-            <Button
-              onClick={handleSubmit}
-              disabled={saving}
-              className="h-12 rounded-2xl bg-[#0F4C75] px-5 text-white shadow-lg shadow-cyan-900/10 hover:bg-[#123f5e]"
-            >
-              <Save className="size-4" />
-              {saving ? 'Publishing' : 'Publish listing'}
-            </Button>
-          </div>
-        </section>
-
+      <div className="space-y-5 sm:space-y-7" data-manage-listing-hero-removed="true">
         <section className="grid grid-cols-1 gap-3 lg:grid-cols-3" data-manage-listing-bento="dense-3x2-no-empty-cells">
           <Card className="group overflow-hidden rounded-[1.5rem] border-slate-200 bg-slate-950 text-white shadow-sm lg:col-span-2">
             <CardContent className="relative p-5 sm:p-6">
@@ -562,9 +535,11 @@ export default function ManageListing() {
                 </div>
                 <div>
                   <p className="text-xs font-medium uppercase tracking-[0.22em] text-cyan-100/80">Public profile</p>
-                  <h2 className="mt-2 text-2xl font-black tracking-[-0.035em] sm:text-3xl">A visitor-facing card with discipline.</h2>
-                  <p className="mt-2 max-w-xl text-sm leading-6 text-slate-300 sm:text-base">
-                    Use concise copy, useful contact details, and exact map context. Everything saved here is what visitors evaluate before they choose where to go.
+                  <h2 className="mt-2 max-w-3xl text-[clamp(2rem,5vw,3.75rem)] font-black leading-[0.95] tracking-[-0.055em] sm:text-5xl">
+                    Shape how visitors see your stay.
+                  </h2>
+                  <p className="mt-3 max-w-2xl text-sm leading-6 text-slate-300 sm:text-base">
+                    Keep the public tourism card precise: clean details, gallery-ready photos, and an exact visitor pin without exposing backend clutter.
                   </p>
                 </div>
               </div>
@@ -793,23 +768,8 @@ export default function ManageListing() {
               </CardContent>
             </Card>
 
-            <Card className="rounded-[1.5rem] border-slate-200 bg-white shadow-sm">
-              <CardContent className="space-y-3 p-4 sm:p-5">
-                <h3 className="text-base font-black tracking-[-0.02em] text-slate-950">Publish checklist</h3>
-                <div className="space-y-2 text-sm text-slate-600">
-                  <div className="flex items-center justify-between gap-3 rounded-2xl bg-slate-50 px-3 py-2">
-                    <span>Core details</span>
-                    <Badge variant="outline" className="rounded-full bg-white">{formData.name && formData.type ? 'Ready' : 'Draft'}</Badge>
-                  </div>
-                  <div className="flex items-center justify-between gap-3 rounded-2xl bg-slate-50 px-3 py-2">
-                    <span>Exact pin</span>
-                    <Badge variant="outline" className="rounded-full bg-white">{hasExactCoordinates ? 'Ready' : 'Unset'}</Badge>
-                  </div>
-                  <div className="flex items-center justify-between gap-3 rounded-2xl bg-slate-50 px-3 py-2">
-                    <span>Gallery</span>
-                    <Badge variant="outline" className="rounded-full bg-white">{images.length > 0 ? 'Visible' : 'Empty'}</Badge>
-                  </div>
-                </div>
+            <Card className="rounded-[1.5rem] border-slate-200 bg-white/90 shadow-sm" data-manage-listing-checklist-removed="true">
+              <CardContent className="p-4 sm:p-5">
                 <Button
                   onClick={handleSubmit}
                   disabled={saving}
