@@ -1,10 +1,17 @@
 import { useState, useEffect, useRef } from 'react'
 import L from 'leaflet'
 import 'leaflet/dist/leaflet.css'
-import { Save, Globe, Clock, Phone, Mail, MapPin, Info, ImagePlus, Building2, X, Crosshair, Search } from 'lucide-react'
+import { Save, Globe, Clock, Phone, Mail, MapPin, Info, ImagePlus, Building2, X, Crosshair, Search, Sparkles } from 'lucide-react'
 import { supabase } from '../../../lib/supabase'
 import { compressListingImage } from '../../../lib/listingImages'
 import { toast } from 'sonner'
+import { Badge } from '../../components/ui/badge'
+import { Button } from '../../components/ui/button'
+import { Card, CardContent, CardHeader, CardTitle } from '../../components/ui/card'
+import { Input } from '../../components/ui/input'
+import { Label } from '../../components/ui/label'
+import { Separator } from '../../components/ui/separator'
+import { Textarea } from '../../components/ui/textarea'
 
 const BALAYAN_CENTER = { latitude: 13.9385, longitude: 120.7332 }
 const LEAFLET_ATTRIBUTION = '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
@@ -516,209 +523,306 @@ export default function ManageListing() {
   }
 
   return (
-    <div className="space-y-6">
-      <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-        <h2 className="font-semibold text-blue-800">🏢 Manage Your Public Listing</h2>
-        <p className="text-sm text-blue-700 mt-1">
-          Information you enter here will be displayed on the public tourism website where visitors can discover your establishment.
-        </p>
-      </div>
+    <main className="w-full max-w-full overflow-x-hidden" data-manage-listing-redesign="shadcn-taste-editorial">
+      <div className="space-y-5 sm:space-y-7">
+        <section className="relative overflow-hidden rounded-[1.75rem] border border-slate-200/80 bg-[radial-gradient(circle_at_top_left,rgba(28,167,201,0.18),transparent_34%),linear-gradient(135deg,#ffffff_0%,#f8fbfc_52%,#eef8fa_100%)] p-4 shadow-sm sm:p-6 lg:p-7">
+          <div className="pointer-events-none absolute -right-16 -top-20 h-52 w-52 rounded-full bg-cyan-200/35 blur-3xl" />
+          <div className="pointer-events-none absolute -bottom-24 left-1/4 h-48 w-48 rounded-full bg-slate-200/50 blur-3xl" />
+          <div className="relative flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
+            <div className="max-w-4xl">
+              <div className="mb-3 inline-flex items-center gap-2 rounded-full border border-slate-200 bg-white/80 px-3 py-1 text-xs font-medium tracking-[0.18em] text-slate-500 shadow-sm backdrop-blur">
+                <span className="h-1.5 w-1.5 rounded-full bg-[#1CA7C9]" />
+                PUBLIC LISTING STUDIO
+              </div>
+              <h1 className="max-w-5xl text-[clamp(2.25rem,7vw,4.65rem)] font-black leading-[0.92] tracking-[-0.06em] text-slate-950">
+                Shape how visitors see your stay.
+              </h1>
+              <p className="mt-3 max-w-2xl text-base leading-7 text-slate-600 sm:text-lg">
+                Keep the public tourism card precise: clean details, gallery-ready photos, and an exact visitor pin without exposing backend clutter.
+              </p>
+            </div>
+            <Button
+              onClick={handleSubmit}
+              disabled={saving}
+              className="h-12 rounded-2xl bg-[#0F4C75] px-5 text-white shadow-lg shadow-cyan-900/10 hover:bg-[#123f5e]"
+            >
+              <Save className="size-4" />
+              {saving ? 'Publishing' : 'Publish listing'}
+            </Button>
+          </div>
+        </section>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Main Form */}
-        <div className="lg:col-span-2 space-y-6">
-          {/* Basic Info */}
-          <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-            <h3 className="text-lg font-semibold text-gray-900 mb-4">Basic Information</h3>
-            <div className="space-y-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Establishment Name *</label>
-                <input
-                  type="text"
-                  value={formData.name}
-                  onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
-                />
+        <section className="grid grid-cols-1 gap-3 lg:grid-cols-3" data-manage-listing-bento="dense-3x2-no-empty-cells">
+          <Card className="group overflow-hidden rounded-[1.5rem] border-slate-200 bg-slate-950 text-white shadow-sm lg:col-span-2">
+            <CardContent className="relative p-5 sm:p-6">
+              <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_20%_10%,rgba(28,167,201,0.42),transparent_32%),radial-gradient(circle_at_90%_10%,rgba(148,163,184,0.24),transparent_28%)]" />
+              <div className="relative flex items-start gap-4">
+                <div className="flex size-12 shrink-0 items-center justify-center rounded-2xl bg-white/10 ring-1 ring-white/15 transition-transform duration-500 group-hover:scale-105">
+                  <Sparkles className="size-6 text-cyan-100" />
+                </div>
+                <div>
+                  <p className="text-xs font-medium uppercase tracking-[0.22em] text-cyan-100/80">Public profile</p>
+                  <h2 className="mt-2 text-2xl font-black tracking-[-0.035em] sm:text-3xl">A visitor-facing card with discipline.</h2>
+                  <p className="mt-2 max-w-xl text-sm leading-6 text-slate-300 sm:text-base">
+                    Use concise copy, useful contact details, and exact map context. Everything saved here is what visitors evaluate before they choose where to go.
+                  </p>
+                </div>
               </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Category *</label>
-                <select
-                  value={formData.type}
-                  onChange={(e) => setFormData({ ...formData, type: e.target.value })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
-                >
-                  <option value="Resort">Resort</option>
-                  <option value="Hotel">Hotel</option>
-                  <option value="Inn">Inn</option>
-                  <option value="Food & Beverage Establishment">Restaurant / Cafe</option>
-                  <option value="Tourist Attraction">Tourist Attraction</option>
-                </select>
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1 flex items-center gap-1">
-                  <MapPin className="w-4 h-4" /> Address
-                </label>
-                <input
-                  type="text"
-                  value={formData.address}
-                  onChange={(e) => setFormData({ ...formData, address: e.target.value })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg"
-                  placeholder="Brgy. Sampaga, Balayan, Batangas"
-                />
-              </div>
+            </CardContent>
+          </Card>
 
-              <div className="rounded-xl border border-teal-100 bg-teal-50/60 p-4">
-                <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
-                  <label className="sr-only" htmlFor="listing-map-search">Search Geoapify</label>
-                  <div className="flex min-w-0 flex-1 gap-2">
-                    <input
-                      id="listing-map-search"
+          <Card className="rounded-[1.5rem] border-slate-200 bg-white/90 shadow-sm backdrop-blur">
+            <CardContent className="grid grid-cols-3 gap-2 p-4 sm:p-5 lg:grid-cols-1">
+              <div className="rounded-2xl bg-slate-50 p-3">
+                <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-slate-400">Photos</p>
+                <p className="mt-2 text-sm font-bold text-slate-900">{images.length} published</p>
+              </div>
+              <div className="rounded-2xl bg-cyan-50 p-3">
+                <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-cyan-700/60">Pin</p>
+                <p className="mt-2 text-sm font-bold text-cyan-950">{hasExactCoordinates ? 'Ready' : 'Unset'}</p>
+              </div>
+              <div className="rounded-2xl bg-amber-50 p-3">
+                <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-amber-700/60">Type</p>
+                <p className="mt-2 truncate text-sm font-bold text-amber-950">{formData.type || 'Listing'}</p>
+              </div>
+            </CardContent>
+          </Card>
+        </section>
+
+        <div className="grid grid-cols-1 gap-5 lg:grid-cols-[minmax(0,1.45fr)_minmax(320px,0.75fr)]">
+          <div className="space-y-5">
+            <Card className="overflow-hidden rounded-[1.5rem] border-slate-200 bg-white shadow-sm">
+              <CardHeader className="border-b border-slate-100 bg-slate-50/70 px-4 py-4 sm:px-6">
+                <CardTitle className="text-xl font-black tracking-[-0.025em] text-slate-950">Listing essentials</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4 px-4 py-5 sm:px-6">
+                <div className="grid gap-4 sm:grid-cols-[1.1fr_0.9fr]">
+                  <div className="min-w-0 space-y-2">
+                    <Label htmlFor="listing-name">Establishment Name *</Label>
+                    <Input
+                      id="listing-name"
                       type="text"
-                      value={mapSearch}
-                      onChange={(e) => setMapSearch(e.target.value)}
-                      onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); handleMapSearch() } }}
-                      className="w-full min-w-0 rounded-lg border border-gray-300 px-3 py-2 text-sm"
-                      placeholder="Search your establishment or nearby landmark"
+                      value={formData.name}
+                      onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                      className="h-11 rounded-xl border-slate-200 bg-white"
                     />
-                    <button
-                      type="button"
-                      onClick={handleMapSearch}
-                      disabled={mapStatus === 'searching'}
-                      className="inline-flex shrink-0 items-center justify-center gap-2 rounded-lg bg-[#0E5A72] px-3 py-2 text-xs font-semibold text-white hover:bg-[#073B4C] disabled:cursor-not-allowed disabled:opacity-60"
+                  </div>
+                  <div className="min-w-0 space-y-2">
+                    <Label htmlFor="listing-category">Category *</Label>
+                    <select
+                      id="listing-category"
+                      value={formData.type}
+                      onChange={(e) => setFormData({ ...formData, type: e.target.value })}
+                      className="flex h-11 w-full min-w-0 rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm outline-none transition focus:border-[#1CA7C9] focus:ring-2 focus:ring-[#1CA7C9]/20"
                     >
-                      <Search className="w-4 h-4" /> {mapStatus === 'searching' ? 'Searching...' : 'Search'}
-                    </button>
-                  </div>
-                  <button
-                    type="button"
-                    onClick={useCurrentLocationAsPin}
-                    className="inline-flex shrink-0 items-center justify-center gap-2 rounded-lg bg-[#0E5A72] px-3 py-2 text-xs font-semibold text-white hover:bg-[#073B4C]"
-                  >
-                    <Crosshair className="w-4 h-4" /> Use my location
-                  </button>
-                </div>
-                <div className="mt-4 space-y-3">
-                  <div className="manage-listing-map relative isolate z-0 overflow-hidden rounded-xl border border-teal-100 bg-white">
-                    <div ref={mapContainerRef} className="h-64 w-full sm:h-72" />
-                    {mapStatus === 'searching' && (
-                      <div className="absolute inset-0 flex items-center justify-center bg-white/75 text-sm font-medium text-[#0E5A72]">
-                        Searching Geoapify...
-                      </div>
-                    )}
-                    {mapStatus === 'error' && (
-                      <div className="pointer-events-none absolute inset-x-4 top-4 rounded-lg bg-white/95 p-3 text-center text-xs text-red-600 shadow-sm">
-                        Search is unavailable. The map still works: click to pin, drag the marker, or paste coordinates manually.
-                      </div>
-                    )}
+                      <option value="Resort">Resort</option>
+                      <option value="Hotel">Hotel</option>
+                      <option value="Inn">Inn</option>
+                      <option value="Food & Beverage Establishment">Restaurant / Cafe</option>
+                      <option value="Tourist Attraction">Tourist Attraction</option>
+                    </select>
                   </div>
                 </div>
-                <p className="mt-2 text-xs text-gray-500">
-                  {hasExactCoordinates
-                    ? 'Exact coordinates are ready to publish. You can still drag the marker or click the map to adjust the pin.'
-                    : 'Search Geoapify, click the map, drag the marker, use your location, or paste coordinates manually.'}
-                </p>
-              </div>
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1 flex items-center gap-1">
-                    <Phone className="w-4 h-4" /> Contact Number
-                  </label>
-                  <input
+
+                <div className="space-y-2">
+                  <Label htmlFor="listing-address" className="flex items-center gap-2"><MapPin className="size-4" /> Address</Label>
+                  <Input
+                    id="listing-address"
                     type="text"
-                    value={formData.contact_number}
-                    onChange={(e) => setFormData({ ...formData, contact_number: e.target.value })}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg"
-                    placeholder="+63 912 345 6789"
+                    value={formData.address}
+                    onChange={(e) => setFormData({ ...formData, address: e.target.value })}
+                    className="h-11 rounded-xl border-slate-200 bg-white"
+                    placeholder="Brgy. Sampaga, Balayan, Batangas"
                   />
                 </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1 flex items-center gap-1">
-                    <Mail className="w-4 h-4" /> Email
+
+                <Separator className="bg-slate-100" />
+
+                <div className="rounded-[1.35rem] border border-cyan-100 bg-cyan-50/50 p-3 sm:p-4" data-manage-listing-pin-ui="provider-neutral-exact-pin">
+                  <div className="mb-3 flex items-start justify-between gap-3">
+                    <div>
+                      <h3 className="text-base font-black tracking-[-0.02em] text-slate-950">Exact Location Pin</h3>
+                      <p className="mt-1 text-sm leading-6 text-slate-600">Search, use your current location, click the map, or drag the marker before publishing.</p>
+                    </div>
+                    <Badge variant="outline" className={hasExactCoordinates ? 'rounded-full border-cyan-200 bg-white text-cyan-800' : 'rounded-full border-amber-200 bg-amber-50 text-amber-800'}>
+                      {hasExactCoordinates ? 'Pin ready' : 'Needs pin'}
+                    </Badge>
+                  </div>
+                  <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
+                    <Label className="sr-only" htmlFor="listing-map-search">Search location</Label>
+                    <div className="flex min-w-0 flex-1 gap-2">
+                      <Input
+                        id="listing-map-search"
+                        type="text"
+                        value={mapSearch}
+                        onChange={(e) => setMapSearch(e.target.value)}
+                        onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); handleMapSearch() } }}
+                        className="h-11 rounded-xl border-slate-200 bg-white"
+                        placeholder="Search establishment or nearby landmark"
+                      />
+                      <Button
+                        type="button"
+                        onClick={handleMapSearch}
+                        disabled={mapStatus === 'searching'}
+                        className="h-11 rounded-xl bg-[#0E5A72] text-white hover:bg-[#073B4C]"
+                      >
+                        <Search className="size-4" /> {mapStatus === 'searching' ? 'Searching' : 'Search'}
+                      </Button>
+                    </div>
+                    <Button
+                      type="button"
+                      onClick={useCurrentLocationAsPin}
+                      variant="outline"
+                      className="h-11 rounded-xl border-cyan-200 bg-white text-[#0E5A72] hover:bg-cyan-50"
+                    >
+                      <Crosshair className="size-4" /> Use my location
+                    </Button>
+                  </div>
+                  <div className="mt-4 space-y-3">
+                    <div className="manage-listing-map relative isolate z-0 overflow-hidden rounded-[1.25rem] border border-cyan-100 bg-white shadow-sm">
+                      <div ref={mapContainerRef} className="h-72 w-full sm:h-80" />
+                      {mapStatus === 'searching' && (
+                        <div className="absolute inset-0 flex items-center justify-center bg-white/75 text-sm font-medium text-[#0E5A72]">
+                          Searching location...
+                        </div>
+                      )}
+                      {mapStatus === 'error' && (
+                        <div className="pointer-events-none absolute inset-x-4 top-4 rounded-xl bg-white/95 p-3 text-center text-xs text-red-600 shadow-sm">
+                          Search is unavailable. The map still works: click to pin or drag the marker.
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </div>
+
+                <div className="grid gap-4 sm:grid-cols-2">
+                  <div className="min-w-0 space-y-2">
+                    <Label htmlFor="listing-phone" className="flex items-center gap-2"><Phone className="size-4" /> Contact Number</Label>
+                    <Input
+                      id="listing-phone"
+                      type="text"
+                      value={formData.contact_number}
+                      onChange={(e) => setFormData({ ...formData, contact_number: e.target.value })}
+                      className="h-11 rounded-xl border-slate-200 bg-white"
+                      placeholder="+63 912 345 6789"
+                    />
+                  </div>
+                  <div className="min-w-0 space-y-2">
+                    <Label htmlFor="listing-email" className="flex items-center gap-2"><Mail className="size-4" /> Email</Label>
+                    <Input
+                      id="listing-email"
+                      type="email"
+                      value={formData.email}
+                      onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                      className="h-11 rounded-xl border-slate-200 bg-white"
+                      placeholder="contact@yourbusiness.com"
+                    />
+                  </div>
+                </div>
+
+                <div className="grid gap-4 sm:grid-cols-2">
+                  <div className="min-w-0 space-y-2">
+                    <Label htmlFor="listing-website" className="flex items-center gap-2"><Globe className="size-4" /> Website</Label>
+                    <Input
+                      id="listing-website"
+                      type="url"
+                      value={formData.website_url}
+                      onChange={(e) => setFormData({ ...formData, website_url: e.target.value })}
+                      className="h-11 rounded-xl border-slate-200 bg-white"
+                      placeholder="https://yourwebsite.com"
+                    />
+                  </div>
+                  <div className="min-w-0 space-y-2">
+                    <Label htmlFor="listing-hours" className="flex items-center gap-2"><Clock className="size-4" /> Opening Hours</Label>
+                    <Input
+                      id="listing-hours"
+                      type="text"
+                      value={formData.opening_hours}
+                      onChange={(e) => setFormData({ ...formData, opening_hours: e.target.value })}
+                      className="h-11 rounded-xl border-slate-200 bg-white"
+                      placeholder="Mon-Sun: 8:00 AM - 8:00 PM"
+                    />
+                  </div>
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="listing-description" className="flex items-center gap-2"><Info className="size-4" /> Description</Label>
+                  <Textarea
+                    id="listing-description"
+                    value={formData.description}
+                    onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                    rows={5}
+                    className="min-h-32 rounded-xl border-slate-200 bg-white leading-6"
+                    placeholder="Describe your establishment, amenities, nearby attractions, and unique features."
+                  />
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+
+          <aside className="space-y-5">
+            <Card className="overflow-hidden rounded-[1.5rem] border-slate-200 bg-white shadow-sm">
+              <CardHeader className="border-b border-slate-100 bg-slate-50/70 px-4 py-4 sm:px-5">
+                <div className="flex items-center justify-between gap-3">
+                  <CardTitle className="text-xl font-black tracking-[-0.025em] text-slate-950">Photo gallery</CardTitle>
+                  <Badge variant="outline" className="rounded-full border-slate-200 bg-white text-slate-700">{images.length} photos</Badge>
+                </div>
+              </CardHeader>
+              <CardContent className="px-4 py-4 sm:px-5">
+                <div className="grid grid-cols-2 gap-3">
+                  {images.map((img, index) => (
+                    <div key={index} className="group relative overflow-hidden rounded-2xl border border-slate-200 bg-slate-100">
+                      <img src={img} alt={`Public listing photo ${index + 1}`} className="h-28 w-full object-cover transition-transform duration-700 ease-out group-hover:scale-105" />
+                      <button
+                        type="button"
+                        onClick={() => removeImage(index)}
+                        className="absolute right-2 top-2 inline-flex size-7 items-center justify-center rounded-full bg-red-600 text-white opacity-100 shadow-sm transition hover:bg-red-700 sm:opacity-0 sm:group-hover:opacity-100"
+                        aria-label="Remove photo"
+                      >
+                        <X className="size-3.5" />
+                      </button>
+                    </div>
+                  ))}
+                  <label className="flex h-28 cursor-pointer flex-col items-center justify-center rounded-2xl border border-dashed border-cyan-200 bg-cyan-50/50 text-center transition hover:border-[#1CA7C9] hover:bg-cyan-50">
+                    <input type="file" accept="image/*" multiple onChange={handleImageUpload} className="hidden" disabled={uploading} />
+                    <ImagePlus className="size-6 text-[#0E5A72]" />
+                    <span className="mt-2 text-xs font-semibold text-slate-600">{uploading ? 'Uploading' : 'Add photos'}</span>
                   </label>
-                  <input
-                    type="email"
-                    value={formData.email}
-                    onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg"
-                    placeholder="contact@yourbusiness.com"
-                  />
                 </div>
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1 flex items-center gap-1">
-                  <Globe className="w-4 h-4" /> Website (Optional)
-                </label>
-                <input
-                  type="url"
-                  value={formData.website_url}
-                  onChange={(e) => setFormData({ ...formData, website_url: e.target.value })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg"
-                  placeholder="https://yourwebsite.com"
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1 flex items-center gap-1">
-                  <Clock className="w-4 h-4" /> Opening Hours
-                </label>
-                <input
-                  type="text"
-                  value={formData.opening_hours}
-                  onChange={(e) => setFormData({ ...formData, opening_hours: e.target.value })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg"
-                  placeholder="Mon-Sun: 8:00 AM - 8:00 PM"
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1 flex items-center gap-1">
-                  <Info className="w-4 h-4" /> Description
-                </label>
-                <textarea
-                  value={formData.description}
-                  onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                  rows={4}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg"
-                  placeholder="Describe your establishment, amenities, nearby attractions, unique features..."
-                />
-              </div>
-            </div>
-          </div>
-        </div>
+                <p className="mt-3 text-xs leading-5 text-slate-500">Photos are published to the visitor website after upload and save.</p>
+              </CardContent>
+            </Card>
 
-        {/* Images Section */}
-        <div className="space-y-6">
-          <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-            <h3 className="text-lg font-semibold text-gray-900 mb-4">Photos</h3>
-            <div className="grid grid-cols-2 gap-3 mb-4">
-              {images.map((img, index) => (
-                <div key={index} className="relative group">
-                  <img src={img} alt={`Photo ${index + 1}`} className="w-full h-24 object-cover rounded-lg" />
-                  <button
-                    onClick={() => removeImage(index)}
-                    className="absolute top-1 right-1 bg-red-600 text-white p-1 rounded-full opacity-0 group-hover:opacity-100 transition"
-                  >
-                    <X className="w-3 h-3" />
-                  </button>
+            <Card className="rounded-[1.5rem] border-slate-200 bg-white shadow-sm">
+              <CardContent className="space-y-3 p-4 sm:p-5">
+                <h3 className="text-base font-black tracking-[-0.02em] text-slate-950">Publish checklist</h3>
+                <div className="space-y-2 text-sm text-slate-600">
+                  <div className="flex items-center justify-between gap-3 rounded-2xl bg-slate-50 px-3 py-2">
+                    <span>Core details</span>
+                    <Badge variant="outline" className="rounded-full bg-white">{formData.name && formData.type ? 'Ready' : 'Draft'}</Badge>
+                  </div>
+                  <div className="flex items-center justify-between gap-3 rounded-2xl bg-slate-50 px-3 py-2">
+                    <span>Exact pin</span>
+                    <Badge variant="outline" className="rounded-full bg-white">{hasExactCoordinates ? 'Ready' : 'Unset'}</Badge>
+                  </div>
+                  <div className="flex items-center justify-between gap-3 rounded-2xl bg-slate-50 px-3 py-2">
+                    <span>Gallery</span>
+                    <Badge variant="outline" className="rounded-full bg-white">{images.length > 0 ? 'Visible' : 'Empty'}</Badge>
+                  </div>
                 </div>
-              ))}
-              <label className="border-2 border-dashed border-gray-300 rounded-lg flex flex-col items-center justify-center h-24 cursor-pointer hover:border-blue-500 transition">
-                <input type="file" accept="image/*" multiple onChange={handleImageUpload} className="hidden" disabled={uploading} />
-                <ImagePlus className="w-6 h-6 text-gray-400" />
-                <span className="text-xs text-gray-500 mt-1">{uploading ? 'Uploading...' : 'Add Photos'}</span>
-              </label>
-            </div>
-            <p className="text-xs text-gray-500">Showcase your establishment with photos</p>
-          </div>
-
-          <button
-            onClick={handleSubmit}
-            disabled={saving}
-            className="w-full flex items-center justify-center gap-2 px-4 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition font-medium"
-          >
-            <Save className="w-5 h-5" />
-            {saving ? 'Publishing...' : 'Publish to Public Website'}
-          </button>
+                <Button
+                  onClick={handleSubmit}
+                  disabled={saving}
+                  className="h-12 w-full rounded-2xl bg-[#0F4C75] text-white shadow-lg shadow-cyan-900/10 hover:bg-[#123f5e]"
+                >
+                  <Save className="size-4" />
+                  {saving ? 'Publishing' : 'Publish to public website'}
+                </Button>
+              </CardContent>
+            </Card>
+          </aside>
         </div>
       </div>
-    </div>
+    </main>
   )
 }
