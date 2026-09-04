@@ -88,7 +88,6 @@ export default function Establishments() {
     const { data, error } = await supabase
       .from('establishments')
       .select('*')
-      .eq('status', 'active')
       .order('name');
     
     if (error) {
@@ -104,7 +103,6 @@ export default function Establishments() {
     const { data, error } = await supabase
       .from('profiles')
       .select('*')
-      .eq('status', 'active')
       .order('created_at', { ascending: false });
     
     if (error) {
@@ -115,14 +113,13 @@ export default function Establishments() {
   }
 
   const staffCountByEstablishment = users.reduce<Record<string, number>>((counts, user) => {
-    if (user.role === "establishment_staff" && user.status !== "inactive" && user.establishment_id) {
+    if (user.role === "establishment_staff" && user.status === "active" && user.establishment_id) {
       counts[user.establishment_id] = (counts[user.establishment_id] || 0) + 1;
     }
     return counts;
   }, {});
 
   const filteredEstablishments = establishments.filter((est) => {
-    if (est.status !== "active") return false;
     const matchesSearch = est.name.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesType = filterType === "all" || est.type === filterType;
     const matchesStatus = filterStatus === "all" || est.status === filterStatus;
@@ -130,7 +127,6 @@ export default function Establishments() {
   });
 
   const filteredUsers = users.filter((user) => {
-    if (user.status !== "active") return false;
     const matchesSearch =
       user.full_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
       user.email?.toLowerCase().includes(searchTerm.toLowerCase());
@@ -256,8 +252,32 @@ export default function Establishments() {
       if (error) {
         toast.error("Failed to update: " + error.message);
       } else {
-        toast.success("Establishment updated successfully");
-        fetchEstablishments();
+        const statusChanged = editingEstablishment.status !== establishmentForm.status;
+        let syncedStaffCount = 0;
+
+        if (statusChanged && ["active", "inactive"].includes(establishmentForm.status)) {
+          const { data: syncedStaff, error: staffSyncError } = await supabase
+            .from('profiles')
+            .update({ status: establishmentForm.status })
+            .eq('establishment_id', editingEstablishment.id)
+            .eq('role', 'establishment_staff')
+            .select('id');
+
+          if (staffSyncError) {
+            toast.error("Establishment updated, but failed to sync linked staff status: " + staffSyncError.message);
+            await Promise.all([fetchEstablishments(), fetchUsers()]);
+            return;
+          }
+
+          syncedStaffCount = syncedStaff?.length || 0;
+        }
+
+        toast.success(
+          statusChanged
+            ? `Establishment updated successfully${syncedStaffCount ? ` and ${syncedStaffCount} linked staff user${syncedStaffCount === 1 ? "" : "s"} set to ${establishmentForm.status}` : ""}`
+            : "Establishment updated successfully"
+        );
+        await Promise.all([fetchEstablishments(), fetchUsers()]);
         setShowEstablishmentModal(false);
       }
     } else {
