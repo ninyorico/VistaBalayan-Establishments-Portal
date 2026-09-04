@@ -278,8 +278,7 @@ export default function SubmitAccommodationReport() {
     totalCheckIns > 0 ? (totalGuestNights / totalCheckIns).toFixed(2) : "0.00";
   const avgOccupancyRate = calculateAccommodationOccupancy(
     totalOccupiedRooms,
-    totalRooms,
-    reportDate
+    totalRooms
   ).toFixed(2);
   const avgGuestPerRoom =
     totalOccupiedRooms > 0
@@ -606,10 +605,10 @@ export default function SubmitAccommodationReport() {
             <p className="text-3xl font-bold text-[#0B2530]">{avgGuestNight}</p>
             <p className="text-xs text-[#5D6F73] mt-1">nights per guest</p>
           </div>
-          <div className="bg-gray-50 rounded-lg p-4 border border-gray-200">
-            <p className="text-sm text-gray-700 font-medium mb-1">Average Room Occupancy Rate</p>
+          <div className="bg-gray-50 rounded-lg p-4 border border-gray-200" data-hotel-report-daily-occupancy="selected-report-date">
+            <p className="text-sm text-gray-700 font-medium mb-1">Daily Room Occupancy Rate</p>
             <p className="text-3xl font-bold text-gray-900">{avgOccupancyRate}%</p>
-            <p className="text-xs text-gray-500 mt-1">monthly average</p>
+            <p className="text-xs text-gray-500 mt-1">selected report date only</p>
           </div>
           <div className="bg-gray-50 rounded-lg p-4 border border-gray-200">
             <p className="text-sm text-gray-700 font-medium mb-1">Average Guest Per Room</p>

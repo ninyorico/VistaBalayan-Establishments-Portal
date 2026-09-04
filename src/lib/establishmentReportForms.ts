@@ -16,26 +16,27 @@ const accommodationTypes = new Set([
   "hostel",
 ]);
 
-const hasRooms = (establishment?: EstablishmentReportFormSource | null) =>
-  Number(establishment?.total_rooms || 0) > 0;
-
 const isAccommodationType = (establishment?: EstablishmentReportFormSource | null) =>
   accommodationTypes.has(normalize(establishment?.type));
+
+export const isAccommodationEstablishment = (establishment?: EstablishmentReportFormSource | null) =>
+  Boolean(establishment && isAccommodationType(establishment));
 
 export const canSubmitAccommodationReport = (establishment?: EstablishmentReportFormSource | null) => {
   if (!establishment) return false;
 
-  // Only actual accommodation categories with room inventory use the hotel form.
-  // Resorts remain on the resort/non-accommodation report even if imported data has a room count.
-  return isAccommodationType(establishment) && hasRooms(establishment);
+  // Hotel/accommodation categories always use hotel analytics and the hotel form.
+  // If their room count has not been configured yet, the form lets staff set it up
+  // instead of incorrectly falling back to resort visitor demographics.
+  return isAccommodationEstablishment(establishment);
 };
 
 export const canSubmitVisitorReport = (establishment?: EstablishmentReportFormSource | null) => {
   if (!establishment) return false;
 
-  // Resorts and other non-accommodation categories use the visitor/non-accommodation form.
-  // Accommodation categories without room inventory also fall back to the visitor form so staff
-  // are not sent to a hotel report they cannot complete.
+  // Resorts and other non-accommodation categories use visitor counts,
+  // demographics, and monthly arrivals. Hotel/accommodation accounts should
+  // not show demographics analytics.
   return !canSubmitAccommodationReport(establishment);
 };
 

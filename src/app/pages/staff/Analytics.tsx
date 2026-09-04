@@ -13,7 +13,7 @@ import {
   ResponsiveContainer,
 } from "recharts";
 import { supabase } from "../../../lib/supabase";
-import { calculateAverageAccommodationOccupancy } from "../../../lib/reportMetrics";
+import { calculateAccommodationOccupancy, calculateAverageAccommodationOccupancy } from "../../../lib/reportMetrics";
 import { canSubmitAccommodationReport, canSubmitVisitorReport } from "../../../lib/establishmentReportForms";
 import { LoadingState, MetricCard } from "../../components/vista/PolishedShell";
 
@@ -157,25 +157,38 @@ export default function Analytics() {
     { month: "No data", visitors: 0, male: 0, female: 0 }
   );
 
-  const averageOccupancy = calculateAverageAccommodationOccupancy(approvedAccommodationReports);
+  const currentMonthAccommodationReports = approvedAccommodationReports.filter((report) =>
+    (report.report_date || "").startsWith(currentMonthKey)
+  );
+  const monthlyAverageOccupancy = calculateAverageAccommodationOccupancy(currentMonthAccommodationReports);
   const totalCheckIns = approvedAccommodationReports.reduce((sum, report) => sum + toNumber(report.total_check_ins), 0);
   const totalGuestNights = approvedAccommodationReports.reduce((sum, report) => sum + toNumber(report.total_guest_nights), 0);
 
   const accommodationTrendData = useMemo(() => {
-    const monthMap = new Map<string, { month: string; checkIns: number; guestNights: number }>();
+    const monthMap = new Map<string, { month: string; checkIns: number; guestNights: number; occupancyRates: number[] }>();
 
     approvedAccommodationReports.forEach((report) => {
       const key = (report.report_date || "No date").slice(0, 7);
-      const current = monthMap.get(key) || { month: monthLabel(report.report_date), checkIns: 0, guestNights: 0 };
+      const current = monthMap.get(key) || { month: monthLabel(report.report_date), checkIns: 0, guestNights: 0, occupancyRates: [] };
       current.checkIns += toNumber(report.total_check_ins);
       current.guestNights += toNumber(report.total_guest_nights);
+      current.occupancyRates.push(
+        calculateAccommodationOccupancy(report.total_occupied_rooms, report.total_rooms, report.report_date)
+      );
       monthMap.set(key, current);
     });
 
     return Array.from(monthMap.entries())
       .sort(([a], [b]) => a.localeCompare(b))
       .slice(-6)
-      .map(([, value]) => value);
+      .map(([, value]) => ({
+        month: value.month,
+        checkIns: value.checkIns,
+        guestNights: value.guestNights,
+        occupancyRate: value.occupancyRates.length > 0
+          ? Number((value.occupancyRates.reduce((sum, rate) => sum + rate, 0) / value.occupancyRates.length).toFixed(1))
+          : 0,
+      }));
   }, [approvedAccommodationReports]);
 
   const bestAccommodationMonth = accommodationTrendData.reduce(
@@ -188,7 +201,7 @@ export default function Analytics() {
   }
 
   return (
-    <div className="space-y-6" data-staff-resort-analytics="visitor-counts-demographics-no-occupancy">
+    <div className="space-y-6" data-staff-analytics-scope="resort-visitors-hotel-occupancy">
       <div>
         <h1 className="text-3xl font-bold text-gray-900">Establishment Analytics</h1>
         <p className="mt-1 text-gray-600">
@@ -266,13 +279,13 @@ export default function Analytics() {
       {showAccommodationAnalytics && (
         <>
           <div className="grid grid-cols-1 gap-6 md:grid-cols-3">
-            <MetricCard label="Average Occupancy Rate" value={`${averageOccupancy.toFixed(1)}%`} helper="approved accommodation reports" icon={Percent} tone="bg-violet-50 text-violet-700 ring-violet-100" />
+            <MetricCard label="Monthly Average Occupancy Rate" value={`${monthlyAverageOccupancy.toFixed(1)}%`} helper="current month approved hotel reports" icon={Percent} tone="bg-violet-50 text-violet-700 ring-violet-100" />
             <MetricCard label="Total Check-ins" value={totalCheckIns.toLocaleString()} helper="approved accommodation reports" icon={UsersRound} tone="bg-emerald-50 text-emerald-700 ring-emerald-100" />
             <MetricCard label="Guest Nights" value={totalGuestNights.toLocaleString()} helper="approved accommodation reports" icon={TrendingUp} tone="bg-sky-50 text-sky-700 ring-sky-100" />
           </div>
 
           <div className="rounded-lg border border-gray-200 bg-white p-6 shadow-sm">
-            <h3 className="mb-4 text-lg font-semibold text-gray-900">Monthly Guest Overview</h3>
+            <h3 className="mb-4 text-lg font-semibold text-gray-900">Monthly Hotel Occupancy Overview</h3>
             <ResponsiveContainer width="100%" height={350}>
               <BarChart data={accommodationTrendData}>
                 <CartesianGrid strokeDasharray="3 3" />
@@ -280,6 +293,7 @@ export default function Analytics() {
                 <YAxis allowDecimals={false} />
                 <Tooltip />
                 <Legend />
+                <Bar dataKey="occupancyRate" fill="#7c3aed" name="Avg Occupancy %" />
                 <Bar dataKey="checkIns" fill="#0E5A72" name="Check-ins" />
                 <Bar dataKey="guestNights" fill="#8b5cf6" name="Guest Nights" />
               </BarChart>

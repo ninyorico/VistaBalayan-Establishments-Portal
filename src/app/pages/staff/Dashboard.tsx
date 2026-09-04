@@ -156,7 +156,7 @@ export default function StaffDashboard() {
 
   const hotelPerformanceStats = [
     { title: "Average Guest Night", value: hotelMetrics.averageGuestNight, subtitle: "nights per guest", icon: Moon, tone: "bg-sky-50 text-sky-700 ring-sky-100" },
-    { title: "Average Room Occupancy Rate", value: `${hotelMetrics.monthlyOccupancyRate}%`, subtitle: "monthly average", icon: Percent, tone: "bg-violet-50 text-violet-700 ring-violet-100" },
+    { title: "Monthly Average Occupancy Rate", value: `${hotelMetrics.monthlyOccupancyRate}%`, subtitle: "current month average", icon: Percent, tone: "bg-violet-50 text-violet-700 ring-violet-100" },
     { title: "Average Guest Per Room", value: hotelMetrics.averageGuestPerRoom, subtitle: "guests per room", icon: UsersRound, tone: "bg-emerald-50 text-emerald-700 ring-emerald-100" },
   ];
 
