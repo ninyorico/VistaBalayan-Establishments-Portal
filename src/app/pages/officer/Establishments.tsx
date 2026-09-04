@@ -546,33 +546,51 @@ export default function Establishments() {
     if (!deleteTarget) return;
 
     if (deleteTarget.type === "establishment") {
-      const { data: affectedStaff, error: staffError } = await supabase
-        .from('profiles')
-        .update({ status: 'inactive', establishment_id: null })
-        .eq('establishment_id', deleteTarget.id)
-        .eq('role', 'establishment_staff')
-        .select('id');
+      let removeErrorMessage: string | null = null;
+      let staffRemoved = 0;
 
-      if (staffError) {
-        toast.error("Failed to remove establishment staff: " + staffError.message);
-      } else {
-        const { data: affectedEstablishments, error: establishmentError } = await supabase
-          .from('establishments')
-          .update({ status: 'inactive' })
-          .eq('id', deleteTarget.id)
-          .select('id');
+      const { data: rpcResult, error: rpcError } = await supabase.rpc('delete_officer_establishment_with_staff', {
+        p_establishment_id: deleteTarget.id,
+      });
 
-        if (establishmentError) {
-          toast.error("Failed to remove establishment: " + establishmentError.message);
-        } else if (!affectedEstablishments?.length) {
-          toast.error("Could not remove this establishment. It may already be removed or you may not have permission.");
+      if (rpcError) {
+        const isMissingRpc = rpcError.code === '42883' || rpcError.code === 'PGRST202' || /delete_officer_establishment_with_staff/i.test(rpcError.message || '');
+
+        if (isMissingRpc) {
+          removeErrorMessage = "The verified hard-delete database function is not installed yet. Apply the Supabase admin migration, then try deleting again.";
         } else {
-          const staffRemoved = affectedStaff?.length || 0;
-          setEstablishments((current) => current.filter((establishment) => establishment.id !== deleteTarget.id));
-          setUsers((current) => current.filter((user) => user.establishment_id !== deleteTarget.id));
-          toast.success(`Establishment removed successfully${staffRemoved ? ` with ${staffRemoved} staff user${staffRemoved === 1 ? "" : "s"}` : ""}`);
-          await Promise.all([fetchEstablishments(), fetchUsers()]);
+          removeErrorMessage = rpcError.message;
         }
+      } else {
+        const result = (Array.isArray(rpcResult) ? rpcResult[0] : rpcResult) as { establishment_deleted?: number; staff_profiles_deleted?: number } | null;
+        if ((result?.establishment_deleted || 0) !== 1) {
+          removeErrorMessage = "The database did not confirm that the establishment was deleted.";
+        }
+        staffRemoved = result?.staff_profiles_deleted || 0;
+      }
+
+      if (!removeErrorMessage) {
+        const { data: stillExistingEstablishment, error: verifyError } = await supabase
+          .from('establishments')
+          .select('id, status')
+          .eq('id', deleteTarget.id)
+          .maybeSingle();
+
+        if (verifyError) {
+          removeErrorMessage = verifyError.message;
+        } else if (stillExistingEstablishment) {
+          removeErrorMessage = "The database still shows this establishment after delete. No success message was shown because the record was not actually removed.";
+        }
+      }
+
+      if (removeErrorMessage) {
+        toast.error("Failed to delete establishment: " + removeErrorMessage);
+        await Promise.all([fetchEstablishments(), fetchUsers()]);
+      } else {
+        setEstablishments((current) => current.filter((establishment) => establishment.id !== deleteTarget.id));
+        setUsers((current) => current.filter((user) => user.establishment_id !== deleteTarget.id));
+        toast.success(`Establishment deleted successfully${staffRemoved ? ` with ${staffRemoved} linked staff user${staffRemoved === 1 ? "" : "s"}` : ""}`);
+        await Promise.all([fetchEstablishments(), fetchUsers()]);
       }
     } else {
       const userToRemove = users.find((user) => user.id === deleteTarget.id);
