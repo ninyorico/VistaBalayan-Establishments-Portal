@@ -305,26 +305,19 @@ setOccupancyRate(occupancyRate);
         metricValue={`${occupancyRate.toFixed(1)}%`}
       />
 
-      <section className="grid grid-cols-3 gap-2 sm:gap-3 lg:gap-4">
+      <section className="grid grid-cols-3 gap-2 sm:gap-3 lg:gap-4" data-officer-dashboard-uniform-kpis="true">
         {[
-          { label: "Total visitors", value: totalVisitors.toLocaleString(), icon: Users, tone: "bg-cyan-50 text-[#0E5A72] ring-cyan-100" },
-          { label: "Monthly arrivals", value: monthlyArrivals.toLocaleString(), icon: TrendingUp, tone: "bg-slate-50 text-[#0B2530] ring-slate-200" },
-          { label: "Occupancy rate", value: `${occupancyRate.toFixed(1)}%`, icon: Bed, tone: "bg-[#EAF2F1] text-[#0E5A72] ring-[#b8d2cf]" },
-        ].map((stat) => (
-          <MetricCard key={stat.label} {...stat} compact />
-        ))}
-      </section>
-
-      <section className="grid grid-cols-3 gap-2 sm:gap-3 lg:gap-4">
-        {[
-          { label: "Establishments", value: totalEstablishments.toString(), helper: "Active tourism records", icon: Building2, tone: "bg-emerald-50 text-[#2F5F55] ring-emerald-100" },
+          { label: "Total visitors", value: totalVisitors.toLocaleString(), helper: "Approved and pending guests", icon: Users, tone: "bg-cyan-50 text-[#0E5A72] ring-cyan-100" },
+          { label: "Monthly arrivals", value: monthlyArrivals.toLocaleString(), helper: "Latest reporting month", icon: TrendingUp, tone: "bg-slate-50 text-[#0B2530] ring-slate-200" },
+          { label: "Occupancy rate", value: `${occupancyRate.toFixed(1)}%`, helper: "Average hotel occupancy", icon: Bed, tone: "bg-[#EAF2F1] text-[#0E5A72] ring-[#b8d2cf]" },
+          { label: "Establishments", value: totalEstablishments.toString(), helper: "Tourism records", icon: Building2, tone: "bg-emerald-50 text-[#2F5F55] ring-emerald-100" },
           { label: "Active reports", value: workflowMetrics.activeReports, helper: "Pending, review, or hold", icon: AlertTriangle, tone: "bg-amber-50 text-amber-700 ring-amber-100" },
           { label: "Pending reports", value: workflowMetrics.pendingReports, helper: "Waiting for officer review", icon: Clock, tone: "bg-[#EAF2F1] text-[#0E5A72] ring-[#b8d2cf]" },
           { label: "On hold", value: workflowMetrics.onHoldReports, helper: "Needs manual verification", icon: AlertTriangle, tone: "bg-rose-50 text-rose-700 ring-rose-100" },
           { label: "Resolved reports", value: workflowMetrics.resolvedReports, helper: "Approved or rejected", icon: CheckCircle, tone: "bg-emerald-50 text-[#2F5F55] ring-emerald-100" },
           { label: "Avg. resolution", value: `${workflowMetrics.averageResolutionHours.toFixed(1)}h`, helper: "Submit to decision", icon: TrendingUp, tone: "bg-slate-50 text-[#0B2530] ring-slate-200" },
         ].map((metric) => (
-          <MetricCard key={metric.label} {...metric} compact />
+          <MetricCard key={metric.label} {...metric} compact className="h-full min-h-[118px] sm:min-h-[132px]" />
         ))}
       </section>
 
