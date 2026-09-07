@@ -20,7 +20,7 @@ If this returns HTTP 401, update the Drive folder sharing to `Anyone with the li
 
 ```bash
 SOURCE_DIR=/opt/data/vistabalayan_gdrive_import/source \
-SUPABASE_URL='https://fzamvdvdxslmnltqpbnv.supabase.co' \
+SUPABASE_URL='https://jopqjlvtaxgfxqbdbqqq.supabase.co' \
 SUPABASE_SERVICE_ROLE_KEY='YOUR_SERVICE_ROLE_KEY' \
 node scripts/import-historical-tourism-data.mjs --dry-run
 ```
@@ -36,7 +36,7 @@ Outputs are written to `/opt/data/vistabalayan_gdrive_import/output/`:
 
 ```bash
 SOURCE_DIR=/opt/data/vistabalayan_gdrive_import/source \
-SUPABASE_URL='https://fzamvdvdxslmnltqpbnv.supabase.co' \
+SUPABASE_URL='https://jopqjlvtaxgfxqbdbqqq.supabase.co' \
 SUPABASE_SERVICE_ROLE_KEY='YOUR_SERVICE_ROLE_KEY' \
 EXECUTE_IMPORT=true \
 node scripts/import-historical-tourism-data.mjs

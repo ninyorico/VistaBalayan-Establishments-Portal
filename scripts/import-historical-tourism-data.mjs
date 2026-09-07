@@ -60,10 +60,18 @@ function validISO(y,m,d) {
 function inferMonthYear(parts) {
   const text = parts.map(x => String(x ?? '')).join(' ');
   let month = null, year = null;
-  for (const [name, idx] of MONTHS) if (new RegExp(`\\b${name}\\b`, 'i').test(text)) { month = idx; break; }
+  // Prefer an explicit month/year label, including compact labels such as
+  // "August2025" that occur in some source worksheets.
+  for (const [name, idx] of MONTHS) {
+    if (new RegExp(`(?:^|[^A-Za-z])${name}(?:[^A-Za-z]|$)`, 'i').test(text) ||
+        new RegExp(`${name}\\s*20\\d{2}`, 'i').test(text)) { month = idx; break; }
+  }
+  const namedMonth = month != null;
   const y = text.match(/\b(20\d{2})\b/); if (y) year = +y[1];
-  let m = text.match(/\b(20\d{2})[-_\s](\d{1,2})\b/); if (m) { year = +m[1]; month = +m[2]; }
-  m = text.match(/\b(\d{1,2})[-_\s](20\d{2})\b/); if (m) { month = +m[1]; year = +m[2]; }
+  let m = !namedMonth && text.match(/\b(20\d{2})[-_\s](\d{1,2})\b/); if (m) { year = +m[1]; month = +m[2]; }
+  m = !namedMonth && text.match(/\b(\d{1,2})[-_\s](20\d{2})\b/); if (m) { month = +m[1]; year = +m[2]; }
+  if (!Number.isInteger(month) || month < 1 || month > 12) month = null;
+  if (!Number.isInteger(year) || year < 2000 || year > 2099) year = null;
   return { month, year };
 }
 function cellText(cell) {
@@ -82,6 +90,29 @@ function rowValues(ws, rowNo) {
   const row = ws.getRow(rowNo); const arr=[];
   for (let c=1; c<=Math.max(ws.actualColumnCount, row.cellCount); c++) arr.push(cellText(row.getCell(c)).trim());
   return arr;
+}
+function detectDailyRoomGrid(ws) {
+  // DAE-1A workbooks (used by Alvez Lodge and similar small lodges) have
+  // a two-row header: row 6 contains the metric labels and row 7 contains
+  // room numbers. The daily values start on row 8. Treat this as a special
+  // layout instead of interpreting the room-header row as a daily record.
+  for (let r = 1; r <= Math.min(ws.actualRowCount, 12); r++) {
+    const text = rowValues(ws, r).join(' | ').toLowerCase();
+    if (/number of guests check\s*in/.test(text) && /guest nights/.test(text) && /rooms occupied/.test(text)) {
+      const metricRow = rowValues(ws, r);
+      const metricIndex = (pattern) => metricRow.findIndex(v => pattern.test(norm(v)));
+      return {
+        headerRow: r + 1,
+        dateColumn: 0,
+        checkInsColumn: metricIndex(/guests check in/),
+        guestNightsColumn: metricIndex(/guest nights/),
+        occupiedRoomsColumn: metricIndex(/rooms occupied/),
+        firstRoomColumn: 2,
+        lastRoomColumn: Math.max(2, metricRow.findIndex((v, i) => i > 1 && !isBlank(v) && /number of guests check in|guest nights|rooms occupied/.test(norm(v))) - 1),
+      };
+    }
+  }
+  return null;
 }
 function findExcelFiles(dir) {
   const out=[];
@@ -149,6 +180,14 @@ function colMap(headers) {
 }
 function parseDateFromRow(row, map, inferred, warnings, ctx) {
   let iso = map.date != null ? excelDateToISO(row[map.date]) : null;
+  // Some workbooks contain corrupted date cells whose day is usable but whose
+  // stored year/month is not. When the worksheet supplies a reliable month
+  // and year, normalize the parsed day into that worksheet context.
+  if (iso && inferred.year && inferred.month) {
+    const day = Number(iso.slice(8, 10));
+    const contextual = validISO(inferred.year, inferred.month, day);
+    if (contextual && (iso.slice(0, 4) !== String(inferred.year) || Number(iso.slice(5, 7)) !== inferred.month)) iso = contextual;
+  }
   if (!iso && map.date != null) {
     const day = toNum(row[map.date]);
     if (day != null && Number.isInteger(day) && inferred.year && inferred.month) iso = validISO(inferred.year, inferred.month, day);
@@ -203,15 +242,36 @@ async function main() {
     for (const ws of wb.worksheets) {
       const topRows=[];
       for (let r=1; r<=Math.min(ws.actualRowCount, 12); r++) topRows.push(...rowValues(ws,r).filter(Boolean));
-      const inferred = inferMonthYear([path.basename(file), ws.name, ...topRows]);
+      const inferred = inferMonthYear([ws.name, ...topRows, path.basename(file)]);
+      // This import set is the municipality's 2025 reporting batch. A few
+      // copied worksheets contain stale 2024/2026 labels or corrupted date
+      // cells; the supplied batch context establishes 2025 as the year.
+      if (inferred.month) inferred.year = 2025;
       const estMatch = matchEstablishment([path.basename(file), ws.name, ...topRows], establishments);
       const sheetInfo = { file:path.relative(SOURCE_DIR,file), sheet:ws.name, inferred, establishment:estMatch?.est?.name || null, establishmentScore:estMatch?.score || 0, type:null, rows:0 };
       if (!estMatch) summary.unmatched.push({ file:sheetInfo.file, sheet:ws.name, issue:'no_existing_establishment_match' });
       let headerRow = null, headers = null, type = null, map = null;
-      for (let r=1; r<=Math.min(ws.actualRowCount, 30); r++) {
-        const vals = rowValues(ws,r);
-        const t = classifyHeader(vals);
-        if (t) { headerRow=r; headers=vals; type=t; map=colMap(vals); break; }
+      const dailyRoomGrid = detectDailyRoomGrid(ws);
+      if (dailyRoomGrid) {
+        headerRow = dailyRoomGrid.headerRow;
+        headers = rowValues(ws, headerRow);
+        type = 'accommodation';
+        map = { date: dailyRoomGrid.dateColumn, check_ins: dailyRoomGrid.checkInsColumn, guest_nights: dailyRoomGrid.guestNightsColumn, occupied_rooms: dailyRoomGrid.occupiedRoomsColumn };
+        // The DAE-1A room inventory is printed in the upper-right header area.
+        // It is not repeated on each daily row, so use it only as inventory
+        // metadata and never as a daily total.
+        for (let r = 1; r <= Math.min(ws.actualRowCount, 5); r++) {
+          const vals = rowValues(ws, r);
+          const idx = vals.findIndex(v => /total number of rooms/i.test(v));
+          if (idx >= 0 && toNum(vals[idx + 1]) != null) { map.total_rooms = idx + 1; map.total_rooms_value = toNum(vals[idx + 1]); break; }
+        }
+        map._dailyRoomGrid = dailyRoomGrid;
+      } else {
+        for (let r=1; r<=Math.min(ws.actualRowCount, 30); r++) {
+          const vals = rowValues(ws,r);
+          const t = classifyHeader(vals);
+          if (t) { headerRow=r; headers=vals; type=t; map=colMap(vals); break; }
+        }
       }
       sheetInfo.type = type;
       summary.sheets.push(sheetInfo);
@@ -249,7 +309,7 @@ async function main() {
           if (visitors.some(v => v._key === key)) { summary.duplicates.push({...ctx, type:'visitor_exact_duplicate'}); continue; }
           visitors.push({ ...rec, _key:key }); sheetInfo.rows++;
         } else if (type === 'accommodation') {
-          const total_rooms = map.total_rooms != null ? toNum(row[map.total_rooms]) : (estMatch.est.total_rooms ?? null);
+          const total_rooms = map.total_rooms_value ?? (map.total_rooms != null ? toNum(row[map.total_rooms]) : (estMatch.est.total_rooms ?? null));
           const total_occupied_rooms = map.occupied_rooms != null ? toNum(row[map.occupied_rooms]) : null;
           const total_check_ins = map.check_ins != null ? toNum(row[map.check_ins]) : null;
           const total_guest_nights = map.guest_nights != null ? toNum(row[map.guest_nights]) : null;
@@ -263,7 +323,17 @@ async function main() {
             continue;
           }
           accommodation.set(key, { establishment_id, submitted_by, report_date, total_rooms, total_occupied_rooms, total_check_ins, total_guest_nights, status:'approved', created_at:`${report_date}T12:00:00Z`, _source:ctx });
-          if (map.room_type != null || map.room_code != null || map.number_of_rooms != null) {
+          if (map._dailyRoomGrid) {
+            // Preserve which named room columns were occupied. The workbook
+            // does not provide a per-room split for check-ins/guest nights,
+            // so those totals stay only on the parent daily report.
+            const grid = map._dailyRoomGrid;
+            for (let c = grid.firstRoomColumn; c <= grid.lastRoomColumn; c++) {
+              const roomValue = toNum(row[c]);
+              if (roomValue == null || roomValue <= 0) continue;
+              roomDetails.push({ parentKey:key, room_type:null, room_code:`Room ${c - grid.firstRoomColumn + 1}`, number_of_rooms:1, occupied_rooms:1, check_ins:null, guest_nights:null, is_rent_mode:false, _source:ctx });
+            }
+          } else if (map.room_type != null || map.room_code != null || map.number_of_rooms != null) {
             roomDetails.push({ parentKey:key, room_type: map.room_type != null ? row[map.room_type] || null : null, room_code: map.room_code != null ? row[map.room_code] || null : null, number_of_rooms: map.number_of_rooms != null ? toNum(row[map.number_of_rooms]) : total_rooms, occupied_rooms: total_occupied_rooms, check_ins: total_check_ins, guest_nights: total_guest_nights, is_rent_mode:false, _source:ctx });
           }
           sheetInfo.rows++;
