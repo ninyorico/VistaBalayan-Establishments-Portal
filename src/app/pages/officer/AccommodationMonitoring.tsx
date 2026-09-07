@@ -97,35 +97,45 @@ export default function AccommodationMonitoring({ embedded = false }: { embedded
       );
       setEstablishmentTotalRooms(canonicalTotalRooms);
 
-      // Fetch all accommodation reports with establishment names
-      const { data: reports, error: reportsError } = await supabase
-        .from("accommodation_reports")
-        .select(`
-          id,
-          report_date,
-          total_rooms,
-          total_occupied_rooms,
-          total_check_ins,
-          total_guest_nights,
-          status,
-          establishment_id,
-          establishments!accommodation_reports_establishment_id_fkey (
-            name,
-            total_rooms
-          )
-        `)
-        .in("status", ["pending", "approved"])
-        .order("report_date", { ascending: false });
+      // Fetch all accommodation reports with establishment names. Supabase REST
+      // returns at most 1,000 rows per request unless an explicit range is used.
+      const pageSize = 1000;
+      const reports: any[] = [];
+      let page = 0;
+      while (true) {
+        const { data, error } = await supabase
+          .from("accommodation_reports")
+          .select(`
+            id,
+            report_date,
+            total_rooms,
+            total_occupied_rooms,
+            total_check_ins,
+            total_guest_nights,
+            status,
+            establishment_id,
+            establishments!accommodation_reports_establishment_id_fkey (
+              name,
+              total_rooms
+            )
+          `)
+          .in("status", ["pending", "approved"])
+          .order("report_date", { ascending: false })
+          .range(page * pageSize, page * pageSize + pageSize - 1);
+
+        if (error) {
+          console.error("Error fetching accommodation reports:", error);
+          toast.error("Failed to load accommodation data: " + error.message);
+          setLoading(false);
+          return;
+        }
+
+        reports.push(...(data || []));
+        if (!data || data.length < pageSize) break;
+        page += 1;
+      }
 
       console.log("Accommodation reports:", reports);
-      console.log("Error:", reportsError);
-
-      if (reportsError) {
-        console.error("Error fetching accommodation reports:", reportsError);
-        toast.error("Failed to load accommodation data: " + reportsError.message);
-        setLoading(false);
-        return;
-      }
 
       if (!reports || reports.length === 0) {
         console.log("No accommodation reports found");

@@ -59,30 +59,41 @@ export default function VisitorMonitoring({ embedded = false }: { embedded?: boo
   const fetchVisitorRecords = async () => {
     setLoading(true);
     
-    // Fetch visitor reports with establishment names
-    const { data, error } = await supabase
-      .from("visitor_reports")
-      .select(`
-        id,
-        report_date,
-        total_male,
-        total_female,
-        total_guests,
-        residence_type,
-        place_of_residence,
-        establishments (name)
-      `)
-      .in("status", ["pending", "approved"])
-      .order("report_date", { ascending: false });
+    // Supabase REST limits each response to 1,000 rows by default. Fetch all
+    // pages so older imported months are not silently cut off.
+    const pageSize = 1000;
+    const allRecords: any[] = [];
+    let page = 0;
+    while (true) {
+      const { data, error } = await supabase
+        .from("visitor_reports")
+        .select(`
+          id,
+          report_date,
+          total_male,
+          total_female,
+          total_guests,
+          residence_type,
+          place_of_residence,
+          establishments (name)
+        `)
+        .in("status", ["pending", "approved"])
+        .order("report_date", { ascending: false })
+        .range(page * pageSize, page * pageSize + pageSize - 1);
 
-    if (error) {
-      console.error("Error fetching visitor records:", error);
-      setLoading(false);
-      return;
+      if (error) {
+        console.error("Error fetching visitor records:", error);
+        setLoading(false);
+        return;
+      }
+
+      allRecords.push(...(data || []));
+      if (!data || data.length < pageSize) break;
+      page += 1;
     }
 
     // Transform data for display
-    const formattedRecords: VisitorRecord[] = (data || []).map((item: any) => ({
+    const formattedRecords: VisitorRecord[] = allRecords.map((item: any) => ({
       id: item.id,
       establishment: item.establishments?.name || "Unknown",
       date: item.report_date,
