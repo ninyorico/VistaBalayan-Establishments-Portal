@@ -357,16 +357,12 @@ begin
     v_related_deleted := v_related_deleted || jsonb_build_object('room_occupancy_details', v_count);
   end if;
 
-  if to_regclass('public.establishment_rating_reviews') is not null then
-    delete from public.establishment_rating_reviews where establishment_id = p_establishment_id;
+  -- The public rating summaries/reviews are views. Delete the underlying
+  -- writable rating rows; the views will stop exposing them automatically.
+  if to_regclass('public.establishment_ratings') is not null then
+    delete from public.establishment_ratings where establishment_id = p_establishment_id;
     get diagnostics v_count = row_count;
-    v_related_deleted := v_related_deleted || jsonb_build_object('establishment_rating_reviews', v_count);
-  end if;
-
-  if to_regclass('public.establishment_rating_summaries') is not null then
-    delete from public.establishment_rating_summaries where establishment_id = p_establishment_id;
-    get diagnostics v_count = row_count;
-    v_related_deleted := v_related_deleted || jsonb_build_object('establishment_rating_summaries', v_count);
+    v_related_deleted := v_related_deleted || jsonb_build_object('establishment_ratings', v_count);
   end if;
 
   if to_regclass('public.ai_recommendations') is not null then

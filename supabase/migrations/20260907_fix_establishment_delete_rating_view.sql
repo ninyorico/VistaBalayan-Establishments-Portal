@@ -1,7 +1,6 @@
--- Deletes an establishment and its establishment staff profiles in one verified
--- security-definer operation. The regular client-side delete could report
--- success even when RLS/dependent rows prevented the establishment from
--- disappearing from the officer list.
+-- Fixes the establishment delete RPC when public rating views exist.
+-- establishment_rating_reviews and establishment_rating_summaries are views;
+-- the writable source is establishment_ratings.
 
 create or replace function public.delete_officer_establishment_with_staff(
   p_establishment_id uuid
@@ -37,8 +36,6 @@ begin
    where establishment_id = p_establishment_id
      and role = 'establishment_staff';
 
-  -- Delete dependent data first so FK constraints cannot leave the establishment
-  -- row behind while the UI reports a successful delete.
   if to_regclass('public.room_occupancy_details') is not null
      and to_regclass('public.accommodation_reports') is not null then
     delete from public.room_occupancy_details
@@ -49,8 +46,7 @@ begin
     v_related_deleted := v_related_deleted || jsonb_build_object('room_occupancy_details', v_count);
   end if;
 
-  -- The public rating summaries/reviews are views. Delete the underlying
-  -- writable rating rows; the views will stop exposing them automatically.
+  -- These public rating objects are views, so delete their source rows.
   if to_regclass('public.establishment_ratings') is not null then
     delete from public.establishment_ratings where establishment_id = p_establishment_id;
     get diagnostics v_count = row_count;
