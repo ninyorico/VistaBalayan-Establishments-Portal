@@ -326,6 +326,7 @@ declare
   v_auth_users_deleted integer := 0;
   v_related_deleted jsonb := '{}'::jsonb;
   v_count integer := 0;
+  v_optional_table text;
 begin
   if not public.is_municipal_officer() then
     raise exception 'Only municipal officers can delete establishments';
@@ -357,31 +358,34 @@ begin
     v_related_deleted := v_related_deleted || jsonb_build_object('room_occupancy_details', v_count);
   end if;
 
-  -- The public rating summaries/reviews are views. Delete the underlying
-  -- writable rating rows; the views will stop exposing them automatically.
-  if to_regclass('public.establishment_ratings') is not null then
-    delete from public.establishment_ratings where establishment_id = p_establishment_id;
-    get diagnostics v_count = row_count;
-    v_related_deleted := v_related_deleted || jsonb_build_object('establishment_ratings', v_count);
-  end if;
-
-  if to_regclass('public.ai_recommendations') is not null then
-    delete from public.ai_recommendations where establishment_id = p_establishment_id;
-    get diagnostics v_count = row_count;
-    v_related_deleted := v_related_deleted || jsonb_build_object('ai_recommendations', v_count);
-  end if;
-
-  if to_regclass('public.ai_anomalies_cache') is not null then
-    delete from public.ai_anomalies_cache where establishment_id = p_establishment_id;
-    get diagnostics v_count = row_count;
-    v_related_deleted := v_related_deleted || jsonb_build_object('ai_anomalies_cache', v_count);
-  end if;
-
-  if to_regclass('public.ai_insights_cache') is not null then
-    delete from public.ai_insights_cache where establishment_id = p_establishment_id;
-    get diagnostics v_count = row_count;
-    v_related_deleted := v_related_deleted || jsonb_build_object('ai_insights_cache', v_count);
-  end if;
+  -- Public ratings and AI caches can differ between deployments. Only touch
+  -- actual tables that expose establishment_id; views or older schemas are
+  -- skipped safely.
+  for v_optional_table in
+    select unnest(array[
+      'establishment_ratings',
+      'ai_recommendations',
+      'ai_anomalies_cache',
+      'ai_insights_cache'
+    ])
+  loop
+    if exists (
+      select 1
+      from information_schema.tables t
+      join information_schema.columns c
+        on c.table_schema = t.table_schema
+       and c.table_name = t.table_name
+      where t.table_schema = 'public'
+        and t.table_name = v_optional_table
+        and t.table_type = 'BASE TABLE'
+        and c.column_name = 'establishment_id'
+    ) then
+      execute format('delete from public.%I where establishment_id = $1', v_optional_table)
+        using p_establishment_id;
+      get diagnostics v_count = row_count;
+      v_related_deleted := v_related_deleted || jsonb_build_object(v_optional_table, v_count);
+    end if;
+  end loop;
 
   if to_regclass('public.visitor_reports') is not null then
     delete from public.visitor_reports where establishment_id = p_establishment_id;
