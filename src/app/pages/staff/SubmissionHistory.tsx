@@ -151,9 +151,30 @@ export default function SubmissionHistory() {
 
     const visitors = (visitorData || []) as VisitorReportExportRecord[];
     const accommodations = (accommodationData || []) as AccommodationReportExportRecord[];
+    const groupedSubmissions = groupStaffSubmissions(visitors, accommodations);
     setVisitorReports(visitors);
     setAccommodationReports(accommodations);
-    setSubmissions(groupStaffSubmissions(visitors, accommodations));
+    setSubmissions(groupedSubmissions);
+
+    // If the current month has no data, open the newest available reporting
+    // month. A native select can visually fall back to its first option while
+    // React state still holds an unavailable year, which made valid historical
+    // reports appear as an empty current-year view.
+    const hasCurrentPeriod = groupedSubmissions.some((submission) => {
+      const parts = getDateParts(submission.reportDate);
+      return parts?.year === now.getFullYear() && parts.month === now.getMonth();
+    });
+    if (!hasCurrentPeriod && groupedSubmissions.length > 0) {
+      const newestParts = groupedSubmissions
+        .map((submission) => getDateParts(submission.reportDate))
+        .filter((parts): parts is NonNullable<ReturnType<typeof getDateParts>> => Boolean(parts))
+        .sort((a, b) => b.year - a.year || b.month - a.month || b.day - a.day)[0];
+      if (newestParts) {
+        setSelectedYear(newestParts.year);
+        setSelectedMonth(newestParts.month);
+        setExpandedWeek(getWeekNumberInFourWeekMonth(newestParts.day));
+      }
+    }
     setLoading(false);
   };
 

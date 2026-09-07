@@ -242,7 +242,12 @@ async function main() {
     for (const ws of wb.worksheets) {
       const topRows=[];
       for (let r=1; r<=Math.min(ws.actualRowCount, 12); r++) topRows.push(...rowValues(ws,r).filter(Boolean));
-      const inferred = inferMonthYear([ws.name, ...topRows, path.basename(file)]);
+      // Worksheet names are the authoritative reporting period for monthly workbooks.
+      // Do not let stale month labels in copied header cells or filenames override them.
+      const sheetPeriod = inferMonthYear([ws.name]);
+      const inferred = sheetPeriod.month && sheetPeriod.year
+        ? sheetPeriod
+        : inferMonthYear([ws.name, ...topRows, path.basename(file)]);
       // This import set is the municipality's 2025 reporting batch. A few
       // copied worksheets contain stale 2024/2026 labels or corrupted date
       // cells; the supplied batch context establishes 2025 as the year.
@@ -309,10 +314,26 @@ async function main() {
           if (visitors.some(v => v._key === key)) { summary.duplicates.push({...ctx, type:'visitor_exact_duplicate'}); continue; }
           visitors.push({ ...rec, _key:key }); sheetInfo.rows++;
         } else if (type === 'accommodation') {
-          const total_rooms = map.total_rooms_value ?? (map.total_rooms != null ? toNum(row[map.total_rooms]) : (estMatch.est.total_rooms ?? null));
-          const total_occupied_rooms = map.occupied_rooms != null ? toNum(row[map.occupied_rooms]) : null;
+          const grid = map._dailyRoomGrid;
+          const occupiedRoomValues = grid
+            ? row
+                .slice(grid.firstRoomColumn, grid.lastRoomColumn + 1)
+                .map(toNum)
+                .filter(value => value != null && value > 0)
+            : [];
+          const gridRoomCount = grid ? grid.lastRoomColumn - grid.firstRoomColumn + 1 : null;
+          const derivedOccupiedRooms = grid ? occupiedRoomValues.length : null;
+          const derivedGuestNights = grid ? occupiedRoomValues.reduce((sum, value) => sum + value, 0) : null;
+          const total_rooms = map.total_rooms_value ?? (map.total_rooms != null ? toNum(row[map.total_rooms]) : null) ?? gridRoomCount ?? estMatch.est.total_rooms ?? null;
+          const total_occupied_rooms = (map.occupied_rooms != null ? toNum(row[map.occupied_rooms]) : null) ?? derivedOccupiedRooms;
           const total_check_ins = map.check_ins != null ? toNum(row[map.check_ins]) : null;
-          const total_guest_nights = map.guest_nights != null ? toNum(row[map.guest_nights]) : null;
+          const total_guest_nights = (map.guest_nights != null ? toNum(row[map.guest_nights]) : null) ?? derivedGuestNights;
+          if (grid && map.occupied_rooms != null && toNum(row[map.occupied_rooms]) != null && toNum(row[map.occupied_rooms]) !== derivedOccupiedRooms) {
+            summary.warnings.push({...ctx, issue:'room_grid_occupied_total_discrepancy', roomGrid:derivedOccupiedRooms, reported:toNum(row[map.occupied_rooms])});
+          }
+          if (grid && map.guest_nights != null && toNum(row[map.guest_nights]) != null && toNum(row[map.guest_nights]) !== derivedGuestNights) {
+            summary.warnings.push({...ctx, issue:'room_grid_guest_nights_total_discrepancy', roomGrid:derivedGuestNights, reported:toNum(row[map.guest_nights])});
+          }
           if ([total_rooms,total_occupied_rooms,total_check_ins,total_guest_nights].every(v => v == null)) { summary.skippedRows.push({...ctx, issue:'no_accommodation_metrics'}); continue; }
           const key = `${establishment_id}|${report_date}`;
           const existing = accommodation.get(key);
@@ -324,14 +345,16 @@ async function main() {
           }
           accommodation.set(key, { establishment_id, submitted_by, report_date, total_rooms, total_occupied_rooms, total_check_ins, total_guest_nights, status:'approved', created_at:`${report_date}T12:00:00Z`, _source:ctx });
           if (map._dailyRoomGrid) {
-            // Preserve which named room columns were occupied. The workbook
-            // does not provide a per-room split for check-ins/guest nights,
-            // so those totals stay only on the parent daily report.
+            // Preserve each occupied room column. Its numeric cell is the guest
+            // count for that room/day, so it also supplies the per-room guest
+            // nights when the worksheet's aggregate metric cell is blank.
+            // Check-ins remain only on the parent report because the source does
+            // not identify which room received each new arrival.
             const grid = map._dailyRoomGrid;
             for (let c = grid.firstRoomColumn; c <= grid.lastRoomColumn; c++) {
               const roomValue = toNum(row[c]);
               if (roomValue == null || roomValue <= 0) continue;
-              roomDetails.push({ parentKey:key, room_type:null, room_code:`Room ${c - grid.firstRoomColumn + 1}`, number_of_rooms:1, occupied_rooms:1, check_ins:null, guest_nights:null, is_rent_mode:false, _source:ctx });
+              roomDetails.push({ parentKey:key, room_type:null, room_code:`Room ${c - grid.firstRoomColumn + 1}`, number_of_rooms:1, occupied_rooms:1, check_ins:null, guest_nights:roomValue, is_rent_mode:false, _source:ctx });
             }
           } else if (map.room_type != null || map.room_code != null || map.number_of_rooms != null) {
             roomDetails.push({ parentKey:key, room_type: map.room_type != null ? row[map.room_type] || null : null, room_code: map.room_code != null ? row[map.room_code] || null : null, number_of_rooms: map.number_of_rooms != null ? toNum(row[map.number_of_rooms]) : total_rooms, occupied_rooms: total_occupied_rooms, check_ins: total_check_ins, guest_nights: total_guest_nights, is_rent_mode:false, _source:ctx });
