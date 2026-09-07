@@ -133,19 +133,24 @@ export default function SubmissionHistory() {
     setAllowedForms({ visitor: canSeeVisitor, accommodation: canSeeAccommodation });
 
     const establishmentId = profileData?.establishment_id;
+    // Submission History is a historical record, so it must load every report
+    // family belonging to the establishment. Current form eligibility is still
+    // used for the sidebar and new-report routes, but it must not hide imported
+    // accommodation history when an establishment's current type is Resort or
+    // another category that no longer exposes the accommodation form.
     const [{ data: visitorData }, { data: accommodationData }] = await Promise.all([
-      canSeeVisitor
+      establishmentId
         ? supabase
             .from("visitor_reports")
             .select("id, report_date, created_at, status, guest_name, total_male, total_female, total_guests, residence_type, place_of_residence")
-            .eq("establishment_id", establishmentId!)
+            .eq("establishment_id", establishmentId)
             .order("created_at", { ascending: false })
         : Promise.resolve({ data: [] }),
-      canSeeAccommodation
+      establishmentId
         ? supabase
             .from("accommodation_reports")
             .select("id, report_date, created_at, status, total_rooms, total_occupied_rooms, total_check_ins, total_guest_nights")
-            .eq("establishment_id", establishmentId!)
+            .eq("establishment_id", establishmentId)
             .order("created_at", { ascending: false })
         : Promise.resolve({ data: [] }),
     ]);
