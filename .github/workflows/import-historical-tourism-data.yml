@@ -1,0 +1,61 @@
+name: Import historical tourism reports
+
+on:
+  workflow_dispatch:
+    inputs:
+      execute_import:
+        description: "Delete existing report/generated AI data and import the validated Drive workbooks"
+        required: true
+        default: false
+        type: boolean
+
+permissions:
+  contents: read
+
+jobs:
+  import-reports:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    environment: Production
+    env:
+      SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
+      SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+      SOURCE_DIR: ${{ github.workspace }}/drive-source
+      OUT_DIR: ${{ github.workspace }}/import-output
+    steps:
+      - name: Check out importer
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Install application dependencies
+        run: npm ci
+
+      - name: Download the supplied Google Drive folder
+        run: |
+          python -m pip install --disable-pip-version-check gdown
+          gdown --folder "https://drive.google.com/drive/folders/19n-0490p0PzBSWfjGJhTbFYzDwqOMfFi" --output "$SOURCE_DIR"
+          test "$(find "$SOURCE_DIR" -type f -iname '*.xlsx' | wc -l)" -eq 32
+
+      - name: Parse and validate workbooks without changing Supabase
+        if: ${{ !inputs.execute_import }}
+        run: node scripts/import-historical-tourism-data.mjs --dry-run
+
+      - name: Replace report and generated AI data
+        if: ${{ inputs.execute_import }}
+        env:
+          EXECUTE_IMPORT: "true"
+        run: node scripts/import-historical-tourism-data.mjs
+
+      - name: Upload sanitized import audit summary
+        if: ${{ always() }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: tourism-import-summary-${{ github.run_id }}
+          path: ${{ github.workspace }}/import-output/import-summary-*.json
+          if-no-files-found: warn
+          retention-days: 7
