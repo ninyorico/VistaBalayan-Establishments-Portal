@@ -132,19 +132,20 @@ export default function SubmissionHistory() {
 
     setAllowedForms({ visitor: canSeeVisitor, accommodation: canSeeAccommodation });
 
+    const establishmentId = profileData?.establishment_id;
     const [{ data: visitorData }, { data: accommodationData }] = await Promise.all([
       canSeeVisitor
         ? supabase
             .from("visitor_reports")
             .select("id, report_date, created_at, status, guest_name, total_male, total_female, total_guests, residence_type, place_of_residence")
-            .eq("submitted_by", user.id)
+            .eq("establishment_id", establishmentId!)
             .order("created_at", { ascending: false })
         : Promise.resolve({ data: [] }),
       canSeeAccommodation
         ? supabase
             .from("accommodation_reports")
             .select("id, report_date, created_at, status, total_rooms, total_occupied_rooms, total_check_ins, total_guest_nights")
-            .eq("submitted_by", user.id)
+            .eq("establishment_id", establishmentId!)
             .order("created_at", { ascending: false })
         : Promise.resolve({ data: [] }),
     ]);
