@@ -93,34 +93,62 @@ export default function OfficerDashboard() {
     try {
       console.log('=== FETCHING DASHBOARD DATA ===');
       
-      // 1. Fetch all approved visitor reports
-      const { data: visitorData, error: visitorError } = await supabase
-        .from('visitor_reports')
-        .select('report_date, total_guests')
-        .in('status', ['pending', 'approved'])
-        .order('report_date', { ascending: true });
+      // Supabase returns at most 1,000 rows by default. Page through the
+      // complete history so dashboard totals do not silently stop at 1,000.
+      const pageSize = 1000;
+      const fetchVisitorRows = async () => {
+        const rows: any[] = [];
+        for (let page = 0; ; page += 1) {
+          const { data, error } = await supabase
+            .from('visitor_reports')
+            .select('report_date, total_guests, residence_type, place_of_residence, establishment_id, establishments(name)')
+            .in('status', ['pending', 'approved'])
+            .order('report_date', { ascending: true })
+            .range(page * pageSize, page * pageSize + pageSize - 1);
+          if (error) throw error;
+          rows.push(...(data || []));
+          if (!data || data.length < pageSize) break;
+        }
+        return rows;
+      };
+      const fetchAccommodationRows = async () => {
+        const rows: any[] = [];
+        for (let page = 0; ; page += 1) {
+          const { data, error } = await supabase
+            .from('accommodation_reports')
+            .select('total_rooms, total_occupied_rooms, report_date')
+            .in('status', ['pending', 'approved'])
+            .order('report_date', { ascending: true })
+            .range(page * pageSize, page * pageSize + pageSize - 1);
+          if (error) throw error;
+          rows.push(...(data || []));
+          if (!data || data.length < pageSize) break;
+        }
+        return rows;
+      };
+      const [visitorData, accommodationData] = await Promise.all([
+        fetchVisitorRows(),
+        fetchAccommodationRows(),
+      ]);
 
-      if (visitorError) {
-        console.error('Visitor data error:', visitorError);
-        setError('Failed to load visitor data');
-        setLoading(false);
-        return;
-      }
-
-      console.log('Visitor data count:', visitorData?.length || 0);
+      console.log('Visitor data count:', visitorData.length);
       
       // Calculate total visitors
-      const total = visitorData?.reduce((sum, v) => sum + (v.total_guests || 0), 0) || 0;
+      const total = visitorData?.reduce((sum, v) => sum + Number(v.total_guests || 0), 0) || 0;
       setTotalVisitors(total);
       console.log('Total visitors set to:', total);
 
       // Calculate monthly trends
       const monthly: Record<string, number> = {};
       visitorData?.forEach((v) => {
-        const month = new Date(v.report_date).toLocaleString('default', { month: 'short' });
-        monthly[month] = (monthly[month] || 0) + (v.total_guests || 0);
+        const date = new Date(v.report_date);
+        const month = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
+        monthly[month] = (monthly[month] || 0) + Number(v.total_guests || 0);
       });
-      const trends = Object.entries(monthly).map(([month, visitors]) => ({ month, visitors }));
+      const trends = Object.entries(monthly).map(([month, visitors]) => ({
+        month: new Date(`${month}-01T00:00:00`).toLocaleString('default', { month: 'short', year: 'numeric' }),
+        visitors,
+      }));
       setVisitorTrends(trends);
       console.log('Monthly trends:', trends);
 
@@ -132,24 +160,14 @@ if (visitorData && visitorData.length > 0) {
     .sort((a: Date, b: Date) => b.getTime() - a.getTime());  // ← Fixed: use getTime()
   
   const latestDate = sortedDates[0];
-  const currentMonthStr = latestDate.toLocaleString('default', { month: 'short' });
+  const currentMonthStr = `${latestDate.getFullYear()}-${String(latestDate.getMonth() + 1).padStart(2, '0')}`;
   const currentMonthVisitors = monthly[currentMonthStr] || 0;
   setMonthlyArrivals(currentMonthVisitors);
   console.log('Monthly arrivals (current month) set to:', currentMonthVisitors);
 }
 
-      // 2. Fetch accommodation reports
-// Get the number of days in the month for each report
-// If your reports are monthly, you need to know which month each report is for
-
-// Option 1: If you have report_date in accommodation_reports
-const { data: accommodationData } = await supabase
-  .from('accommodation_reports')
-  .select('total_rooms, total_occupied_rooms, report_date')
-  .in('status', ['pending', 'approved']);
-
-let weightedOccupancySum = 0;
-let occupancyReportCount = 0;
+      let weightedOccupancySum = 0;
+      let occupancyReportCount = 0;
 
 accommodationData?.forEach((report) => {
   const reportOccupancy = calculateAccommodationOccupancy(
@@ -174,17 +192,13 @@ setOccupancyRate(occupancyRate);
         console.log('Total establishments set to:', establishmentsCount);
       }
 
-      // 4. Fetch demographics
-      const { data: demoData } = await supabase
-        .from('visitor_reports')
-        .select('residence_type, total_guests')
-        .in('status', ['pending', 'approved']);
-
-      if (demoData && demoData.length > 0) {
+      // 4. Calculate demographics from the same complete visitor dataset used
+      // for the total, preventing the cards from disagreeing with each other.
+      if (visitorData.length > 0) {
         const dist: Record<string, number> = {};
-        demoData.forEach((item) => {
+        visitorData.forEach((item) => {
           const type = item.residence_type || "Unknown";
-          dist[type] = (dist[type] || 0) + (item.total_guests || 0);
+          dist[type] = (dist[type] || 0) + Number(item.total_guests || 0);
         });
         const totalDemo = Object.values(dist).reduce((a, b) => a + b, 0);
         const chartData = Object.entries(dist).map(([name, value], index) => ({
@@ -196,20 +210,15 @@ setOccupancyRate(occupancyRate);
         console.log('Demographics set:', chartData);
       }
 
-      // 5. Fetch top establishments
-      const { data: topData } = await supabase
-        .from('visitor_reports')
-        .select(`establishment_id, total_guests, establishments(name)`)
-        .in('status', ['pending', 'approved']);
-
-      if (topData && topData.length > 0) {
+      // 5. Calculate top establishments from the same complete visitor data.
+      if (visitorData.length > 0) {
         const stats: Record<string, { name: string; visitors: number }> = {};
-        topData.forEach((item: any) => {
+        visitorData.forEach((item: any) => {
           const id = item.establishment_id;
           const name = item.establishments?.name;
           if (id && name) {
             if (!stats[id]) stats[id] = { name, visitors: 0 };
-            stats[id].visitors += item.total_guests || 0;
+            stats[id].visitors += Number(item.total_guests || 0);
           }
         });
         const sorted = Object.values(stats).sort((a, b) => b.visitors - a.visitors).slice(0, 5);
