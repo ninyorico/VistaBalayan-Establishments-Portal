@@ -31,7 +31,7 @@ export default function SubmitVisitorReport() {
   const [submitting, setSubmitting] = useState(false);
   const [reportDate, setReportDate] = useState(new Date().toISOString().slice(0, 10));
   const [entries, setEntries] = useState<VisitorEntry[]>([
-    { id: 1, groupName: "", male: 0, female: 0, total: 0, residenceType: "Within Batangas", placeOfResidence: "" }
+    { id: 1, groupName: "", male: 0, female: 0, total: 0, residenceType: "THIS_PROVINCE", placeOfResidence: "" }
   ]);
   const [nextId, setNextId] = useState(2);
   const [establishmentName, setEstablishmentName] = useState("Loading...");
@@ -94,7 +94,7 @@ const loadProfile = async () => {
     if (profile?.establishment_id) {
       const { data: establishment, error: estError } = await supabase
         .from('establishments')
-        .select('*')
+        .select('name,reporting_mode')
         .eq('id', profile.establishment_id);
       
       if (estError) {
@@ -133,7 +133,7 @@ const loadProfile = async () => {
     setEntries(entries.map(entry => {
       if (entry.id === id) {
         const updated = { ...entry, [field]: value };
-        if (field === "residenceType" && value !== "Others, specify") {
+        if (field === "residenceType" && value !== "OTHER_PROVINCE" && value !== "FOREIGN") {
           updated.placeOfResidence = "";
         }
         if (field === "male" || field === "female") {
@@ -152,7 +152,7 @@ const loadProfile = async () => {
       male: 0,
       female: 0,
       total: 0,
-      residenceType: "Within Batangas",
+      residenceType: "THIS_PROVINCE",
       placeOfResidence: ""
     }]);
     setNextId(nextId + 1);
@@ -184,6 +184,22 @@ const loadProfile = async () => {
 
     setSubmitting(true);
 
+    const selectedDate = new Date(`${reportDate}T00:00:00`);
+    if (!reportDate || Number.isNaN(selectedDate.getTime())) {
+      toast.error("Please enter a valid report date");
+      setSubmitting(false);
+      return;
+    }
+
+    const invalidResidence = entries.find((entry) =>
+      (entry.residenceType === "OTHER_PROVINCE" || entry.residenceType === "FOREIGN") && !entry.placeOfResidence.trim()
+    );
+    if (invalidResidence) {
+      toast.error(invalidResidence.residenceType === "FOREIGN" ? "Country is required for foreign visitors" : "Province or municipality is required for domestic visitors");
+      setSubmitting(false);
+      return;
+    }
+
     const submissions = entries
       .filter(entry => entry.total > 0)
       .map(entry => ({
@@ -191,12 +207,20 @@ const loadProfile = async () => {
         submitted_by: profile.id,
         report_date: reportDate,
         guest_name: entry.groupName || null,
+        guest_group_name: entry.groupName || null,
         total_male: entry.male,
         total_female: entry.female,
         total_guests: entry.total,
+        male_visitors: entry.male,
+        female_visitors: entry.female,
+        total_visitors: entry.total,
         residence_type: entry.residenceType,
-        place_of_residence: entry.residenceType === "Others, specify" ? entry.placeOfResidence || null : null,
-        status: "pending"
+        residence_category: entry.residenceType,
+        place_of_residence: entry.placeOfResidence || null,
+        municipality: entry.residenceType === "THIS_PROVINCE" ? "Balayan" : null,
+        province: entry.residenceType === "OTHER_PROVINCE" ? entry.placeOfResidence || null : entry.residenceType === "THIS_PROVINCE" ? "Batangas" : null,
+        country: entry.residenceType === "FOREIGN" ? entry.placeOfResidence || null : null,
+        status: "submitted"
       }));
 
     if (submissions.length === 0) {
@@ -215,7 +239,7 @@ const loadProfile = async () => {
     } else {
       toast.success(`${submissions.length} visitor record(s) submitted successfully`);
       // Reset form
-      setEntries([{ id: 1, groupName: "", male: 0, female: 0, total: 0, residenceType: "Within Batangas", placeOfResidence: "" }]);
+      setEntries([{ id: 1, groupName: "", male: 0, female: 0, total: 0, residenceType: "THIS_PROVINCE", placeOfResidence: "" }]);
       setNextId(2);
       setReportDate(new Date().toISOString().slice(0, 10));
     }
@@ -263,8 +287,8 @@ const loadProfile = async () => {
   return (
     <div className="space-y-4 sm:space-y-6">
       <div>
-        <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">Submit Resort Report</h1>
-        <p className="text-sm sm:text-base text-gray-600 mt-1">Record daily resort visitor arrivals at your establishment</p>
+        <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">Daily Tourist Arrival Encoding</h1>
+        <p className="text-sm sm:text-base text-gray-600 mt-1">Record same-day visitors by residence category</p>
       </div>
 
       <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4 sm:p-6 overflow-hidden">
@@ -315,12 +339,12 @@ const loadProfile = async () => {
                   <td className="px-1.5 py-2 md:px-3">
                     <input type="text" value={entry.groupName} onChange={(e) => updateEntry(entry.id, "groupName", e.target.value)} placeholder="Group optional" className="block w-full min-w-0 rounded-md border border-gray-300 px-1.5 py-1.5 text-xs md:text-sm" />
                     <select value={entry.residenceType} onChange={(e) => updateEntry(entry.id, "residenceType", e.target.value)} className="mt-1 block w-full min-w-0 rounded-md border border-gray-300 px-1.5 py-1.5 text-xs md:text-sm">
-                      <option>Within Batangas</option>
-                      <option>Outside of Batangas</option>
-                      <option>Others, specify</option>
+                      <option value="THIS_PROVINCE">This Province / Batangas</option>
+                      <option value="OTHER_PROVINCE">Other Province / Domestic</option>
+                      <option value="FOREIGN">Foreign Residence</option>
                     </select>
-                    {entry.residenceType === "Others, specify" && (
-                      <input type="text" value={entry.placeOfResidence} onChange={(e) => updateEntry(entry.id, "placeOfResidence", e.target.value)} placeholder="Specify residence" className="mt-1 block w-full min-w-0 rounded-md border border-gray-300 px-1.5 py-1.5 text-xs md:text-sm" />
+                    {(entry.residenceType === "OTHER_PROVINCE" || entry.residenceType === "FOREIGN") && (
+                      <input type="text" value={entry.placeOfResidence} onChange={(e) => updateEntry(entry.id, "placeOfResidence", e.target.value)} placeholder={entry.residenceType === "FOREIGN" ? "Country" : "Province / municipality"} required className="mt-1 block w-full min-w-0 rounded-md border border-gray-300 px-1.5 py-1.5 text-xs md:text-sm" />
                     )}
                   </td>
                   <td className="px-1 py-2 md:px-3">

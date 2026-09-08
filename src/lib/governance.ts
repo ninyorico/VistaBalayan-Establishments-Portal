@@ -1,7 +1,7 @@
 import { supabase } from "./supabase";
 
 export type UserRole = "municipal_officer" | "establishment_staff";
-export type ReportStatus = "pending" | "under_review" | "on_hold" | "approved" | "rejected" | "archived";
+export type ReportStatus = "draft" | "pending" | "submitted" | "under_review" | "validated" | "needs_review" | "on_hold" | "approved" | "rejected" | "archived";
 export type ReportTable = "visitor_reports" | "accommodation_reports";
 
 export interface AuditLogEntry {
@@ -22,7 +22,7 @@ export const roleHomePath = (role?: string | null) => {
 
 export const normalizeReportStatus = (status?: string | null): ReportStatus => {
   const normalized = String(status || "pending").toLowerCase().replace(/\s+/g, "_");
-  if (["pending", "under_review", "on_hold", "approved", "rejected", "archived"].includes(normalized)) {
+  if (["draft", "pending", "submitted", "under_review", "validated", "needs_review", "on_hold", "approved", "rejected", "archived"].includes(normalized)) {
     return normalized as ReportStatus;
   }
   return "pending";
@@ -35,8 +35,12 @@ export const reportStatusLabel = (status?: string | null) =>
     .join(" ");
 
 export const reportStatusClasses: Record<ReportStatus, string> = {
+  draft: "bg-slate-100 text-slate-700 ring-slate-200",
   pending: "bg-yellow-100 text-yellow-700 ring-yellow-200",
+  submitted: "bg-yellow-100 text-yellow-700 ring-yellow-200",
   under_review: "bg-blue-100 text-blue-700 ring-blue-200",
+  validated: "bg-green-100 text-green-700 ring-green-200",
+  needs_review: "bg-orange-100 text-orange-700 ring-orange-200",
   on_hold: "bg-orange-100 text-orange-700 ring-orange-200",
   approved: "bg-green-100 text-green-700 ring-green-200",
   rejected: "bg-red-100 text-red-700 ring-red-200",

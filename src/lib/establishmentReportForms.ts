@@ -1,5 +1,8 @@
+export type ReportingMode = "accommodation" | "visitor" | "both";
+
 export interface EstablishmentReportFormSource {
   type?: string | null;
+  reporting_mode?: ReportingMode | null;
   total_rooms?: number | null;
 }
 
@@ -12,36 +15,37 @@ const accommodationTypes = new Set([
   "lodge",
   "inn",
   "motel",
+  "apartel",
   "apartelle",
-  "hostel",
+  "condotel",
+  "homestay",
+  "pension house",
+  "serviced residence",
+  "tourist inn",
 ]);
 
 const isAccommodationType = (establishment?: EstablishmentReportFormSource | null) =>
   accommodationTypes.has(normalize(establishment?.type));
 
+export const getEstablishmentReportingMode = (establishment?: EstablishmentReportFormSource | null): ReportingMode => {
+  if (establishment?.reporting_mode === "accommodation" || establishment?.reporting_mode === "visitor" || establishment?.reporting_mode === "both") {
+    return establishment.reporting_mode;
+  }
+  return Number(establishment?.total_rooms || 0) > 0 || isAccommodationType(establishment) ? "accommodation" : "visitor";
+};
+
 export const isAccommodationEstablishment = (establishment?: EstablishmentReportFormSource | null) =>
-  Boolean(establishment && isAccommodationType(establishment));
+  getEstablishmentReportingMode(establishment) !== "visitor";
 
-export const canSubmitAccommodationReport = (establishment?: EstablishmentReportFormSource | null) => {
-  if (!establishment) return false;
+export const canSubmitAccommodationReport = (establishment?: EstablishmentReportFormSource | null) =>
+  Boolean(establishment && isAccommodationEstablishment(establishment));
 
-  // Hotel/accommodation categories always use hotel analytics and the hotel form.
-  // If their room count has not been configured yet, the form lets staff set it up
-  // instead of incorrectly falling back to resort visitor demographics.
-  return isAccommodationEstablishment(establishment);
-};
-
-export const canSubmitVisitorReport = (establishment?: EstablishmentReportFormSource | null) => {
-  if (!establishment) return false;
-
-  // Resorts and other non-accommodation categories use visitor counts,
-  // demographics, and monthly arrivals. Hotel/accommodation accounts should
-  // not show demographics analytics.
-  return !canSubmitAccommodationReport(establishment);
-};
+export const canSubmitVisitorReport = (establishment?: EstablishmentReportFormSource | null) =>
+  Boolean(establishment && getEstablishmentReportingMode(establishment) !== "accommodation");
 
 export const getPrimaryReportFormLabel = (establishment?: EstablishmentReportFormSource | null) => {
-  if (canSubmitAccommodationReport(establishment)) return "Hotel accommodation report";
-  if (canSubmitVisitorReport(establishment)) return "Resort visitor report";
-  return "Tourism report";
+  const mode = getEstablishmentReportingMode(establishment);
+  if (mode === "both") return "Accommodation and visitor reports";
+  if (mode === "accommodation") return "Digital DAE-1A accommodation report";
+  return "Daily Tourist Arrival Encoding";
 };

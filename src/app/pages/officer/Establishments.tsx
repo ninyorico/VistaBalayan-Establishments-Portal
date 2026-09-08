@@ -6,11 +6,16 @@ import { datestampedFilename, downloadCsv } from "../../../lib/exportCsv";
 import { getBusinessPermitImages } from "../../../lib/businessPermitImages";
 import { DEFAULT_ROOM_CONFIG, EstablishmentRoomConfig, getRoomConfigFromAmenities, setRoomConfigInAmenities } from "../../../lib/establishmentRoomConfig";
 
+type ReportingMode = "accommodation" | "visitor" | "both";
+
 interface Establishment {
   id: string;
   name: string;
   type: string;
   address: string;
+  reporting_mode?: "accommodation" | "visitor" | "both";
+  ae_id?: string | null;
+  attraction_code?: string | null;
   contact_number: string;
   total_rooms: number;
   status: string;
@@ -60,6 +65,7 @@ export default function Establishments() {
     contact_number: "",
     total_rooms: 0,
     room_config: DEFAULT_ROOM_CONFIG,
+    reporting_mode: "accommodation" as ReportingMode,
     status: "active",
   });
 
@@ -144,6 +150,7 @@ export default function Establishments() {
       contact_number: "",
       total_rooms: 0,
       room_config: DEFAULT_ROOM_CONFIG,
+      reporting_mode: "accommodation" as ReportingMode,
       status: "active",
     });
     setShowEstablishmentModal(true);
@@ -159,6 +166,7 @@ export default function Establishments() {
       contact_number: "",
       total_rooms: 0,
       room_config: DEFAULT_ROOM_CONFIG,
+      reporting_mode: "accommodation" as ReportingMode,
       status: "active",
     });
     setNewAccountForm({
@@ -184,6 +192,7 @@ export default function Establishments() {
         contact_number: establishment.contact_number,
         total_rooms: establishment.total_rooms,
         room_config: getRoomConfigFromAmenities(establishment.amenities),
+        reporting_mode: establishment.reporting_mode || (establishment.total_rooms > 0 ? "accommodation" : "visitor"),
         status: establishment.status,
       });
       setShowEstablishmentModal(true);
@@ -245,6 +254,7 @@ export default function Establishments() {
           type: establishmentForm.type,
           address: establishmentForm.address,
           contact_number: establishmentForm.contact_number,
+          reporting_mode: establishmentForm.reporting_mode,
           status: establishmentForm.status,
         })
         .eq('id', editingEstablishment.id);
@@ -290,6 +300,7 @@ export default function Establishments() {
           address: establishmentForm.address,
           contact_number: establishmentForm.contact_number,
           total_rooms: totalRooms,
+          reporting_mode: establishmentForm.reporting_mode,
           amenities: setRoomConfigInAmenities("", normalizedRoomConfig),
           status: establishmentForm.status,
         }]);
@@ -311,6 +322,7 @@ export default function Establishments() {
       p_address: establishmentForm.address.trim(),
       p_contact_number: establishmentForm.contact_number.trim(),
       p_total_rooms: totalRooms,
+      p_reporting_mode: establishmentForm.reporting_mode,
       p_amenities: setRoomConfigInAmenities("", normalizedRoomConfig),
       p_status: establishmentForm.status,
     };
@@ -329,6 +341,7 @@ export default function Establishments() {
         address: payload.p_address,
         contact_number: payload.p_contact_number,
         total_rooms: payload.p_total_rooms,
+        reporting_mode: payload.p_reporting_mode,
         amenities: payload.p_amenities,
         status: payload.p_status,
       }])
@@ -1196,6 +1209,15 @@ export default function Establishments() {
                   <option value="Resort">Resort</option>
                   <option value="Hotel">Hotel</option>
                 </select>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Reporting Mode *</label>
+                <select value={establishmentForm.reporting_mode} onChange={(e) => setEstablishmentForm({ ...establishmentForm, reporting_mode: e.target.value as "accommodation" | "visitor" | "both" })} className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#1CA7C9]/50 focus:border-[#1CA7C9] outline-none transition-all">
+                  <option value="accommodation">Accommodation — Digital DAE-1A</option>
+                  <option value="visitor">Same-day visitor — Tourist Arrival Encoding</option>
+                  <option value="both">Both pipelines</option>
+                </select>
+                <p className="mt-1 text-xs text-gray-500">Independent of business type. Use Both for resorts with rooms and day-use visitors.</p>
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">Address *</label>

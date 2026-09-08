@@ -119,7 +119,7 @@ export default function AccommodationMonitoring({ embedded = false }: { embedded
               total_rooms
             )
           `)
-          .in("status", ["pending", "approved"])
+          .in("status", ["pending", "submitted", "validated", "approved"])
           .order("report_date", { ascending: false })
           .range(page * pageSize, page * pageSize + pageSize - 1);
 

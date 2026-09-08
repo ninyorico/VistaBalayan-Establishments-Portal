@@ -49,7 +49,7 @@ export default function StaffLayout() {
 
       const { data: establishmentData } = await supabase
         .from("establishments")
-        .select("type,total_rooms")
+        .select("type,total_rooms,reporting_mode")
         .eq("id", profile.establishment_id)
         .maybeSingle();
 

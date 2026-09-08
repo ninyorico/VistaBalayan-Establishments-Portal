@@ -36,6 +36,8 @@ export default function SubmitAccommodationReport() {
   const [roomTypes, setRoomTypes] = useState<EstablishmentRoomConfig[]>(DEFAULT_ROOM_CONFIG);
   const [establishmentAmenities, setEstablishmentAmenities] = useState<string>("");
   const [submitting, setSubmitting] = useState(false);
+  const [foreignGuestCheckIns, setForeignGuestCheckIns] = useState(0);
+  const [foreignGuestNights, setForeignGuestNights] = useState(0);
 
   const getTodayDate = () => {
     const today = new Date();
@@ -85,7 +87,7 @@ export default function SubmitAccommodationReport() {
 
     const { data: est, error: estError } = await supabase
       .from('establishments')
-      .select('name,type,total_rooms,amenities')
+      .select('name,type,reporting_mode,total_rooms,amenities')
       .eq('id', profileData.establishment_id)
       .single();
 
@@ -295,8 +297,24 @@ export default function SubmitAccommodationReport() {
       return;
     }
 
+    const selectedDate = new Date(`${reportDate}T00:00:00`);
+    if (!reportDate || Number.isNaN(selectedDate.getTime())) {
+      toast.error("Please enter a valid report date");
+      return;
+    }
+
     if (totalRooms === 0) {
       toast.error("Please configure rooms first");
+      return;
+    }
+
+    if (foreignGuestCheckIns > totalCheckIns || foreignGuestNights > totalGuestNights) {
+      toast.error("Foreign guest counts cannot exceed overall guest counts");
+      return;
+    }
+
+    if (totalGuestNights < totalCheckIns) {
+      toast.error("Guest nights cannot be lower than guest check-ins");
       return;
     }
 
@@ -327,7 +345,12 @@ export default function SubmitAccommodationReport() {
         total_occupied_rooms: totalOccupiedRooms,
         total_check_ins: totalCheckIns,
         total_guest_nights: totalGuestNights,
-        status: "pending",
+        rooms_occupied: totalOccupiedRooms,
+        guest_check_ins: totalCheckIns,
+        guest_nights: totalGuestNights,
+        foreign_guest_check_ins: foreignGuestCheckIns,
+        foreign_guest_nights: foreignGuestNights,
+        status: "submitted",
       })
       .select()
       .single();
@@ -366,6 +389,8 @@ export default function SubmitAccommodationReport() {
         guestNights: 0,
       })));
       setReportDate(getTodayDate());
+      setForeignGuestCheckIns(0);
+      setForeignGuestNights(0);
     }
     setSubmitting(false);
   };
@@ -404,11 +429,11 @@ export default function SubmitAccommodationReport() {
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">
-            Submit Hotels Report
-          </h1>
-          <p className="text-gray-600 mt-1 text-sm sm:text-base">
-            For hotel establishments with accommodation rooms
-          </p>
+              Digital DAE-1A
+            </h1>
+            <p className="text-gray-600 mt-1 text-sm sm:text-base">
+              Daily accommodation source record for MCTAO reporting
+            </p>
         </div>
         <button
           onClick={() => setShowRoomSetup(true)}
@@ -593,6 +618,17 @@ export default function SubmitAccommodationReport() {
               </tr>
             </tbody>
           </table>
+        </div>
+      </div>
+
+      <div className="grid grid-cols-1 gap-4 rounded-lg border border-gray-200 bg-white p-4 sm:grid-cols-2 sm:p-6">
+        <div>
+          <label className="mb-2 block text-sm font-medium text-gray-700">Foreign Guests Checked In</label>
+          <input type="number" min="0" value={foreignGuestCheckIns || ""} onChange={(event) => setForeignGuestCheckIns(Math.max(0, Number(event.target.value) || 0))} className="block w-full rounded-lg border border-gray-300 px-3 py-2" placeholder="0" />
+        </div>
+        <div>
+          <label className="mb-2 block text-sm font-medium text-gray-700">Foreign Guest Nights</label>
+          <input type="number" min="0" value={foreignGuestNights || ""} onChange={(event) => setForeignGuestNights(Math.max(0, Number(event.target.value) || 0))} className="block w-full rounded-lg border border-gray-300 px-3 py-2" placeholder="0" />
         </div>
       </div>
 

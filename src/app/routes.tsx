@@ -6,7 +6,7 @@ import { ProtectedRoute } from "./components/ProtectedRoute";
 import OfficerDashboard from "./pages/officer/Dashboard";
 import Establishments from "./pages/officer/Establishments";
 import ReportMonitoring from "./pages/officer/ReportMonitoring";
-import Reports from "./pages/officer/Reports";
+import GeneratedReports from "./pages/officer/GeneratedReports";
 import Analytics from "./pages/officer/Analytics";
 import AIInsights from "./pages/officer/AIInsights";
 import Settings from "./pages/officer/Settings";
@@ -37,7 +37,7 @@ export const router = createBrowserRouter([
       { path: "report-monitoring", Component: ReportMonitoring },
       { path: "visitor-monitoring", element: <Navigate to="/officer/report-monitoring" replace /> },
       { path: "accommodation-monitoring", element: <Navigate to="/officer/report-monitoring" replace /> },
-      { path: "reports", Component: Reports },
+      { path: "reports", Component: GeneratedReports },
       { path: "analytics", Component: Analytics },
       { path: "ai-insights", Component: AIInsights },
       { path: "settings", Component: Settings },

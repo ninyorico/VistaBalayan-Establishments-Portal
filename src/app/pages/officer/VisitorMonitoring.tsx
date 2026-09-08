@@ -77,7 +77,7 @@ export default function VisitorMonitoring({ embedded = false }: { embedded?: boo
           place_of_residence,
           establishments (name)
         `)
-        .in("status", ["pending", "approved"])
+        .in("status", ["pending", "submitted", "validated", "approved"])
         .order("report_date", { ascending: false })
         .range(page * pageSize, page * pageSize + pageSize - 1);
 

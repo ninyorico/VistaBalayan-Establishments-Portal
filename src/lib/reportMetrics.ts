@@ -64,15 +64,20 @@ export const calculateAverageAccommodationOccupancy = (
 ) => {
   if (reports.length === 0) return 0;
 
-  const rates = reports.map((report) =>
-    calculateAccommodationOccupancy(
-      report.total_occupied_rooms,
-      report.total_rooms,
-      report.report_date
-    )
+  const totals = reports.reduce(
+    (result, report) => {
+      const occupied = Number(report.total_occupied_rooms ?? 0);
+      const rooms = Number(report.total_rooms ?? 0);
+      if (rooms <= 0 || occupied < 0) return result;
+      const representedDays = occupied > rooms ? getDaysInMonth(report.report_date) : 1;
+      result.occupied += occupied;
+      result.available += rooms * representedDays;
+      return result;
+    },
+    { occupied: 0, available: 0 }
   );
 
-  return rates.reduce((sum, rate) => sum + rate, 0) / rates.length;
+  return totals.available > 0 ? (totals.occupied / totals.available) * 100 : 0;
 };
 
 export const groupStaffSubmissions = (
