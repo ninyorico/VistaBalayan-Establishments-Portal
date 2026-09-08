@@ -336,7 +336,7 @@ setOccupancyRate(occupancyRate);
         metricValue={`${occupancyRate.toFixed(1)}%`}
       />
 
-      <section className="grid grid-cols-1 gap-2 sm:grid-cols-2 sm:gap-3 lg:grid-cols-4 lg:gap-4" data-officer-dashboard-uniform-kpis="true">
+      <section className="grid grid-cols-3 gap-2 sm:gap-3 lg:grid-cols-4 lg:gap-4" data-officer-dashboard-uniform-kpis="true">
         {[
           { label: "Total visitors", value: totalVisitors.toLocaleString(), helper: "Approved and pending guests", icon: Users, tone: "bg-cyan-50 text-[#0E5A72] ring-cyan-100" },
           { label: "Monthly arrivals", value: monthlyArrivals.toLocaleString(), helper: "Latest reporting month", icon: TrendingUp, tone: "bg-slate-50 text-[#0B2530] ring-slate-200" },
