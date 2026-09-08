@@ -86,7 +86,7 @@ alter table public.accommodation_reports
     coalesce(rooms_occupied, total_occupied_rooms, 0) <= coalesce(total_rooms, 0) and
     coalesce(foreign_guest_check_ins, 0) <= coalesce(guest_check_ins, total_check_ins, 0) and
     coalesce(foreign_guest_nights, 0) <= coalesce(guest_nights, total_guest_nights, 0)
-  );
+  ) not valid;
 
 alter table public.visitor_reports
   drop constraint if exists visitor_reports_counts_check;
@@ -94,7 +94,7 @@ alter table public.visitor_reports
   add constraint visitor_reports_counts_check check (
     coalesce(male_visitors, total_male, 0) >= 0 and coalesce(female_visitors, total_female, 0) >= 0 and
     coalesce(total_visitors, total_guests, 0) = coalesce(male_visitors, total_male, 0) + coalesce(female_visitors, total_female, 0)
-  );
+  ) not valid;
 
 alter table public.visitor_reports
   drop constraint if exists visitor_reports_residence_category_check;
