@@ -359,22 +359,26 @@ setOccupancyRate(occupancyRate);
       <section className="grid grid-cols-1 gap-6 xl:grid-cols-2">
         <PanelCard title="Monthly visitor trends" description="Aggregated visitor counts by report month.">
           {visitorTrends.length > 0 ? (
-            <ResponsiveContainer width="100%" height={300}>
-              <AreaChart data={visitorTrends}>
-                <defs>
-                  <linearGradient id="visitorFill" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor="#0E5A72" stopOpacity={0.32} />
-                    <stop offset="95%" stopColor="#0E5A72" stopOpacity={0.02} />
-                  </linearGradient>
-                </defs>
-                <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
-                <XAxis dataKey="month" stroke="#64748b" interval={0} angle={-35} textAnchor="end" height={75} tickMargin={8} />
-                <YAxis stroke="#64748b" />
-                <Tooltip />
-                <Legend />
-                <Area type="monotone" dataKey="visitors" stroke="#0E5A72" fill="url(#visitorFill)" strokeWidth={3} name="Visitors" />
-              </AreaChart>
-            </ResponsiveContainer>
+            <div className="overflow-x-auto pb-2">
+              <div className="min-w-[720px]">
+                <ResponsiveContainer width="100%" height={300}>
+                  <AreaChart data={visitorTrends}>
+                    <defs>
+                      <linearGradient id="visitorFill" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="5%" stopColor="#0E5A72" stopOpacity={0.32} />
+                        <stop offset="95%" stopColor="#0E5A72" stopOpacity={0.02} />
+                      </linearGradient>
+                    </defs>
+                    <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
+                    <XAxis dataKey="month" stroke="#64748b" interval={0} angle={-35} textAnchor="end" height={75} tickMargin={8} />
+                    <YAxis stroke="#64748b" />
+                    <Tooltip />
+                    <Legend />
+                    <Area type="monotone" dataKey="visitors" stroke="#0E5A72" fill="url(#visitorFill)" strokeWidth={3} name="Visitors" />
+                  </AreaChart>
+                </ResponsiveContainer>
+              </div>
+            </div>
           ) : (
             <EmptyState>No visitor data available</EmptyState>
           )}
