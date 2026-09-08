@@ -326,6 +326,11 @@ setOccupancyRate(occupancyRate);
     );
   }
 
+  const visitorTrendMax = Math.max(1, ...visitorTrends.map((item) => Number(item.visitors) || 0));
+  const visitorTrendTicks = Array.from({ length: 5 }, (_, index) =>
+    Math.round((visitorTrendMax * (4 - index)) / 4)
+  );
+
   return (
     <div className="space-y-7">
       <PageHero
@@ -360,17 +365,15 @@ setOccupancyRate(occupancyRate);
         <PanelCard title="Monthly visitor trends" description="Aggregated visitor counts by report month.">
           {visitorTrends.length > 0 ? (
             <div className="flex min-w-0 pb-2">
-              <div className="z-10 w-20 shrink-0 bg-white">
-                <ResponsiveContainer width="100%" height={300}>
-                  <AreaChart data={visitorTrends} margin={{ top: 5, right: 0, bottom: 0, left: 0 }}>
-                    <YAxis orientation="right" stroke="#64748b" width={72} tick={{ fontSize: 12 }} />
-                  </AreaChart>
-                </ResponsiveContainer>
+              <div className="relative h-[300px] w-16 shrink-0 bg-white pr-2 text-right text-[11px] text-[#64748b]">
+                <div className="absolute inset-x-0 top-1 bottom-[75px] flex flex-col justify-between">
+                  {visitorTrendTicks.map((tick, index) => <span key={`${tick}-${index}`}>{tick.toLocaleString()}</span>)}
+                </div>
               </div>
               <div className="min-w-0 flex-1 overflow-x-auto">
                 <div className="min-w-[720px]">
                 <ResponsiveContainer width="100%" height={300}>
-                  <AreaChart data={visitorTrends}>
+                  <AreaChart data={visitorTrends} margin={{ top: 5, right: 8, bottom: 0, left: 16 }}>
                     <defs>
                       <linearGradient id="visitorFill" x1="0" y1="0" x2="0" y2="1">
                         <stop offset="5%" stopColor="#0E5A72" stopOpacity={0.32} />
@@ -379,7 +382,7 @@ setOccupancyRate(occupancyRate);
                     </defs>
                     <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
                     <XAxis dataKey="month" stroke="#64748b" interval={0} angle={-35} textAnchor="end" height={75} tickMargin={8} />
-                    <YAxis hide />
+                    <YAxis hide domain={[0, visitorTrendMax]} ticks={visitorTrendTicks} />
                     <Tooltip />
                     <Legend />
                     <Area type="monotone" dataKey="visitors" stroke="#0E5A72" fill="url(#visitorFill)" strokeWidth={3} name="Visitors" />

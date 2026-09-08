@@ -493,6 +493,10 @@ export default function Reports() {
       return acc;
     }, {})
   ).sort((a, b) => b[1] - a[1])[0];
+  const chartMaxVisitors = Math.max(1, ...chartData.map((item) => Number(item.visitors) || 0));
+  const chartVisitorTicks = Array.from({ length: 5 }, (_, index) =>
+    Math.round((chartMaxVisitors * (4 - index)) / 4)
+  );
 
   return (
     <div className="space-y-6">
@@ -633,20 +637,18 @@ export default function Reports() {
         </h3>
         {chartData.length > 0 ? (
           <div className="flex min-w-0 pb-2">
-            <div className="z-10 w-20 shrink-0 bg-white">
-              <ResponsiveContainer width="100%" height={350}>
-                <LineChart data={chartData} margin={{ top: 5, right: 0, bottom: 0, left: 0 }}>
-                  <YAxis orientation="right" width={72} tick={{ fontSize: 12 }} />
-                </LineChart>
-              </ResponsiveContainer>
+            <div className="relative h-[350px] w-16 shrink-0 bg-white pr-2 text-right text-[11px] text-slate-600">
+              <div className="absolute inset-x-0 top-1 bottom-[75px] flex flex-col justify-between">
+                {chartVisitorTicks.map((tick, index) => <span key={`${tick}-${index}`}>{tick.toLocaleString()}</span>)}
+              </div>
             </div>
             <div className="min-w-0 flex-1 overflow-x-auto">
               <div className="min-w-[720px]">
                 <ResponsiveContainer width="100%" height={350}>
-                  <LineChart data={chartData}>
+                  <LineChart data={chartData} margin={{ top: 5, right: 8, bottom: 0, left: 16 }}>
                     <CartesianGrid strokeDasharray="3 3" />
                     <XAxis dataKey="period" interval={0} angle={-35} textAnchor="end" height={75} tickMargin={8} />
-                    <YAxis hide />
+                    <YAxis hide domain={[0, chartMaxVisitors]} ticks={chartVisitorTicks} />
                     <Tooltip />
                     <Legend />
                     <Line type="monotone" dataKey="visitors" stroke="#3b82f6" strokeWidth={2} name="Visitors" />
