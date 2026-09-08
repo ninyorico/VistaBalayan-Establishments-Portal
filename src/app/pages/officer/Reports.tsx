@@ -633,10 +633,10 @@ export default function Reports() {
         </h3>
         {chartData.length > 0 ? (
           <div className="flex min-w-0 pb-2">
-            <div className="z-10 w-14 shrink-0 bg-white">
+            <div className="z-10 w-20 shrink-0 bg-white">
               <ResponsiveContainer width="100%" height={350}>
                 <LineChart data={chartData} margin={{ top: 5, right: 0, bottom: 0, left: 0 }}>
-                  <YAxis width={52} />
+                  <YAxis orientation="right" width={72} tick={{ fontSize: 12 }} />
                 </LineChart>
               </ResponsiveContainer>
             </div>
