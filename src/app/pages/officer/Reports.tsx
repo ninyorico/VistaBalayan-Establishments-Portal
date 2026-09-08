@@ -632,18 +632,27 @@ export default function Reports() {
           Visitor Trends ({getFilterLabel()})
         </h3>
         {chartData.length > 0 ? (
-          <div className="overflow-x-auto pb-2">
-            <div className="min-w-[720px]">
+          <div className="flex min-w-0 pb-2">
+            <div className="z-10 w-14 shrink-0 bg-white">
               <ResponsiveContainer width="100%" height={350}>
-                <LineChart data={chartData}>
-                  <CartesianGrid strokeDasharray="3 3" />
-                  <XAxis dataKey="period" interval={0} angle={-35} textAnchor="end" height={75} tickMargin={8} />
-                  <YAxis />
-                  <Tooltip />
-                  <Legend />
-                  <Line type="monotone" dataKey="visitors" stroke="#3b82f6" strokeWidth={2} name="Visitors" />
+                <LineChart data={chartData} margin={{ top: 5, right: 0, bottom: 0, left: 0 }}>
+                  <YAxis width={52} />
                 </LineChart>
               </ResponsiveContainer>
+            </div>
+            <div className="min-w-0 flex-1 overflow-x-auto">
+              <div className="min-w-[720px]">
+                <ResponsiveContainer width="100%" height={350}>
+                  <LineChart data={chartData}>
+                    <CartesianGrid strokeDasharray="3 3" />
+                    <XAxis dataKey="period" interval={0} angle={-35} textAnchor="end" height={75} tickMargin={8} />
+                    <YAxis hide />
+                    <Tooltip />
+                    <Legend />
+                    <Line type="monotone" dataKey="visitors" stroke="#3b82f6" strokeWidth={2} name="Visitors" />
+                  </LineChart>
+                </ResponsiveContainer>
+              </div>
             </div>
           </div>
         ) : (

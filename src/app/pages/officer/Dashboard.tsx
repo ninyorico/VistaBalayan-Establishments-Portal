@@ -359,8 +359,16 @@ setOccupancyRate(occupancyRate);
       <section className="grid grid-cols-1 gap-6 xl:grid-cols-2">
         <PanelCard title="Monthly visitor trends" description="Aggregated visitor counts by report month.">
           {visitorTrends.length > 0 ? (
-            <div className="overflow-x-auto pb-2">
-              <div className="min-w-[720px]">
+            <div className="flex min-w-0 pb-2">
+              <div className="z-10 w-14 shrink-0 bg-white">
+                <ResponsiveContainer width="100%" height={300}>
+                  <AreaChart data={visitorTrends} margin={{ top: 5, right: 0, bottom: 0, left: 0 }}>
+                    <YAxis stroke="#64748b" width={52} />
+                  </AreaChart>
+                </ResponsiveContainer>
+              </div>
+              <div className="min-w-0 flex-1 overflow-x-auto">
+                <div className="min-w-[720px]">
                 <ResponsiveContainer width="100%" height={300}>
                   <AreaChart data={visitorTrends}>
                     <defs>
@@ -371,12 +379,13 @@ setOccupancyRate(occupancyRate);
                     </defs>
                     <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
                     <XAxis dataKey="month" stroke="#64748b" interval={0} angle={-35} textAnchor="end" height={75} tickMargin={8} />
-                    <YAxis stroke="#64748b" />
+                    <YAxis hide />
                     <Tooltip />
                     <Legend />
                     <Area type="monotone" dataKey="visitors" stroke="#0E5A72" fill="url(#visitorFill)" strokeWidth={3} name="Visitors" />
                   </AreaChart>
                 </ResponsiveContainer>
+                </div>
               </div>
             </div>
           ) : (
