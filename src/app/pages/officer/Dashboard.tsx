@@ -51,6 +51,8 @@ interface Demographic {
 
 const DEMOGRAPHIC_COLORS = ["#0E7490", "#7C3AED", "#F97316", "#16A34A", "#DC2626", "#2563EB"];
 
+const MAX_VISIBLE_DEMOGRAPHICS = 4;
+
 const getDemographicColor = (name: string, index: number) => {
   const normalized = name.toLowerCase();
 
@@ -60,6 +62,32 @@ const getDemographicColor = (name: string, index: number) => {
   if (normalized.includes("unknown")) return "#64748B";
 
   return DEMOGRAPHIC_COLORS[index % DEMOGRAPHIC_COLORS.length];
+};
+
+const buildDemographicChartData = (distribution: Record<string, number>, total: number): Demographic[] => {
+  const sortedEntries = Object.entries(distribution)
+    .filter(([, value]) => value > 0)
+    .sort(([, firstValue], [, secondValue]) => secondValue - firstValue);
+  const visibleEntries = sortedEntries.slice(0, MAX_VISIBLE_DEMOGRAPHICS);
+  const otherVisitors = sortedEntries
+    .slice(MAX_VISIBLE_DEMOGRAPHICS)
+    .reduce((sum, [, value]) => sum + value, 0);
+
+  const chartData = visibleEntries.map(([name, value], index) => ({
+    name,
+    value: total > 0 ? Math.round((value / total) * 100) : 0,
+    color: getDemographicColor(name, index),
+  }));
+
+  if (otherVisitors > 0) {
+    chartData.push({
+      name: "Others",
+      value: total > 0 ? Math.round((otherVisitors / total) * 100) : 0,
+      color: getDemographicColor("Others", MAX_VISIBLE_DEMOGRAPHICS),
+    });
+  }
+
+  return chartData;
 };
 
 export default function OfficerDashboard() {
@@ -201,11 +229,7 @@ setOccupancyRate(occupancyRate);
           dist[type] = (dist[type] || 0) + Number(item.total_guests || 0);
         });
         const totalDemo = Object.values(dist).reduce((a, b) => a + b, 0);
-        const chartData = Object.entries(dist).map(([name, value], index) => ({
-          name,
-          value: totalDemo > 0 ? Math.round((value / totalDemo) * 100) : 0,
-          color: getDemographicColor(name, index),
-        }));
+        const chartData = buildDemographicChartData(dist, totalDemo);
         setDemographics(chartData);
         console.log('Demographics set:', chartData);
       }
