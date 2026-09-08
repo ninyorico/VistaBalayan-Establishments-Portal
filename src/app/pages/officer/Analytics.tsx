@@ -321,7 +321,7 @@ export default function Analytics() {
           <ResponsiveContainer width="100%" height={350}>
             <AreaChart data={data.seasonalData}>
               <CartesianGrid strokeDasharray="3 3" />
-              <XAxis dataKey="month" interval={0} angle={-35} textAnchor="end" height={60} />
+              <XAxis dataKey="month" interval={0} angle={-35} textAnchor="end" height={75} tickMargin={8} />
               <YAxis />
               <Tooltip />
               <Legend />
