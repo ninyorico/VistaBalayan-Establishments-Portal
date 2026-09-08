@@ -637,9 +637,14 @@ export default function Reports() {
         </h3>
         {chartData.length > 0 ? (
           <div className="flex min-w-0 pb-2">
-            <div className="relative h-[350px] w-16 shrink-0 bg-white pr-2 text-right text-[11px] text-slate-600">
+            <div className="relative h-[350px] w-16 shrink-0 border-r border-slate-300 bg-white pr-1 text-right text-[11px] text-slate-600">
               <div className="absolute inset-x-0 top-1 bottom-[75px] flex flex-col justify-between">
-                {chartVisitorTicks.map((tick, index) => <span key={`${tick}-${index}`}>{tick.toLocaleString()}</span>)}
+                {chartVisitorTicks.map((tick, index) => (
+                  <span key={`${tick}-${index}`} className="relative pr-2">
+                    {tick.toLocaleString()}
+                    <span className="absolute right-[-4px] top-1/2 h-px w-1 bg-slate-400" aria-hidden="true" />
+                  </span>
+                ))}
               </div>
             </div>
             <div className="min-w-0 flex-1 overflow-x-auto">

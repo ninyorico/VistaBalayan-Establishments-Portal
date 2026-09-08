@@ -365,9 +365,14 @@ setOccupancyRate(occupancyRate);
         <PanelCard title="Monthly visitor trends" description="Aggregated visitor counts by report month.">
           {visitorTrends.length > 0 ? (
             <div className="flex min-w-0 pb-2">
-              <div className="relative h-[300px] w-16 shrink-0 bg-white pr-2 text-right text-[11px] text-[#64748b]">
+              <div className="relative h-[300px] w-16 shrink-0 border-r border-[#cbd5e1] bg-white pr-1 text-right text-[11px] text-[#64748b]">
                 <div className="absolute inset-x-0 top-1 bottom-[75px] flex flex-col justify-between">
-                  {visitorTrendTicks.map((tick, index) => <span key={`${tick}-${index}`}>{tick.toLocaleString()}</span>)}
+                  {visitorTrendTicks.map((tick, index) => (
+                    <span key={`${tick}-${index}`} className="relative pr-2">
+                      {tick.toLocaleString()}
+                      <span className="absolute right-[-4px] top-1/2 h-px w-1 bg-[#94a3b8]" aria-hidden="true" />
+                    </span>
+                  ))}
                 </div>
               </div>
               <div className="min-w-0 flex-1 overflow-x-auto">
