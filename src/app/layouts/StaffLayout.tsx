@@ -1,31 +1,18 @@
 import { supabase } from "../../lib/supabase";
-
 import { Outlet, NavLink, useNavigate } from "react-router";
-import {
-  LayoutDashboard,
-  FileUp,
-  Bed,
-  History,
-  BarChart3,
-  Brain,
-  User,
-  LogOut,
-  Menu,
-  Settings,
-  Building2,
-} from "lucide-react";
+import { LayoutDashboard, FileUp, Bed, History, BarChart3, Brain, User, LogOut, Menu, Building2, ShieldCheck } from "lucide-react";
 import { useEffect, useState } from "react";
 import { canSubmitAccommodationReport, canSubmitVisitorReport } from "../../lib/establishmentReportForms";
 import NotificationCenter from "../components/NotificationCenter";
 
 const menuItems = [
   { path: "/staff", icon: LayoutDashboard, label: "Dashboard" },
-  { path: "/staff/submit-visitor-report", icon: FileUp, label: "Resort", form: "visitor" },
-  { path: "/staff/submit-accommodation-report", icon: Bed, label: "Hotels", form: "accommodation" },
-  { path: "/staff/submission-history", icon: History, label: "Submission History" },
+  { path: "/staff/submit-visitor-report", icon: FileUp, label: "Resort report", form: "visitor" },
+  { path: "/staff/submit-accommodation-report", icon: Bed, label: "Hotel report", form: "accommodation" },
+  { path: "/staff/submission-history", icon: History, label: "Submission history" },
   { path: "/staff/analytics", icon: BarChart3, label: "Analytics" },
-  { path: "/staff/ai-insights", icon: Brain, label: "AI Insights" },
-  { path: "/staff/manage-listing", icon: Building2, label: "Manage Public Listing" },
+  { path: "/staff/ai-insights", icon: Brain, label: "AI insights" },
+  { path: "/staff/manage-listing", icon: Building2, label: "Public listing" },
 ];
 
 export default function StaffLayout() {
@@ -33,168 +20,20 @@ export default function StaffLayout() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [profileDropdownOpen, setProfileDropdownOpen] = useState(false);
   const [establishment, setEstablishment] = useState<any>(null);
-
-  useEffect(() => {
-    const loadEstablishment = async () => {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) return;
-
-      const { data: profile } = await supabase
-        .from("profiles")
-        .select("establishment_id")
-        .eq("id", user.id)
-        .maybeSingle();
-
-      if (!profile?.establishment_id) return;
-
-      const { data: establishmentData } = await supabase
-        .from("establishments")
-        .select("type,total_rooms")
-        .eq("id", profile.establishment_id)
-        .maybeSingle();
-
-      setEstablishment(establishmentData);
-    };
-
-    loadEstablishment();
-  }, []);
-
-  const visibleMenuItems = menuItems.filter((item) => {
-    if (item.form === "visitor") return canSubmitVisitorReport(establishment);
-    if (item.form === "accommodation") return canSubmitAccommodationReport(establishment);
-    return true;
-  });
-
-  const handleLogout = async () => {
-  await supabase.auth.signOut();
-  window.location.href = "/admin/login";
-  };
-
-  const closeSidebarOnMobile = () => {
-    if (window.innerWidth < 1024) {
-      setSidebarOpen(false);
-    }
-  };
+  useEffect(() => { (async () => { const { data: { user } } = await supabase.auth.getUser(); if (!user) return; const { data: profile } = await supabase.from("profiles").select("establishment_id").eq("id", user.id).maybeSingle(); if (!profile?.establishment_id) return; const { data } = await supabase.from("establishments").select("type,total_rooms").eq("id", profile.establishment_id).maybeSingle(); setEstablishment(data); })(); }, []);
+  const visibleMenuItems = menuItems.filter((item) => item.form === "visitor" ? canSubmitVisitorReport(establishment) : item.form === "accommodation" ? canSubmitAccommodationReport(establishment) : true);
+  const handleLogout = async () => { await supabase.auth.signOut(); window.location.href = "/admin/login"; };
+  const closeSidebarOnMobile = () => { if (window.innerWidth < 1024) setSidebarOpen(false); };
 
   return (
-    <div className="min-h-[100dvh] tourism-shell text-slate-950">
-      {/* Mobile Overlay */}
-      {sidebarOpen && (
-        <div
-          className="fixed inset-0 z-[85] bg-black/50 lg:hidden"
-          onClick={() => setSidebarOpen(false)}
-        />
-      )}
-
-      {/* Sidebar */}
-      <aside
-        className={`fixed left-0 top-0 lg:top-0 h-full lg:h-full border-r border-[#d7e5e2] bg-white shadow-[0_24px_80px_rgba(7,59,76,0.18)] transition-all duration-300 lg:bg-white/92 lg:backdrop-blur-xl ${
-          sidebarOpen ? "w-[82vw] max-w-80 z-[90]" : "w-0 lg:w-64 z-40"
-        } overflow-hidden`}
-      >
-        <div className="border-b border-[#d7e5e2] bg-[linear-gradient(135deg,#ffffff,#f6f8f7_55%,#eef4f2)] p-6">
-          <div className="flex items-center gap-3">
-            <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-[#0E5A72] text-sm font-black text-white shadow-lg shadow-teal-950/15">VB</div>
-            <div>
-              <h1 className="text-xl font-semibold tracking-[-0.035em] text-[#0B2530]">VistaBalayan</h1>
-              <p className="mt-0.5 text-sm font-medium text-[#0E5A72]">Establishment Portal</p>
-            </div>
-          </div>
-        </div>
-
-        <nav className="h-[calc(100vh-130px)] space-y-1.5 overflow-y-auto bg-white p-4 lg:h-auto lg:bg-transparent">
-          {visibleMenuItems.map((item) => (
-            <NavLink
-              key={item.path}
-              to={item.path}
-              end={item.path === "/staff"}
-              onClick={closeSidebarOnMobile}
-              className={({ isActive }) =>
-                `flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 ${
-                  isActive
-                    ? "bg-[#0E5A72] text-white shadow-lg shadow-teal-950/15"
-                    : "text-[#334155] hover:bg-[#e5f1f2] hover:text-[#0B2530]"
-                }`
-              }
-            >
-              <item.icon className="w-5 h-5" />
-              <span className="font-semibold text-sm">{item.label}</span>
-            </NavLink>
-          ))}
-        </nav>
+    <div className="min-h-[100dvh] tourism-shell text-clay-foreground">
+      {sidebarOpen && <div className="fixed inset-0 z-[85] bg-clay-foreground/35 backdrop-blur-sm lg:hidden" onClick={() => setSidebarOpen(false)} />}
+      <aside className={`fixed inset-y-0 left-0 z-[90] overflow-hidden border-r border-clay-border bg-white/72 shadow-clayCard backdrop-blur-xl transition-all duration-300 ${sidebarOpen ? "w-[84vw] max-w-80" : "w-0 lg:w-72"}`}>
+        <div className="border-b border-clay-border bg-gradient-to-br from-white/90 via-sky-50/80 to-violet-50/70 p-6"><div className="flex items-center gap-3"><div className="clay-orb flex h-12 w-12 items-center justify-center bg-gradient-to-br from-sky-400 to-violet-700 text-sm font-black text-white">VB</div><div><p className="font-heading text-xl font-black tracking-tight">VistaBalayan</p><p className="text-sm font-semibold text-clay-accent">Establishment Portal</p></div></div></div>
+        <div className="mx-4 mt-5 rounded-[24px] bg-gradient-to-br from-sky-400 to-violet-600 p-4 text-white shadow-clayButton"><div className="flex items-center gap-3"><ShieldCheck className="h-5 w-5" /><div><p className="text-xs font-bold uppercase tracking-widest text-white/75">Your workspace</p><p className="mt-1 font-heading font-black">Keep reports current</p></div></div></div>
+        <nav className="space-y-2 overflow-y-auto p-4">{visibleMenuItems.map((item) => <NavLink key={item.path} to={item.path} end={item.path === "/staff"} onClick={closeSidebarOnMobile} className={({ isActive }) => `group flex min-h-12 items-center gap-3 rounded-[20px] px-4 py-3 text-sm font-bold transition-all duration-300 ${isActive ? "-translate-y-0.5 bg-gradient-to-r from-sky-500 to-violet-600 text-white shadow-clayButton" : "text-clay-muted hover:-translate-y-0.5 hover:bg-white/80 hover:text-clay-accent hover:shadow-clayCard"}`}><item.icon className="h-5 w-5" /><span>{item.label}</span></NavLink>)}</nav>
       </aside>
-
-      {/* Main Content */}
-      <div className="lg:ml-64">
-        {/* Top Navbar */}
-        <header className="sticky top-0 z-[80] border-b border-[#d7e5e2] bg-white/90 shadow-[0_10px_40px_rgba(7,59,76,0.06)] backdrop-blur-xl">
-          <div className="px-4 sm:px-6 py-4 flex items-center justify-between">
-            <button
-              onClick={() => setSidebarOpen(!sidebarOpen)}
-              className="rounded-2xl bg-[#0E5A72] p-2.5 shadow-lg shadow-teal-950/15 transition-all duration-200 hover:bg-[#073B4C] lg:hidden"
-            >
-              <Menu className="w-5 h-5 text-white" />
-            </button>
-
-            <div className="flex items-center gap-3">
-              <NotificationCenter role="establishment_staff" />
-
-              <div className="h-8 w-px bg-slate-200"></div>
-
-              <div className="relative">
-                <button
-                  onClick={() => setProfileDropdownOpen(!profileDropdownOpen)}
-                  className="flex items-center gap-2 rounded-2xl px-2 py-1.5 transition-colors hover:bg-slate-100 sm:gap-3"
-                >
-                  <div className="flex h-9 w-9 items-center justify-center rounded-2xl bg-[#0E5A72] text-xs font-bold text-white shadow-md sm:h-10 sm:w-10 sm:text-sm">
-                    ES
-                  </div>
-                  <div className="hidden sm:block text-left">
-                    <div className="text-sm font-semibold text-[#0F172A]">
-                      Establishment Staff
-                    </div>
-                    <div className="text-xs text-[#6B7280]">
-                      staff@establishment.com
-                    </div>
-                  </div>
-                </button>
-
-                {/* Profile Dropdown */}
-                {profileDropdownOpen && (
-                  <div className="absolute right-0 z-50 mt-2 w-56 rounded-2xl border border-slate-200 bg-white py-2 shadow-xl">
-                    <button
-                      onClick={() => {
-                        navigate("/staff/profile");
-                        setProfileDropdownOpen(false);
-                      }}
-                      className="w-full flex items-center gap-3 px-4 py-3 hover:bg-[#F2F5F7] transition-colors text-left"
-                    >
-                      <User className="w-5 h-5 text-[#6B7280]" />
-                      <span className="text-sm font-medium text-[#0F172A]">Profile</span>
-                    </button>
-                    <div className="border-t border-[#D9E2EC] my-2"></div>
-                    <button
-                      onClick={() => {
-                        handleLogout();
-                        setProfileDropdownOpen(false);
-                      }}
-                      className="w-full flex items-center gap-3 px-4 py-3 hover:bg-red-50 transition-colors text-left"
-                    >
-                      <LogOut className="w-5 h-5 text-red-600" />
-                      <span className="text-sm font-medium text-red-600">Logout</span>
-                    </button>
-                  </div>
-                )}
-              </div>
-            </div>
-          </div>
-        </header>
-
-        {/* Page Content */}
-        <main className="w-full p-3 sm:p-4 lg:p-4 xl:p-5 2xl:p-6">
-          <Outlet />
-        </main>
-      </div>
+      <div className="lg:ml-72"><header className="sticky top-0 z-[80] border-b border-clay-border bg-white/60 shadow-[0_12px_40px_rgba(160,150,180,.12)] backdrop-blur-xl"><div className="flex items-center justify-between px-4 py-3 sm:px-6 lg:px-8"><button onClick={() => setSidebarOpen(!sidebarOpen)} className="clay-button flex h-11 w-11 items-center justify-center lg:hidden" aria-label="Toggle navigation"><Menu className="h-5 w-5" /></button><div className="hidden items-center gap-3 lg:flex"><div className="rounded-full bg-sky-100 px-4 py-2 text-xs font-bold uppercase tracking-widest text-sky-700">Establishment workspace</div><span className="text-sm font-medium text-clay-muted">Submit, track, grow</span></div><div className="flex items-center gap-3"><NotificationCenter role="establishment_staff" /><div className="h-8 w-px bg-violet-200" /><div className="relative"><button onClick={() => setProfileDropdownOpen(!profileDropdownOpen)} className="flex min-h-11 items-center gap-3 rounded-[20px] px-2 py-1.5 transition hover:bg-white/80 hover:shadow-clayCard"><div className="clay-orb flex h-10 w-10 items-center justify-center bg-gradient-to-br from-pink-400 to-violet-600 text-sm font-black text-white">ES</div><div className="hidden text-left sm:block"><p className="text-sm font-bold">Establishment staff</p><p className="text-xs text-clay-muted">staff@establishment.com</p></div></button>{profileDropdownOpen && <div className="absolute right-0 z-50 mt-3 w-60 rounded-[24px] border border-clay-border bg-white/90 p-2 shadow-clayCard backdrop-blur-xl"><button onClick={() => { navigate("/staff/profile"); setProfileDropdownOpen(false); }} className="flex min-h-11 w-full items-center gap-3 rounded-[16px] px-4 text-left text-sm font-bold hover:bg-violet-50"><User className="h-5 w-5 text-clay-accent" />Profile</button><button onClick={() => { handleLogout(); setProfileDropdownOpen(false); }} className="flex min-h-11 w-full items-center gap-3 rounded-[16px] px-4 text-left text-sm font-bold text-red-600 hover:bg-red-50"><LogOut className="h-5 w-5" />Logout</button></div>}</div></div></div></header><main className="mx-auto w-full max-w-[1600px] p-4 sm:p-6 lg:p-8"><Outlet /></main></div>
     </div>
   );
 }

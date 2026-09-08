@@ -111,7 +111,7 @@ export default function Login() {
   };
 
   return (
-    <main className="min-h-[100dvh] tourism-shell text-[#0B2530]">
+    <main className="min-h-[100dvh] tourism-shell text-[#332F3A]">
       <div className="grid min-h-[100dvh] grid-cols-1 lg:grid-cols-[1.08fr_0.92fr]">
         <section className="relative hidden overflow-hidden tourism-panel-dark lg:block">
           <img
@@ -153,20 +153,20 @@ export default function Login() {
 
           <div className="relative z-10 w-full max-w-[440px]">
             <div className="mb-8 lg:hidden">
-              <div className="mb-5 flex h-12 w-12 items-center justify-center rounded-2xl bg-[#0E5A72] text-white shadow-lg shadow-teal-950/15">
+              <div className="mb-5 flex h-12 w-12 items-center justify-center rounded-2xl bg-[#7C3AED] text-white shadow-lg shadow-teal-950/15">
                 <ShieldCheck className="h-5 w-5" strokeWidth={1.8} />
               </div>
-              <p className="text-3xl font-semibold tracking-[-0.035em] text-[#0B2530]">VistaBalayan</p>
-              <p className="mt-2 text-sm leading-6 text-[#5D6F73]">Tourism analytics and establishment management.</p>
+              <p className="text-3xl font-semibold tracking-[-0.035em] text-[#332F3A]">VistaBalayan</p>
+              <p className="mt-2 text-sm leading-6 text-[#635F69]">Tourism analytics and establishment management.</p>
             </div>
 
             <div className="rounded-[2rem] border border-white/80 bg-white/88 p-6 shadow-tourism backdrop-blur-xl sm:p-8">
               <div className="mb-8">
-                <div className="mb-5 flex h-12 w-12 items-center justify-center rounded-2xl bg-cyan-50 text-[#0E5A72] ring-1 ring-cyan-900/10">
+                <div className="mb-5 flex h-12 w-12 items-center justify-center rounded-2xl bg-cyan-50 text-[#7C3AED] ring-1 ring-cyan-900/10">
                   <LockKeyhole className="h-5 w-5" strokeWidth={1.8} />
                 </div>
-                <h2 className="text-3xl font-semibold tracking-[-0.035em] text-[#0B2530]">Welcome back</h2>
-                <p className="mt-2 text-sm leading-6 text-[#5D6F73]">
+                <h2 className="text-3xl font-semibold tracking-[-0.035em] text-[#332F3A]">Welcome back</h2>
+                <p className="mt-2 text-sm leading-6 text-[#635F69]">
                   Use your authorized officer or establishment staff account.
                 </p>
               </div>
@@ -189,7 +189,7 @@ export default function Login() {
                       type="email"
                       value={email}
                       onChange={(e) => setEmail(e.target.value)}
-                      className="w-full rounded-2xl border border-slate-200 bg-white px-11 py-3.5 text-base text-[#0B2530] outline-none transition duration-200 placeholder:text-slate-400 focus:border-[#34A0A4] focus:ring-4 focus:ring-[#e5f1f2]"
+                      className="w-full rounded-2xl border border-slate-200 bg-white px-11 py-3.5 text-base text-[#332F3A] outline-none transition duration-200 placeholder:text-slate-400 focus:border-[#34A0A4] focus:ring-4 focus:ring-[#EDE9FE]"
                       placeholder="officer@balayan.gov.ph"
                       autoComplete="email"
                       required
@@ -208,7 +208,7 @@ export default function Login() {
                       type={showPassword ? "text" : "password"}
                       value={password}
                       onChange={(e) => setPassword(e.target.value)}
-                      className="w-full rounded-2xl border border-slate-200 bg-white px-11 py-3.5 pr-12 text-base text-[#0B2530] outline-none transition duration-200 placeholder:text-slate-400 focus:border-[#34A0A4] focus:ring-4 focus:ring-[#e5f1f2]"
+                      className="w-full rounded-2xl border border-slate-200 bg-white px-11 py-3.5 pr-12 text-base text-[#332F3A] outline-none transition duration-200 placeholder:text-slate-400 focus:border-[#34A0A4] focus:ring-4 focus:ring-[#EDE9FE]"
                       placeholder="Enter your password"
                       autoComplete="current-password"
                       required
@@ -216,7 +216,7 @@ export default function Login() {
                     <button
                       type="button"
                       onClick={() => setShowPassword(!showPassword)}
-                      className="absolute right-3 top-1/2 flex h-9 w-9 -translate-y-1/2 items-center justify-center rounded-xl text-slate-500 transition duration-200 hover:bg-slate-100 hover:text-slate-900 focus:outline-none focus:ring-4 focus:ring-[#e5f1f2]"
+                      className="absolute right-3 top-1/2 flex h-9 w-9 -translate-y-1/2 items-center justify-center rounded-xl text-slate-500 transition duration-200 hover:bg-slate-100 hover:text-slate-900 focus:outline-none focus:ring-4 focus:ring-[#EDE9FE]"
                       aria-label={showPassword ? "Hide password" : "Show password"}
                     >
                       {showPassword ? <EyeOff className="h-5 w-5" strokeWidth={1.8} /> : <Eye className="h-5 w-5" strokeWidth={1.8} />}
@@ -225,10 +225,10 @@ export default function Login() {
                 </div>
 
                 <div className="flex items-center justify-between gap-4 pt-1">
-                  <label className="flex cursor-pointer items-center gap-2.5 text-sm text-[#5D6F73]">
+                  <label className="flex cursor-pointer items-center gap-2.5 text-sm text-[#635F69]">
                     <input
                       type="checkbox"
-                      className="h-4 w-4 rounded border-slate-300 text-[#0E5A72] focus:ring-[#168AAD]"
+                      className="h-4 w-4 rounded border-slate-300 text-[#7C3AED] focus:ring-[#168AAD]"
                     />
                     Remember me
                   </label>
@@ -240,7 +240,7 @@ export default function Login() {
                       setForgotMessage('');
                       setShowForgotPassword(true);
                     }}
-                    className="text-sm font-medium text-[#0E5A72] transition duration-200 hover:text-[#168AAD]"
+                    className="text-sm font-medium text-[#7C3AED] transition duration-200 hover:text-[#168AAD]"
                   >
                     Forgot password?
                   </button>
@@ -249,7 +249,7 @@ export default function Login() {
                 <button
                   type="submit"
                   disabled={loading}
-                  className="mt-3 w-full rounded-2xl bg-[#0E5A72] px-5 py-4 text-base font-semibold text-white shadow-[0_18px_36px_rgba(15,76,117,0.22)] transition duration-200 hover:-translate-y-0.5 hover:bg-[#073B4C] focus:outline-none focus:ring-4 focus:ring-[#e5f1f2] active:translate-y-[1px] disabled:cursor-not-allowed disabled:opacity-60 disabled:hover:translate-y-0"
+                  className="mt-3 w-full rounded-2xl bg-[#7C3AED] px-5 py-4 text-base font-semibold text-white shadow-[0_18px_36px_rgba(15,76,117,0.22)] transition duration-200 hover:-translate-y-0.5 hover:bg-[#073B4C] focus:outline-none focus:ring-4 focus:ring-[#EDE9FE] active:translate-y-[1px] disabled:cursor-not-allowed disabled:opacity-60 disabled:hover:translate-y-0"
                 >
                   {loading ? "Signing in..." : "Sign in"}
                 </button>
@@ -268,8 +268,8 @@ export default function Login() {
           <div className="w-full max-w-md rounded-[2rem] bg-white p-6 shadow-2xl sm:p-8">
             <div className="mb-5 flex items-start justify-between gap-4">
               <div>
-                <h3 className="text-2xl font-semibold tracking-[-0.03em] text-[#0B2530]">Reset password</h3>
-                <p className="mt-2 text-sm leading-6 text-[#5D6F73]">
+                <h3 className="text-2xl font-semibold tracking-[-0.03em] text-[#332F3A]">Reset password</h3>
+                <p className="mt-2 text-sm leading-6 text-[#635F69]">
                   Receive a 6-digit OTP by email, then set your new password.
                 </p>
               </div>
@@ -283,7 +283,7 @@ export default function Login() {
             </div>
 
             {forgotMessage && (
-              <div className="mb-4 rounded-2xl border border-cyan-100 bg-cyan-50 px-4 py-3 text-sm leading-6 text-[#0E5A72]">
+              <div className="mb-4 rounded-2xl border border-cyan-100 bg-cyan-50 px-4 py-3 text-sm leading-6 text-[#7C3AED]">
                 {forgotMessage}
               </div>
             )}
@@ -296,7 +296,7 @@ export default function Login() {
                     type="email"
                     value={forgotEmail}
                     onChange={(e) => setForgotEmail(e.target.value)}
-                    className="mt-2 w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-base outline-none focus:border-[#34A0A4] focus:ring-4 focus:ring-[#e5f1f2]"
+                    className="mt-2 w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-base outline-none focus:border-[#34A0A4] focus:ring-4 focus:ring-[#EDE9FE]"
                     placeholder="your@email.com"
                     required
                   />
@@ -304,7 +304,7 @@ export default function Login() {
                 <button
                   type="submit"
                   disabled={forgotLoading}
-                  className="w-full rounded-2xl bg-[#0E5A72] px-5 py-3.5 text-base font-semibold text-white disabled:cursor-not-allowed disabled:opacity-60"
+                  className="w-full rounded-2xl bg-[#7C3AED] px-5 py-3.5 text-base font-semibold text-white disabled:cursor-not-allowed disabled:opacity-60"
                 >
                   {forgotLoading ? 'Sending...' : 'Reset password'}
                 </button>
@@ -320,7 +320,7 @@ export default function Login() {
                     maxLength={6}
                     value={forgotOtp}
                     onChange={(e) => setForgotOtp(e.target.value.replace(/\D/g, '').slice(0, 6))}
-                    className="mt-2 w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-center text-2xl font-bold tracking-[0.4em] outline-none focus:border-[#34A0A4] focus:ring-4 focus:ring-[#e5f1f2]"
+                    className="mt-2 w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-center text-2xl font-bold tracking-[0.4em] outline-none focus:border-[#34A0A4] focus:ring-4 focus:ring-[#EDE9FE]"
                     placeholder="000000"
                     required
                   />
@@ -331,7 +331,7 @@ export default function Login() {
                     type="password"
                     value={forgotPassword}
                     onChange={(e) => setForgotPassword(e.target.value)}
-                    className="mt-2 w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-base outline-none focus:border-[#34A0A4] focus:ring-4 focus:ring-[#e5f1f2]"
+                    className="mt-2 w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-base outline-none focus:border-[#34A0A4] focus:ring-4 focus:ring-[#EDE9FE]"
                     minLength={8}
                     required
                   />
@@ -342,7 +342,7 @@ export default function Login() {
                     type="password"
                     value={forgotConfirmPassword}
                     onChange={(e) => setForgotConfirmPassword(e.target.value)}
-                    className="mt-2 w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-base outline-none focus:border-[#34A0A4] focus:ring-4 focus:ring-[#e5f1f2]"
+                    className="mt-2 w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-base outline-none focus:border-[#34A0A4] focus:ring-4 focus:ring-[#EDE9FE]"
                     minLength={8}
                     required
                   />
@@ -358,7 +358,7 @@ export default function Login() {
                   <button
                     type="submit"
                     disabled={forgotLoading}
-                    className="flex-1 rounded-2xl bg-[#0E5A72] px-5 py-3 text-base font-semibold text-white disabled:cursor-not-allowed disabled:opacity-60"
+                    className="flex-1 rounded-2xl bg-[#7C3AED] px-5 py-3 text-base font-semibold text-white disabled:cursor-not-allowed disabled:opacity-60"
                   >
                     {forgotLoading ? 'Resetting...' : 'Reset password'}
                   </button>
