@@ -336,7 +336,7 @@ setOccupancyRate(occupancyRate);
         metricValue={`${occupancyRate.toFixed(1)}%`}
       />
 
-      <section className="grid grid-cols-3 gap-2 sm:gap-3 lg:grid-cols-4 lg:gap-4" data-officer-dashboard-uniform-kpis="true">
+      <section className="grid grid-cols-6 gap-2 sm:gap-3 lg:grid-cols-4 lg:gap-4" data-officer-dashboard-uniform-kpis="true">
         {[
           { label: "Total visitors", value: totalVisitors.toLocaleString(), helper: "Approved and pending guests", icon: Users, tone: "bg-cyan-50 text-[#0E5A72] ring-cyan-100" },
           { label: "Monthly arrivals", value: monthlyArrivals.toLocaleString(), helper: "Latest reporting month", icon: TrendingUp, tone: "bg-slate-50 text-[#0B2530] ring-slate-200" },
@@ -346,8 +346,13 @@ setOccupancyRate(occupancyRate);
           { label: "Pending reports", value: workflowMetrics.pendingReports, helper: "Waiting for officer review", icon: Clock, tone: "bg-[#EAF2F1] text-[#0E5A72] ring-[#b8d2cf]" },
           { label: "On hold", value: workflowMetrics.onHoldReports, helper: "Needs manual verification", icon: AlertTriangle, tone: "bg-rose-50 text-rose-700 ring-rose-100" },
           { label: "Resolved reports", value: workflowMetrics.resolvedReports, helper: "Approved or rejected", icon: CheckCircle, tone: "bg-emerald-50 text-[#2F5F55] ring-emerald-100" },
-        ].map((metric) => (
-          <MetricCard key={metric.label} {...metric} compact className="h-full min-h-[118px] sm:min-h-[132px]" />
+        ].map((metric, index) => (
+          <MetricCard
+            key={metric.label}
+            {...metric}
+            compact
+            className={`${index >= 6 ? "col-span-3 lg:col-span-1" : "col-span-2 lg:col-span-1"} h-full min-h-[118px] sm:min-h-[132px]`}
+          />
         ))}
       </section>
 
