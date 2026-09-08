@@ -73,7 +73,28 @@ export default function GeneratedReports() {
     setLoading(false);
   };
 
-  useEffect(() => { void loadReports(); }, []);
+  useEffect(() => {
+    let mounted = true;
+
+    const loadWhenAuthenticated = async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (session) {
+        await loadReports();
+      } else if (mounted) {
+        setLoading(false);
+      }
+    };
+
+    void loadWhenAuthenticated();
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_, session) => {
+      if (session) void loadReports();
+    });
+
+    return () => {
+      mounted = false;
+      subscription.unsubscribe();
+    };
+  }, []);
 
   const accommodationSummaries = useMemo(() => establishments
     .filter((establishment) => ["accommodation", "both"].includes(establishment.reporting_mode || ""))
