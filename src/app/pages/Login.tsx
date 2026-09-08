@@ -115,8 +115,8 @@ export default function Login() {
       <div className="grid min-h-[100dvh] grid-cols-1 lg:grid-cols-[1.08fr_0.92fr]">
         <section className="relative hidden overflow-hidden tourism-panel-dark lg:block">
           <img
-            src="https://images.unsplash.com/photo-1507525428034-b723cf961d3e?auto=format&fit=crop&w=1400&q=80"
-            alt="Sunlit beach and coastal scenery for Balayan tourism"
+            src="/balayan-church-login.jpg"
+            alt="Historic church and statues in Balayan"
             className="absolute inset-0 h-full w-full object-cover opacity-80"
           />
           <div className="absolute inset-0 bg-[linear-gradient(135deg,rgba(7,59,76,0.9),rgba(11,37,48,0.48)_45%,rgba(14,90,114,0.72))]" />
