@@ -368,9 +368,10 @@ setOccupancyRate(occupancyRate);
                   </linearGradient>
                 </defs>
                 <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
-                <XAxis dataKey="month" stroke="#64748b" />
+                <XAxis dataKey="month" stroke="#64748b" interval={0} angle={-35} textAnchor="end" height={60} />
                 <YAxis stroke="#64748b" />
                 <Tooltip />
+                <Legend />
                 <Area type="monotone" dataKey="visitors" stroke="#0E5A72" fill="url(#visitorFill)" strokeWidth={3} name="Visitors" />
               </AreaChart>
             </ResponsiveContainer>
@@ -426,9 +427,10 @@ setOccupancyRate(occupancyRate);
           <ResponsiveContainer width="100%" height={320}>
             <BarChart data={topEstablishments}>
               <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
-              <XAxis dataKey="name" angle={-35} textAnchor="end" height={90} stroke="#64748b" />
+              <XAxis dataKey="name" angle={-35} textAnchor="end" height={90} interval={0} stroke="#64748b" />
               <YAxis stroke="#64748b" />
               <Tooltip />
+              <Legend />
               <Bar dataKey="visitors" fill="#0E5A72" radius={[10, 10, 0, 0]} name="Visitors" />
             </BarChart>
           </ResponsiveContainer>

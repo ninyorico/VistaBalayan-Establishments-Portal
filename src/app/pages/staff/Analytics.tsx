@@ -137,7 +137,6 @@ export default function Analytics() {
 
     return Array.from(monthMap.entries())
       .sort(([a], [b]) => a.localeCompare(b))
-      .slice(-6)
       .map(([, value]) => value);
   }, [approvedVisitorReports]);
 
@@ -225,7 +224,7 @@ export default function Analytics() {
             <ResponsiveContainer width="100%" height={350}>
               <LineChart data={visitorTrendData}>
                 <CartesianGrid strokeDasharray="3 3" />
-                <XAxis dataKey="month" />
+                <XAxis dataKey="month" interval={0} angle={-35} textAnchor="end" height={60} />
                 <YAxis allowDecimals={false} />
                 <Tooltip />
                 <Legend />
@@ -241,7 +240,7 @@ export default function Analytics() {
             <ResponsiveContainer width="100%" height={350}>
               <BarChart data={visitorTrendData}>
                 <CartesianGrid strokeDasharray="3 3" />
-                <XAxis dataKey="month" />
+                <XAxis dataKey="month" interval={0} angle={-35} textAnchor="end" height={60} />
                 <YAxis allowDecimals={false} />
                 <Tooltip />
                 <Legend />
@@ -257,7 +256,7 @@ export default function Analytics() {
             <ResponsiveContainer width="100%" height={350}>
               <BarChart data={residenceData}>
                 <CartesianGrid strokeDasharray="3 3" />
-                <XAxis dataKey="residence" />
+                <XAxis dataKey="residence" interval={0} angle={-35} textAnchor="end" height={80} />
                 <YAxis allowDecimals={false} />
                 <Tooltip />
                 <Legend />
@@ -289,7 +288,7 @@ export default function Analytics() {
             <ResponsiveContainer width="100%" height={350}>
               <BarChart data={accommodationTrendData}>
                 <CartesianGrid strokeDasharray="3 3" />
-                <XAxis dataKey="month" />
+                <XAxis dataKey="month" interval={0} angle={-35} textAnchor="end" height={60} />
                 <YAxis allowDecimals={false} />
                 <Tooltip />
                 <Legend />

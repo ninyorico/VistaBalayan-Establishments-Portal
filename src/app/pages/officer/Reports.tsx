@@ -630,7 +630,7 @@ export default function Reports() {
           <ResponsiveContainer width="100%" height={350}>
             <LineChart data={chartData}>
               <CartesianGrid strokeDasharray="3 3" />
-              <XAxis dataKey="period" />
+              <XAxis dataKey="period" interval={0} angle={-35} textAnchor="end" height={60} />
               <YAxis />
               <Tooltip />
               <Legend />

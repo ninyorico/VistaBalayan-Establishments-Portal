@@ -321,7 +321,7 @@ export default function Analytics() {
           <ResponsiveContainer width="100%" height={350}>
             <AreaChart data={data.seasonalData}>
               <CartesianGrid strokeDasharray="3 3" />
-              <XAxis dataKey="month" />
+              <XAxis dataKey="month" interval={0} angle={-35} textAnchor="end" height={60} />
               <YAxis />
               <Tooltip />
               <Legend />
@@ -343,6 +343,7 @@ export default function Analytics() {
               <XAxis type="number" domain={[0, 100]} />
               <YAxis dataKey="name" type="category" width={170} />
               <Tooltip formatter={(value, name) => [name === "score" ? `${value}/100` : value, name === "score" ? "Performance Score" : name]} />
+              <Legend />
               <Bar dataKey="score" fill="#10b981" name="Performance Score" />
             </BarChart>
           </ResponsiveContainer>
