@@ -75,7 +75,7 @@ export default function StaffDashboard() {
       if (profileData.establishment_id) {
         const { data: establishmentData } = await supabase
           .from("establishments")
-          .select("name,type,total_rooms")
+          .select("name,type,total_rooms,reporting_mode")
           .eq("id", profileData.establishment_id)
           .maybeSingle();
         setEstablishment(establishmentData);
