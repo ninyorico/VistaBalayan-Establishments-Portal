@@ -78,6 +78,8 @@ export const downloadOfficialArrivalsWorkbook = async ({
     if (sheet.name === "GRAND TOTAL" ? !annual : !monthsToWrite.includes(sheet)) workbook.removeWorksheet(sheet.id);
   });
   const establishmentByKey = new Map(establishments.map((establishment) => [exportNameKey(establishment.name), establishment]));
+  const daytourEstablishments = establishments.filter((establishment) => ["visitor", "both"].includes(establishment.reporting_mode || ""));
+  const overnightEstablishments = establishments.filter((establishment) => ["accommodation", "both"].includes(establishment.reporting_mode || ""));
 
   const visitorFor = (establishment: EstablishmentReportingRow, monthNumber: number) => visitors.filter((record) => record.establishment_id === establishment.id && (weeklyLabel || record.report_date?.startsWith(`${year}-${String(monthNumber).padStart(2, "0")}`)));
   const accommodationFor = (establishment: EstablishmentReportingRow, monthNumber: number) => accommodation.filter((record) => record.establishment_id === establishment.id && (weeklyLabel || record.report_date?.startsWith(`${year}-${String(monthNumber).padStart(2, "0")}`)));
@@ -92,8 +94,15 @@ export const downloadOfficialArrivalsWorkbook = async ({
     for (let column = 4; column <= 16; column += 1) sheet.getCell(41, column).value = new Date(Date.UTC(year, monthNumber - 1, 1));
 
     for (let rowNumber = 15; rowNumber <= 37; rowNumber += 1) {
+      const establishmentIndex = rowNumber - 15;
+      const rowEstablishment = daytourEstablishments[establishmentIndex];
+      sheet.getCell(rowNumber, 2).value = rowEstablishment ? establishmentIndex + 1 : "";
+      sheet.getCell(rowNumber, 3).value = rowEstablishment?.name || "";
       const name = String(sheet.getCell(rowNumber, 3).value || "").trim();
-      if (!name || name === "TOURIST ATTRACTIONS") continue;
+      if (!name) {
+        for (let column = 4; column <= 16; column += 1) sheet.getCell(rowNumber, column).value = "";
+        continue;
+      }
       const establishment = establishmentByKey.get(exportNameKey(name));
       const source = includeData && establishment ? visitorFor(establishment, monthNumber) : [];
       const reportSource = source.map((record) => ({ ...record, status: "validated" as const }));
@@ -111,9 +120,16 @@ export const downloadOfficialArrivalsWorkbook = async ({
         sheet.getCell(rowNumber, 16).value = { formula: `SUM(N${rowNumber}:O${rowNumber})` };
       }
     }
-    for (let rowNumber = 45; rowNumber <= 54; rowNumber += 1) {
+    for (let rowNumber = 45; rowNumber <= 53; rowNumber += 1) {
+      const establishmentIndex = rowNumber - 45;
+      const rowEstablishment = overnightEstablishments[establishmentIndex];
+      sheet.getCell(rowNumber, 2).value = rowEstablishment ? establishmentIndex + 1 : "";
+      sheet.getCell(rowNumber, 3).value = rowEstablishment?.name || "";
       const name = String(sheet.getCell(rowNumber, 3).value || "").trim();
-      if (!name || name.startsWith("Total")) continue;
+      if (!name) {
+        for (let column = 4; column <= 9; column += 1) sheet.getCell(rowNumber, column).value = "";
+        continue;
+      }
       const establishment = establishmentByKey.get(exportNameKey(name));
       const source = includeData && establishment ? accommodationFor(establishment, monthNumber) : [];
       const reportSource = source.map((record) => ({ ...record, status: "validated" as const }));
@@ -128,11 +144,32 @@ export const downloadOfficialArrivalsWorkbook = async ({
       sheet.getCell(rowNumber, 9).value = hasData && summary ? summary.occupancyRate : "";
     }
   }
+  const grandTotal = workbook.getWorksheet("GRAND TOTAL");
+  if (grandTotal && annual) {
+    daytourEstablishments.slice(0, 15).forEach((establishment, index) => {
+      const rowNumber = 4 + index;
+      grandTotal.getCell(rowNumber, 1).value = index + 1;
+      grandTotal.getCell(rowNumber, 2).value = establishment.name;
+      const monthlyRows = months.map((_, monthIndex) => `'${months[monthIndex].toUpperCase()} ${year}'!P${15 + index}`);
+      grandTotal.getCell(rowNumber, 3).value = { formula: monthlyRows.join("+") };
+    });
+    for (let rowNumber = 4 + daytourEstablishments.length; rowNumber <= 18; rowNumber += 1) {
+      grandTotal.getCell(rowNumber, 1).value = "";
+      grandTotal.getCell(rowNumber, 2).value = "";
+      grandTotal.getCell(rowNumber, 3).value = "";
+    }
+    grandTotal.getCell("E4").value = { formula: months.map((_, index) => `'${months[index].toUpperCase()} ${year}'!P38`).join("+") };
+    grandTotal.getCell("E7").value = { formula: months.map((_, index) => `'${months[index].toUpperCase()} ${year}'!F54`).join("+") };
+    grandTotal.getCell("E10").value = { formula: "E4+E7" };
+    grandTotal.getCell("E13").value = { formula: months.map((_, index) => `'${months[index].toUpperCase()} ${year}'!N38`).join("+") };
+    grandTotal.getCell("E16").value = { formula: months.map((_, index) => `'${months[index].toUpperCase()} ${year}'!O38`).join("+") };
+    grandTotal.getCell("E19").value = { formula: "E13+E16" };
+    grandTotal.getCell("C29").value = { formula: "SUM(C4:C18)" };
+  }
   if (weeklyLabel && monthsToWrite[0]) {
     monthsToWrite[0].name = weeklyLabel.slice(0, 31);
     monthsToWrite[0].getCell("B1").value = "Tourism Attraction Visitor Record — WEEKLY";
   }
-  const grandTotal = workbook.getWorksheet("GRAND TOTAL");
   if (grandTotal && annual) grandTotal.getCell("A1").value = `BALAYAN TOURISM ARRIVALS — ${year}`;
   workbook.creator = "VistaBalayan";
   workbook.modified = new Date();

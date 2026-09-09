@@ -121,6 +121,7 @@ export default function Reports() {
   const [selectedWeek, setSelectedWeek] = useState("1");
   const [searchTerm, setSearchTerm] = useState("");
   const [filterStatus, setFilterStatus] = useState("all");
+  const [establishmentDirectory, setEstablishmentDirectory] = useState<any[]>([]);
   const [submissions, setSubmissions] = useState<Submission[]>([]);
   const [selectedSubmission, setSelectedSubmission] = useState<Submission | null>(null);
   const [showDetailModal, setShowDetailModal] = useState(false);
@@ -170,10 +171,33 @@ export default function Reports() {
       return rows;
     };
 
+    const fetchAllEstablishments = async () => {
+      const rows: any[] = [];
+      const pageSize = 1000;
+      for (let offset = 0; ; offset += pageSize) {
+        const { data, error } = await supabase
+          .from("establishments")
+          .select("id,name,type,reporting_mode,ae_id,attraction_code,total_rooms,status")
+          .order("name", { ascending: true })
+          .range(offset, offset + pageSize - 1);
+        if (error) throw error;
+        rows.push(...(data || []));
+        if (!data || data.length < pageSize) break;
+      }
+      return rows;
+    };
+
     let visitorData: any[] = [];
     let accommodationData: any[] = [];
     try {
-      [visitorData, accommodationData] = await Promise.all([fetchAllReports("visitor_reports"), fetchAllReports("accommodation_reports")]);
+      const [directory, visitorRows, accommodationRows] = await Promise.all([
+        fetchAllEstablishments(),
+        fetchAllReports("visitor_reports"),
+        fetchAllReports("accommodation_reports"),
+      ]);
+      setEstablishmentDirectory(directory);
+      visitorData = visitorRows;
+      accommodationData = accommodationRows;
     } catch (error) {
       console.error("Reports loading error:", error);
       toast.error(`Failed to load reports: ${error instanceof Error ? error.message : "Unknown error"}`);
@@ -322,7 +346,7 @@ export default function Reports() {
 
   const handleExport = async () => {
     try {
-      const establishmentsById = new Map<string, any>();
+      const establishmentsById = new Map<string, any>(establishmentDirectory.map((establishment) => [establishment.id, establishment]));
       const accommodation: any[] = [];
       const visitors: any[] = [];
       filteredReports.forEach((report) => {
