@@ -95,9 +95,9 @@ export const downloadOfficialArrivalsWorkbook = async ({
     const includeData = includeMonth(selectedMonth, selectedMonths, monthNumber);
     if (daytourExtraRows) sheet.insertRows(38, Array.from({ length: daytourExtraRows }, () => Array(16).fill(null)), "i");
     const daytourTotalRow = 38 + daytourExtraRows;
-    const overnightStartRow = 45 + daytourExtraRows;
-    const overnightTotalRow = 54 + daytourExtraRows + overnightExtraRows;
-    const overnightHeaderRow = overnightStartRow - 4;
+    const overnightStartRow = 42 + daytourExtraRows;
+    const overnightTotalRow = 51 + daytourExtraRows + overnightExtraRows;
+    const overnightHeaderRow = overnightStartRow - 1;
     if (overnightExtraRows) sheet.insertRows(overnightTotalRow, Array.from({ length: overnightExtraRows }, () => Array(16).fill(null)), "i");
     sheet.getCell("H4").value = new Date(Date.UTC(year, monthNumber - 1, 1));
     sheet.getCell("I4").value = new Date(Date.UTC(year, monthNumber - 1, 1));
@@ -164,7 +164,7 @@ export const downloadOfficialArrivalsWorkbook = async ({
   }
   const grandTotal = workbook.getWorksheet("GRAND TOTAL");
   const exportedDaytourTotalRow = 38 + daytourExtraRows;
-  const exportedOvernightTotalRow = 54 + daytourExtraRows + overnightExtraRows;
+  const exportedOvernightTotalRow = 51 + daytourExtraRows + overnightExtraRows;
   const grandTotalExtraRows = Math.max(0, daytourEstablishments.length - 15);
   if (grandTotal && annual && grandTotalExtraRows) grandTotal.insertRows(19, Array.from({ length: grandTotalExtraRows }, () => Array(5).fill(null)), "i");
   if (grandTotal && annual) {
