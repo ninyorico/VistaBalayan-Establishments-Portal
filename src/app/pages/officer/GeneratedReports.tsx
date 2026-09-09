@@ -3,6 +3,7 @@ import * as ExcelJS from "exceljs";
 import { Download, FileSpreadsheet, RefreshCw } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "../../../lib/supabase";
+import { useAuth } from "../../../contexts/AuthContext";
 import {
   buildVAR3MRow,
   daysInMonth,
@@ -48,6 +49,7 @@ const downloadWorkbook = async (filename: string, sheets: Array<{ name: string; 
 };
 
 export default function GeneratedReports() {
+  const { user, profile, loading: authLoading } = useAuth();
   const [reportKind, setReportKind] = useState("dae3");
   const [year, setYear] = useState(currentYear);
   const [month, setMonth] = useState(new Date().getMonth() + 1);
@@ -83,27 +85,13 @@ export default function GeneratedReports() {
   };
 
   useEffect(() => {
-    let mounted = true;
-
-    const loadWhenAuthenticated = async () => {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (session) {
-        await loadReports();
-      } else if (mounted) {
-        setLoading(false);
-      }
-    };
-
-    void loadWhenAuthenticated();
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_, session) => {
-      if (session) void loadReports();
-    });
-
-    return () => {
-      mounted = false;
-      subscription.unsubscribe();
-    };
-  }, []);
+    if (authLoading) return;
+    if (user && profile?.role === "municipal_officer") {
+      void loadReports();
+    } else {
+      setLoading(false);
+    }
+  }, [authLoading, profile?.role, user?.id]);
 
   const accommodationSummaries = useMemo(() => establishments
     .filter((establishment) => ["accommodation", "both"].includes(establishment.reporting_mode || ""))
