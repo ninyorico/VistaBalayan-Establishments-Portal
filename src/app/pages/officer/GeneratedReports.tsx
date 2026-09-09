@@ -122,14 +122,23 @@ const formatGrandTotalSheet = (sheet: ExcelJS.Worksheet, establishmentEndRow: nu
   sheet.getColumn(2).width = 38;
   sheet.getColumn(3).width = 18;
   sheet.getColumn(5).width = 18;
-  // Match the final template: continuous A:C table plus the E summary block.
+  // Keep the main table uniform and fully bordered.
   addFullBorders(sheet, 3, totalRow - 2, 1, 3);
   addFullBorders(sheet, totalRow, 1, 1, 3);
   centerExportTable(sheet, 3, 3, 1, 3);
   centerExportTable(sheet, 4, totalRow, 1, 3);
   leftAlignGrandTotalNames(sheet, 4, establishmentEndRow);
+  for (let row = 4; row <= establishmentEndRow; row += 1) {
+    const nameCell = sheet.getCell(row, 2);
+    nameCell.font = { ...nameCell.font, bold: true, italic: false };
+  }
   sheet.getCell(`A${totalRow}`).alignment = { ...sheet.getCell(`A${totalRow}`).alignment, horizontal: "center", vertical: "middle" };
-  addFullBorders(sheet, 3, 17, 5, 5);
+  // KPI labels/values stay centered without boxed borders between items.
+  for (let row = 3; row <= 19; row += 1) {
+    const cell = sheet.getCell(row, 5);
+    cell.alignment = { ...cell.alignment, horizontal: "center", vertical: "middle" };
+    cell.border = {};
+  }
 };
 const shiftMergedRanges = (sheet: ExcelJS.Worksheet, insertRow: number, rowCount: number) => {
   const ranges = [...sheet.model.merges];
