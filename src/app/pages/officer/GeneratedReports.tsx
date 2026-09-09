@@ -96,6 +96,14 @@ const autoFitExportColumns = (sheet: ExcelJS.Worksheet) => {
     sheet.getColumn(column).width = Math.min(limits.max, contentWidth);
   });
 };
+const centerExportTable = (sheet: ExcelJS.Worksheet, startRow: number, endRow: number, startColumn: number, endColumn: number) => {
+  for (let row = startRow; row <= endRow; row += 1) {
+    for (let column = startColumn; column <= endColumn; column += 1) {
+      const cell = sheet.getCell(row, column);
+      cell.alignment = { ...cell.alignment, horizontal: "center", vertical: "middle" };
+    }
+  }
+};
 const shiftMergedRanges = (sheet: ExcelJS.Worksheet, insertRow: number, rowCount: number) => {
   const ranges = [...sheet.model.merges];
   ranges.forEach((range) => sheet.unMergeCells(range));
@@ -243,6 +251,8 @@ export const downloadOfficialArrivalsWorkbook = async ({
       const letter = String.fromCharCode(64 + column);
       setFormula(sheet.getCell(overnightTotalRow, column), `SUM(${letter}${overnightStartRow}:${letter}${overnightTotalRow - 1})`);
     }
+    centerExportTable(sheet, 15, daytourTotalRow, 2, 16);
+    centerExportTable(sheet, overnightStartRow, overnightTotalRow, 2, 9);
     autoFitExportColumns(sheet);
   }
   const grandTotal = workbook.getWorksheet("GRAND TOTAL");
