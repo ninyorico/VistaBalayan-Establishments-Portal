@@ -288,12 +288,19 @@ export const downloadOfficialArrivalsWorkbook = async ({
   const grandTotal = workbook.getWorksheet("GRAND TOTAL");
   const exportedDaytourTotalRow = 38 + daytourExtraRows;
   const exportedOvernightTotalRow = 54 + daytourExtraRows + overnightExtraRows;
-  const grandTotalExtraRows = Math.max(0, daytourEstablishments.length - 15);
+  const grandTotalExtraRows = Math.max(0, daytourEstablishments.length - 25);
+  const grandTotalTotalRow = 4 + daytourEstablishments.length;
+  const totalLabel = grandTotal ? String(grandTotal.getCell("A29").value || "Total of this Month ****") : "Total of this Month ****";
   if (grandTotal && annual && grandTotalExtraRows) {
-    grandTotal.insertRows(19, Array.from({ length: grandTotalExtraRows }, () => Array(5).fill(null)), "i");
-    shiftMergedRanges(grandTotal, 19, grandTotalExtraRows);
+    grandTotal.insertRows(29, Array.from({ length: grandTotalExtraRows }, () => Array(5).fill(null)), "i");
+    shiftMergedRanges(grandTotal, 29, grandTotalExtraRows);
   }
   if (grandTotal && annual) {
+    if (!grandTotalExtraRows) {
+      [...grandTotal.model.merges].forEach((range) => grandTotal.unMergeCells(range));
+      copyRowFormatting(grandTotal, 29, grandTotalTotalRow, 1, 1, 3);
+      grandTotal.mergeCells(`A${grandTotalTotalRow}:B${grandTotalTotalRow}`);
+    }
     daytourEstablishments.forEach((establishment, index) => {
       const rowNumber = 4 + index;
       grandTotal.getCell(rowNumber, 1).value = index + 1;
@@ -301,7 +308,8 @@ export const downloadOfficialArrivalsWorkbook = async ({
       const monthlyRows = months.map((_, monthIndex) => `'${months[monthIndex].toUpperCase()} ${year}'!P${15 + index}`);
       setFormula(grandTotal.getCell(rowNumber, 3), `SUM(${monthlyRows.join(",")})`);
     });
-    for (let rowNumber = 4 + daytourEstablishments.length; rowNumber <= 18 + grandTotalExtraRows; rowNumber += 1) {
+    grandTotal.getCell(`A${grandTotalTotalRow}`).value = normalizeExportText(totalLabel);
+    for (let rowNumber = grandTotalTotalRow + 1; rowNumber <= grandTotal.rowCount; rowNumber += 1) {
       grandTotal.getCell(rowNumber, 1).value = "";
       grandTotal.getCell(rowNumber, 2).value = "";
       grandTotal.getCell(rowNumber, 3).value = "";
@@ -312,18 +320,13 @@ export const downloadOfficialArrivalsWorkbook = async ({
     setFormula(grandTotal.getCell("E13"), `SUM(${months.map((_, index) => `'${months[index].toUpperCase()} ${year}'!N${exportedDaytourTotalRow}`).join(",")})`);
     setFormula(grandTotal.getCell("E16"), `SUM(${months.map((_, index) => `'${months[index].toUpperCase()} ${year}'!O${exportedDaytourTotalRow}`).join(",")})`);
     setFormula(grandTotal.getCell("E19"), "SUM(E13,E16)");
-    setFormula(grandTotal.getCell(`C${29 + grandTotalExtraRows}`), `SUM(C4:C${18 + grandTotalExtraRows})`);
+    setFormula(grandTotal.getCell(`C${grandTotalTotalRow}`), `SUM(C4:C${3 + daytourEstablishments.length})`);
     // Keep the template's E summary block, but clear shifted legacy attraction cells.
     for (let rowNumber = 3; rowNumber <= grandTotal.rowCount; rowNumber += 1) {
       grandTotal.getCell(rowNumber, 4).value = null;
       if (rowNumber >= 20) grandTotal.getCell(rowNumber, 5).value = null;
     }
-    for (let rowNumber = 4 + daytourEstablishments.length; rowNumber < 29 + grandTotalExtraRows; rowNumber += 1) {
-      grandTotal.getCell(rowNumber, 1).value = "";
-      grandTotal.getCell(rowNumber, 2).value = "";
-      grandTotal.getCell(rowNumber, 3).value = "";
-    }
-    formatGrandTotalSheet(grandTotal, 3 + daytourEstablishments.length, 29 + grandTotalExtraRows);
+    formatGrandTotalSheet(grandTotal, 3 + daytourEstablishments.length, grandTotalTotalRow);
   }
   if (weeklyLabel && monthsToWrite[0]) {
     monthsToWrite[0].name = weeklyLabel.slice(0, 31);
