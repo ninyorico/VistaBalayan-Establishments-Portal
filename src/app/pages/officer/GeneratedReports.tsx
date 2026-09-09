@@ -54,6 +54,16 @@ const addFullBorders = (sheet: ExcelJS.Worksheet, startRow: number, rowCount: nu
     }
   }
 };
+const copyRowFormatting = (sheet: ExcelJS.Worksheet, sourceRow: number, startRow: number, rowCount: number, startColumn: number, endColumn: number) => {
+  for (let row = startRow; row < startRow + rowCount; row += 1) {
+    sheet.getRow(row).height = sheet.getRow(sourceRow).height;
+    for (let column = startColumn; column <= endColumn; column += 1) {
+      const source = sheet.getCell(sourceRow, column);
+      const target = sheet.getCell(row, column);
+      target.style = { ...source.style };
+    }
+  }
+};
 
 const includeMonth = (selectedMonth: number | undefined, selectedMonths: number[] | undefined, monthNumber: number) =>
   selectedMonths ? selectedMonths.includes(monthNumber) : !selectedMonth || selectedMonth === monthNumber;
@@ -108,6 +118,7 @@ export const downloadOfficialArrivalsWorkbook = async ({
     const includeData = includeMonth(selectedMonth, selectedMonths, monthNumber);
     if (daytourExtraRows) {
       sheet.insertRows(38, Array.from({ length: daytourExtraRows }, () => Array(16).fill(null)), "i");
+      copyRowFormatting(sheet, 37, 38, daytourExtraRows, 2, 16);
       addFullBorders(sheet, 38, daytourExtraRows, 2, 16);
     }
     const daytourTotalRow = 38 + daytourExtraRows;
@@ -116,6 +127,7 @@ export const downloadOfficialArrivalsWorkbook = async ({
     const overnightDateRow = 41 + daytourExtraRows;
     if (overnightExtraRows) {
       sheet.insertRows(overnightTotalRow, Array.from({ length: overnightExtraRows }, () => Array(16).fill(null)), "i");
+      copyRowFormatting(sheet, overnightTotalRow - overnightExtraRows - 1, overnightTotalRow, overnightExtraRows, 2, 9);
       addFullBorders(sheet, overnightTotalRow, overnightExtraRows, 2, 9);
     }
     sheet.getCell("H4").value = new Date(Date.UTC(year, monthNumber - 1, 1));
