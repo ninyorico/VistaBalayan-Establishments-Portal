@@ -79,8 +79,8 @@ export const downloadOfficialArrivalsWorkbook = async ({
   });
   const establishmentByKey = new Map(establishments.map((establishment) => [exportNameKey(establishment.name), establishment]));
 
-  const visitorFor = (establishment: EstablishmentReportingRow, monthNumber: number) => visitors.filter((record) => record.establishment_id === establishment.id && record.report_date?.startsWith(`${year}-${String(monthNumber).padStart(2, "0")}`));
-  const accommodationFor = (establishment: EstablishmentReportingRow, monthNumber: number) => accommodation.filter((record) => record.establishment_id === establishment.id && record.report_date?.startsWith(`${year}-${String(monthNumber).padStart(2, "0")}`));
+  const visitorFor = (establishment: EstablishmentReportingRow, monthNumber: number) => visitors.filter((record) => record.establishment_id === establishment.id && (weeklyLabel || record.report_date?.startsWith(`${year}-${String(monthNumber).padStart(2, "0")}`)));
+  const accommodationFor = (establishment: EstablishmentReportingRow, monthNumber: number) => accommodation.filter((record) => record.establishment_id === establishment.id && (weeklyLabel || record.report_date?.startsWith(`${year}-${String(monthNumber).padStart(2, "0")}`)));
 
   for (const sheet of monthsToWrite) {
     const monthNumber = months.findIndex((value) => sheet.name.startsWith(value.toUpperCase())) + 1;
@@ -117,7 +117,8 @@ export const downloadOfficialArrivalsWorkbook = async ({
       const establishment = establishmentByKey.get(exportNameKey(name));
       const source = includeData && establishment ? accommodationFor(establishment, monthNumber) : [];
       const reportSource = source.map((record) => ({ ...record, status: "validated" as const }));
-      const summary = establishment ? summarizeAccommodation(establishment, reportSource, year, monthNumber) : null;
+      const summaryBase = establishment ? summarizeAccommodation(establishment, reportSource, year, monthNumber) : null;
+      const summary = summaryBase && weeklyLabel ? { ...summaryBase, daysInPeriod: 7, availableRoomNights: summaryBase.totalRooms * 7, occupancyRate: summaryBase.totalRooms > 0 ? (summaryBase.roomsOccupied / (summaryBase.totalRooms * 7)) * 100 : 0 } : summaryBase;
       const hasData = source.length > 0;
       sheet.getCell(rowNumber, 4).value = hasData ? (establishment?.ae_id || "") : "NO RECORD SUBMITTED";
       sheet.getCell(rowNumber, 5).value = hasData && summary ? summary.guestCheckIns : "";
