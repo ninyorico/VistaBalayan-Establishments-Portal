@@ -151,7 +151,7 @@ export default function GeneratedReports() {
     const table = family === "accommodation" ? "accommodation_reports" : "visitor_reports";
     const start = `${year}-${String(month).padStart(2, "0")}-01`;
     const end = `${year}-${String(month).padStart(2, "0")}-${String(daysInMonth(year, month)).padStart(2, "0")}`;
-    const { error } = await supabase.from(table).update({ status: "validated" }).eq("establishment_id", establishmentId).gte("report_date", start).lte("report_date", end).in("status", ["submitted", "pending", "under_review"]);
+    const { error } = await supabase.from(table).update({ status: "validated" }).eq("establishment_id", establishmentId).gte("report_date", start).lte("report_date", end).in("status", ["submitted", "pending", "under_review", "needs_review"]);
     if (error) {
       toast.error(`Validation failed: ${error.message}`);
       return;
