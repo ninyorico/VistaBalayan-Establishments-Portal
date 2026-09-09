@@ -254,21 +254,27 @@ export const summarizeVisitors = (establishment: EstablishmentReportingRow, reco
     FOREIGN: { male: 0, female: 0, total: 0 },
   };
   const finalized = records.filter((record) => ["validated", "approved"].includes(String(record.status || "").toLowerCase()));
+  const unclassified = { male: 0, female: 0, total: 0 };
   finalized.forEach((record) => {
-    const category = residenceCategory(record);
-    if (!category) return;
     const male = numeric(record.male_visitors ?? record.total_male);
     const female = numeric(record.female_visitors ?? record.total_female);
+    const category = residenceCategory(record);
+    if (!category) {
+      unclassified.male += male;
+      unclassified.female += female;
+      unclassified.total += numeric(record.total_visitors ?? record.total_guests ?? male + female);
+      return;
+    }
     buckets[category].male += male;
     buckets[category].female += female;
-    buckets[category].total += male + female;
+    buckets[category].total += numeric(record.total_visitors ?? record.total_guests ?? male + female);
   });
   const grandTotal = (Object.keys(buckets) as ResidenceCategory[]).reduce((result, category) => {
     result.male += buckets[category].male;
     result.female += buckets[category].female;
     result.total += buckets[category].total;
     return result;
-  }, { male: 0, female: 0, total: 0 });
+  }, { ...unclassified });
   const invalid = records.flatMap(validateVisitorRecord);
   return {
     establishmentId: establishment.id,

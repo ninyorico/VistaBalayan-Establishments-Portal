@@ -43,8 +43,8 @@ const exportNameAliases: Record<string, string> = {
 };
 const exportNameKey = (value: string) => exportNameAliases[normalizeExportName(value)] || normalizeExportName(value);
 
-const finalizedRecords = <T extends { status?: string | null }>(records: T[]) => records.filter((record) => isFinalized(record.status));
-const numeric = (value: unknown) => typeof value === "number" && Number.isFinite(value) ? value : Number(value) || 0;
+const includeMonth = (selectedMonth: number | undefined, selectedMonths: number[] | undefined, monthNumber: number) =>
+  selectedMonths ? selectedMonths.includes(monthNumber) : !selectedMonth || selectedMonth === monthNumber;
 
 export const downloadOfficialArrivalsWorkbook = async ({
   filename,
@@ -71,13 +71,13 @@ export const downloadOfficialArrivalsWorkbook = async ({
   const monthsToWrite = sheets;
   const establishmentByKey = new Map(establishments.map((establishment) => [exportNameKey(establishment.name), establishment]));
 
-  const visitorFor = (establishment: EstablishmentReportingRow, monthNumber: number) => summarizeVisitors(establishment, finalizedRecords(visitors.filter((record) => record.establishment_id === establishment.id && record.report_date?.startsWith(`${year}-${String(monthNumber).padStart(2, "0")}`))));
-  const accommodationFor = (establishment: EstablishmentReportingRow, monthNumber: number) => summarizeAccommodation(establishment, finalizedRecords(accommodation.filter((record) => record.establishment_id === establishment.id && record.report_date?.startsWith(`${year}-${String(monthNumber).padStart(2, "0")}`))), year, monthNumber);
+  const visitorFor = (establishment: EstablishmentReportingRow, monthNumber: number) => visitors.filter((record) => record.establishment_id === establishment.id && record.report_date?.startsWith(`${year}-${String(monthNumber).padStart(2, "0")}`));
+  const accommodationFor = (establishment: EstablishmentReportingRow, monthNumber: number) => accommodation.filter((record) => record.establishment_id === establishment.id && record.report_date?.startsWith(`${year}-${String(monthNumber).padStart(2, "0")}`));
 
   for (const sheet of monthsToWrite) {
     const monthNumber = months.findIndex((value) => sheet.name.startsWith(value.toUpperCase())) + 1;
     if (!monthNumber) continue;
-    const includeData = !selectedMonths && (!selectedMonth || selectedMonth === monthNumber) || Boolean(selectedMonths?.includes(monthNumber));
+    const includeData = includeMonth(selectedMonth, selectedMonths, monthNumber);
     sheet.getCell("H4").value = new Date(Date.UTC(year, monthNumber - 1, 1));
     sheet.getCell("I4").value = new Date(Date.UTC(year, monthNumber - 1, 1));
     sheet.getCell("D41").value = new Date(Date.UTC(year, monthNumber - 1, 1));
@@ -87,28 +87,34 @@ export const downloadOfficialArrivalsWorkbook = async ({
       const name = String(sheet.getCell(rowNumber, 3).value || "").trim();
       if (!name || name === "TOURIST ATTRACTIONS") continue;
       const establishment = establishmentByKey.get(exportNameKey(name));
-      const summary = includeData && establishment ? visitorFor(establishment, monthNumber) : null;
-      const hasData = Boolean(summary && summary.status !== "missing");
-      const values = hasData && summary ? [summary.thisProvince.male, summary.thisProvince.female, summary.thisProvince.total, summary.otherProvince.male, summary.otherProvince.female, summary.otherProvince.total, summary.foreign.male, summary.foreign.female, summary.foreign.total, summary.grandTotal.male, summary.grandTotal.female, summary.grandTotal.total] : [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
+      const source = includeData && establishment ? visitorFor(establishment, monthNumber) : [];
+      const reportSource = source.map((record) => ({ ...record, status: "validated" as const }));
+      const summary = establishment ? summarizeVisitors(establishment, reportSource) : null;
+      const hasData = source.length > 0;
+      const values = hasData && summary ? [summary.thisProvince.male, summary.thisProvince.female, summary.thisProvince.total, summary.otherProvince.male, summary.otherProvince.female, summary.otherProvince.total, summary.foreign.male, summary.foreign.female, summary.foreign.total, summary.grandTotal.male, summary.grandTotal.female, summary.grandTotal.total] : Array(12).fill("");
       sheet.getCell(rowNumber, 4).value = hasData ? (establishment?.attraction_code || "") : "NO RECORD SUBMITTED";
       [5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16].forEach((column, index) => { sheet.getCell(rowNumber, column).value = values[index]; });
-      sheet.getCell(rowNumber, 7).value = { formula: `SUM(E${rowNumber}:F${rowNumber})` };
-      sheet.getCell(rowNumber, 10).value = { formula: `SUM(H${rowNumber}:I${rowNumber})` };
-      sheet.getCell(rowNumber, 13).value = { formula: `SUM(K${rowNumber}:L${rowNumber})` };
-      sheet.getCell(rowNumber, 14).value = { formula: `SUM(E${rowNumber},H${rowNumber},K${rowNumber})` };
-      sheet.getCell(rowNumber, 15).value = { formula: `SUM(F${rowNumber},I${rowNumber},L${rowNumber})` };
-      sheet.getCell(rowNumber, 16).value = { formula: `SUM(N${rowNumber}:O${rowNumber})` };
+      if (hasData) {
+        sheet.getCell(rowNumber, 7).value = { formula: `SUM(E${rowNumber}:F${rowNumber})` };
+        sheet.getCell(rowNumber, 10).value = { formula: `SUM(H${rowNumber}:I${rowNumber})` };
+        sheet.getCell(rowNumber, 13).value = { formula: `SUM(K${rowNumber}:L${rowNumber})` };
+        sheet.getCell(rowNumber, 14).value = { formula: `SUM(E${rowNumber},H${rowNumber},K${rowNumber})` };
+        sheet.getCell(rowNumber, 15).value = { formula: `SUM(F${rowNumber},I${rowNumber},L${rowNumber})` };
+        sheet.getCell(rowNumber, 16).value = { formula: `SUM(N${rowNumber}:O${rowNumber})` };
+      }
     }
     for (let rowNumber = 45; rowNumber <= 54; rowNumber += 1) {
       const name = String(sheet.getCell(rowNumber, 3).value || "").trim();
       if (!name || name.startsWith("Total")) continue;
       const establishment = establishmentByKey.get(exportNameKey(name));
-      const summary = includeData && establishment ? accommodationFor(establishment, monthNumber) : null;
-      const hasData = Boolean(summary && summary.status !== "missing");
-      sheet.getCell(rowNumber, 4).value = hasData ? (establishment?.ae_id || "") : "";
-      sheet.getCell(rowNumber, 5).value = hasData && summary ? summary.guestCheckIns : "NO RECORD SUBMITTED";
-      sheet.getCell(rowNumber, 6).value = hasData && summary ? summary.guestNights : "NO RECORD SUBMITTED";
-      sheet.getCell(rowNumber, 7).value = hasData && summary ? summary.roomsOccupied : "NO RECORD SUBMITTED";
+      const source = includeData && establishment ? accommodationFor(establishment, monthNumber) : [];
+      const reportSource = source.map((record) => ({ ...record, status: "validated" as const }));
+      const summary = establishment ? summarizeAccommodation(establishment, reportSource, year, monthNumber) : null;
+      const hasData = source.length > 0;
+      sheet.getCell(rowNumber, 4).value = hasData ? (establishment?.ae_id || "") : "NO RECORD SUBMITTED";
+      sheet.getCell(rowNumber, 5).value = hasData && summary ? summary.guestCheckIns : "";
+      sheet.getCell(rowNumber, 6).value = hasData && summary ? summary.guestNights : "";
+      sheet.getCell(rowNumber, 7).value = hasData && summary ? summary.roomsOccupied : "";
       sheet.getCell(rowNumber, 8).value = hasData && summary ? summary.averageLengthOfStay : "";
       sheet.getCell(rowNumber, 9).value = hasData && summary ? summary.occupancyRate : "";
     }
