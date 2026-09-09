@@ -181,18 +181,18 @@ export const downloadOfficialArrivalsWorkbook = async ({
       grandTotal.getCell(rowNumber, 1).value = index + 1;
       grandTotal.getCell(rowNumber, 2).value = establishment.name;
       const monthlyRows = months.map((_, monthIndex) => `'${months[monthIndex].toUpperCase()} ${year}'!P${15 + index}`);
-      grandTotal.getCell(rowNumber, 3).value = { formula: monthlyRows.join("+") };
+      grandTotal.getCell(rowNumber, 3).value = { formula: `SUM(${monthlyRows.join(",")})` };
     });
     for (let rowNumber = 4 + daytourEstablishments.length; rowNumber <= 18 + grandTotalExtraRows; rowNumber += 1) {
       grandTotal.getCell(rowNumber, 1).value = "";
       grandTotal.getCell(rowNumber, 2).value = "";
       grandTotal.getCell(rowNumber, 3).value = "";
     }
-    grandTotal.getCell("E4").value = { formula: months.map((_, index) => `'${months[index].toUpperCase()} ${year}'!P${exportedDaytourTotalRow}`).join("+") };
-    grandTotal.getCell("E7").value = { formula: months.map((_, index) => `'${months[index].toUpperCase()} ${year}'!F${exportedOvernightTotalRow}`).join("+") };
+    grandTotal.getCell("E4").value = { formula: `SUM(${months.map((_, index) => `'${months[index].toUpperCase()} ${year}'!P${exportedDaytourTotalRow}`).join(",")})` };
+    grandTotal.getCell("E7").value = { formula: `SUM(${months.map((_, index) => `'${months[index].toUpperCase()} ${year}'!F${exportedOvernightTotalRow}`).join(",")})` };
     grandTotal.getCell("E10").value = { formula: "E4+E7" };
-    grandTotal.getCell("E13").value = { formula: months.map((_, index) => `'${months[index].toUpperCase()} ${year}'!N${exportedDaytourTotalRow}`).join("+") };
-    grandTotal.getCell("E16").value = { formula: months.map((_, index) => `'${months[index].toUpperCase()} ${year}'!O${exportedDaytourTotalRow}`).join("+") };
+    grandTotal.getCell("E13").value = { formula: `SUM(${months.map((_, index) => `'${months[index].toUpperCase()} ${year}'!N${exportedDaytourTotalRow}`).join(",")})` };
+    grandTotal.getCell("E16").value = { formula: `SUM(${months.map((_, index) => `'${months[index].toUpperCase()} ${year}'!O${exportedDaytourTotalRow}`).join(",")})` };
     grandTotal.getCell("E19").value = { formula: "E13+E16" };
     grandTotal.getCell(`C${29 + grandTotalExtraRows}`).value = { formula: `SUM(C4:C${18 + grandTotalExtraRows})` };
   }
