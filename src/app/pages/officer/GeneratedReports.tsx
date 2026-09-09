@@ -110,6 +110,16 @@ const leftAlignEstablishmentNames = (sheet: ExcelJS.Worksheet, startRow: number,
     cell.alignment = { ...cell.alignment, horizontal: "left", vertical: "middle" };
   }
 };
+const formatGrandTotalSheet = (sheet: ExcelJS.Worksheet, establishmentEndRow: number, totalRow: number) => {
+  sheet.getColumn(1).width = Math.max(8, String(establishmentEndRow - 3).length + 5);
+  sheet.getColumn(2).width = 38;
+  sheet.getColumn(3).width = 18;
+  sheet.getColumn(5).width = 18;
+  addFullBorders(sheet, 3, totalRow - 2, 1, 3);
+  centerExportTable(sheet, 4, totalRow, 1, 3);
+  leftAlignEstablishmentNames(sheet, 4, establishmentEndRow);
+  addFullBorders(sheet, 3, 17, 5, 5);
+};
 const shiftMergedRanges = (sheet: ExcelJS.Worksheet, insertRow: number, rowCount: number) => {
   const ranges = [...sheet.model.merges];
   ranges.forEach((range) => sheet.unMergeCells(range));
@@ -297,6 +307,7 @@ export const downloadOfficialArrivalsWorkbook = async ({
     setFormula(grandTotal.getCell("E16"), `SUM(${months.map((_, index) => `'${months[index].toUpperCase()} ${year}'!O${exportedDaytourTotalRow}`).join(",")})`);
     setFormula(grandTotal.getCell("E19"), "E13+E16");
     setFormula(grandTotal.getCell(`C${29 + grandTotalExtraRows}`), `SUM(C4:C${18 + grandTotalExtraRows})`);
+    formatGrandTotalSheet(grandTotal, 3 + daytourEstablishments.length, 29 + grandTotalExtraRows);
   }
   if (weeklyLabel && monthsToWrite[0]) {
     monthsToWrite[0].name = weeklyLabel.slice(0, 31);
