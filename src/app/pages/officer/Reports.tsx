@@ -24,7 +24,7 @@ import {
 } from "recharts";
 import { toast } from "sonner";
 import { supabase } from "../../../lib/supabase";
-import { datestampedWorkbookFilename, downloadTourismReportsWorkbook, getTourismReportFormType } from "../../../lib/exportExcel";
+import { downloadOfficialArrivalsWorkbook } from "./GeneratedReports";
 import {
   normalizeReportStatus,
   reportStatusClasses,
@@ -52,8 +52,7 @@ const getWeekRange = (year: string, week: string) => {
   };
 };
 
-const getReportTypeLabel = (report: Submission) =>
-  getTourismReportFormType(report) === "Visitor Report" ? "Resort" : "Hotels";
+const getReportTypeLabel = (report: Submission) => report.type === "Visitor Report" ? "Resort" : "Hotels";
 
 const statusStyles = reportStatusClasses;
 const normalizeStatus = normalizeReportStatus;
@@ -71,7 +70,7 @@ const detectReportAnomalies = (report: Submission) => {
     reasons.push("Invalid visitor/check-in total");
   }
 
-  if (getTourismReportFormType(report) === "Visitor Report") {
+  if (report.type === "Visitor Report") {
     const male = Number(report.details?.total_male ?? 0);
     const female = Number(report.details?.total_female ?? 0);
     const guests = Number(report.details?.total_guests ?? report.visitors ?? 0);
@@ -155,33 +154,30 @@ export default function Reports() {
   const fetchSubmissions = async () => {
     setLoading(true);
     
-    const { data: visitorData, error: visitorError } = await supabase
-      .from("visitor_reports")
-      .select(`
-        *,
-        establishments!visitor_reports_establishment_id_fkey (
-          name,
-          type,
-          total_rooms
-        )
-      `)
-      .order("created_at", { ascending: false });
+    const fetchAllReports = async (table: "visitor_reports" | "accommodation_reports") => {
+      const rows: any[] = [];
+      const pageSize = 1000;
+      for (let offset = 0; ; offset += pageSize) {
+        const { data, error } = await supabase
+          .from(table)
+          .select(`*, establishments!${table === "visitor_reports" ? "visitor_reports_establishment_id_fkey" : "accommodation_reports_establishment_id_fkey"} (name, type, total_rooms, ae_id, attraction_code)`)
+          .order("created_at", { ascending: false })
+          .range(offset, offset + pageSize - 1);
+        if (error) throw error;
+        rows.push(...(data || []));
+        if (!data || data.length < pageSize) break;
+      }
+      return rows;
+    };
 
-    if (visitorError) console.error("Visitor reports error:", visitorError);
-
-    const { data: accommodationData, error: accError } = await supabase
-      .from("accommodation_reports")
-      .select(`
-        *,
-        establishments!accommodation_reports_establishment_id_fkey (
-          name,
-          type,
-          total_rooms
-        )
-      `)
-      .order("created_at", { ascending: false });
-
-    if (accError) console.error("Accommodation reports error:", accError);
+    let visitorData: any[] = [];
+    let accommodationData: any[] = [];
+    try {
+      [visitorData, accommodationData] = await Promise.all([fetchAllReports("visitor_reports"), fetchAllReports("accommodation_reports")]);
+    } catch (error) {
+      console.error("Reports loading error:", error);
+      toast.error(`Failed to load reports: ${error instanceof Error ? error.message : "Unknown error"}`);
+    }
 
     const getEstablishmentName = (item: any) => {
       if (item.establishments) {
@@ -287,15 +283,10 @@ export default function Reports() {
         grouped[key] = (grouped[key] || 0) + (item.total_guests || 0);
       });
 
-      const chartDataArray = filterType === "year"
-        ? months.map((period) => ({
-            period,
-            visitors: grouped[period] || 0,
-          }))
-        : Object.entries(grouped).map(([period, visitors]) => ({
-            period,
-            visitors,
-          }));
+      const chartDataArray = Object.entries(grouped).map(([period, visitors]) => ({
+        period,
+        visitors,
+      }));
       setChartData(chartDataArray);
       
       const currentTotal = chartDataArray[chartDataArray.length - 1]?.visitors || 0;
@@ -331,14 +322,68 @@ export default function Reports() {
 
   const handleExport = async () => {
     try {
-      await downloadTourismReportsWorkbook(
-        datestampedWorkbookFilename("tourism-reports"),
-        filteredReports
-      );
-      toast.success(`Exported ${filteredReports.length} report(s) to Excel`);
+      const establishmentsById = new Map<string, any>();
+      const accommodation: any[] = [];
+      const visitors: any[] = [];
+      filteredReports.forEach((report) => {
+        const establishmentId = String(report.details?.establishment_id || report.id);
+        const joined = Array.isArray(report.details?.establishments) ? report.details.establishments[0] : report.details?.establishments;
+        establishmentsById.set(establishmentId, {
+          id: establishmentId,
+          name: report.establishment,
+          type: joined?.type || "resort",
+          reporting_mode: report.type === "Visitor Report" ? "visitor" : "accommodation",
+          ae_id: joined?.ae_id || "",
+          attraction_code: joined?.attraction_code || "",
+          total_rooms: Number(report.details?.total_rooms || joined?.total_rooms || 0),
+          status: "active",
+        });
+        if (report.type === "Visitor Report") {
+          visitors.push({
+            id: report.id,
+            establishment_id: establishmentId,
+            report_date: report.reportDate,
+            male_visitors: report.details?.male_visitors,
+            female_visitors: report.details?.female_visitors,
+            total_visitors: report.details?.total_visitors,
+            total_male: report.details?.total_male,
+            total_female: report.details?.total_female,
+            total_guests: report.details?.total_guests ?? report.visitors,
+            residence_category: report.details?.residence_category,
+            residence_type: report.details?.residence_type,
+            status: report.status,
+          });
+        } else {
+          accommodation.push({
+            id: report.id,
+            establishment_id: establishmentId,
+            report_date: report.reportDate,
+            total_rooms: report.details?.total_rooms,
+            total_check_ins: report.details?.total_check_ins,
+            total_guest_nights: report.details?.total_guest_nights,
+            total_occupied_rooms: report.details?.total_occupied_rooms,
+            guest_check_ins: report.details?.guest_check_ins,
+            guest_nights: report.details?.guest_nights,
+            rooms_occupied: report.details?.rooms_occupied,
+            foreign_guest_check_ins: report.details?.foreign_guest_check_ins,
+            foreign_guest_nights: report.details?.foreign_guest_nights,
+            status: report.status,
+          });
+        }
+      });
+      const isAnnual = filterType === "year" || (filterType === "month" && !selectedMonth);
+      await downloadOfficialArrivalsWorkbook({
+        filename: isAnnual ? `Balayan_Official_Arrivals_Annual_${selectedYear}.xlsx` : `Balayan_Official_Arrivals_${selectedYear}-${String(months.indexOf(selectedMonth) + 1).padStart(2, "0")}.xlsx`,
+        year: Number(selectedYear),
+        selectedMonth: isAnnual ? undefined : months.indexOf(selectedMonth) + 1,
+        establishments: Array.from(establishmentsById.values()),
+        accommodation,
+        visitors,
+      });
+      toast.success(`Exported official arrivals template for ${getFilterLabel()}`);
     } catch (error) {
-      console.error("Excel export error:", error);
-      toast.error("Failed to export Excel workbook");
+      console.error("Official Excel export error:", error);
+      toast.error(error instanceof Error ? error.message : "Failed to export official Excel workbook");
     }
   };
 
@@ -493,10 +538,6 @@ export default function Reports() {
       return acc;
     }, {})
   ).sort((a, b) => b[1] - a[1])[0];
-  const chartMaxVisitors = Math.max(1, ...chartData.map((item) => Number(item.visitors) || 0));
-  const chartVisitorTicks = Array.from({ length: 5 }, (_, index) =>
-    Math.round((chartMaxVisitors * (4 - index)) / 4)
-  );
 
   return (
     <div className="space-y-6">
@@ -636,32 +677,16 @@ export default function Reports() {
           Visitor Trends ({getFilterLabel()})
         </h3>
         {chartData.length > 0 ? (
-          <div className="flex min-w-0 pb-2">
-            <div className="relative h-[350px] w-16 shrink-0 border-r border-slate-300 bg-white pr-1 text-right text-[11px] text-slate-600">
-              <div className="absolute inset-x-0 top-1 bottom-[75px] flex flex-col justify-between">
-                {chartVisitorTicks.map((tick, index) => (
-                  <span key={`${tick}-${index}`} className="relative pr-2">
-                    {tick.toLocaleString()}
-                    <span className="absolute right-[-4px] top-1/2 h-px w-1 bg-slate-400" aria-hidden="true" />
-                  </span>
-                ))}
-              </div>
-            </div>
-            <div className="min-w-0 flex-1 overflow-x-auto">
-              <div className="min-w-[720px]">
-                <ResponsiveContainer width="100%" height={350}>
-                  <LineChart data={chartData} margin={{ top: 5, right: 8, bottom: 0, left: 16 }}>
-                    <CartesianGrid strokeDasharray="3 3" />
-                    <XAxis dataKey="period" interval={0} angle={-35} textAnchor="end" height={75} tickMargin={8} />
-                    <YAxis hide domain={[0, chartMaxVisitors]} ticks={chartVisitorTicks} />
-                    <Tooltip />
-                    <Legend />
-                    <Line type="monotone" dataKey="visitors" stroke="#3b82f6" strokeWidth={2} name="Visitors" />
-                  </LineChart>
-                </ResponsiveContainer>
-              </div>
-            </div>
-          </div>
+          <ResponsiveContainer width="100%" height={350}>
+            <LineChart data={chartData}>
+              <CartesianGrid strokeDasharray="3 3" />
+              <XAxis dataKey="period" />
+              <YAxis />
+              <Tooltip />
+              <Legend />
+              <Line type="monotone" dataKey="visitors" stroke="#3b82f6" strokeWidth={2} name="Visitors" />
+            </LineChart>
+          </ResponsiveContainer>
         ) : (
           <div className="text-center py-12 text-gray-500">No data available for the selected period</div>
         )}

@@ -46,7 +46,7 @@ const exportNameKey = (value: string) => exportNameAliases[normalizeExportName(v
 const finalizedRecords = <T extends { status?: string | null }>(records: T[]) => records.filter((record) => isFinalized(record.status));
 const numeric = (value: unknown) => typeof value === "number" && Number.isFinite(value) ? value : Number(value) || 0;
 
-const downloadOfficialArrivalsWorkbook = async ({
+export const downloadOfficialArrivalsWorkbook = async ({
   filename,
   year,
   selectedMonth,
