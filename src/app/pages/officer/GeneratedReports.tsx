@@ -72,14 +72,7 @@ export const downloadOfficialArrivalsWorkbook = async ({
   const allMonthSheets = workbook.worksheets.filter((sheet) => sheet.name !== "GRAND TOTAL");
   allMonthSheets.forEach((sheet, index) => {
     if (months[index]) sheet.name = `${months[index].toUpperCase()} ${year}`;
-    for (let column = 5; column <= 16; column += 1) {
-      const letter = String.fromCharCode(64 + column);
-      sheet.getCell(38, column).value = { formula: `SUM(${letter}15:${letter}37)` };
-    }
-    for (let column = 5; column <= 7; column += 1) {
-      const letter = String.fromCharCode(64 + column);
-      sheet.getCell(54, column).value = { formula: `SUM(${letter}45:${letter}53)` };
-    }
+
   });
   const annual = !selectedMonth && !selectedMonths && !weeklyLabel;
   const activeMonths = selectedMonths || (selectedMonth ? [selectedMonth] : months.map((_, index) => index + 1));
@@ -103,13 +96,13 @@ export const downloadOfficialArrivalsWorkbook = async ({
     const includeData = includeMonth(selectedMonth, selectedMonths, monthNumber);
     if (daytourExtraRows) sheet.insertRows(38, Array.from({ length: daytourExtraRows }, () => Array(16).fill(null)), "i");
     const daytourTotalRow = 38 + daytourExtraRows;
-    const overnightStartRow = 42 + daytourExtraRows;
-    const overnightTotalRow = 51 + daytourExtraRows + overnightExtraRows;
-    const overnightHeaderRow = overnightStartRow - 1;
+    const overnightStartRow = 45 + daytourExtraRows;
+    const overnightTotalRow = 54 + daytourExtraRows + overnightExtraRows;
+    const overnightDateRow = 41 + daytourExtraRows;
     if (overnightExtraRows) sheet.insertRows(overnightTotalRow, Array.from({ length: overnightExtraRows }, () => Array(16).fill(null)), "i");
     sheet.getCell("H4").value = new Date(Date.UTC(year, monthNumber - 1, 1));
     sheet.getCell("I4").value = new Date(Date.UTC(year, monthNumber - 1, 1));
-    for (let column = 4; column <= 16; column += 1) sheet.getCell(overnightHeaderRow, column).value = new Date(Date.UTC(year, monthNumber - 1, 1));
+    sheet.getCell(overnightDateRow, 4).value = new Date(Date.UTC(year, monthNumber - 1, 1));
 
     for (let rowNumber = 15; rowNumber < daytourTotalRow; rowNumber += 1) {
       const establishmentIndex = rowNumber - 15;
@@ -172,7 +165,7 @@ export const downloadOfficialArrivalsWorkbook = async ({
   }
   const grandTotal = workbook.getWorksheet("GRAND TOTAL");
   const exportedDaytourTotalRow = 38 + daytourExtraRows;
-  const exportedOvernightTotalRow = 51 + daytourExtraRows + overnightExtraRows;
+  const exportedOvernightTotalRow = 54 + daytourExtraRows + overnightExtraRows;
   const grandTotalExtraRows = Math.max(0, daytourEstablishments.length - 15);
   if (grandTotal && annual && grandTotalExtraRows) grandTotal.insertRows(19, Array.from({ length: grandTotalExtraRows }, () => Array(5).fill(null)), "i");
   if (grandTotal && annual) {
