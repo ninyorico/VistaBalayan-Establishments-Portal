@@ -24,29 +24,100 @@ const currentYear = new Date().getFullYear();
 const statusLabel = (status: string) => status.replace(/_/g, " ").replace(/\b\w/g, (letter) => letter.toUpperCase());
 const isFinalized = (status?: string | null) => ["validated", "approved"].includes(String(status || "").toLowerCase());
 
-const downloadWorkbook = async (filename: string, sheets: Array<{ name: string; headers: string[]; rows: Array<Array<string | number>> }>) => {
-  const workbook = new ExcelJS.Workbook();
-  workbook.creator = "VistaBalayan";
-  sheets.forEach(({ name, headers, rows }) => {
-    const sheet = workbook.addWorksheet(name.slice(0, 31));
-    sheet.addRow(["Republic of the Philippines"]);
-    sheet.addRow(["MUNICIPALITY OF BALAYAN"]);
-    sheet.addRow(["Province of Batangas"]);
-    sheet.addRow([]);
-    sheet.addRow(headers);
-    rows.forEach((row) => sheet.addRow(row));
-    sheet.getRow(5).font = { bold: true, color: { argb: "FFFFFFFF" } };
-    sheet.getRow(5).fill = { type: "pattern", pattern: "solid", fgColor: { argb: "FF0E5A72" } };
-    sheet.columns.forEach((column) => { column.width = 20; });
-    sheet.views = [{ state: "frozen", ySplit: 5 }];
-  });
-  const buffer = await workbook.xlsx.writeBuffer();
+const downloadBuffer = (filename: string, buffer: ArrayBuffer | Uint8Array) => {
   const url = URL.createObjectURL(new Blob([buffer], { type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" }));
   const link = document.createElement("a");
   link.href = url;
   link.download = filename;
   link.click();
   URL.revokeObjectURL(url);
+};
+
+const normalizeExportName = (value: string) => value.toUpperCase().replace(/[^A-Z0-9]/g, "");
+const exportNameAliases: Record<string, string> = {
+  MYPLACERESORTPAVILLION: "MYPLACERESORTPAVILLION",
+  MYPLACERESORTPAVILION: "MYPLACERESORTPAVILLION",
+  VILLABEADOYRESORTPAVILION: "VILLABEADOYRESORTPAVILLION",
+  VILLABEADOYRESORTPAVILLION: "VILLABEADOYRESORTPAVILLION",
+  SOGGIORNOLORENZANA: "SOGGIORNS",
+};
+const exportNameKey = (value: string) => exportNameAliases[normalizeExportName(value)] || normalizeExportName(value);
+
+const finalizedRecords = <T extends { status?: string | null }>(records: T[]) => records.filter((record) => isFinalized(record.status));
+const numeric = (value: unknown) => typeof value === "number" && Number.isFinite(value) ? value : Number(value) || 0;
+
+const downloadOfficialArrivalsWorkbook = async ({
+  filename,
+  year,
+  selectedMonth,
+  establishments,
+  accommodation,
+  visitors,
+}: {
+  filename: string;
+  year: number;
+  selectedMonth?: number;
+  establishments: EstablishmentReportingRow[];
+  accommodation: AccommodationSourceRecord[];
+  visitors: VisitorSourceRecord[];
+}) => {
+  const template = await fetch("/templates/Balayan_Official_Arrivals_Template.xlsx");
+  if (!template.ok) throw new Error(`Official arrivals template could not be loaded (${template.status})`);
+  const workbook = new ExcelJS.Workbook();
+  await workbook.xlsx.load(await template.arrayBuffer());
+  const sheets = workbook.worksheets.filter((sheet) => sheet.name !== "GRAND TOTAL");
+  const monthsToWrite = sheets;
+  const establishmentByKey = new Map(establishments.map((establishment) => [exportNameKey(establishment.name), establishment]));
+
+  const visitorFor = (establishment: EstablishmentReportingRow, monthNumber: number) => summarizeVisitors(establishment, finalizedRecords(visitors.filter((record) => record.establishment_id === establishment.id && record.report_date?.startsWith(`${year}-${String(monthNumber).padStart(2, "0")}`))));
+  const accommodationFor = (establishment: EstablishmentReportingRow, monthNumber: number) => summarizeAccommodation(establishment, finalizedRecords(accommodation.filter((record) => record.establishment_id === establishment.id && record.report_date?.startsWith(`${year}-${String(monthNumber).padStart(2, "0")}`))), year, monthNumber);
+
+  for (const sheet of monthsToWrite) {
+    const monthNumber = months.findIndex((value) => sheet.name.startsWith(value.toUpperCase())) + 1;
+    if (!monthNumber) continue;
+    const includeData = !selectedMonth || selectedMonth === monthNumber;
+    sheet.getCell("H4").value = new Date(Date.UTC(year, monthNumber - 1, 1));
+    sheet.getCell("I4").value = new Date(Date.UTC(year, monthNumber - 1, 1));
+    sheet.getCell("D41").value = new Date(Date.UTC(year, monthNumber - 1, 1));
+    for (let column = 4; column <= 16; column += 1) sheet.getCell(41, column).value = new Date(Date.UTC(year, monthNumber - 1, 1));
+
+    for (let rowNumber = 15; rowNumber <= 37; rowNumber += 1) {
+      const name = String(sheet.getCell(rowNumber, 3).value || "").trim();
+      if (!name || name === "TOURIST ATTRACTIONS") continue;
+      const establishment = establishmentByKey.get(exportNameKey(name));
+      const summary = includeData && establishment ? visitorFor(establishment, monthNumber) : null;
+      const hasData = Boolean(summary && summary.status !== "missing");
+      const values = hasData && summary ? [summary.thisProvince.male, summary.thisProvince.female, summary.thisProvince.total, summary.otherProvince.male, summary.otherProvince.female, summary.otherProvince.total, summary.foreign.male, summary.foreign.female, summary.foreign.total, summary.grandTotal.male, summary.grandTotal.female, summary.grandTotal.total] : [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
+      sheet.getCell(rowNumber, 4).value = hasData ? (establishment?.attraction_code || "") : "NO RECORD SUBMITTED";
+      [5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16].forEach((column, index) => { sheet.getCell(rowNumber, column).value = values[index]; });
+      sheet.getCell(rowNumber, 7).value = { formula: `SUM(E${rowNumber}:F${rowNumber})` };
+      sheet.getCell(rowNumber, 10).value = { formula: `SUM(H${rowNumber}:I${rowNumber})` };
+      sheet.getCell(rowNumber, 13).value = { formula: `SUM(K${rowNumber}:L${rowNumber})` };
+      sheet.getCell(rowNumber, 14).value = { formula: `SUM(E${rowNumber},H${rowNumber},K${rowNumber})` };
+      sheet.getCell(rowNumber, 15).value = { formula: `SUM(F${rowNumber},I${rowNumber},L${rowNumber})` };
+      sheet.getCell(rowNumber, 16).value = { formula: `SUM(N${rowNumber}:O${rowNumber})` };
+    }
+    for (let rowNumber = 45; rowNumber <= 54; rowNumber += 1) {
+      const name = String(sheet.getCell(rowNumber, 3).value || "").trim();
+      if (!name || name.startsWith("Total")) continue;
+      const establishment = establishmentByKey.get(exportNameKey(name));
+      const summary = includeData && establishment ? accommodationFor(establishment, monthNumber) : null;
+      const hasData = Boolean(summary && summary.status !== "missing");
+      sheet.getCell(rowNumber, 4).value = hasData ? (establishment?.ae_id || "") : "";
+      sheet.getCell(rowNumber, 5).value = hasData && summary ? summary.guestCheckIns : "NO RECORD SUBMITTED";
+      sheet.getCell(rowNumber, 6).value = hasData && summary ? summary.guestNights : "NO RECORD SUBMITTED";
+      sheet.getCell(rowNumber, 7).value = hasData && summary ? summary.roomsOccupied : "NO RECORD SUBMITTED";
+      sheet.getCell(rowNumber, 8).value = hasData && summary ? summary.averageLengthOfStay : "";
+      sheet.getCell(rowNumber, 9).value = hasData && summary ? summary.occupancyRate : "";
+    }
+  }
+  const grandTotal = workbook.getWorksheet("GRAND TOTAL");
+  if (grandTotal) grandTotal.getCell("A1").value = `BALAYAN TOURISM ARRIVALS — ${year}`;
+  workbook.creator = "VistaBalayan";
+  workbook.modified = new Date();
+  workbook.calcProperties.fullCalcOnLoad = true;
+  const buffer = await workbook.xlsx.writeBuffer();
+  downloadBuffer(filename, buffer);
 };
 
 export default function GeneratedReports() {
@@ -160,19 +231,20 @@ export default function GeneratedReports() {
   };
 
   const exportReport = async () => {
-    if (reportKind === "dae3") {
-      await downloadWorkbook(`DAE-3_Balayan_${year}-${String(month).padStart(2, "0")}.xlsx`, [{ name: "DAE-3", headers: ["Province", "Municipality", "Year", "Month", "AE-ID", "Type-Class", "Total Rooms", "Guests Checked-In", "Guest Nights", "Rooms Occupied", "Foreign Arrivals", "Foreign Guest Nights"], rows: accommodationSummaries.filter((row) => row.status === "validated").map((row) => ["Batangas", "Balayan", year, months[month - 1], row.aeId, row.typeClass, row.totalRooms, row.guestCheckIns, row.guestNights, row.roomsOccupied, row.foreignGuestCheckIns, row.foreignGuestNights]) }]);
-    } else if (reportKind === "dae4") {
-      const rows = summarizeDAE4(accommodationSummaries);
-      await downloadWorkbook(`DAE-4_Balayan_${year}-${String(month).padStart(2, "0")}.xlsx`, [{ name: "DAE-4", headers: ["Type-Class", "Establishments", "Rooms", "Domestic Arrivals", "Foreign Arrivals", "Total Arrivals", "Guest Nights", "Rooms Occupied", "Occupancy Rate %", "ALOS"], rows: rows.map((row) => [row.typeClass, row.establishments, row.totalRooms, row.domesticGuestArrivals, row.foreignGuestArrivals, row.totalGuestArrivals, row.totalGuestNights, row.totalRoomsOccupied, row.averageOccupancyRate.toFixed(2), row.averageLengthOfStay.toFixed(2)]) }]);
-    } else if (reportKind === "dae4-annual") {
-      await downloadWorkbook(`DAE-4_Balayan_Annual_${year}.xlsx`, [{ name: "DAE-4 Annual", headers: ["Type-Class", "Establishments", "Rooms", "Domestic Arrivals", "Foreign Arrivals", "Total Arrivals", "Guest Nights", "Rooms Occupied", "Occupancy Rate %", "ALOS"], rows: annualAccommodation.map((row) => [row.typeClass, row.establishments, row.totalRooms, row.domesticGuestArrivals, row.foreignGuestArrivals, row.totalGuestArrivals, row.totalGuestNights, row.totalRoomsOccupied, row.averageOccupancyRate.toFixed(2), row.averageLengthOfStay.toFixed(2)]) }]);
-    } else if (reportKind === "var2m") {
-      await downloadWorkbook(`VAR-2M_Balayan_${year}-${String(month).padStart(2, "0")}.xlsx`, [{ name: "VAR-2M", headers: ["Visitor Attraction Name", "Attraction Code / ID", "This Province Total", "This Province Male", "This Province Female", "Other Province Total", "Other Province Male", "Other Province Female", "Foreign Total", "Foreign Male", "Foreign Female", "Grand Total"], rows: visitorSummaries.filter((row) => row.status === "validated").map((row) => [row.establishmentName, (row as VisitorSummary).attractionCode, (row as VisitorSummary).thisProvince.total, (row as VisitorSummary).thisProvince.male, (row as VisitorSummary).thisProvince.female, (row as VisitorSummary).otherProvince.total, (row as VisitorSummary).otherProvince.male, (row as VisitorSummary).otherProvince.female, (row as VisitorSummary).foreign.total, (row as VisitorSummary).foreign.male, (row as VisitorSummary).foreign.female, row.grandTotal.total]) }]);
-    } else {
-      await downloadWorkbook(`VAR-3M_Balayan_Annual_${year}.xlsx`, [{ name: "VAR-3M", headers: ["Month", "Domestic Male", "Domestic Female", "Foreign Male", "Foreign Female", "Grand Total"], rows: [...annualVisitorRows.map((row) => [months[row.month - 1], row.domesticMale, row.domesticFemale, row.foreignMale, row.foreignFemale, row.grandTotal]), ["ANNUAL TOTAL", annualVisitorRows.reduce((sum, row) => sum + row.domesticMale, 0), annualVisitorRows.reduce((sum, row) => sum + row.domesticFemale, 0), annualVisitorRows.reduce((sum, row) => sum + row.foreignMale, 0), annualVisitorRows.reduce((sum, row) => sum + row.foreignFemale, 0), annualVisitorRows.reduce((sum, row) => sum + row.grandTotal, 0)]] }]);
+    try {
+      const annual = reportKind.includes("annual");
+      await downloadOfficialArrivalsWorkbook({
+        filename: annual ? `Balayan_Official_Arrivals_Annual_${year}.xlsx` : `Balayan_Official_Arrivals_${year}-${String(month).padStart(2, "0")}.xlsx`,
+        year,
+        selectedMonth: annual ? undefined : month,
+        establishments,
+        accommodation,
+        visitors,
+      });
+      toast.success("Official arrivals template exported from validated source data");
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Official arrivals export failed");
     }
-    toast.success("Report exported from validated source data");
   };
 
   const reportTitle = { dae3: "Monthly DAE-3", dae4: "Monthly DAE-4", "dae4-annual": "Annual DAE-4", var2m: "Monthly VAR-2M", "var3m-annual": "Annual VAR-3M" }[reportKind];
@@ -181,8 +253,8 @@ export default function GeneratedReports() {
   return <div className="space-y-6">
     <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
       <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
-        <div><p className="text-sm font-semibold uppercase tracking-wider text-[#0E5A72]">MCTAO Reports</p><h1 className="mt-1 text-3xl font-bold text-slate-950">{reportTitle}</h1><p className="mt-2 text-sm text-slate-600">Generated from validated establishment source records. Missing submissions remain distinct from zero values.</p></div>
-        <div className="flex flex-wrap gap-2"><select value={reportKind} onChange={(event) => setReportKind(event.target.value)} className="rounded-xl border border-slate-300 px-3 py-2 text-sm"><option value="dae3">Monthly DAE-3</option><option value="dae4">Monthly DAE-4</option><option value="dae4-annual">Annual DAE-4</option><option value="var2m">Monthly VAR-2M</option><option value="var3m-annual">Annual VAR-3M</option></select><select value={year} onChange={(event) => setYear(Number(event.target.value))} className="rounded-xl border border-slate-300 px-3 py-2 text-sm">{[currentYear - 2, currentYear - 1, currentYear, currentYear + 1].map((value) => <option key={value}>{value}</option>)}</select>{!reportKind.includes("annual") && <select value={month} onChange={(event) => setMonth(Number(event.target.value))} className="rounded-xl border border-slate-300 px-3 py-2 text-sm">{months.map((value, index) => <option key={value} value={index + 1}>{value}</option>)}</select>}<button type="button" onClick={() => void loadReports()} className="rounded-xl border border-slate-300 p-2 text-slate-600" title="Refresh"><RefreshCw className="h-5 w-5" /></button><button type="button" onClick={() => void exportReport()} className="inline-flex items-center gap-2 rounded-xl bg-[#0E5A72] px-4 py-2 text-sm font-semibold text-white"><Download className="h-4 w-4" /> Export Excel</button></div>
+        <div><p className="text-sm font-semibold uppercase tracking-wider text-[#0E5A72]">MCTAO Reports</p><h1 className="mt-1 text-3xl font-bold text-slate-950">{reportTitle}</h1><p className="mt-2 text-sm text-slate-600">The Excel export uses the official Balayan arrivals template and combines validated day-tour and overnight source records. Missing submissions remain distinct from zero values.</p></div>
+        <div className="flex flex-wrap gap-2"><select value={reportKind} onChange={(event) => setReportKind(event.target.value)} className="rounded-xl border border-slate-300 px-3 py-2 text-sm"><option value="dae3">Monthly DAE-3</option><option value="dae4">Monthly DAE-4</option><option value="dae4-annual">Annual DAE-4</option><option value="var2m">Monthly VAR-2M</option><option value="var3m-annual">Annual VAR-3M</option></select><select value={year} onChange={(event) => setYear(Number(event.target.value))} className="rounded-xl border border-slate-300 px-3 py-2 text-sm">{[currentYear - 2, currentYear - 1, currentYear, currentYear + 1].map((value) => <option key={value}>{value}</option>)}</select>{!reportKind.includes("annual") && <select value={month} onChange={(event) => setMonth(Number(event.target.value))} className="rounded-xl border border-slate-300 px-3 py-2 text-sm">{months.map((value, index) => <option key={value} value={index + 1}>{value}</option>)}</select>}<button type="button" onClick={() => void loadReports()} className="rounded-xl border border-slate-300 p-2 text-slate-600" title="Refresh"><RefreshCw className="h-5 w-5" /></button><button type="button" onClick={() => void exportReport()} className="inline-flex items-center gap-2 rounded-xl bg-[#0E5A72] px-4 py-2 text-sm font-semibold text-white"><Download className="h-4 w-4" /> Export Official Excel</button></div>
       </div>
     </div>
     <div className="grid grid-cols-2 gap-3 md:grid-cols-5">{["validated", "missing", "incomplete", "needs_review", "on_hold"].map((status) => <div key={status} className="rounded-2xl border border-slate-200 bg-white p-4"><p className="text-xs font-semibold uppercase tracking-wide text-slate-500">{statusLabel(status)}</p><p className="mt-2 text-2xl font-bold text-slate-950">{counts[status] || 0}</p></div>)}</div>
