@@ -349,7 +349,7 @@ export default function Reports() {
       const establishmentsById = new Map<string, any>(establishmentDirectory.map((establishment) => [establishment.id, establishment]));
       const accommodation: any[] = [];
       const visitors: any[] = [];
-      filteredReports.forEach((report) => {
+      submissions.forEach((report) => {
         const establishmentId = String(report.details?.establishment_id || report.id);
         const joined = Array.isArray(report.details?.establishments) ? report.details.establishments[0] : report.details?.establishments;
         establishmentsById.set(establishmentId, {

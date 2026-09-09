@@ -115,12 +115,13 @@ const formatGrandTotalSheet = (sheet: ExcelJS.Worksheet, establishmentEndRow: nu
   sheet.getColumn(1).width = Math.max(10, String(Math.max(establishmentEndRow - 3, 1)).length + 7);
   sheet.getColumn(2).width = 38;
   sheet.getColumn(3).width = 18;
-  sheet.getColumn(5).width = 2;
-  // Match the final template: one continuous A:C table through the total row.
+  sheet.getColumn(5).width = 18;
+  // Match the final template: continuous A:C table plus the E summary block.
   addFullBorders(sheet, 3, totalRow - 2, 1, 3);
   addFullBorders(sheet, totalRow, 1, 1, 3);
   centerExportTable(sheet, 4, totalRow, 1, 3);
   leftAlignEstablishmentNames(sheet, 4, establishmentEndRow);
+  addFullBorders(sheet, 3, 17, 5, 5);
 };
 const shiftMergedRanges = (sheet: ExcelJS.Worksheet, insertRow: number, rowCount: number) => {
   const ranges = [...sheet.model.merges];
@@ -285,6 +286,8 @@ export const downloadOfficialArrivalsWorkbook = async ({
     autoFitExportColumns(sheet);
   }
   const grandTotal = workbook.getWorksheet("GRAND TOTAL");
+  const exportedDaytourTotalRow = 38 + daytourExtraRows;
+  const exportedOvernightTotalRow = 54 + daytourExtraRows + overnightExtraRows;
   const grandTotalExtraRows = Math.max(0, daytourEstablishments.length - 15);
   if (grandTotal && annual && grandTotalExtraRows) {
     grandTotal.insertRows(19, Array.from({ length: grandTotalExtraRows }, () => Array(5).fill(null)), "i");
@@ -303,12 +306,17 @@ export const downloadOfficialArrivalsWorkbook = async ({
       grandTotal.getCell(rowNumber, 2).value = "";
       grandTotal.getCell(rowNumber, 3).value = "";
     }
+    setFormula(grandTotal.getCell("E4"), `SUM(${months.map((_, index) => `'${months[index].toUpperCase()} ${year}'!P${exportedDaytourTotalRow}`).join(",")})`);
+    setFormula(grandTotal.getCell("E7"), `SUM(${months.map((_, index) => `'${months[index].toUpperCase()} ${year}'!F${exportedOvernightTotalRow}`).join(",")})`);
+    setFormula(grandTotal.getCell("E10"), "SUM(E4,E7)");
+    setFormula(grandTotal.getCell("E13"), `SUM(${months.map((_, index) => `'${months[index].toUpperCase()} ${year}'!N${exportedDaytourTotalRow}`).join(",")})`);
+    setFormula(grandTotal.getCell("E16"), `SUM(${months.map((_, index) => `'${months[index].toUpperCase()} ${year}'!O${exportedDaytourTotalRow}`).join(",")})`);
+    setFormula(grandTotal.getCell("E19"), "SUM(E13,E16)");
     setFormula(grandTotal.getCell(`C${29 + grandTotalExtraRows}`), `SUM(C4:C${18 + grandTotalExtraRows})`);
-    // The current reporting model has one A:C grand-total table only.
-    // Clear shifted legacy summary/attraction cells from the template.
+    // Keep the template's E summary block, but clear shifted legacy attraction cells.
     for (let rowNumber = 3; rowNumber <= grandTotal.rowCount; rowNumber += 1) {
       grandTotal.getCell(rowNumber, 4).value = null;
-      grandTotal.getCell(rowNumber, 5).value = null;
+      if (rowNumber >= 20) grandTotal.getCell(rowNumber, 5).value = null;
     }
     for (let rowNumber = 4 + daytourEstablishments.length; rowNumber < 29 + grandTotalExtraRows; rowNumber += 1) {
       grandTotal.getCell(rowNumber, 1).value = "";
