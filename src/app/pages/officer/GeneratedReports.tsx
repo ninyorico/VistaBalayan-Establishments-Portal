@@ -70,6 +70,9 @@ export const downloadOfficialArrivalsWorkbook = async ({
   const workbook = new ExcelJS.Workbook();
   await workbook.xlsx.load(await template.arrayBuffer());
   const allMonthSheets = workbook.worksheets.filter((sheet) => sheet.name !== "GRAND TOTAL");
+  allMonthSheets.forEach((sheet, index) => {
+    if (months[index]) sheet.name = `${months[index].toUpperCase()} ${year}`;
+  });
   const annual = !selectedMonth && !selectedMonths && !weeklyLabel;
   const activeMonths = selectedMonths || (selectedMonth ? [selectedMonth] : months.map((_, index) => index + 1));
   const firstActiveSheet = allMonthSheets.find((sheet) => sheet.name.startsWith(months[(activeMonths[0] || 1) - 1].toUpperCase()));
@@ -94,11 +97,11 @@ export const downloadOfficialArrivalsWorkbook = async ({
     const daytourTotalRow = 38 + daytourExtraRows;
     const overnightStartRow = 45 + daytourExtraRows;
     const overnightTotalRow = 54 + daytourExtraRows + overnightExtraRows;
+    const overnightHeaderRow = overnightStartRow - 4;
     if (overnightExtraRows) sheet.insertRows(overnightTotalRow, Array.from({ length: overnightExtraRows }, () => Array(16).fill(null)), "i");
     sheet.getCell("H4").value = new Date(Date.UTC(year, monthNumber - 1, 1));
     sheet.getCell("I4").value = new Date(Date.UTC(year, monthNumber - 1, 1));
-    sheet.getCell("D41").value = new Date(Date.UTC(year, monthNumber - 1, 1));
-    for (let column = 4; column <= 16; column += 1) sheet.getCell(41, column).value = new Date(Date.UTC(year, monthNumber - 1, 1));
+    for (let column = 4; column <= 16; column += 1) sheet.getCell(overnightHeaderRow, column).value = new Date(Date.UTC(year, monthNumber - 1, 1));
 
     for (let rowNumber = 15; rowNumber < daytourTotalRow; rowNumber += 1) {
       const establishmentIndex = rowNumber - 15;
