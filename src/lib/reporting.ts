@@ -191,6 +191,43 @@ export const summarizeAccommodation = (
   };
 };
 
+export const summarizeAnnualAccommodation = (
+  establishment: EstablishmentReportingRow,
+  records: AccommodationSourceRecord[],
+  year: number,
+): AccommodationSummary => {
+  const totalRooms = numeric(records[0]?.total_rooms ?? establishment.total_rooms);
+  const validatedRecords = records.filter((record) => ["validated", "approved"].includes(String(record.status || "").toLowerCase()));
+  const totals = validatedRecords.reduce((result, record) => {
+    const values = accommodationValues(record);
+    result.guestCheckIns += values.guestCheckIns;
+    result.guestNights += values.guestNights;
+    result.roomsOccupied += values.roomsOccupied;
+    result.foreignGuestCheckIns += values.foreignGuestCheckIns;
+    result.foreignGuestNights += values.foreignGuestNights;
+    return result;
+  }, { guestCheckIns: 0, guestNights: 0, roomsOccupied: 0, foreignGuestCheckIns: 0, foreignGuestNights: 0 });
+  const days = new Date(year, 1, 29).getDate() === 29 ? 366 : 365;
+  const invalid = records.flatMap((record) => validateAccommodationRecord(record, numeric(record.total_rooms ?? totalRooms)));
+  const status = !records.length ? "missing" : invalid.length ? "needs_review" : validatedRecords.length !== records.length ? "incomplete" : "validated";
+  const availableRoomNights = totalRooms * days;
+  return {
+    establishmentId: establishment.id,
+    establishmentName: establishment.name,
+    aeId: establishment.ae_id || establishment.id,
+    typeClass: getTypeClass(establishment.type),
+    totalRooms,
+    daysInPeriod: days,
+    ...totals,
+    availableRoomNights,
+    occupancyRate: safeRatio(totals.roomsOccupied, availableRoomNights) * 100,
+    averageLengthOfStay: safeRatio(totals.guestNights, totals.guestCheckIns),
+    averageGuestsPerOccupiedRoom: safeRatio(totals.guestNights, totals.roomsOccupied),
+    sourceRecords: records,
+    status,
+  };
+};
+
 const residenceCategory = (record: VisitorSourceRecord): ResidenceCategory | null => {
   if (record.residence_category) return record.residence_category;
   const value = String(record.residence_type || "").toLowerCase();

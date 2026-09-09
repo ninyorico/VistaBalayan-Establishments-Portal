@@ -8,11 +8,12 @@ import {
   buildVAR3MRow,
   daysInMonth,
   summarizeAccommodation,
+  summarizeAnnualAccommodation,
   summarizeDAE4,
   summarizeAnnualDAE4,
   summarizeVisitors,
   type AccommodationSourceRecord,
-  type AccommodationSummary,
+
   type EstablishmentReportingRow,
   type VisitorSourceRecord,
   type VisitorSummary,
@@ -136,15 +137,13 @@ export default function GeneratedReports() {
     return buildVAR3MRow(index + 1, monthly);
   }), [establishments, visitors, year]);
 
-  const annualAccommodation = useMemo(() => {
-    const summaries: AccommodationSummary[] = [];
-    establishments.filter((establishment) => ["accommodation", "both"].includes(establishment.reporting_mode || "")).forEach((establishment) => {
-      for (let period = 1; period <= 12; period += 1) summaries.push(summarizeAccommodation(establishment, accommodation.filter((record) => record.establishment_id === establishment.id && record.report_date?.startsWith(`${year}-${String(period).padStart(2, "0")}`)), year, period));
-    });
-    return summarizeAnnualDAE4(summaries);
-  }, [accommodation, establishments, year]);
+  const annualAccommodationSummaries = useMemo(() => establishments
+    .filter((establishment) => ["accommodation", "both"].includes(establishment.reporting_mode || ""))
+    .map((establishment) => summarizeAnnualAccommodation(establishment, accommodation.filter((record) => record.establishment_id === establishment.id && record.report_date?.startsWith(`${year}-`)), year)), [accommodation, establishments, year]);
 
-  const coverage: any[] = reportKind.startsWith("var") ? visitorSummaries : accommodationSummaries;
+  const annualAccommodation = useMemo(() => summarizeAnnualDAE4(annualAccommodationSummaries), [annualAccommodationSummaries]);
+
+  const coverage: any[] = reportKind.startsWith("var") ? visitorSummaries : reportKind === "dae4-annual" ? annualAccommodationSummaries : accommodationSummaries;
   const counts = coverage.reduce<Record<string, number>>((result, item) => { result[item.status] = (result[item.status] || 0) + 1; return result; }, {});
 
   const validateEstablishment = async (establishmentId: string, family: "accommodation" | "visitor") => {
