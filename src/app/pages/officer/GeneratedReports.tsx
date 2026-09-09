@@ -58,6 +58,7 @@ export default function GeneratedReports() {
   const [visitors, setVisitors] = useState<VisitorSourceRecord[]>([]);
   const [loading, setLoading] = useState(true);
   const [generatedAt, setGeneratedAt] = useState<string | null>(null);
+  const [loaderDiagnostics, setLoaderDiagnostics] = useState({ establishments: 0, accommodation: 0, visitors: 0, errors: "" });
 
   const loadReports = async () => {
     setLoading(true);
@@ -89,6 +90,12 @@ export default function GeneratedReports() {
       authenticatedRead<VisitorSourceRecord>("visitor_reports", "id,establishment_id,report_date,male_visitors,female_visitors,total_visitors,total_male,total_female,total_guests,residence_category,residence_type,status", "report_date.asc"),
     ]);
     const error = establishmentResult.error || accommodationResult.error || visitorResult.error;
+    setLoaderDiagnostics({
+      establishments: establishmentResult.data?.length || 0,
+      accommodation: accommodationResult.data?.length || 0,
+      visitors: visitorResult.data?.length || 0,
+      errors: [establishmentResult.error?.message, accommodationResult.error?.message, visitorResult.error?.message].filter(Boolean).join(" | "),
+    });
     if (error) toast.error(`Could not load reporting data: ${error.message}`);
     setEstablishments((establishmentResult.data || []) as EstablishmentReportingRow[]);
     setAccommodation((accommodationResult.data || []) as AccommodationSourceRecord[]);
@@ -170,7 +177,7 @@ export default function GeneratedReports() {
   const reportTitle = { dae3: "Monthly DAE-3", dae4: "Monthly DAE-4", "dae4-annual": "Annual DAE-4", var2m: "Monthly VAR-2M", "var3m-annual": "Annual VAR-3M" }[reportKind];
   if (loading) return <div className="flex h-96 items-center justify-center text-slate-600">Loading reporting data…</div>;
 
-  return <div className="space-y-6">
+  return <div className="space-y-6" data-report-loader={JSON.stringify(loaderDiagnostics)}>
     <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
       <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
         <div><p className="text-sm font-semibold uppercase tracking-wider text-[#0E5A72]">MCTAO Reports</p><h1 className="mt-1 text-3xl font-bold text-slate-950">{reportTitle}</h1><p className="mt-2 text-sm text-slate-600">Generated from validated establishment source records. Missing submissions remain distinct from zero values.</p></div>
