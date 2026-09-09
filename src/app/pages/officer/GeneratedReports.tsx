@@ -104,6 +104,12 @@ const centerExportTable = (sheet: ExcelJS.Worksheet, startRow: number, endRow: n
     }
   }
 };
+const leftAlignEstablishmentNames = (sheet: ExcelJS.Worksheet, startRow: number, endRow: number) => {
+  for (let row = startRow; row <= endRow; row += 1) {
+    const cell = sheet.getCell(row, 3);
+    cell.alignment = { ...cell.alignment, horizontal: "left", vertical: "middle" };
+  }
+};
 const shiftMergedRanges = (sheet: ExcelJS.Worksheet, insertRow: number, rowCount: number) => {
   const ranges = [...sheet.model.merges];
   ranges.forEach((range) => sheet.unMergeCells(range));
@@ -253,6 +259,8 @@ export const downloadOfficialArrivalsWorkbook = async ({
     }
     centerExportTable(sheet, 15, daytourTotalRow, 2, 16);
     centerExportTable(sheet, overnightStartRow, overnightTotalRow, 2, 9);
+    leftAlignEstablishmentNames(sheet, 15, daytourTotalRow - 1);
+    leftAlignEstablishmentNames(sheet, overnightStartRow, overnightTotalRow - 1);
     autoFitExportColumns(sheet);
   }
   const grandTotal = workbook.getWorksheet("GRAND TOTAL");
