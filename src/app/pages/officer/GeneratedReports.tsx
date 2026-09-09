@@ -72,16 +72,23 @@ export default function GeneratedReports() {
     }
     const authenticatedRead = async <T,>(table: string, select: string, order: string) => {
       const params = new URLSearchParams({ select, order });
-      const response = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/rest/v1/${table}?${params.toString()}`, {
-        headers: {
-          apikey: import.meta.env.VITE_SUPABASE_ANON_KEY,
-          Authorization: `Bearer ${session.access_token}`,
-        },
-      });
-      const data = await response.json();
-      return response.ok
-        ? { data: data as T[], error: null }
-        : { data: null, error: { message: data?.message || `Request failed with status ${response.status}` } };
+      const rows: T[] = [];
+      const pageSize = 1000;
+      for (let offset = 0; ; offset += pageSize) {
+        const response = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/rest/v1/${table}?${params.toString()}`, {
+          headers: {
+            apikey: import.meta.env.VITE_SUPABASE_ANON_KEY,
+            Authorization: `Bearer ${session.access_token}`,
+            Range: `${offset}-${offset + pageSize - 1}`,
+          },
+        });
+        const data = await response.json();
+        if (!response.ok) return { data: null, error: { message: data?.message || `Request failed with status ${response.status}` } };
+        const page = data as T[];
+        rows.push(...page);
+        if (page.length < pageSize) break;
+      }
+      return { data: rows, error: null };
     };
 
     const [establishmentResult, accommodationResult, visitorResult] = await Promise.all([
