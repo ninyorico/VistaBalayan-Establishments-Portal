@@ -72,6 +72,14 @@ export const downloadOfficialArrivalsWorkbook = async ({
   const allMonthSheets = workbook.worksheets.filter((sheet) => sheet.name !== "GRAND TOTAL");
   allMonthSheets.forEach((sheet, index) => {
     if (months[index]) sheet.name = `${months[index].toUpperCase()} ${year}`;
+    for (let column = 5; column <= 16; column += 1) {
+      const letter = String.fromCharCode(64 + column);
+      sheet.getCell(38, column).value = { formula: `SUM(${letter}15:${letter}37)` };
+    }
+    for (let column = 5; column <= 7; column += 1) {
+      const letter = String.fromCharCode(64 + column);
+      sheet.getCell(54, column).value = { formula: `SUM(${letter}45:${letter}53)` };
+    }
   });
   const annual = !selectedMonth && !selectedMonths && !weeklyLabel;
   const activeMonths = selectedMonths || (selectedMonth ? [selectedMonth] : months.map((_, index) => index + 1));
