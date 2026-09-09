@@ -137,13 +137,14 @@ export const downloadOfficialArrivalsWorkbook = async ({
     }
     const daytourTotalRow = 38 + daytourExtraRows;
     const overnightStartRow = 45 + daytourExtraRows;
-    const overnightTotalRow = 54 + daytourExtraRows + overnightExtraRows;
+    const overnightBaseTotalRow = 54 + daytourExtraRows;
+    const overnightTotalRow = overnightBaseTotalRow + overnightExtraRows;
     const overnightDateRow = 41 + daytourExtraRows;
     if (overnightExtraRows) {
-      sheet.insertRows(overnightTotalRow, Array.from({ length: overnightExtraRows }, () => Array(16).fill(null)), "i");
-      shiftMergedRanges(sheet, overnightTotalRow, overnightExtraRows);
-      copyRowFormatting(sheet, overnightTotalRow - overnightExtraRows - 1, overnightTotalRow, overnightExtraRows, 2, 9);
-      addFullBorders(sheet, overnightTotalRow, overnightExtraRows, 2, 9);
+      sheet.insertRows(overnightBaseTotalRow, Array.from({ length: overnightExtraRows }, () => Array(16).fill(null)), "i");
+      shiftMergedRanges(sheet, overnightBaseTotalRow, overnightExtraRows);
+      copyRowFormatting(sheet, overnightBaseTotalRow - 1, overnightBaseTotalRow, overnightExtraRows, 2, 9);
+      addFullBorders(sheet, overnightBaseTotalRow, overnightExtraRows, 2, 9);
     }
     sheet.getCell("H4").value = new Date(Date.UTC(year, monthNumber - 1, 1));
     sheet.getCell("I4").value = new Date(Date.UTC(year, monthNumber - 1, 1));
