@@ -159,7 +159,7 @@ export const summarizeAccommodation = (
   month: number,
 ): AccommodationSummary => {
   const days = daysInMonth(year, month);
-  const totalRooms = numeric(establishment.total_rooms ?? records[0]?.total_rooms);
+  const totalRooms = numeric(records[0]?.total_rooms ?? establishment.total_rooms);
   const validatedRecords = records.filter((record) => ["validated", "approved"].includes(String(record.status || "").toLowerCase()));
   const sourceRecords = records.length ? records : [];
   const totals = validatedRecords.reduce((result, record) => {
