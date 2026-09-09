@@ -128,16 +128,25 @@ const formatGrandTotalSheet = (sheet: ExcelJS.Worksheet, establishmentEndRow: nu
   centerExportTable(sheet, 3, 3, 1, 3);
   centerExportTable(sheet, 4, totalRow, 1, 3);
   leftAlignGrandTotalNames(sheet, 4, establishmentEndRow);
+  for (let row = 3; row <= totalRow; row += 1) {
+    const totalCell = sheet.getCell(row, 3);
+    totalCell.alignment = { ...totalCell.alignment, horizontal: "center", vertical: "middle" };
+  }
   for (let row = 4; row <= establishmentEndRow; row += 1) {
     const nameCell = sheet.getCell(row, 2);
     nameCell.font = { ...nameCell.font, bold: true, italic: false };
   }
   sheet.getCell(`A${totalRow}`).alignment = { ...sheet.getCell(`A${totalRow}`).alignment, horizontal: "center", vertical: "middle" };
-  // KPI labels/values stay centered without boxed borders between items.
+  // KPI titles and values are centered and fully bordered.
   for (let row = 3; row <= 19; row += 1) {
     const cell = sheet.getCell(row, 5);
     cell.alignment = { ...cell.alignment, horizontal: "center", vertical: "middle" };
-    cell.border = {};
+    cell.border = {
+      top: { style: "thin", color: { argb: "FF000000" } },
+      left: { style: "thin", color: { argb: "FF000000" } },
+      bottom: { style: "thin", color: { argb: "FF000000" } },
+      right: { style: "thin", color: { argb: "FF000000" } },
+    };
   }
 };
 const shiftMergedRanges = (sheet: ExcelJS.Worksheet, insertRow: number, rowCount: number) => {
