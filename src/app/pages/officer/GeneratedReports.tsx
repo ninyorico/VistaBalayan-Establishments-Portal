@@ -42,6 +42,18 @@ const exportNameAliases: Record<string, string> = {
   SOGGIORNOLORENZANA: "SOGGIORNS",
 };
 const exportNameKey = (value: string) => exportNameAliases[normalizeExportName(value)] || normalizeExportName(value);
+const addFullBorders = (sheet: ExcelJS.Worksheet, startRow: number, rowCount: number, startColumn: number, endColumn: number) => {
+  for (let row = startRow; row < startRow + rowCount; row += 1) {
+    for (let column = startColumn; column <= endColumn; column += 1) {
+      sheet.getCell(row, column).border = {
+        top: { style: "thin", color: { argb: "FF000000" } },
+        left: { style: "thin", color: { argb: "FF000000" } },
+        bottom: { style: "thin", color: { argb: "FF000000" } },
+        right: { style: "thin", color: { argb: "FF000000" } },
+      };
+    }
+  }
+};
 
 const includeMonth = (selectedMonth: number | undefined, selectedMonths: number[] | undefined, monthNumber: number) =>
   selectedMonths ? selectedMonths.includes(monthNumber) : !selectedMonth || selectedMonth === monthNumber;
@@ -94,12 +106,18 @@ export const downloadOfficialArrivalsWorkbook = async ({
     const monthNumber = months.findIndex((value) => sheet.name.startsWith(value.toUpperCase())) + 1;
     if (!monthNumber) continue;
     const includeData = includeMonth(selectedMonth, selectedMonths, monthNumber);
-    if (daytourExtraRows) sheet.insertRows(38, Array.from({ length: daytourExtraRows }, () => Array(16).fill(null)), "i");
+    if (daytourExtraRows) {
+      sheet.insertRows(38, Array.from({ length: daytourExtraRows }, () => Array(16).fill(null)), "i");
+      addFullBorders(sheet, 38, daytourExtraRows, 2, 16);
+    }
     const daytourTotalRow = 38 + daytourExtraRows;
     const overnightStartRow = 45 + daytourExtraRows;
     const overnightTotalRow = 54 + daytourExtraRows + overnightExtraRows;
     const overnightDateRow = 41 + daytourExtraRows;
-    if (overnightExtraRows) sheet.insertRows(overnightTotalRow, Array.from({ length: overnightExtraRows }, () => Array(16).fill(null)), "i");
+    if (overnightExtraRows) {
+      sheet.insertRows(overnightTotalRow, Array.from({ length: overnightExtraRows }, () => Array(16).fill(null)), "i");
+      addFullBorders(sheet, overnightTotalRow, overnightExtraRows, 2, 9);
+    }
     sheet.getCell("H4").value = new Date(Date.UTC(year, monthNumber - 1, 1));
     sheet.getCell("I4").value = new Date(Date.UTC(year, monthNumber - 1, 1));
     sheet.getCell(overnightDateRow, 4).value = new Date(Date.UTC(year, monthNumber - 1, 1));
