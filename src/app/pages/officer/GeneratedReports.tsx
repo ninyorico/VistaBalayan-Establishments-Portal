@@ -51,6 +51,7 @@ export const downloadOfficialArrivalsWorkbook = async ({
   year,
   selectedMonth,
   selectedMonths,
+  weeklyLabel,
   establishments,
   accommodation,
   visitors,
@@ -59,6 +60,7 @@ export const downloadOfficialArrivalsWorkbook = async ({
   year: number;
   selectedMonth?: number;
   selectedMonths?: number[];
+  weeklyLabel?: string;
   establishments: EstablishmentReportingRow[];
   accommodation: AccommodationSourceRecord[];
   visitors: VisitorSourceRecord[];
@@ -67,8 +69,14 @@ export const downloadOfficialArrivalsWorkbook = async ({
   if (!template.ok) throw new Error(`Official arrivals template could not be loaded (${template.status})`);
   const workbook = new ExcelJS.Workbook();
   await workbook.xlsx.load(await template.arrayBuffer());
-  const sheets = workbook.worksheets.filter((sheet) => sheet.name !== "GRAND TOTAL");
-  const monthsToWrite = sheets;
+  const allMonthSheets = workbook.worksheets.filter((sheet) => sheet.name !== "GRAND TOTAL");
+  const annual = !selectedMonth && !selectedMonths && !weeklyLabel;
+  const activeMonths = selectedMonths || (selectedMonth ? [selectedMonth] : months.map((_, index) => index + 1));
+  const firstActiveSheet = allMonthSheets.find((sheet) => sheet.name.startsWith(months[(activeMonths[0] || 1) - 1].toUpperCase()));
+  const monthsToWrite = weeklyLabel && firstActiveSheet ? [firstActiveSheet] : allMonthSheets.filter((sheet) => activeMonths.some((monthNumber) => sheet.name.startsWith(months[monthNumber - 1].toUpperCase())));
+  workbook.worksheets.slice().forEach((sheet) => {
+    if (sheet.name === "GRAND TOTAL" ? !annual : !monthsToWrite.includes(sheet)) workbook.removeWorksheet(sheet.id);
+  });
   const establishmentByKey = new Map(establishments.map((establishment) => [exportNameKey(establishment.name), establishment]));
 
   const visitorFor = (establishment: EstablishmentReportingRow, monthNumber: number) => visitors.filter((record) => record.establishment_id === establishment.id && record.report_date?.startsWith(`${year}-${String(monthNumber).padStart(2, "0")}`));
@@ -119,8 +127,12 @@ export const downloadOfficialArrivalsWorkbook = async ({
       sheet.getCell(rowNumber, 9).value = hasData && summary ? summary.occupancyRate : "";
     }
   }
+  if (weeklyLabel && monthsToWrite[0]) {
+    monthsToWrite[0].name = weeklyLabel.slice(0, 31);
+    monthsToWrite[0].getCell("B1").value = "Tourism Attraction Visitor Record — WEEKLY";
+  }
   const grandTotal = workbook.getWorksheet("GRAND TOTAL");
-  if (grandTotal) grandTotal.getCell("A1").value = `BALAYAN TOURISM ARRIVALS — ${year}`;
+  if (grandTotal && annual) grandTotal.getCell("A1").value = `BALAYAN TOURISM ARRIVALS — ${year}`;
   workbook.creator = "VistaBalayan";
   workbook.modified = new Date();
   workbook.calcProperties.fullCalcOnLoad = true;
