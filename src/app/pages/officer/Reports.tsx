@@ -413,6 +413,8 @@ export default function Reports() {
         year: Number(selectedYear),
         selectedMonths: exportMonths,
         weeklyLabel: filterType === "week" ? `WEEK ${selectedWeek} ${selectedYear}` : undefined,
+        weeklyStartDate: filterType === "week" ? startDate : undefined,
+        weeklyEndDate: filterType === "week" ? endDate : undefined,
         establishments: Array.from(establishmentsById.values()),
         accommodation,
         visitors,

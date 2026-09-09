@@ -133,6 +133,8 @@ export const downloadOfficialArrivalsWorkbook = async ({
   selectedMonth,
   selectedMonths,
   weeklyLabel,
+  weeklyStartDate,
+  weeklyEndDate,
   establishments,
   accommodation,
   visitors,
@@ -142,6 +144,8 @@ export const downloadOfficialArrivalsWorkbook = async ({
   selectedMonth?: number;
   selectedMonths?: number[];
   weeklyLabel?: string;
+  weeklyStartDate?: string;
+  weeklyEndDate?: string;
   establishments: EstablishmentReportingRow[];
   accommodation: AccommodationSourceRecord[];
   visitors: VisitorSourceRecord[];
@@ -168,8 +172,13 @@ export const downloadOfficialArrivalsWorkbook = async ({
   const daytourExtraRows = Math.max(0, daytourEstablishments.length - 23);
   const overnightExtraRows = Math.max(0, overnightEstablishments.length - 9);
 
-  const visitorFor = (establishment: EstablishmentReportingRow, monthNumber: number) => visitors.filter((record) => record.establishment_id === establishment.id && (weeklyLabel || record.report_date?.startsWith(`${year}-${String(monthNumber).padStart(2, "0")}`)));
-  const accommodationFor = (establishment: EstablishmentReportingRow, monthNumber: number) => accommodation.filter((record) => record.establishment_id === establishment.id && (weeklyLabel || record.report_date?.startsWith(`${year}-${String(monthNumber).padStart(2, "0")}`)));
+  const inSelectedPeriod = (date: string | null | undefined, monthNumber: number) => {
+    if (!date) return false;
+    if (weeklyStartDate && weeklyEndDate) return date >= weeklyStartDate && date <= weeklyEndDate;
+    return date.startsWith(`${year}-${String(monthNumber).padStart(2, "0")}`);
+  };
+  const visitorFor = (establishment: EstablishmentReportingRow, monthNumber: number) => visitors.filter((record) => record.establishment_id === establishment.id && inSelectedPeriod(record.report_date, monthNumber));
+  const accommodationFor = (establishment: EstablishmentReportingRow, monthNumber: number) => accommodation.filter((record) => record.establishment_id === establishment.id && inSelectedPeriod(record.report_date, monthNumber));
 
   for (const sheet of monthsToWrite) {
     const monthNumber = months.findIndex((value) => sheet.name.startsWith(value.toUpperCase())) + 1;
