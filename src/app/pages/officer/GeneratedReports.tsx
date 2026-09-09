@@ -80,6 +80,8 @@ export const downloadOfficialArrivalsWorkbook = async ({
   const establishmentByKey = new Map(establishments.map((establishment) => [exportNameKey(establishment.name), establishment]));
   const daytourEstablishments = establishments.filter((establishment) => ["visitor", "both"].includes(establishment.reporting_mode || ""));
   const overnightEstablishments = establishments.filter((establishment) => ["accommodation", "both"].includes(establishment.reporting_mode || ""));
+  const daytourExtraRows = Math.max(0, daytourEstablishments.length - 23);
+  const overnightExtraRows = Math.max(0, overnightEstablishments.length - 9);
 
   const visitorFor = (establishment: EstablishmentReportingRow, monthNumber: number) => visitors.filter((record) => record.establishment_id === establishment.id && (weeklyLabel || record.report_date?.startsWith(`${year}-${String(monthNumber).padStart(2, "0")}`)));
   const accommodationFor = (establishment: EstablishmentReportingRow, monthNumber: number) => accommodation.filter((record) => record.establishment_id === establishment.id && (weeklyLabel || record.report_date?.startsWith(`${year}-${String(monthNumber).padStart(2, "0")}`)));
@@ -88,12 +90,17 @@ export const downloadOfficialArrivalsWorkbook = async ({
     const monthNumber = months.findIndex((value) => sheet.name.startsWith(value.toUpperCase())) + 1;
     if (!monthNumber) continue;
     const includeData = includeMonth(selectedMonth, selectedMonths, monthNumber);
+    if (daytourExtraRows) sheet.insertRows(38, Array.from({ length: daytourExtraRows }, () => Array(16).fill(null)), "i");
+    const daytourTotalRow = 38 + daytourExtraRows;
+    const overnightStartRow = 45 + daytourExtraRows;
+    const overnightTotalRow = 54 + daytourExtraRows + overnightExtraRows;
+    if (overnightExtraRows) sheet.insertRows(overnightTotalRow, Array.from({ length: overnightExtraRows }, () => Array(16).fill(null)), "i");
     sheet.getCell("H4").value = new Date(Date.UTC(year, monthNumber - 1, 1));
     sheet.getCell("I4").value = new Date(Date.UTC(year, monthNumber - 1, 1));
     sheet.getCell("D41").value = new Date(Date.UTC(year, monthNumber - 1, 1));
     for (let column = 4; column <= 16; column += 1) sheet.getCell(41, column).value = new Date(Date.UTC(year, monthNumber - 1, 1));
 
-    for (let rowNumber = 15; rowNumber <= 37; rowNumber += 1) {
+    for (let rowNumber = 15; rowNumber < daytourTotalRow; rowNumber += 1) {
       const establishmentIndex = rowNumber - 15;
       const rowEstablishment = daytourEstablishments[establishmentIndex];
       sheet.getCell(rowNumber, 2).value = rowEstablishment ? establishmentIndex + 1 : "";
@@ -120,8 +127,8 @@ export const downloadOfficialArrivalsWorkbook = async ({
         sheet.getCell(rowNumber, 16).value = { formula: `SUM(N${rowNumber}:O${rowNumber})` };
       }
     }
-    for (let rowNumber = 45; rowNumber <= 53; rowNumber += 1) {
-      const establishmentIndex = rowNumber - 45;
+    for (let rowNumber = overnightStartRow; rowNumber < overnightTotalRow; rowNumber += 1) {
+      const establishmentIndex = rowNumber - overnightStartRow;
       const rowEstablishment = overnightEstablishments[establishmentIndex];
       sheet.getCell(rowNumber, 2).value = rowEstablishment ? establishmentIndex + 1 : "";
       sheet.getCell(rowNumber, 3).value = rowEstablishment?.name || "";
@@ -143,28 +150,40 @@ export const downloadOfficialArrivalsWorkbook = async ({
       sheet.getCell(rowNumber, 8).value = hasData && summary ? summary.averageLengthOfStay : "";
       sheet.getCell(rowNumber, 9).value = hasData && summary ? summary.occupancyRate : "";
     }
+    for (let column = 5; column <= 16; column += 1) {
+      const letter = String.fromCharCode(64 + column);
+      sheet.getCell(daytourTotalRow, column).value = { formula: `SUM(${letter}15:${letter}${daytourTotalRow - 1})` };
+    }
+    for (let column = 5; column <= 7; column += 1) {
+      const letter = String.fromCharCode(64 + column);
+      sheet.getCell(overnightTotalRow, column).value = { formula: `SUM(${letter}${overnightStartRow}:${letter}${overnightTotalRow - 1})` };
+    }
   }
   const grandTotal = workbook.getWorksheet("GRAND TOTAL");
+  const exportedDaytourTotalRow = 38 + daytourExtraRows;
+  const exportedOvernightTotalRow = 54 + daytourExtraRows + overnightExtraRows;
+  const grandTotalExtraRows = Math.max(0, daytourEstablishments.length - 15);
+  if (grandTotal && annual && grandTotalExtraRows) grandTotal.insertRows(19, Array.from({ length: grandTotalExtraRows }, () => Array(5).fill(null)), "i");
   if (grandTotal && annual) {
-    daytourEstablishments.slice(0, 15).forEach((establishment, index) => {
+    daytourEstablishments.forEach((establishment, index) => {
       const rowNumber = 4 + index;
       grandTotal.getCell(rowNumber, 1).value = index + 1;
       grandTotal.getCell(rowNumber, 2).value = establishment.name;
       const monthlyRows = months.map((_, monthIndex) => `'${months[monthIndex].toUpperCase()} ${year}'!P${15 + index}`);
       grandTotal.getCell(rowNumber, 3).value = { formula: monthlyRows.join("+") };
     });
-    for (let rowNumber = 4 + daytourEstablishments.length; rowNumber <= 18; rowNumber += 1) {
+    for (let rowNumber = 4 + daytourEstablishments.length; rowNumber <= 18 + grandTotalExtraRows; rowNumber += 1) {
       grandTotal.getCell(rowNumber, 1).value = "";
       grandTotal.getCell(rowNumber, 2).value = "";
       grandTotal.getCell(rowNumber, 3).value = "";
     }
-    grandTotal.getCell("E4").value = { formula: months.map((_, index) => `'${months[index].toUpperCase()} ${year}'!P38`).join("+") };
-    grandTotal.getCell("E7").value = { formula: months.map((_, index) => `'${months[index].toUpperCase()} ${year}'!F54`).join("+") };
+    grandTotal.getCell("E4").value = { formula: months.map((_, index) => `'${months[index].toUpperCase()} ${year}'!P${exportedDaytourTotalRow}`).join("+") };
+    grandTotal.getCell("E7").value = { formula: months.map((_, index) => `'${months[index].toUpperCase()} ${year}'!F${exportedOvernightTotalRow}`).join("+") };
     grandTotal.getCell("E10").value = { formula: "E4+E7" };
-    grandTotal.getCell("E13").value = { formula: months.map((_, index) => `'${months[index].toUpperCase()} ${year}'!N38`).join("+") };
-    grandTotal.getCell("E16").value = { formula: months.map((_, index) => `'${months[index].toUpperCase()} ${year}'!O38`).join("+") };
+    grandTotal.getCell("E13").value = { formula: months.map((_, index) => `'${months[index].toUpperCase()} ${year}'!N${exportedDaytourTotalRow}`).join("+") };
+    grandTotal.getCell("E16").value = { formula: months.map((_, index) => `'${months[index].toUpperCase()} ${year}'!O${exportedDaytourTotalRow}`).join("+") };
     grandTotal.getCell("E19").value = { formula: "E13+E16" };
-    grandTotal.getCell("C29").value = { formula: "SUM(C4:C18)" };
+    grandTotal.getCell(`C${29 + grandTotalExtraRows}`).value = { formula: `SUM(C4:C${18 + grandTotalExtraRows})` };
   }
   if (weeklyLabel && monthsToWrite[0]) {
     monthsToWrite[0].name = weeklyLabel.slice(0, 31);
