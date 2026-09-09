@@ -61,14 +61,15 @@ export default function GeneratedReports() {
 
   const loadReports = async () => {
     setLoading(true);
-    const { data: { user }, error: authError } = await supabase.auth.getUser();
-    if (authError || !user) {
+    const { data: { session }, error: authError } = await supabase.auth.getSession();
+    if (authError || !session?.user) {
       setEstablishments([]);
       setAccommodation([]);
       setVisitors([]);
       setLoading(false);
       return;
     }
+    await supabase.auth.setSession(session);
 
     const [establishmentResult, accommodationResult, visitorResult] = await Promise.all([
       supabase.from("establishments").select("id,name,type,reporting_mode,ae_id,attraction_code,total_rooms,status").order("name"),
