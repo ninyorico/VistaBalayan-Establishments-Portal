@@ -69,10 +69,24 @@ export default function GeneratedReports() {
       setLoading(false);
       return;
     }
+    const authenticatedRead = async <T,>(table: string, select: string, order: string) => {
+      const params = new URLSearchParams({ select, order });
+      const response = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/rest/v1/${table}?${params.toString()}`, {
+        headers: {
+          apikey: import.meta.env.VITE_SUPABASE_ANON_KEY,
+          Authorization: `Bearer ${session.access_token}`,
+        },
+      });
+      const data = await response.json();
+      return response.ok
+        ? { data: data as T[], error: null }
+        : { data: null, error: { message: data?.message || `Request failed with status ${response.status}` } };
+    };
+
     const [establishmentResult, accommodationResult, visitorResult] = await Promise.all([
-      supabase.from("establishments").select("id,name,type,reporting_mode,ae_id,attraction_code,total_rooms,status").order("name"),
-      supabase.from("accommodation_reports").select("id,establishment_id,report_date,total_rooms,total_check_ins,total_guest_nights,total_occupied_rooms,guest_check_ins,guest_nights,rooms_occupied,foreign_guest_check_ins,foreign_guest_nights,status").order("report_date"),
-      supabase.from("visitor_reports").select("id,establishment_id,report_date,male_visitors,female_visitors,total_visitors,total_male,total_female,total_guests,residence_category,residence_type,status").order("report_date"),
+      authenticatedRead<EstablishmentReportingRow>("establishments", "id,name,type,reporting_mode,ae_id,attraction_code,total_rooms,status", "name.asc"),
+      authenticatedRead<AccommodationSourceRecord>("accommodation_reports", "id,establishment_id,report_date,total_rooms,total_check_ins,total_guest_nights,total_occupied_rooms,guest_check_ins,guest_nights,rooms_occupied,foreign_guest_check_ins,foreign_guest_nights,status", "report_date.asc"),
+      authenticatedRead<VisitorSourceRecord>("visitor_reports", "id,establishment_id,report_date,male_visitors,female_visitors,total_visitors,total_male,total_female,total_guests,residence_category,residence_type,status", "report_date.asc"),
     ]);
     const error = establishmentResult.error || accommodationResult.error || visitorResult.error;
     if (error) toast.error(`Could not load reporting data: ${error.message}`);
