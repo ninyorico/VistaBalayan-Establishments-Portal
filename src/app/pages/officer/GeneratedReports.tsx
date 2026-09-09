@@ -179,8 +179,7 @@ export default function GeneratedReports() {
   const reportTitle = { dae3: "Monthly DAE-3", dae4: "Monthly DAE-4", "dae4-annual": "Annual DAE-4", var2m: "Monthly VAR-2M", "var3m-annual": "Annual VAR-3M" }[reportKind];
   if (loading) return <div className="flex h-96 items-center justify-center text-slate-600">Loading reporting data…</div>;
 
-  const diagnostic = { accommodation: accommodation.length, alvez: accommodation.filter((record) => record.establishment_id === "c3d4e5f6-a7b8-9012-cdef-345678901234").map((record) => ({ date: record.report_date, status: record.status })) };
-  return <div className="space-y-6" data-report-diagnostic={JSON.stringify(diagnostic)}>
+  return <div className="space-y-6">
     <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
       <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
         <div><p className="text-sm font-semibold uppercase tracking-wider text-[#0E5A72]">MCTAO Reports</p><h1 className="mt-1 text-3xl font-bold text-slate-950">{reportTitle}</h1><p className="mt-2 text-sm text-slate-600">Generated from validated establishment source records. Missing submissions remain distinct from zero values.</p></div>
