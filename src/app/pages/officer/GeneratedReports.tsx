@@ -286,7 +286,10 @@ export const downloadOfficialArrivalsWorkbook = async ({
   }
   const grandTotal = workbook.getWorksheet("GRAND TOTAL");
   const grandTotalExtraRows = Math.max(0, daytourEstablishments.length - 15);
-  if (grandTotal && annual && grandTotalExtraRows) grandTotal.insertRows(19, Array.from({ length: grandTotalExtraRows }, () => Array(5).fill(null)), "i");
+  if (grandTotal && annual && grandTotalExtraRows) {
+    grandTotal.insertRows(19, Array.from({ length: grandTotalExtraRows }, () => Array(5).fill(null)), "i");
+    shiftMergedRanges(grandTotal, 19, grandTotalExtraRows);
+  }
   if (grandTotal && annual) {
     daytourEstablishments.forEach((establishment, index) => {
       const rowNumber = 4 + index;
