@@ -111,6 +111,12 @@ const leftAlignEstablishmentNames = (sheet: ExcelJS.Worksheet, startRow: number,
     cell.alignment = { ...cell.alignment, horizontal: "left", vertical: "middle" };
   }
 };
+const leftAlignGrandTotalNames = (sheet: ExcelJS.Worksheet, startRow: number, endRow: number) => {
+  for (let row = startRow; row <= endRow; row += 1) {
+    const cell = sheet.getCell(row, 2);
+    cell.alignment = { ...cell.alignment, horizontal: "left", vertical: "middle" };
+  }
+};
 const formatGrandTotalSheet = (sheet: ExcelJS.Worksheet, establishmentEndRow: number, totalRow: number) => {
   sheet.getColumn(1).width = Math.max(10, String(Math.max(establishmentEndRow - 3, 1)).length + 7);
   sheet.getColumn(2).width = 38;
@@ -119,8 +125,10 @@ const formatGrandTotalSheet = (sheet: ExcelJS.Worksheet, establishmentEndRow: nu
   // Match the final template: continuous A:C table plus the E summary block.
   addFullBorders(sheet, 3, totalRow - 2, 1, 3);
   addFullBorders(sheet, totalRow, 1, 1, 3);
+  centerExportTable(sheet, 3, 3, 1, 3);
   centerExportTable(sheet, 4, totalRow, 1, 3);
-  leftAlignEstablishmentNames(sheet, 4, establishmentEndRow);
+  leftAlignGrandTotalNames(sheet, 4, establishmentEndRow);
+  sheet.getCell(`A${totalRow}`).alignment = { ...sheet.getCell(`A${totalRow}`).alignment, horizontal: "center", vertical: "middle" };
   addFullBorders(sheet, 3, 17, 5, 5);
 };
 const shiftMergedRanges = (sheet: ExcelJS.Worksheet, insertRow: number, rowCount: number) => {
