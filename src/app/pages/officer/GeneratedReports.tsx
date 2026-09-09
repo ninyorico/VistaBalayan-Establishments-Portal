@@ -60,9 +60,41 @@ const copyRowFormatting = (sheet: ExcelJS.Worksheet, sourceRow: number, startRow
     for (let column = startColumn; column <= endColumn; column += 1) {
       const source = sheet.getCell(sourceRow, column);
       const target = sheet.getCell(row, column);
-      target.style = { ...source.style };
+      target.style = JSON.parse(JSON.stringify(source.style));
     }
   }
+};
+const autoFitExportColumns = (sheet: ExcelJS.Worksheet) => {
+  const widths: Record<number, { min: number; max: number }> = {
+    2: { min: 5, max: 8 },
+    3: { min: 24, max: 38 },
+    4: { min: 14, max: 22 },
+    5: { min: 10, max: 16 },
+    6: { min: 10, max: 16 },
+    7: { min: 10, max: 16 },
+    8: { min: 12, max: 18 },
+    9: { min: 12, max: 18 },
+    10: { min: 10, max: 16 },
+    11: { min: 10, max: 16 },
+    12: { min: 10, max: 16 },
+    13: { min: 10, max: 16 },
+    14: { min: 10, max: 16 },
+    15: { min: 10, max: 16 },
+    16: { min: 10, max: 16 },
+  };
+  Object.entries(widths).forEach(([columnNumber, limits]) => {
+    const column = Number(columnNumber);
+    let contentWidth = limits.min;
+    for (let row = 15; row <= sheet.rowCount; row += 1) {
+      const cell = sheet.getCell(row, column);
+      if (cell.isMerged) continue;
+      const value = cell.value;
+      if (value === null || value === undefined) continue;
+      const text = typeof value === "object" ? "" : String(value).replace(/\n/g, " ");
+      contentWidth = Math.max(contentWidth, text.length + 2);
+    }
+    sheet.getColumn(column).width = Math.min(limits.max, contentWidth);
+  });
 };
 const shiftMergedRanges = (sheet: ExcelJS.Worksheet, insertRow: number, rowCount: number) => {
   const ranges = [...sheet.model.merges];
@@ -149,6 +181,9 @@ export const downloadOfficialArrivalsWorkbook = async ({
     sheet.getCell("H4").value = new Date(Date.UTC(year, monthNumber - 1, 1));
     sheet.getCell("I4").value = new Date(Date.UTC(year, monthNumber - 1, 1));
     sheet.getCell(overnightDateRow, 4).value = new Date(Date.UTC(year, monthNumber - 1, 1));
+    sheet.getCell("H4").numFmt = "mmmm yyyy";
+    sheet.getCell("I4").numFmt = "mmmm yyyy";
+    sheet.getCell(overnightDateRow, 4).numFmt = "mmmm yyyy";
 
     for (let rowNumber = 15; rowNumber < daytourTotalRow; rowNumber += 1) {
       const establishmentIndex = rowNumber - 15;
@@ -208,6 +243,7 @@ export const downloadOfficialArrivalsWorkbook = async ({
       const letter = String.fromCharCode(64 + column);
       setFormula(sheet.getCell(overnightTotalRow, column), `SUM(${letter}${overnightStartRow}:${letter}${overnightTotalRow - 1})`);
     }
+    autoFitExportColumns(sheet);
   }
   const grandTotal = workbook.getWorksheet("GRAND TOTAL");
   const exportedDaytourTotalRow = 38 + daytourExtraRows;
