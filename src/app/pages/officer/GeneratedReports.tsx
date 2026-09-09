@@ -2,7 +2,6 @@ import { useEffect, useMemo, useState } from "react";
 import * as ExcelJS from "exceljs";
 import { Download, FileSpreadsheet, RefreshCw } from "lucide-react";
 import { toast } from "sonner";
-import { createClient } from "@supabase/supabase-js";
 import { supabase } from "../../../lib/supabase";
 import { useAuth } from "../../../contexts/AuthContext";
 import {
@@ -62,7 +61,7 @@ export default function GeneratedReports() {
 
   const loadReports = async () => {
     setLoading(true);
-    const { data: { session }, error: authError } = await supabase.auth.getSession();
+    const { data: { session }, error: authError } = await supabase.auth.refreshSession();
     if (authError || !session?.user) {
       setEstablishments([]);
       setAccommodation([]);
@@ -70,19 +69,10 @@ export default function GeneratedReports() {
       setLoading(false);
       return;
     }
-    const reportsClient = createClient(
-      import.meta.env.VITE_SUPABASE_URL,
-      import.meta.env.VITE_SUPABASE_ANON_KEY,
-      {
-        auth: { autoRefreshToken: false, detectSessionInUrl: false, persistSession: false },
-        global: { headers: { Authorization: `Bearer ${session.access_token}` } },
-      },
-    );
-
     const [establishmentResult, accommodationResult, visitorResult] = await Promise.all([
-      reportsClient.from("establishments").select("id,name,type,reporting_mode,ae_id,attraction_code,total_rooms,status").order("name"),
-      reportsClient.from("accommodation_reports").select("id,establishment_id,report_date,total_rooms,total_check_ins,total_guest_nights,total_occupied_rooms,guest_check_ins,guest_nights,rooms_occupied,foreign_guest_check_ins,foreign_guest_nights,status").order("report_date"),
-      reportsClient.from("visitor_reports").select("id,establishment_id,report_date,male_visitors,female_visitors,total_visitors,total_male,total_female,total_guests,residence_category,residence_type,status").order("report_date"),
+      supabase.from("establishments").select("id,name,type,reporting_mode,ae_id,attraction_code,total_rooms,status").order("name"),
+      supabase.from("accommodation_reports").select("id,establishment_id,report_date,total_rooms,total_check_ins,total_guest_nights,total_occupied_rooms,guest_check_ins,guest_nights,rooms_occupied,foreign_guest_check_ins,foreign_guest_nights,status").order("report_date"),
+      supabase.from("visitor_reports").select("id,establishment_id,report_date,male_visitors,female_visitors,total_visitors,total_male,total_female,total_guests,residence_category,residence_type,status").order("report_date"),
     ]);
     const error = establishmentResult.error || accommodationResult.error || visitorResult.error;
     if (error) toast.error(`Could not load reporting data: ${error.message}`);
