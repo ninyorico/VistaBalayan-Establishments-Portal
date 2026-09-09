@@ -371,11 +371,23 @@ export default function Reports() {
           });
         }
       });
-      const isAnnual = filterType === "year" || (filterType === "month" && !selectedMonth);
+      const { startDate, endDate } = getReportRange();
+      const exportStart = new Date(`${startDate}T00:00:00`);
+      const exportEnd = new Date(`${endDate}T00:00:00`);
+      const exportMonths = filterType === "year" || (filterType === "month" && !selectedMonth)
+        ? undefined
+        : Array.from(new Set(
+            Array.from({ length: Math.max(1, Math.round((exportEnd.getTime() - exportStart.getTime()) / 86400000) + 1) }, (_, index) => {
+              const date = new Date(exportStart);
+              date.setDate(exportStart.getDate() + index);
+              return date.getFullYear() === Number(selectedYear) ? date.getMonth() + 1 : null;
+            }).filter((value): value is number => value !== null),
+          ));
+      const isAnnual = !exportMonths;
       await downloadOfficialArrivalsWorkbook({
-        filename: isAnnual ? `Balayan_Official_Arrivals_Annual_${selectedYear}.xlsx` : `Balayan_Official_Arrivals_${selectedYear}-${String(months.indexOf(selectedMonth) + 1).padStart(2, "0")}.xlsx`,
+        filename: isAnnual ? `Balayan_Official_Arrivals_Annual_${selectedYear}.xlsx` : `Balayan_Official_Arrivals_${filterType}_${selectedYear}.xlsx`,
         year: Number(selectedYear),
-        selectedMonth: isAnnual ? undefined : months.indexOf(selectedMonth) + 1,
+        selectedMonths: exportMonths,
         establishments: Array.from(establishmentsById.values()),
         accommodation,
         visitors,

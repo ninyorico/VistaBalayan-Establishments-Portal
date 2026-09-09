@@ -50,6 +50,7 @@ export const downloadOfficialArrivalsWorkbook = async ({
   filename,
   year,
   selectedMonth,
+  selectedMonths,
   establishments,
   accommodation,
   visitors,
@@ -57,6 +58,7 @@ export const downloadOfficialArrivalsWorkbook = async ({
   filename: string;
   year: number;
   selectedMonth?: number;
+  selectedMonths?: number[];
   establishments: EstablishmentReportingRow[];
   accommodation: AccommodationSourceRecord[];
   visitors: VisitorSourceRecord[];
@@ -75,7 +77,7 @@ export const downloadOfficialArrivalsWorkbook = async ({
   for (const sheet of monthsToWrite) {
     const monthNumber = months.findIndex((value) => sheet.name.startsWith(value.toUpperCase())) + 1;
     if (!monthNumber) continue;
-    const includeData = !selectedMonth || selectedMonth === monthNumber;
+    const includeData = !selectedMonths && (!selectedMonth || selectedMonth === monthNumber) || Boolean(selectedMonths?.includes(monthNumber));
     sheet.getCell("H4").value = new Date(Date.UTC(year, monthNumber - 1, 1));
     sheet.getCell("I4").value = new Date(Date.UTC(year, monthNumber - 1, 1));
     sheet.getCell("D41").value = new Date(Date.UTC(year, monthNumber - 1, 1));
