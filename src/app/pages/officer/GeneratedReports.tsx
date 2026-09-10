@@ -136,9 +136,10 @@ const formatGrandTotalSheet = (sheet: ExcelJS.Worksheet, establishmentEndRow: nu
     totalCell.alignment = { ...totalCell.alignment, horizontal: "center", vertical: "middle" };
     totalCell.font = { ...totalCell.font, bold: false, italic: false };
   }
+  const establishmentNameFont = JSON.parse(JSON.stringify(sheet.getCell(4, 2).font));
   for (let row = 4; row <= establishmentEndRow; row += 1) {
     const nameCell = sheet.getCell(row, 2);
-    nameCell.font = { ...nameCell.font, bold: true, italic: false };
+    nameCell.font = { ...establishmentNameFont, bold: true, italic: false };
   }
   sheet.getCell(`A${totalRow}`).alignment = { ...sheet.getCell(`A${totalRow}`).alignment, horizontal: "center", vertical: "middle" };
   // KPI titles and values are centered and fully bordered.
