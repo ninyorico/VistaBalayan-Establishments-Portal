@@ -171,6 +171,19 @@ const setFormula = (cell: ExcelJS.Cell, formula: string) => {
   cell.value = { formula };
 };
 
+const formatExportNumericCells = (workbook: ExcelJS.Workbook) => {
+  workbook.worksheets.forEach((sheet) => {
+    sheet.eachRow((row) => {
+      row.eachCell((cell) => {
+        if (typeof cell.value !== "number" || !Number.isFinite(cell.value)) return;
+        const rounded = Math.round((cell.value + Number.EPSILON) * 100) / 100;
+        cell.value = rounded;
+        cell.numFmt = Number.isInteger(rounded) ? "0" : "0.00";
+      });
+    });
+  });
+};
+
 const includeMonth = (selectedMonth: number | undefined, selectedMonths: number[] | undefined, monthNumber: number) =>
   selectedMonths ? selectedMonths.includes(monthNumber) : !selectedMonth || selectedMonth === monthNumber;
 
@@ -369,6 +382,7 @@ export const downloadOfficialArrivalsWorkbook = async ({
   if (grandTotal && annual) grandTotal.getCell("A1").value = `BALAYAN TOURISM ARRIVALS — ${year}`;
   workbook.creator = "VistaBalayan";
   workbook.modified = new Date();
+  formatExportNumericCells(workbook);
   workbook.calcProperties.fullCalcOnLoad = true;
   const buffer = await workbook.xlsx.writeBuffer();
   downloadBuffer(filename, buffer);
