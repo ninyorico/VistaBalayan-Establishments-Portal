@@ -375,6 +375,10 @@ export const downloadOfficialArrivalsWorkbook = async ({
     monthsToWrite[0].getCell("B1").value = "Tourism Attraction Visitor Record — WEEKLY";
   }
   if (grandTotal && annual) grandTotal.getCell("A1").value = `BALAYAN TOURISM ARRIVALS — ${year}`;
+  if (grandTotal && annual) {
+    // Final pass prevents template or row-insertion styles from overriding names.
+    formatGrandTotalSheet(grandTotal, grandTotalTotalRow - 1, grandTotalTotalRow);
+  }
   workbook.creator = "VistaBalayan";
   workbook.modified = new Date();
   workbook.calcProperties.fullCalcOnLoad = true;
