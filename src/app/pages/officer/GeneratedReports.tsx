@@ -117,6 +117,9 @@ const leftAlignGrandTotalNames = (sheet: ExcelJS.Worksheet, startRow: number, en
     cell.alignment = { ...cell.alignment, horizontal: "left", vertical: "middle" };
   }
 };
+const clearCellBorders = (cell: ExcelJS.Cell) => {
+  cell.border = { top: {}, left: {}, bottom: {}, right: {} };
+};
 const formatGrandTotalSheet = (sheet: ExcelJS.Worksheet, establishmentEndRow: number, totalRow: number) => {
   sheet.getColumn(1).width = Math.max(10, String(Math.max(establishmentEndRow - 3, 1)).length + 7);
   sheet.getColumn(2).width = 38;
@@ -131,6 +134,7 @@ const formatGrandTotalSheet = (sheet: ExcelJS.Worksheet, establishmentEndRow: nu
   for (let row = 3; row <= totalRow; row += 1) {
     const totalCell = sheet.getCell(row, 3);
     totalCell.alignment = { ...totalCell.alignment, horizontal: "center", vertical: "middle" };
+    totalCell.font = { ...totalCell.font, bold: false, italic: false };
   }
   for (let row = 4; row <= establishmentEndRow; row += 1) {
     const nameCell = sheet.getCell(row, 2);
@@ -141,12 +145,16 @@ const formatGrandTotalSheet = (sheet: ExcelJS.Worksheet, establishmentEndRow: nu
   for (let row = 3; row <= 19; row += 1) {
     const cell = sheet.getCell(row, 5);
     cell.alignment = { ...cell.alignment, horizontal: "center", vertical: "middle" };
-    cell.border = {
-      top: { style: "thin", color: { argb: "FF000000" } },
-      left: { style: "thin", color: { argb: "FF000000" } },
-      bottom: { style: "thin", color: { argb: "FF000000" } },
-      right: { style: "thin", color: { argb: "FF000000" } },
-    };
+    if (cell.value === null || cell.value === undefined || cell.value === "") {
+      clearCellBorders(cell);
+    } else {
+      cell.border = {
+        top: { style: "thin", color: { argb: "FF000000" } },
+        left: { style: "thin", color: { argb: "FF000000" } },
+        bottom: { style: "thin", color: { argb: "FF000000" } },
+        right: { style: "thin", color: { argb: "FF000000" } },
+      };
+    }
   }
 };
 const shiftMergedRanges = (sheet: ExcelJS.Worksheet, insertRow: number, rowCount: number) => {
