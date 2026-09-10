@@ -169,7 +169,6 @@ const shiftMergedRanges = (sheet: ExcelJS.Worksheet, insertRow: number, rowCount
 const setFormula = (cell: ExcelJS.Cell, formula: string) => {
   cell.value = null;
   cell.value = { formula };
-  cell.numFmt = "0";
 };
 
 const formatExportNumericCells = (workbook: ExcelJS.Workbook) => {
