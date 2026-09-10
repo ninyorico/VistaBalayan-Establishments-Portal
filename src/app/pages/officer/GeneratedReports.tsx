@@ -175,7 +175,7 @@ const formatExportNumericCells = (workbook: ExcelJS.Workbook) => {
   workbook.worksheets.forEach((sheet) => {
     sheet.eachRow((row) => {
       row.eachCell((cell) => {
-        if (cell.type === ExcelJS.ValueType.Formula || (cell.value && typeof cell.value === "object" && "formula" in cell.value)) {
+        if (cell.value && typeof cell.value === "object" && "formula" in cell.value) {
           cell.numFmt = "0";
           return;
         }
