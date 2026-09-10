@@ -130,16 +130,17 @@ const formatGrandTotalSheet = (sheet: ExcelJS.Worksheet, establishmentEndRow: nu
   addFullBorders(sheet, totalRow, 1, 1, 3);
   centerExportTable(sheet, 3, 3, 1, 3);
   centerExportTable(sheet, 4, totalRow, 1, 3);
-  leftAlignGrandTotalNames(sheet, 4, establishmentEndRow);
+  const establishmentNameFont = JSON.parse(JSON.stringify(sheet.getCell(4, 2).font));
+  const totalValueFont = JSON.parse(JSON.stringify(sheet.getCell(4, 3).font));
+  for (let row = 4; row <= establishmentEndRow; row += 1) {
+    const nameCell = sheet.getCell(row, 2);
+    nameCell.alignment = { ...nameCell.alignment, horizontal: "left", vertical: "middle" };
+    nameCell.font = { ...establishmentNameFont, bold: true, italic: false };
+  }
   for (let row = 3; row <= totalRow; row += 1) {
     const totalCell = sheet.getCell(row, 3);
     totalCell.alignment = { ...totalCell.alignment, horizontal: "center", vertical: "middle" };
-    totalCell.font = { ...totalCell.font, bold: false, italic: false };
-  }
-  const establishmentNameFont = JSON.parse(JSON.stringify(sheet.getCell(4, 2).font));
-  for (let row = 4; row <= establishmentEndRow; row += 1) {
-    const nameCell = sheet.getCell(row, 2);
-    nameCell.font = { ...establishmentNameFont, bold: true, italic: false };
+    totalCell.font = { ...totalValueFont, bold: false, italic: false };
   }
   sheet.getCell(`A${totalRow}`).alignment = { ...sheet.getCell(`A${totalRow}`).alignment, horizontal: "center", vertical: "middle" };
   // KPI titles and values are centered and fully bordered.
