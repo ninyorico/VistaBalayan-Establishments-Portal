@@ -314,6 +314,7 @@ export const downloadOfficialArrivalsWorkbook = async ({
       sheet.getCell(rowNumber, 7).value = hasData && summary ? summary.roomsOccupied : "";
       sheet.getCell(rowNumber, 8).value = hasData && summary ? summary.averageLengthOfStay : "";
       sheet.getCell(rowNumber, 9).value = hasData && summary ? summary.occupancyRate : "";
+      sheet.getCell(rowNumber, 9).numFmt = '0.00"%"';
     }
     for (let column = 5; column <= 16; column += 1) {
       const letter = String.fromCharCode(64 + column);
@@ -323,6 +324,7 @@ export const downloadOfficialArrivalsWorkbook = async ({
       const letter = String.fromCharCode(64 + column);
       setFormula(sheet.getCell(overnightTotalRow, column), `SUM(${letter}${overnightStartRow}:${letter}${overnightTotalRow - 1})`);
     }
+    sheet.getCell(overnightTotalRow, 9).numFmt = '0.00"%"';
     centerExportTable(sheet, 15, daytourTotalRow, 2, 16);
     centerExportTable(sheet, overnightStartRow, overnightTotalRow, 2, 9);
     leftAlignEstablishmentNames(sheet, 15, daytourTotalRow - 1);
