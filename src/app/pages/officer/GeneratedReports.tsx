@@ -130,11 +130,17 @@ const formatGrandTotalSheet = (sheet: ExcelJS.Worksheet, establishmentEndRow: nu
   addFullBorders(sheet, totalRow, 1, 1, 3);
   centerExportTable(sheet, 3, 3, 1, 3);
   centerExportTable(sheet, 4, totalRow, 1, 3);
-  const establishmentNameFont = JSON.parse(JSON.stringify(sheet.getCell(4, 2).font));
+  const establishmentNameTemplate = sheet.getCell(4, 2);
+  const establishmentNameFont = JSON.parse(JSON.stringify(establishmentNameTemplate.font));
+  const establishmentNameAlignment = {
+    horizontal: "left",
+    vertical: "middle",
+    wrapText: establishmentNameTemplate.alignment?.wrapText ?? false,
+  } as const;
   const totalValueFont = JSON.parse(JSON.stringify(sheet.getCell(4, 3).font));
-  for (let row = 4; row <= establishmentEndRow; row += 1) {
+  for (let row = 4; row < totalRow; row += 1) {
     const nameCell = sheet.getCell(row, 2);
-    nameCell.alignment = { ...nameCell.alignment, horizontal: "left", vertical: "middle" };
+    nameCell.alignment = { ...establishmentNameAlignment };
     nameCell.font = { ...establishmentNameFont, bold: true, italic: false };
   }
   for (let row = 3; row <= totalRow; row += 1) {
