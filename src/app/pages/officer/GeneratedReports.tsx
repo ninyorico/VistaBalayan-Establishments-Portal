@@ -175,6 +175,10 @@ const formatExportNumericCells = (workbook: ExcelJS.Workbook) => {
   workbook.worksheets.forEach((sheet) => {
     sheet.eachRow((row) => {
       row.eachCell((cell) => {
+        if (cell.value && typeof cell.value === "object" && "formula" in cell.value) {
+          cell.numFmt = "0";
+          return;
+        }
         if (typeof cell.value !== "number" || !Number.isFinite(cell.value)) return;
         const rounded = Math.round((cell.value + Number.EPSILON) * 100) / 100;
         cell.value = rounded;
