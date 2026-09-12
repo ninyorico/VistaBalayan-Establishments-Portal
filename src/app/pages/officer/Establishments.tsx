@@ -8,6 +8,16 @@ import { DEFAULT_ROOM_CONFIG, EstablishmentRoomConfig, getRoomConfigFromAmenitie
 
 type ReportingMode = "accommodation" | "visitor" | "both";
 
+const ESTABLISHMENT_TYPES = [
+  "Resort",
+  "Hotel",
+  "Lodge",
+  "Inn",
+  "Farm Resort",
+  "Swimming Pool",
+  "Residence",
+] as const;
+
 interface Establishment {
   id: string;
   name: string;
@@ -1153,7 +1163,7 @@ export default function Establishments() {
                     <p className="text-sm text-gray-500 mt-1">This establishment will be created immediately with the staff account.</p>
                     <div className="mt-4 space-y-4">
                       <div><label className="block text-sm font-medium text-gray-700 mb-2">Establishment Name *</label><input type="text" value={establishmentForm.name} onChange={(e) => setEstablishmentForm({ ...establishmentForm, name: e.target.value })} className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#1CA7C9]/50 focus:border-[#1CA7C9] outline-none transition-all" placeholder="Enter establishment name" /></div>
-                      <div><label className="block text-sm font-medium text-gray-700 mb-2">Type *</label><select value={establishmentForm.type} onChange={(e) => setEstablishmentForm({ ...establishmentForm, type: e.target.value })} className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#1CA7C9]/50 focus:border-[#1CA7C9] outline-none transition-all"><option value="Resort">Resort</option><option value="Hotel">Hotel</option></select></div>
+                      <div><label className="block text-sm font-medium text-gray-700 mb-2">Type *</label><select value={establishmentForm.type} onChange={(e) => setEstablishmentForm({ ...establishmentForm, type: e.target.value })} className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#1CA7C9]/50 focus:border-[#1CA7C9] outline-none transition-all">{ESTABLISHMENT_TYPES.map((type) => <option key={type} value={type}>{type}</option>)}</select></div>
                       <div><label className="block text-sm font-medium text-gray-700 mb-2">Address *</label><input type="text" value={establishmentForm.address} onChange={(e) => setEstablishmentForm({ ...establishmentForm, address: e.target.value })} className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#1CA7C9]/50 focus:border-[#1CA7C9] outline-none transition-all" placeholder="Enter address" /></div>
                       <div><label className="block text-sm font-medium text-gray-700 mb-2">Contact Number *</label><input type="text" value={establishmentForm.contact_number} onChange={(e) => setEstablishmentForm({ ...establishmentForm, contact_number: e.target.value })} className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#1CA7C9]/50 focus:border-[#1CA7C9] outline-none transition-all" placeholder="+63 917 123 4567" /></div>
                     </div>
@@ -1206,8 +1216,7 @@ export default function Establishments() {
                   const newType = e.target.value;
                   setEstablishmentForm({ ...establishmentForm, type: newType });
                 }} className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#1CA7C9]/50 focus:border-[#1CA7C9] outline-none transition-all">
-                  <option value="Resort">Resort</option>
-                  <option value="Hotel">Hotel</option>
+                  {ESTABLISHMENT_TYPES.map((type) => <option key={type} value={type}>{type}</option>)}
                 </select>
               </div>
               <div>
