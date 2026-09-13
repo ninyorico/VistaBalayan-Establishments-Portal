@@ -134,11 +134,27 @@ const normalizeOvernightMetricFormats = (sheet: ExcelJS.Worksheet, startRow: num
   for (let row = startRow; row <= endRow; row += 1) {
     const averageGuestNight = sheet.getCell(row, 8);
     const occupancyRate = sheet.getCell(row, 9);
-    // Clone shared template styles before changing numFmt so H and I remain independent.
+    const averageGuestsPerRoom = sheet.getCell(row, 10);
+    // Clone shared template styles before changing numFmt so H, I, and J remain independent.
     averageGuestNight.style = JSON.parse(JSON.stringify(averageGuestNight.style));
     occupancyRate.style = JSON.parse(JSON.stringify(occupancyRate.style));
+    averageGuestsPerRoom.style = JSON.parse(JSON.stringify(occupancyRate.style));
     averageGuestNight.numFmt = "0.00";
     occupancyRate.numFmt = '0.00"%"';
+    averageGuestsPerRoom.numFmt = "0.00";
+  }
+};
+const normalizeOvernightThirdMetric = (sheet: ExcelJS.Worksheet, startRow: number, endRow: number) => {
+  const title = "Average Number of Guest per room";
+  for (let row = 45; row <= 47; row += 1) {
+    const titleCell = sheet.getCell(row, 10);
+    titleCell.style = JSON.parse(JSON.stringify(sheet.getCell(row, 9).style));
+    titleCell.value = title;
+  }
+  for (let row = startRow; row <= endRow; row += 1) {
+    const valueCell = sheet.getCell(row, 10);
+    valueCell.style = JSON.parse(JSON.stringify(sheet.getCell(row, 9).style));
+    valueCell.numFmt = "0.00";
   }
 };
 const normalizeOvernightSpacerBorders = (sheet: ExcelJS.Worksheet, startRow: number, endRow: number) => {
@@ -161,7 +177,7 @@ const normalizeReportTableFonts = (
     sheet.getCell(row, 4).font = { ...daytourReferenceFont, bold: false, italic: false };
   }
   for (let row = overnightStartRow; row <= overnightEndRow; row += 1) {
-    for (let column = 2; column <= 9; column += 1) {
+    for (let column = 2; column <= 10; column += 1) {
       const cell = sheet.getCell(row, column);
       cell.font = { ...cell.font, italic: false };
     }
@@ -322,8 +338,8 @@ export const downloadOfficialArrivalsWorkbook = async ({
     if (overnightExtraRows) {
       sheet.insertRows(overnightBaseTotalRow, Array.from({ length: overnightExtraRows }, () => Array(16).fill(null)), "i");
       shiftMergedRanges(sheet, overnightBaseTotalRow, overnightExtraRows);
-      copyRowFormatting(sheet, overnightBaseTotalRow - 1, overnightBaseTotalRow, overnightExtraRows, 2, 9);
-      addFullBorders(sheet, overnightBaseTotalRow, overnightExtraRows, 2, 9);
+      copyRowFormatting(sheet, overnightBaseTotalRow - 1, overnightBaseTotalRow, overnightExtraRows, 2, 10);
+      addFullBorders(sheet, overnightBaseTotalRow, overnightExtraRows, 2, 10);
     }
     sheet.getCell("H4").value = new Date(Date.UTC(year, monthNumber - 1, 1));
     sheet.getCell("I4").value = new Date(Date.UTC(year, monthNumber - 1, 1));
@@ -366,7 +382,7 @@ export const downloadOfficialArrivalsWorkbook = async ({
       sheet.getCell(rowNumber, 3).value = rowEstablishment ? normalizeExportText(rowEstablishment.name) : "";
       const name = String(sheet.getCell(rowNumber, 3).value || "").trim();
       if (!name) {
-        for (let column = 4; column <= 9; column += 1) sheet.getCell(rowNumber, column).value = "";
+        for (let column = 4; column <= 10; column += 1) sheet.getCell(rowNumber, column).value = "";
         continue;
       }
       const establishment = establishmentByKey.get(exportNameKey(name));
@@ -381,6 +397,10 @@ export const downloadOfficialArrivalsWorkbook = async ({
       sheet.getCell(rowNumber, 7).value = hasData && summary ? summary.roomsOccupied : "";
       sheet.getCell(rowNumber, 8).value = hasData && summary ? summary.averageLengthOfStay : "";
       sheet.getCell(rowNumber, 9).value = hasData && summary ? summary.occupancyRate : "";
+      const averageGuestsPerRoom = sheet.getCell(rowNumber, 10);
+      averageGuestsPerRoom.style = JSON.parse(JSON.stringify(sheet.getCell(rowNumber, 9).style));
+      if (hasData && summary) setFormula(averageGuestsPerRoom, `IFERROR(F${rowNumber}/G${rowNumber},0)`);
+      else averageGuestsPerRoom.value = "";
     }
     for (let column = 5; column <= 16; column += 1) {
       const letter = String.fromCharCode(64 + column);
@@ -391,13 +411,14 @@ export const downloadOfficialArrivalsWorkbook = async ({
       setFormula(sheet.getCell(overnightTotalRow, column), `SUM(${letter}${overnightStartRow}:${letter}${overnightTotalRow - 1})`);
     }
     centerExportTable(sheet, 15, daytourTotalRow, 2, 16);
-    centerExportTable(sheet, overnightStartRow, overnightTotalRow, 2, 9);
+    centerExportTable(sheet, overnightStartRow, overnightTotalRow, 2, 10);
     leftAlignEstablishmentNames(sheet, 15, daytourTotalRow - 1);
     leftAlignEstablishmentNames(sheet, overnightStartRow, overnightTotalRow - 1);
     normalizeReportTableFonts(sheet, 15, daytourTotalRow - 1, overnightStartRow, overnightTotalRow - 1);
     normalizeNoRecordSubmittedFonts(sheet, 15, daytourTotalRow - 1);
     normalizeNoRecordSubmittedFonts(sheet, overnightStartRow, overnightTotalRow - 1);
     normalizeOvernightMetricFormats(sheet, overnightStartRow, overnightTotalRow - 1);
+    normalizeOvernightThirdMetric(sheet, overnightStartRow, overnightTotalRow - 1);
     normalizeOvernightSpacerBorders(sheet, 43, overnightTotalRow);
     autoFitExportColumns(sheet);
   }
