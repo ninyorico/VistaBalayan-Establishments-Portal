@@ -26,7 +26,7 @@ const getActiveStaffFromRequest = async (req, supabaseAdmin) => {
 
   if (profileError) throw profileError;
   if (profile?.role !== 'establishment_staff' || profile?.status !== 'active') {
-    throw new Error('Only active establishment staff can verify Gmail addresses.');
+    throw new Error('Only active establishment staff can verify work email addresses.');
   }
 
   return { user: userData.user, profile };
@@ -39,8 +39,8 @@ export default async function handler(req, res) {
     const body = await readBody(req);
     const email = normalizeEmail(body.email);
 
-    if (!/^\S+@gmail\.com$/i.test(email)) {
-      return sendJson(res, 400, { error: 'Use a valid Gmail address.' });
+    if (!/^\S+@[^\s@]+\.[^\s@]+$/i.test(email)) {
+      return sendJson(res, 400, { error: 'Use a valid work email address.' });
     }
 
     const supabaseAdmin = getSupabaseAdmin();
@@ -56,7 +56,7 @@ export default async function handler(req, res) {
 
     if (existingProfileError) throw existingProfileError;
     if (existingProfile?.id) {
-      return sendJson(res, 409, { error: 'Another active VistaBalayan account already uses this Gmail address.' });
+      return sendJson(res, 409, { error: 'Another active VistaBalayan account already uses this work email address.' });
     }
 
     const code = generateOtp();
@@ -76,6 +76,6 @@ export default async function handler(req, res) {
     return sendJson(res, 200, { ok: true });
   } catch (error) {
     console.error('send-staff-email-verification-otp failed', error);
-    return sendJson(res, 500, { error: describeError(error, 'Failed to send Gmail verification OTP.') });
+    return sendJson(res, 500, { error: describeError(error, 'Failed to send work email verification OTP.') });
   }
 }

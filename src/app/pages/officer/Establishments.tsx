@@ -422,15 +422,15 @@ export default function Establishments() {
   };
 
   const handleCreateStaffWithEstablishment = async () => {
-    const gmail = newAccountForm.email.trim().toLowerCase();
+    const email = newAccountForm.email.trim().toLowerCase();
 
-    if (!establishmentForm.name || !establishmentForm.address || !establishmentForm.contact_number || !newAccountForm.full_name || !gmail || !newAccountForm.password) {
+    if (!establishmentForm.name || !establishmentForm.address || !establishmentForm.contact_number || !newAccountForm.full_name || !email || !newAccountForm.password) {
       toast.error("Please fill in all required establishment and account fields");
       return;
     }
 
-    if (!/^[^\s@]+@gmail\.com$/i.test(gmail)) {
-      toast.error("Please use a valid Gmail address ending in @gmail.com");
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/i.test(email)) {
+      toast.error("Please use a valid work email address");
       return;
     }
 
@@ -450,7 +450,7 @@ export default function Establishments() {
       const { data: existingProfile, error: existingProfileError } = await supabase
         .from('profiles')
         .select('id, status')
-        .eq('email', gmail)
+        .eq('email', email)
         .eq('status', 'active')
         .maybeSingle();
 
@@ -459,11 +459,11 @@ export default function Establishments() {
       }
 
       if (existingProfile?.id) {
-        throw new Error("An active VistaBalayan profile already exists for this Gmail address. Delete that user first or use another Gmail.");
+        throw new Error("An active VistaBalayan profile already exists for this work email address. Delete that user first or use another work email.");
       }
 
       const accountResult = await callOfficerOtpApi('/api/create-staff-account', {
-        email: gmail,
+        email: email,
         password: newAccountForm.password,
         fullName: newAccountForm.full_name.trim(),
       });
@@ -481,7 +481,7 @@ export default function Establishments() {
 
         const { error: profileRpcError } = await supabase.rpc('complete_officer_onboarding_staff_profile', {
           p_user_id: userId,
-          p_email: gmail,
+          p_email: email,
           p_full_name: newAccountForm.full_name.trim(),
           p_establishment_id: createdEstablishmentId,
           p_status: 'active',
@@ -497,7 +497,7 @@ export default function Establishments() {
         throw profileError;
       }
 
-      toast.success("Staff account and establishment created. The staff can verify or update the Gmail address from their Profile page.");
+      toast.success("Staff account and establishment created. The staff can verify or update the work email address from their Profile page.");
       setShowOnboardingModal(false);
       setOnboardingStep("form");
       setOtpCode("");
@@ -1166,7 +1166,7 @@ export default function Establishments() {
             <div className="p-6 border-b border-gray-100 flex items-center justify-between sticky top-0 bg-white rounded-t-2xl">
               <div>
                 <h2 className="text-2xl font-bold text-gray-900">Add User</h2>
-                <p className="mt-1 text-sm text-gray-500">Create the staff login and linked establishment now. The staff can verify the Gmail address later from their Profile page.</p>
+                <p className="mt-1 text-sm text-gray-500">Create the staff login and linked establishment now. The staff can verify the work email address later from their Profile page.</p>
               </div>
               <button onClick={() => setShowOnboardingModal(false)} className="p-2 hover:bg-gray-100 rounded-lg transition-colors" disabled={onboardingSaving}>
                 <X className="w-5 h-5 text-gray-500" />
@@ -1177,10 +1177,10 @@ export default function Establishments() {
                 <>
                   <div className="rounded-xl border border-blue-100 bg-blue-50/60 p-4">
                     <h3 className="font-semibold text-gray-900">Staff account</h3>
-                    <p className="text-sm text-gray-600 mt-1">Only Gmail addresses are accepted. No OTP is required to create the account; Gmail validation is available after the staff signs in.</p>
+                    <p className="text-sm text-gray-600 mt-1">A valid work email address is required. No OTP is required to create the account; email verification is available after the staff signs in.</p>
                     <div className="mt-4 grid grid-cols-1 md:grid-cols-2 gap-4">
                       <div><label className="block text-sm font-medium text-gray-700 mb-2">Full Name *</label><input type="text" value={newAccountForm.full_name} onChange={(e) => setNewAccountForm({ ...newAccountForm, full_name: e.target.value })} className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#1CA7C9]/50 focus:border-[#1CA7C9] outline-none transition-all" placeholder="Staff full name" /></div>
-                      <div><label className="block text-sm font-medium text-gray-700 mb-2">Gmail Address *</label><input type="email" value={newAccountForm.email} onChange={(e) => setNewAccountForm({ ...newAccountForm, email: e.target.value })} className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#1CA7C9]/50 focus:border-[#1CA7C9] outline-none transition-all" placeholder="staff@gmail.com" /></div>
+                      <div><label className="block text-sm font-medium text-gray-700 mb-2">Work Email Address *</label><input type="email" value={newAccountForm.email} onChange={(e) => setNewAccountForm({ ...newAccountForm, email: e.target.value })} className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#1CA7C9]/50 focus:border-[#1CA7C9] outline-none transition-all" placeholder="staff@email.com" /></div>
                       <div><label className="block text-sm font-medium text-gray-700 mb-2">Temporary Password *</label><input type="password" value={newAccountForm.password} onChange={(e) => setNewAccountForm({ ...newAccountForm, password: e.target.value })} className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#1CA7C9]/50 focus:border-[#1CA7C9] outline-none transition-all" placeholder="Minimum 8 characters" /></div>
                       <div><label className="block text-sm font-medium text-gray-700 mb-2">Confirm Password *</label><input type="password" value={newAccountForm.confirm_password} onChange={(e) => setNewAccountForm({ ...newAccountForm, confirm_password: e.target.value })} className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#1CA7C9]/50 focus:border-[#1CA7C9] outline-none transition-all" placeholder="Re-type password" /></div>
                     </div>
@@ -1200,7 +1200,7 @@ export default function Establishments() {
                 </>
               ) : (
                 <div className="rounded-xl border border-emerald-100 bg-emerald-50/70 p-5">
-                  <h3 className="font-semibold text-gray-900">Confirm Gmail OTP</h3>
+                  <h3 className="font-semibold text-gray-900">Confirm work email OTP</h3>
                   <p className="text-sm text-gray-600 mt-1">Enter the 6-digit OTP sent to <span className="font-medium">{pendingOnboarding?.email}</span>. The staff profile and establishment will be created only after this code is accepted.</p>
                   <p className="mt-2 text-xs text-gray-500">If Supabase says the email rate limit was exceeded, use the OTP you already received. If no OTP arrived, wait about 1 hour before sending another OTP.</p>
                   <div className="mt-4 max-w-xs">

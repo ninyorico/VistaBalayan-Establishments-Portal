@@ -18,8 +18,8 @@ export default async function handler(req, res) {
     const password = String(body.password || '');
     const fullName = String(body.fullName || '').trim();
 
-    if (!/^\S+@gmail\.com$/i.test(email)) {
-      return sendJson(res, 400, { error: 'Use a valid Gmail address.' });
+    if (!/^\S+@[^\s@]+\.[^\s@]+$/i.test(email)) {
+      return sendJson(res, 400, { error: 'Use a valid work email address.' });
     }
     if (!fullName) {
       return sendJson(res, 400, { error: 'Full name is required.' });
@@ -40,7 +40,7 @@ export default async function handler(req, res) {
 
     if (existingProfileError) throw existingProfileError;
     if (existingProfile?.id) {
-      return sendJson(res, 409, { error: 'An active VistaBalayan profile already exists for this Gmail address.' });
+      return sendJson(res, 409, { error: 'An active VistaBalayan profile already exists for this work email address.' });
     }
 
     const existingAuthUser = await findAuthUserByEmail(supabaseAdmin, email);

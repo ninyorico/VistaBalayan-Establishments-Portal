@@ -25,7 +25,7 @@ const getActiveStaffFromRequest = async (req, supabaseAdmin) => {
 
   if (profileError) throw profileError;
   if (profile?.role !== 'establishment_staff' || profile?.status !== 'active') {
-    throw new Error('Only active establishment staff can verify Gmail addresses.');
+    throw new Error('Only active establishment staff can verify work email addresses.');
   }
 
   return { user: userData.user, profile };
@@ -39,8 +39,8 @@ export default async function handler(req, res) {
     const email = normalizeEmail(body.email);
     const code = String(body.otp || '').trim();
 
-    if (!/^\S+@gmail\.com$/i.test(email)) {
-      return sendJson(res, 400, { error: 'Use a valid Gmail address.' });
+    if (!/^\S+@[^\s@]+\.[^\s@]+$/i.test(email)) {
+      return sendJson(res, 400, { error: 'Use a valid work email address.' });
     }
     if (!/^\d{6}$/.test(code)) {
       return sendJson(res, 400, { error: 'Enter the 6-digit OTP.' });
@@ -59,12 +59,12 @@ export default async function handler(req, res) {
 
     if (existingProfileError) throw existingProfileError;
     if (existingProfile?.id) {
-      return sendJson(res, 409, { error: 'Another active VistaBalayan account already uses this Gmail address.' });
+      return sendJson(res, 409, { error: 'Another active VistaBalayan account already uses this work email address.' });
     }
 
     const existingAuthUser = await findAuthUserByEmail(supabaseAdmin, email);
     if (existingAuthUser?.id && existingAuthUser.id !== user.id) {
-      throw new Error('Another Supabase auth account already uses this Gmail address.');
+      throw new Error('Another Supabase auth account already uses this work email address.');
     }
 
     const otpRow = await consumeOtp(supabaseAdmin, { email, purpose: 'staff_creation', code });
@@ -96,6 +96,6 @@ export default async function handler(req, res) {
     return sendJson(res, 200, { ok: true, email, verifiedAt });
   } catch (error) {
     console.error('verify-staff-email-otp failed', error);
-    return sendJson(res, 500, { error: describeError(error, 'Failed to verify Gmail OTP.') });
+    return sendJson(res, 500, { error: describeError(error, 'Failed to verify work email OTP.') });
   }
 }
