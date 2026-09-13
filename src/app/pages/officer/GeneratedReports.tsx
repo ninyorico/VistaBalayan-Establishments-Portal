@@ -120,6 +120,32 @@ const leftAlignGrandTotalNames = (sheet: ExcelJS.Worksheet, startRow: number, en
 const clearCellBorders = (cell: ExcelJS.Cell) => {
   cell.border = { top: {}, left: {}, bottom: {}, right: {} };
 };
+const normalizeReportTableFonts = (
+  sheet: ExcelJS.Worksheet,
+  daytourStartRow: number,
+  daytourEndRow: number,
+  overnightStartRow: number,
+  overnightEndRow: number,
+) => {
+  const daytourReferenceFont = JSON.parse(JSON.stringify(sheet.getCell(Math.min(daytourStartRow + 1, daytourEndRow), 4).font));
+  const overnightReferenceFont = JSON.parse(JSON.stringify(sheet.getCell(Math.min(overnightStartRow + 1, overnightEndRow), 4).font));
+  for (let row = daytourStartRow; row <= daytourEndRow; row += 1) {
+    for (let column = 2; column <= 16; column += 1) {
+      const cell = sheet.getCell(row, column);
+      cell.font = { ...cell.font, italic: false };
+    }
+    sheet.getCell(row, 4).font = { ...daytourReferenceFont, bold: false, italic: false };
+  }
+  for (let row = overnightStartRow; row <= overnightEndRow; row += 1) {
+    for (let column = 2; column <= 9; column += 1) {
+      const cell = sheet.getCell(row, column);
+      cell.font = { ...cell.font, italic: false };
+    }
+    sheet.getCell(row, 4).font = { ...overnightReferenceFont, bold: false, italic: false };
+  }
+  // A30 is a known template/style outlier after dynamic row insertion.
+  sheet.getCell("A30").font = { ...sheet.getCell("A30").font, italic: false };
+};
 const formatGrandTotalSheet = (sheet: ExcelJS.Worksheet, establishmentEndRow: number, totalRow: number) => {
   sheet.getColumn(1).width = Math.max(10, String(Math.max(establishmentEndRow - 3, 1)).length + 7);
   sheet.getColumn(2).width = 38;
@@ -151,6 +177,7 @@ const formatGrandTotalSheet = (sheet: ExcelJS.Worksheet, establishmentEndRow: nu
     totalCell.font = { ...totalValueFont, bold: false, italic: false };
   }
   sheet.getCell(`A${totalRow}`).alignment = { ...sheet.getCell(`A${totalRow}`).alignment, horizontal: "center", vertical: "middle" };
+  sheet.getCell("A30").font = { ...sheet.getCell("A30").font, italic: false };
   // KPI titles and values are centered and fully bordered.
   for (let row = 3; row <= 19; row += 1) {
     const cell = sheet.getCell(row, 5);
@@ -343,6 +370,7 @@ export const downloadOfficialArrivalsWorkbook = async ({
     centerExportTable(sheet, overnightStartRow, overnightTotalRow, 2, 9);
     leftAlignEstablishmentNames(sheet, 15, daytourTotalRow - 1);
     leftAlignEstablishmentNames(sheet, overnightStartRow, overnightTotalRow - 1);
+    normalizeReportTableFonts(sheet, 15, daytourTotalRow - 1, overnightStartRow, overnightTotalRow - 1);
     autoFitExportColumns(sheet);
   }
   const grandTotal = workbook.getWorksheet("GRAND TOTAL");
