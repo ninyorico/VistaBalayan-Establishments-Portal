@@ -3,6 +3,7 @@ import { Search, Eye, Download, CheckCircle, Clock, XCircle, ChevronDown, Calend
 import { supabase } from "../../../lib/supabase";
 import { calculateAccommodationOccupancy, formatDate, formatMonthYear, groupStaffSubmissions, StaffSubmissionSummary } from "../../../lib/reportMetrics";
 import { canSubmitAccommodationReport, canSubmitVisitorReport } from "../../../lib/establishmentReportForms";
+import DataState from "../../components/DataState";
 
 interface VisitorReportExportRecord {
   id: string;
@@ -88,6 +89,7 @@ export default function SubmissionHistory() {
   const [visitorReports, setVisitorReports] = useState<VisitorReportExportRecord[]>([]);
   const [accommodationReports, setAccommodationReports] = useState<AccommodationReportExportRecord[]>([]);
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState<{ kind: "error" | "session-expired"; message: string } | null>(null);
   const [searchTerm, setSearchTerm] = useState("");
   const [filterStatus, setFilterStatus] = useState("all");
   const [allowedForms, setAllowedForms] = useState({ visitor: false, accommodation: false });
@@ -103,9 +105,12 @@ export default function SubmissionHistory() {
   }, []);
 
   const fetchSubmissions = async () => {
+    setLoading(true);
+    setLoadError(null);
     const { data: { user } } = await supabase.auth.getUser();
 
     if (!user) {
+      setLoadError({ kind: "session-expired", message: "Your staff session has expired. Sign in again to continue." });
       setLoading(false);
       return;
     }
@@ -138,22 +143,29 @@ export default function SubmissionHistory() {
     // used for the sidebar and new-report routes, but it must not hide imported
     // accommodation history when an establishment's current type is Resort or
     // another category that no longer exposes the accommodation form.
-    const [{ data: visitorData }, { data: accommodationData }] = await Promise.all([
+    const [{ data: visitorData, error: visitorError }, { data: accommodationData, error: accommodationError }] = await Promise.all([
       establishmentId
         ? supabase
             .from("visitor_reports")
             .select("id, report_date, created_at, status, guest_name, total_male, total_female, total_guests, residence_type, place_of_residence")
             .eq("establishment_id", establishmentId)
             .order("created_at", { ascending: false })
-        : Promise.resolve({ data: [] }),
+        : Promise.resolve({ data: [], error: null }),
       establishmentId
         ? supabase
             .from("accommodation_reports")
             .select("id, report_date, created_at, status, total_rooms, total_occupied_rooms, total_check_ins, total_guest_nights")
             .eq("establishment_id", establishmentId)
             .order("created_at", { ascending: false })
-        : Promise.resolve({ data: [] }),
+        : Promise.resolve({ data: [], error: null }),
     ]);
+
+    if (visitorError || accommodationError) {
+      console.error("Error fetching submission history:", visitorError || accommodationError);
+      setLoadError({ kind: "error", message: "The submission history service returned an error. Please retry." });
+      setLoading(false);
+      return;
+    }
 
     const visitors = (visitorData || []) as VisitorReportExportRecord[];
     const accommodations = (accommodationData || []) as AccommodationReportExportRecord[];

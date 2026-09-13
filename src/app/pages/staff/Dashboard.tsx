@@ -18,6 +18,7 @@ import { supabase } from "../../../lib/supabase";
 import { calculateAccommodationOccupancy, groupStaffSubmissions } from "../../../lib/reportMetrics";
 import { canSubmitAccommodationReport, canSubmitVisitorReport, getPrimaryReportFormLabel } from "../../../lib/establishmentReportForms";
 import { EmptyState, LoadingState, MetricCard, PageHero, PanelCard } from "../../components/vista/PolishedShell";
+import DataState from "../../components/DataState";
 
 const statusStyles = {
   approved: "bg-emerald-50 text-emerald-700 ring-emerald-200",
@@ -30,6 +31,7 @@ export default function StaffDashboard() {
   const [profile, setProfile] = useState<any>(null);
   const [establishment, setEstablishment] = useState<any>(null);
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState<{ kind: "error" | "session-expired"; message: string } | null>(null);
   const [stats, setStats] = useState({
     total: 0,
     pending: 0,
@@ -55,19 +57,28 @@ export default function StaffDashboard() {
 
   const loadUserAndData = async () => {
     setLoading(true);
+    setLoadError(null);
 
     const { data: { user } } = await supabase.auth.getUser();
 
     if (!user) {
-      window.location.href = "/";
+      setLoadError({ kind: "session-expired", message: "Your staff session has expired. Sign in again to continue." });
+      setLoading(false);
       return;
     }
 
-    const { data: profileData } = await supabase
+    const { data: profileData, error: profileError } = await supabase
       .from("profiles")
       .select("*")
       .eq("id", user.id)
       .maybeSingle();
+
+    if (profileError) {
+      console.error("Error fetching staff profile:", profileError);
+      setLoadError({ kind: "error", message: "The dashboard service returned an error. Please retry." });
+      setLoading(false);
+      return;
+    }
 
     setProfile(profileData);
 
@@ -81,15 +92,22 @@ export default function StaffDashboard() {
         setEstablishment(establishmentData);
       }
 
-      const { data: visitorData } = await supabase
+      const { data: visitorData, error: visitorError } = await supabase
         .from("visitor_reports")
         .select("id, report_date, created_at, status, total_guests, total_male, total_female")
         .eq("submitted_by", profileData.id);
 
-      const { data: accommodationData } = await supabase
+      const { data: accommodationData, error: accommodationError } = await supabase
         .from("accommodation_reports")
         .select("id, report_date, created_at, status, total_rooms, total_occupied_rooms, total_check_ins, total_guest_nights")
         .eq("submitted_by", profileData.id);
+
+      if (visitorError || accommodationError) {
+        console.error("Error fetching staff dashboard reports:", visitorError || accommodationError);
+        setLoadError({ kind: "error", message: "The dashboard service returned an error. Please retry." });
+        setLoading(false);
+        return;
+      }
 
       const submissions = groupStaffSubmissions(visitorData || [], accommodationData || []);
 
@@ -176,6 +194,14 @@ export default function StaffDashboard() {
 
   if (loading) {
     return <LoadingState label="Loading establishment dashboard" />;
+  }
+
+  if (loadError) {
+    return <DataState state={loadError.kind} message={loadError.message} onRetry={loadUserAndData} />;
+  }
+
+  if (!profile) {
+    return <DataState state="empty" message="No active establishment profile is assigned to this account." />;
   }
 
   return (

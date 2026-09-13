@@ -11,9 +11,9 @@ import {
   Menu,
 } from "lucide-react";
 import { useState } from "react";
-import { supabase } from "../../lib/supabase";
+
 import NotificationCenter from "../components/NotificationCenter";
-// import { useAuth } from "../../contexts/AuthContext"; // TEMPORARILY REMOVED
+import { useAuth } from "../../contexts/AuthContext";
 
 const menuItems = [
   { path: "/officer", icon: LayoutDashboard, label: "Dashboard" },
@@ -26,16 +26,14 @@ const menuItems = [
 
 export default function OfficerLayout() {
   const navigate = useNavigate();
+  const { profile, signOut } = useAuth();
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [profileDropdownOpen, setProfileDropdownOpen] = useState(false);
 
-  // TEMPORARY hardcoded profile
-  const profile = { full_name: "Municipal Tourism Officer", email: "officer@balayan.gov" };
-  
-const handleLogout = async () => {
-  await supabase.auth.signOut();
-  window.location.href = "/admin/login";
-};
+  const handleLogout = async () => {
+    await signOut();
+    window.location.href = "/admin/login";
+  };
 
   const closeSidebarOnMobile = () => {
     if (window.innerWidth < 1024) {
@@ -128,10 +126,10 @@ const handleLogout = async () => {
                   </div>
                   <div className="hidden sm:block text-left">
                     <div className="text-sm font-semibold text-[#0F172A]">
-                      {profile?.full_name || 'Municipal Tourism Officer'}
+                      {profile?.full_name || "Authenticated officer"}
                     </div>
-                    <div className="text-xs text-[#6B7280]">
-                      {profile?.email || 'officer@balayan.gov'}
+                    <div className="text-xs text-slate-500 truncate max-w-[180px]">
+                      {profile?.email || ""}
                     </div>
                   </div>
                 </button>

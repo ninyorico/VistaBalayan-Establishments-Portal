@@ -1,6 +1,7 @@
 import { Fragment, useState, useEffect, useMemo, useRef, type TouchEvent } from "react";
 import { ChevronDown, ChevronRight, Download, Search, TrendingUp, X } from "lucide-react";
 import { toast } from "sonner";
+import DataState from "../../components/DataState";
 import { supabase } from "../../../lib/supabase";
 import { datestampedFilename, downloadCsv } from "../../../lib/exportCsv";
 import { calculateAccommodationOccupancy, calculateAverageAccommodationOccupancy } from "../../../lib/reportMetrics";
@@ -24,6 +25,7 @@ interface AccommodationRecord {
 export default function AccommodationMonitoring({ embedded = false }: { embedded?: boolean }) {
   const [accommodationRecords, setAccommodationRecords] = useState<AccommodationRecord[]>([]);
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState("");
   const [specificMonth, setSpecificMonth] = useState("");
   const [establishmentTotalRooms, setEstablishmentTotalRooms] = useState(0);
@@ -76,6 +78,7 @@ export default function AccommodationMonitoring({ embedded = false }: { embedded
 
   const fetchAccommodationRecords = async () => {
     setLoading(true);
+    setLoadError(null);
     
     try {
       // Match the Establishments page total rooms exactly: sum establishments.total_rooms from the canonical establishments table.
@@ -86,7 +89,8 @@ export default function AccommodationMonitoring({ embedded = false }: { embedded
 
       if (establishmentsError) {
         console.error("Error fetching establishment room totals:", establishmentsError);
-        toast.error("Failed to load establishment room totals: " + establishmentsError.message);
+        setLoadError("The accommodation monitoring service returned an error. Please retry.");
+        toast.error("Failed to load establishment room totals");
         setLoading(false);
         return;
       }
@@ -125,7 +129,8 @@ export default function AccommodationMonitoring({ embedded = false }: { embedded
 
         if (error) {
           console.error("Error fetching accommodation reports:", error);
-          toast.error("Failed to load accommodation data: " + error.message);
+          setLoadError("The accommodation monitoring service returned an error. Please retry.");
+          toast.error("Failed to load accommodation data");
           setLoading(false);
           return;
         }
@@ -203,6 +208,7 @@ export default function AccommodationMonitoring({ embedded = false }: { embedded
 
     } catch (err) {
       console.error("Unexpected error:", err);
+      setLoadError("The accommodation monitoring service returned an error. Please retry.");
       toast.error("Failed to load accommodation data");
     } finally {
       setLoading(false);
@@ -401,12 +407,15 @@ export default function AccommodationMonitoring({ embedded = false }: { embedded
   };
 
   if (loading) {
-    return (
-      <div className="flex items-center justify-center h-96">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#1CA7C9] mx-auto"></div>
-        <p className="mt-4 text-gray-600">Loading accommodation data...</p>
-      </div>
-    );
+    return <DataState state="loading" message="Loading accommodation data…" />;
+  }
+
+  if (loadError) {
+    return <DataState state="error" message={loadError} onRetry={fetchAccommodationRecords} />;
+  }
+
+  if (accommodationRecords.length === 0) {
+    return <DataState state="empty" message="No accommodation records have been submitted yet." />;
   }
 
   return (

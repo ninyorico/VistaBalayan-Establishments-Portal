@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router";
 import { Save, Send, Settings, AlertTriangle, Plus, Trash2 } from "lucide-react";
 import { toast } from "sonner";
@@ -36,6 +36,7 @@ export default function SubmitAccommodationReport() {
   const [roomTypes, setRoomTypes] = useState<EstablishmentRoomConfig[]>(DEFAULT_ROOM_CONFIG);
   const [establishmentAmenities, setEstablishmentAmenities] = useState<string>("");
   const [submitting, setSubmitting] = useState(false);
+  const submissionKeyRef = useRef(crypto.randomUUID());
 
   const getTodayDate = () => {
     const today = new Date();
@@ -325,60 +326,40 @@ export default function SubmitAccommodationReport() {
 
     setSubmitting(true);
 
-    // Insert into accommodation_reports
-    const { data: reportData, error: reportError } = await supabase
-      .from("accommodation_reports")
-      .insert({
-        establishment_id: profile.establishment_id,
-        submitted_by: profile.id,
-        report_date: reportDate,
-        total_rooms: totalRooms,
-        total_occupied_rooms: totalOccupiedRooms,
-        total_check_ins: totalCheckIns,
-        total_guest_nights: totalGuestNights,
-        rooms_occupied: totalOccupiedRooms,
-        guest_check_ins: totalCheckIns,
-        guest_nights: totalGuestNights,
-        status: "submitted",
-      })
-      .select()
-      .single();
+    const { error: submitError } = await supabase.rpc("staff_submit_accommodation_report", {
+      p_establishment_id: profile.establishment_id,
+      p_report_date: reportDate,
+      p_total_rooms: totalRooms,
+      p_total_occupied_rooms: totalOccupiedRooms,
+      p_total_check_ins: totalCheckIns,
+      p_total_guest_nights: totalGuestNights,
+      p_rooms_occupied: totalOccupiedRooms,
+      p_guest_check_ins: totalCheckIns,
+      p_guest_nights: totalGuestNights,
+      p_room_details: roomData.map((room) => ({
+        room_type: room.roomType,
+        room_code: room.roomCode,
+        number_of_rooms: room.numberOfRooms,
+        occupied_rooms: room.occupied,
+        check_ins: room.checkIns,
+        guest_nights: room.guestNights,
+        is_rent_mode: false,
+      })),
+      p_idempotency_key: submissionKeyRef.current,
+    });
 
-    if (reportError) {
-      toast.error("Failed to submit report: " + reportError.message);
-      setSubmitting(false);
-      return;
-    }
-
-    // Insert room details
-    const roomDetails = roomData.map(room => ({
-      accommodation_report_id: reportData.id,
-      room_type: room.roomType,
-      room_code: room.roomCode,
-      number_of_rooms: room.numberOfRooms,
-      occupied_rooms: room.occupied,
-      check_ins: room.checkIns,
-      guest_nights: room.guestNights,
-      is_rent_mode: false,
-    }));
-
-    const { error: detailsError } = await supabase
-      .from("room_occupancy_details")
-      .insert(roomDetails);
-
-    if (detailsError) {
-      toast.error("Failed to save room details: " + detailsError.message);
+    if (submitError) {
+      toast.error("Failed to submit report: " + submitError.message);
     } else {
       toast.success("Hotel report submitted successfully");
-      // Reset form
-      setRoomData(roomData.map(room => ({
+      submissionKeyRef.current = crypto.randomUUID();
+      setRoomData(roomData.map((room) => ({
         ...room,
         occupied: 0,
         checkIns: 0,
         guestNights: 0,
       })));
       setReportDate(getTodayDate());
-
     }
     setSubmitting(false);
   };

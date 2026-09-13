@@ -3,6 +3,7 @@ import { ChevronRight, Download, Search, X } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "../../../lib/supabase";
 import { datestampedFilename, downloadCsv } from "../../../lib/exportCsv";
+import DataState from "../../components/DataState";
 
 interface VisitorRecord {
   id: string;
@@ -19,6 +20,7 @@ interface VisitorRecord {
 export default function VisitorMonitoring({ embedded = false }: { embedded?: boolean }) {
   const [visitorRecords, setVisitorRecords] = useState<VisitorRecord[]>([]);
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState("");
   const [filterResidence, setFilterResidence] = useState("all");
   const [specificMonth, setSpecificMonth] = useState("");
@@ -58,6 +60,7 @@ export default function VisitorMonitoring({ embedded = false }: { embedded?: boo
 
   const fetchVisitorRecords = async () => {
     setLoading(true);
+    setLoadError(null);
     
     // Supabase REST limits each response to 1,000 rows by default. Fetch all
     // pages so older imported months are not silently cut off.
@@ -83,6 +86,7 @@ export default function VisitorMonitoring({ embedded = false }: { embedded?: boo
 
       if (error) {
         console.error("Error fetching visitor records:", error);
+        setLoadError("The visitor monitoring service returned an error. Please retry.");
         setLoading(false);
         return;
       }
@@ -196,12 +200,15 @@ export default function VisitorMonitoring({ embedded = false }: { embedded?: boo
   };
 
   if (loading) {
-    return (
-      <div className="flex items-center justify-center h-96">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#1CA7C9] mx-auto"></div>
-        <p className="mt-4 text-gray-600">Loading visitor records...</p>
-      </div>
-    );
+    return <DataState state="loading" message="Loading visitor records…" />;
+  }
+
+  if (loadError) {
+    return <DataState state="error" message={loadError} onRetry={fetchVisitorRecords} />;
+  }
+
+  if (visitorRecords.length === 0) {
+    return <DataState state="empty" message="No visitor records have been submitted yet." />;
   }
 
   return (

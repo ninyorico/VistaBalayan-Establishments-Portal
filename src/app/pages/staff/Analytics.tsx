@@ -16,6 +16,7 @@ import { supabase } from "../../../lib/supabase";
 import { calculateAccommodationOccupancy, calculateAverageAccommodationOccupancy } from "../../../lib/reportMetrics";
 import { canSubmitAccommodationReport, canSubmitVisitorReport } from "../../../lib/establishmentReportForms";
 import { LoadingState, MetricCard } from "../../components/vista/PolishedShell";
+import DataState from "../../components/DataState";
 
 type VisitorReport = {
   id: string;
@@ -49,6 +50,7 @@ const toNumber = (value?: number | null) => Number(value || 0);
 
 export default function Analytics() {
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState<{ kind: "error" | "session-expired"; message: string } | null>(null);
   const [establishment, setEstablishment] = useState<any>(null);
   const [visitorReports, setVisitorReports] = useState<VisitorReport[]>([]);
   const [accommodationReports, setAccommodationReports] = useState<AccommodationReport[]>([]);
@@ -59,29 +61,45 @@ export default function Analytics() {
 
   const loadAnalytics = async () => {
     setLoading(true);
+    setLoadError(null);
 
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) {
-      window.location.href = "/";
+      setLoadError({ kind: "session-expired", message: "Your staff session has expired. Sign in again to continue." });
+      setLoading(false);
       return;
     }
 
-    const { data: profile } = await supabase
+    const { data: profile, error: profileError } = await supabase
       .from("profiles")
       .select("id, establishment_id")
       .eq("id", user.id)
       .maybeSingle();
+
+    if (profileError) {
+      console.error("Error fetching analytics profile:", profileError);
+      setLoadError({ kind: "error", message: "The analytics service returned an error. Please retry." });
+      setLoading(false);
+      return;
+    }
 
     if (!profile?.establishment_id) {
       setLoading(false);
       return;
     }
 
-    const { data: establishmentData } = await supabase
+    const { data: establishmentData, error: establishmentError } = await supabase
       .from("establishments")
       .select("name,type,total_rooms")
       .eq("id", profile.establishment_id)
       .maybeSingle();
+
+    if (establishmentError) {
+      console.error("Error fetching analytics establishment:", establishmentError);
+      setLoadError({ kind: "error", message: "The analytics service returned an error. Please retry." });
+      setLoading(false);
+      return;
+    }
 
     setEstablishment(establishmentData);
 
@@ -97,6 +115,13 @@ export default function Analytics() {
         .eq("establishment_id", profile.establishment_id)
         .order("report_date", { ascending: true }),
     ]);
+
+    if (visitorResult.error || accommodationResult.error) {
+      console.error("Error fetching analytics reports:", visitorResult.error || accommodationResult.error);
+      setLoadError({ kind: "error", message: "The analytics service returned an error. Please retry." });
+      setLoading(false);
+      return;
+    }
 
     setVisitorReports(visitorResult.data || []);
     setAccommodationReports(accommodationResult.data || []);
@@ -197,6 +222,14 @@ export default function Analytics() {
 
   if (loading) {
     return <LoadingState label="Loading establishment analytics" />;
+  }
+
+  if (loadError) {
+    return <DataState state={loadError.kind} message={loadError.message} onRetry={loadAnalytics} />;
+  }
+
+  if (!establishment) {
+    return <DataState state="empty" message="No active establishment profile is assigned to this account." />;
   }
 
   return (

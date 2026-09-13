@@ -105,7 +105,7 @@ const insertResults = async (supabaseAdmin, results, scope, establishmentId) => 
     const { error } = await supabaseAdmin.from('ai_anomalies_cache').insert(rows);
     if (error) throw new Error('Unable to save generated anomalies');
   }
-  const { error: cacheError } = await supabaseAdmin.from('ai_insights_cache').insert({ insight_type: 'recommendations', data: { insights: results.insights, scope }, generated_at: new Date().toISOString(), expires_at: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString() });
+  const { error: cacheError } = await supabaseAdmin.from('ai_insights_cache').insert({ insight_type: 'recommendations', establishment_id: scope === 'establishment' ? establishmentId : null, data: { insights: results.insights, scope }, generated_at: new Date().toISOString(), expires_at: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString() });
   if (cacheError) throw new Error('Unable to save generated insight cache');
 };
 

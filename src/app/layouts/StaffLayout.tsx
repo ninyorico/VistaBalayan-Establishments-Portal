@@ -15,6 +15,7 @@ import {
   Building2,
 } from "lucide-react";
 import { useEffect, useState } from "react";
+import { useAuth } from "../../contexts/AuthContext";
 import { canSubmitAccommodationReport, canSubmitVisitorReport } from "../../lib/establishmentReportForms";
 import NotificationCenter from "../components/NotificationCenter";
 
@@ -30,21 +31,13 @@ const menuItems = [
 
 export default function StaffLayout() {
   const navigate = useNavigate();
+  const { profile, signOut } = useAuth();
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [profileDropdownOpen, setProfileDropdownOpen] = useState(false);
   const [establishment, setEstablishment] = useState<any>(null);
 
   useEffect(() => {
     const loadEstablishment = async () => {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) return;
-
-      const { data: profile } = await supabase
-        .from("profiles")
-        .select("establishment_id")
-        .eq("id", user.id)
-        .maybeSingle();
-
       if (!profile?.establishment_id) return;
 
       const { data: establishmentData } = await supabase
@@ -56,8 +49,8 @@ export default function StaffLayout() {
       setEstablishment(establishmentData);
     };
 
-    loadEstablishment();
-  }, []);
+    void loadEstablishment();
+  }, [profile?.establishment_id]);
 
   const visibleMenuItems = menuItems.filter((item) => {
     if (item.form === "visitor") return canSubmitVisitorReport(establishment);
@@ -66,8 +59,8 @@ export default function StaffLayout() {
   });
 
   const handleLogout = async () => {
-  await supabase.auth.signOut();
-  window.location.href = "/admin/login";
+    await signOut();
+    window.location.href = "/admin/login";
   };
 
   const closeSidebarOnMobile = () => {

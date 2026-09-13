@@ -2,6 +2,8 @@ import { useState } from "react";
 import { Eye, EyeOff, LockKeyhole, Mail, ShieldCheck } from "lucide-react";
 import { supabase } from "../../lib/supabase";
 
+const roleHomePath = (role: string) => role === "municipal_officer" ? "/officer" : role === "establishment_staff" ? "/staff" : null;
+
 export default function Login() {
   const [showPassword, setShowPassword] = useState(false);
   const [email, setEmail] = useState("");
@@ -23,20 +25,31 @@ export default function Login() {
     setLoading(true);
 
     try {
-      const { error } = await supabase.auth.signInWithPassword({
+      const { data, error } = await supabase.auth.signInWithPassword({
         email,
         password,
       });
 
-      if (error) {
-        throw error;
+      if (error) throw error;
+
+      const { data: profile, error: profileError } = await supabase
+        .from("profiles")
+        .select("role,status")
+        .eq("id", data.user.id)
+        .maybeSingle();
+
+      if (profileError) throw profileError;
+      if (profile?.status !== "active") {
+        await supabase.auth.signOut();
+        throw new Error("This account is not active. Please contact the municipal tourism office.");
       }
 
-      if (email.includes("officer")) {
-        window.location.href = "/officer";
-      } else {
-        window.location.href = "/staff";
+      const destination = roleHomePath(profile.role);
+      if (!destination) {
+        await supabase.auth.signOut();
+        throw new Error("This account does not have an authorized portal role.");
       }
+      window.location.href = destination;
     } catch (err: any) {
       setError(err.message || "Login failed. Please check your details and try again.");
       setLoading(false);
