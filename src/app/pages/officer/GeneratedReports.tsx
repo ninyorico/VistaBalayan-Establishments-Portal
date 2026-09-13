@@ -120,6 +120,30 @@ const leftAlignGrandTotalNames = (sheet: ExcelJS.Worksheet, startRow: number, en
 const clearCellBorders = (cell: ExcelJS.Cell) => {
   cell.border = { top: {}, left: {}, bottom: {}, right: {} };
 };
+const normalizeNoRecordSubmittedFonts = (sheet: ExcelJS.Worksheet, startRow: number, endRow: number) => {
+  for (let row = startRow; row <= endRow; row += 1) {
+    for (const column of [4]) {
+      const cell = sheet.getCell(row, column);
+      if (cell.value === "NO RECORD SUBMITTED") {
+        cell.font = { ...cell.font, name: "Arial Narrow", size: 10 };
+      }
+    }
+  }
+};
+const normalizeOvernightMetricFormats = (sheet: ExcelJS.Worksheet, startRow: number, endRow: number) => {
+  for (let row = startRow; row <= endRow; row += 1) {
+    const averageGuestNight = sheet.getCell(row, 8);
+    const occupancyRate = sheet.getCell(row, 9);
+    // Clone shared template styles before changing numFmt so H and I remain independent.
+    averageGuestNight.style = JSON.parse(JSON.stringify(averageGuestNight.style));
+    occupancyRate.style = JSON.parse(JSON.stringify(occupancyRate.style));
+    averageGuestNight.numFmt = "0.00";
+    occupancyRate.numFmt = '0.00"%"';
+  }
+};
+const normalizeOvernightSpacerBorders = (sheet: ExcelJS.Worksheet, startRow: number, endRow: number) => {
+  addFullBorders(sheet, startRow, endRow - startRow + 1, 10, 10);
+};
 const normalizeReportTableFonts = (
   sheet: ExcelJS.Worksheet,
   daytourStartRow: number,
@@ -371,6 +395,10 @@ export const downloadOfficialArrivalsWorkbook = async ({
     leftAlignEstablishmentNames(sheet, 15, daytourTotalRow - 1);
     leftAlignEstablishmentNames(sheet, overnightStartRow, overnightTotalRow - 1);
     normalizeReportTableFonts(sheet, 15, daytourTotalRow - 1, overnightStartRow, overnightTotalRow - 1);
+    normalizeNoRecordSubmittedFonts(sheet, 15, daytourTotalRow - 1);
+    normalizeNoRecordSubmittedFonts(sheet, overnightStartRow, overnightTotalRow - 1);
+    normalizeOvernightMetricFormats(sheet, overnightStartRow, overnightTotalRow - 1);
+    normalizeOvernightSpacerBorders(sheet, 43, overnightTotalRow);
     autoFitExportColumns(sheet);
   }
   const grandTotal = workbook.getWorksheet("GRAND TOTAL");
