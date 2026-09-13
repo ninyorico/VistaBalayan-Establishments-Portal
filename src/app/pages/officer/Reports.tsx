@@ -123,6 +123,8 @@ export default function Reports() {
   const [filterStatus, setFilterStatus] = useState("all");
   const [establishmentDirectory, setEstablishmentDirectory] = useState<any[]>([]);
   const [submissions, setSubmissions] = useState<Submission[]>([]);
+  const [visitorReports, setVisitorReports] = useState<any[]>([]);
+  const [accommodationReports, setAccommodationReports] = useState<any[]>([]);
   const [selectedSubmission, setSelectedSubmission] = useState<Submission | null>(null);
   const [showDetailModal, setShowDetailModal] = useState(false);
   const [reviewNotes, setReviewNotes] = useState("");
@@ -198,7 +200,12 @@ export default function Reports() {
       setEstablishmentDirectory(directory);
       visitorData = visitorRows;
       accommodationData = accommodationRows;
+      setVisitorReports(visitorRows);
+      setAccommodationReports(accommodationRows);
     } catch (error) {
+      setEstablishmentDirectory([]);
+      setVisitorReports([]);
+      setAccommodationReports([]);
       console.error("Reports loading error:", error);
       toast.error(`Failed to load reports: ${error instanceof Error ? error.message : "Unknown error"}`);
     }
@@ -347,55 +354,22 @@ export default function Reports() {
   const handleExport = async () => {
     try {
       const establishmentsById = new Map<string, any>(establishmentDirectory.map((establishment) => [establishment.id, establishment]));
-      const accommodation: any[] = [];
-      const visitors: any[] = [];
-      submissions.forEach((report) => {
-        const establishmentId = String(report.details?.establishment_id || report.id);
-        const joined = Array.isArray(report.details?.establishments) ? report.details.establishments[0] : report.details?.establishments;
-        const existingEstablishment = establishmentsById.get(establishmentId);
+      const accommodation = accommodationReports.map((report) => ({ ...report, establishment_id: String(report.establishment_id) }));
+      const visitors = visitorReports.map((report) => ({ ...report, establishment_id: String(report.establishment_id) }));
+      [...visitorReports, ...accommodationReports].forEach((report) => {
+        const establishmentId = String(report.establishment_id || "");
+        if (!establishmentId || establishmentsById.has(establishmentId)) return;
+        const joined = Array.isArray(report.establishments) ? report.establishments[0] : report.establishments;
         establishmentsById.set(establishmentId, {
-          ...existingEstablishment,
           id: establishmentId,
-          name: existingEstablishment?.name || report.establishment,
-          type: existingEstablishment?.type || joined?.type || "resort",
-          reporting_mode: existingEstablishment?.reporting_mode || (report.type === "Visitor Report" ? "visitor" : "accommodation"),
-          ae_id: existingEstablishment?.ae_id || joined?.ae_id || "",
-          attraction_code: existingEstablishment?.attraction_code || joined?.attraction_code || "",
-          total_rooms: Number(existingEstablishment?.total_rooms || report.details?.total_rooms || joined?.total_rooms || 0),
-          status: existingEstablishment?.status || "active",
+          name: joined?.name || "Unknown",
+          type: joined?.type || "resort",
+          reporting_mode: joined?.reporting_mode || "both",
+          ae_id: joined?.ae_id || "",
+          attraction_code: joined?.attraction_code || "",
+          total_rooms: Number(joined?.total_rooms || 0),
+          status: "active",
         });
-        if (report.type === "Visitor Report") {
-          visitors.push({
-            id: report.id,
-            establishment_id: establishmentId,
-            report_date: report.reportDate,
-            male_visitors: report.details?.male_visitors,
-            female_visitors: report.details?.female_visitors,
-            total_visitors: report.details?.total_visitors,
-            total_male: report.details?.total_male,
-            total_female: report.details?.total_female,
-            total_guests: report.details?.total_guests ?? report.visitors,
-            residence_category: report.details?.residence_category,
-            residence_type: report.details?.residence_type,
-            status: report.status,
-          });
-        } else {
-          accommodation.push({
-            id: report.id,
-            establishment_id: establishmentId,
-            report_date: report.reportDate,
-            total_rooms: report.details?.total_rooms,
-            total_check_ins: report.details?.total_check_ins,
-            total_guest_nights: report.details?.total_guest_nights,
-            total_occupied_rooms: report.details?.total_occupied_rooms,
-            guest_check_ins: report.details?.guest_check_ins,
-            guest_nights: report.details?.guest_nights,
-            rooms_occupied: report.details?.rooms_occupied,
-            foreign_guest_check_ins: report.details?.foreign_guest_check_ins,
-            foreign_guest_nights: report.details?.foreign_guest_nights,
-            status: report.status,
-          });
-        }
       });
       const visitorEstablishmentIds = new Set(visitors.map((report) => report.establishment_id));
       const accommodationEstablishmentIds = new Set(accommodation.map((report) => report.establishment_id));
