@@ -223,9 +223,19 @@ export const downloadOfficialArrivalsWorkbook = async ({
   workbook.worksheets.slice().forEach((sheet) => {
     if (sheet.name === "GRAND TOTAL" ? !annual : !monthsToWrite.includes(sheet)) workbook.removeWorksheet(sheet.id);
   });
-  const establishmentByKey = new Map(establishments.map((establishment) => [exportNameKey(establishment.name), establishment]));
-  const daytourEstablishments = establishments.filter((establishment) => ["visitor", "both"].includes(establishment.reporting_mode || ""));
-  const overnightEstablishments = establishments.filter((establishment) => ["accommodation", "both"].includes(establishment.reporting_mode || ""));
+  // The establishment directory is authoritative for export membership. An active
+  // establishment must remain visible even when it has not submitted a report.
+  // Legacy active rows without reporting_mode use both sections as a safe fallback;
+  // business `type` is deliberately not used to infer reporting eligibility.
+  const exportableEstablishments = establishments
+    .filter((establishment) => !["inactive", "deleted"].includes(String(establishment.status || "").toLowerCase()))
+    .map((establishment) => ({
+      ...establishment,
+      reporting_mode: establishment.reporting_mode || "both",
+    }));
+  const establishmentByKey = new Map(exportableEstablishments.map((establishment) => [exportNameKey(establishment.name), establishment]));
+  const daytourEstablishments = exportableEstablishments.filter((establishment) => ["visitor", "both"].includes(establishment.reporting_mode || ""));
+  const overnightEstablishments = exportableEstablishments.filter((establishment) => ["accommodation", "both"].includes(establishment.reporting_mode || ""));
   const daytourExtraRows = Math.max(0, daytourEstablishments.length - 23);
   const overnightExtraRows = Math.max(0, overnightEstablishments.length - 9);
 
