@@ -87,7 +87,11 @@ export default function AIInsights() {
         .single()
 
       if (cacheData) {
-        setLastUpdated(new Date(cacheData.generated_at).toLocaleString())
+        setLastUpdated(new Date(cacheData.generated_at).toLocaleString('en-PH', {
+          timeZone: 'Asia/Manila',
+          dateStyle: 'short',
+          timeStyle: 'medium',
+        }))
       }
 
       // If no data exists, generate fresh data
