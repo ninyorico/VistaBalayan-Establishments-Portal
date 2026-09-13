@@ -164,7 +164,7 @@ export default function Reports() {
       for (let offset = 0; ; offset += pageSize) {
         const { data, error } = await supabase
           .from(table)
-          .select(`*, establishments!${table === "visitor_reports" ? "visitor_reports_establishment_id_fkey" : "accommodation_reports_establishment_id_fkey"} (name, type, total_rooms, ae_id, attraction_code)`)
+          .select(`*, establishments!${table === "visitor_reports" ? "visitor_reports_establishment_id_fkey" : "accommodation_reports_establishment_id_fkey"} (name, type, dot_classification, total_rooms, ae_id, attraction_code)`)
           .order("created_at", { ascending: false })
           .range(offset, offset + pageSize - 1);
         if (error) throw error;
@@ -180,7 +180,7 @@ export default function Reports() {
       for (let offset = 0; ; offset += pageSize) {
         const { data, error } = await supabase
           .from("establishments")
-          .select("id,name,type,reporting_mode,ae_id,attraction_code,total_rooms,status")
+          .select("id,name,type,dot_classification,reporting_mode,ae_id,attraction_code,total_rooms,status")
           .order("name", { ascending: true })
           .range(offset, offset + pageSize - 1);
         if (error) throw error;

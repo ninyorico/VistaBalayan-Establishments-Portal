@@ -8,18 +8,32 @@ import { DEFAULT_ROOM_CONFIG, EstablishmentRoomConfig, getRoomConfigFromAmenitie
 
 type ReportingMode = "accommodation" | "visitor" | "both";
 
-const DOT_ESTABLISHMENT_TYPES = [
-  "Hotel",
-  "Resort",
-  "Apartment Hotel",
-  "Mabuhay Accommodation",
-  "Homestay",
-] as const;
+type DotClassification = "HTL" | "RES" | "APA" | "INN" | "PEN" | "MOT" | "ECO" | "HMS" | "CMP" | "OTH";
+
+const DOT_ESTABLISHMENT_CLASSES: { code: DotClassification; label: string; legacyType: string }[] = [
+  { code: "HTL", label: "Hotel", legacyType: "Hotel" },
+  { code: "RES", label: "Resort", legacyType: "Resort" },
+  { code: "APA", label: "Apartelle", legacyType: "Apartment Hotel" },
+  { code: "INN", label: "Tourist Inn", legacyType: "Tourist Inn" },
+  { code: "PEN", label: "Pension House", legacyType: "Pension House" },
+  { code: "MOT", label: "Motorist Hotel / Motel", legacyType: "Motel" },
+  { code: "ECO", label: "Eco-Lodge", legacyType: "Eco-Lodge" },
+  { code: "HMS", label: "Home Stay Site", legacyType: "Homestay" },
+  { code: "CMP", label: "Glamping / Camp Site", legacyType: "Glamping / Camp Site" },
+  { code: "OTH", label: "Others", legacyType: "Others" },
+];
+const dotClassForValue = (value?: string | null): DotClassification => {
+  const normalized = String(value || "").trim().toLowerCase();
+  return DOT_ESTABLISHMENT_CLASSES.find((item) =>
+    item.code.toLowerCase() === normalized || item.label.toLowerCase() === normalized || item.legacyType.toLowerCase() === normalized
+  )?.code || "OTH";
+};
 
 interface Establishment {
   id: string;
   name: string;
   type: string;
+  dot_classification?: DotClassification | null;
   address: string;
   reporting_mode?: "accommodation" | "visitor" | "both";
   ae_id?: string | null;
@@ -69,6 +83,7 @@ export default function Establishments() {
   const [establishmentForm, setEstablishmentForm] = useState({
     name: "",
     type: "Hotel",
+    dot_classification: "HTL" as DotClassification,
     address: "",
     contact_number: "",
     total_rooms: 0,
@@ -91,6 +106,11 @@ export default function Establishments() {
     password: "",
     confirm_password: "",
   });
+
+  const setEstablishmentClass = (code: DotClassification) => {
+    const selected = DOT_ESTABLISHMENT_CLASSES.find((item) => item.code === code) || DOT_ESTABLISHMENT_CLASSES[DOT_ESTABLISHMENT_CLASSES.length - 1];
+    setEstablishmentForm((current) => ({ ...current, type: selected.legacyType, dot_classification: selected.code }));
+  };
 
   useEffect(() => {
     fetchEstablishments();
@@ -154,6 +174,7 @@ export default function Establishments() {
     setEstablishmentForm({
       name: "",
       type: "Hotel",
+      dot_classification: "HTL" as DotClassification,
       address: "",
       contact_number: "",
       total_rooms: 0,
@@ -170,6 +191,7 @@ export default function Establishments() {
     setEstablishmentForm({
       name: "",
       type: "Hotel",
+      dot_classification: "HTL" as DotClassification,
       address: "",
       contact_number: "",
       total_rooms: 0,
@@ -196,6 +218,7 @@ export default function Establishments() {
       setEstablishmentForm({
         name: establishment.name,
         type: establishment.type,
+        dot_classification: dotClassForValue(establishment.dot_classification || establishment.type),
         address: establishment.address,
         contact_number: establishment.contact_number,
         total_rooms: establishment.total_rooms,
@@ -260,6 +283,7 @@ export default function Establishments() {
         .update({
           name: establishmentForm.name,
           type: establishmentForm.type,
+          dot_classification: establishmentForm.dot_classification,
           address: establishmentForm.address,
           contact_number: establishmentForm.contact_number,
           reporting_mode: establishmentForm.reporting_mode,
@@ -305,6 +329,7 @@ export default function Establishments() {
         .insert([{
           name: establishmentForm.name,
           type: establishmentForm.type,
+          dot_classification: establishmentForm.dot_classification,
           address: establishmentForm.address,
           contact_number: establishmentForm.contact_number,
           total_rooms: totalRooms,
@@ -338,6 +363,11 @@ export default function Establishments() {
     const { data: rpcId, error: rpcError } = await supabase.rpc('create_officer_onboarding_establishment', payload);
 
     if (!rpcError && rpcId) {
+      const { error: classificationError } = await supabase
+        .from("establishments")
+        .update({ dot_classification: establishmentForm.dot_classification })
+        .eq("id", rpcId);
+      if (classificationError) throw classificationError;
       return rpcId as string;
     }
 
@@ -346,6 +376,7 @@ export default function Establishments() {
       .insert([{
         name: payload.p_name,
         type: payload.p_type,
+        dot_classification: establishmentForm.dot_classification,
         address: payload.p_address,
         contact_number: payload.p_contact_number,
         total_rooms: payload.p_total_rooms,
@@ -797,7 +828,7 @@ export default function Establishments() {
                   className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#1CA7C9]/50 focus:border-[#1CA7C9] outline-none transition-all"
                 >
                   <option value="all">All Types</option>
-                  {DOT_ESTABLISHMENT_TYPES.map((type) => <option key={type} value={type}>{type}</option>)}
+                  {DOT_ESTABLISHMENT_CLASSES.map((item) => <option key={item.code} value={item.label}>{item.code} — {item.label}</option>)}
                 </select>
               </div>
               <div>
@@ -1160,7 +1191,7 @@ export default function Establishments() {
                     <p className="text-sm text-gray-500 mt-1">This establishment will be created immediately with the staff account.</p>
                     <div className="mt-4 space-y-4">
                       <div><label className="block text-sm font-medium text-gray-700 mb-2">Establishment Name *</label><input type="text" value={establishmentForm.name} onChange={(e) => setEstablishmentForm({ ...establishmentForm, name: e.target.value })} className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#1CA7C9]/50 focus:border-[#1CA7C9] outline-none transition-all" placeholder="Enter establishment name" /></div>
-                      <div><label className="block text-sm font-medium text-gray-700 mb-2">Type *</label><select value={establishmentForm.type} onChange={(e) => setEstablishmentForm({ ...establishmentForm, type: e.target.value })} className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#1CA7C9]/50 focus:border-[#1CA7C9] outline-none transition-all">{DOT_ESTABLISHMENT_TYPES.map((type) => <option key={type} value={type}>{type}</option>)}</select></div>
+                      <div><label className="block text-sm font-medium text-gray-700 mb-2">Establishment Class *</label><select value={establishmentForm.dot_classification} onChange={(e) => setEstablishmentClass(e.target.value as DotClassification)} className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#1CA7C9]/50 focus:border-[#1CA7C9] outline-none transition-all">{DOT_ESTABLISHMENT_CLASSES.map((item) => <option key={item.code} value={item.code}>{item.code} — {item.label}</option>)}</select></div>
                       <div><label className="block text-sm font-medium text-gray-700 mb-2">Report Types *</label><select value={establishmentForm.reporting_mode} onChange={(e) => setEstablishmentForm({ ...establishmentForm, reporting_mode: e.target.value as ReportingMode })} className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#1CA7C9]/50 focus:border-[#1CA7C9] outline-none transition-all"><option value="accommodation">Overnight reports</option><option value="visitor">Day-tour reports</option><option value="both">Day-tour and overnight reports</option></select><p className="mt-1 text-xs text-gray-500">Choose both for day visitors and overnight guests.</p></div>
                       <div><label className="block text-sm font-medium text-gray-700 mb-2">Address *</label><input type="text" value={establishmentForm.address} onChange={(e) => setEstablishmentForm({ ...establishmentForm, address: e.target.value })} className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#1CA7C9]/50 focus:border-[#1CA7C9] outline-none transition-all" placeholder="Enter address" /></div>
                       <div><label className="block text-sm font-medium text-gray-700 mb-2">Contact Number *</label><input type="text" value={establishmentForm.contact_number} onChange={(e) => setEstablishmentForm({ ...establishmentForm, contact_number: e.target.value })} className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#1CA7C9]/50 focus:border-[#1CA7C9] outline-none transition-all" placeholder="+63 917 123 4567" /></div>
@@ -1209,22 +1240,19 @@ export default function Establishments() {
                 <input type="text" value={establishmentForm.name} onChange={(e) => setEstablishmentForm({ ...establishmentForm, name: e.target.value })} className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#1CA7C9]/50 focus:border-[#1CA7C9] outline-none transition-all" placeholder="Enter establishment name" />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Type *</label>
-                <select value={establishmentForm.type} onChange={(e) => {
-                  const newType = e.target.value;
-                  setEstablishmentForm({ ...establishmentForm, type: newType });
-                }} className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#1CA7C9]/50 focus:border-[#1CA7C9] outline-none transition-all">
-                  {DOT_ESTABLISHMENT_TYPES.map((type) => <option key={type} value={type}>{type}</option>)}
+                <label className="block text-sm font-medium text-gray-700 mb-2">Establishment Class *</label>
+                <select value={establishmentForm.dot_classification} onChange={(e) => setEstablishmentClass(e.target.value as DotClassification)} className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#1CA7C9]/50 focus:border-[#1CA7C9] outline-none transition-all">
+                  {DOT_ESTABLISHMENT_CLASSES.map((item) => <option key={item.code} value={item.code}>{item.code} — {item.label}</option>)}
                 </select>
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Reporting Mode *</label>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Report Types *</label>
                 <select value={establishmentForm.reporting_mode} onChange={(e) => setEstablishmentForm({ ...establishmentForm, reporting_mode: e.target.value as "accommodation" | "visitor" | "both" })} className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#1CA7C9]/50 focus:border-[#1CA7C9] outline-none transition-all">
-                  <option value="accommodation">Accommodation — Digital DAE-1A</option>
-                  <option value="visitor">Same-day visitor — Tourist Arrival Encoding</option>
-                  <option value="both">Both pipelines</option>
+                  <option value="accommodation">Overnight reports</option>
+                  <option value="visitor">Day-tour reports</option>
+                  <option value="both">Day-tour and overnight reports</option>
                 </select>
-                <p className="mt-1 text-xs text-gray-500">Independent of business type. Use Both for resorts with rooms and day-use visitors.</p>
+                <p className="mt-1 text-xs text-gray-500">Choose both for day visitors and overnight guests.</p>
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">Address *</label>

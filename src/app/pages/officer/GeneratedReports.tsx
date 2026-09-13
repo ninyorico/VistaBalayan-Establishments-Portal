@@ -476,7 +476,7 @@ export default function GeneratedReports() {
     };
 
     const [establishmentResult, accommodationResult, visitorResult] = await Promise.all([
-      authenticatedRead<EstablishmentReportingRow>("establishments", "id,name,type,reporting_mode,ae_id,attraction_code,total_rooms,status", "name.asc"),
+      authenticatedRead<EstablishmentReportingRow>("establishments", "id,name,type,dot_classification,reporting_mode,ae_id,attraction_code,total_rooms,status", "name.asc"),
       authenticatedRead<AccommodationSourceRecord>("accommodation_reports", "id,establishment_id,report_date,total_rooms,total_check_ins,total_guest_nights,total_occupied_rooms,guest_check_ins,guest_nights,rooms_occupied,foreign_guest_check_ins,foreign_guest_nights,status", "report_date.asc"),
       authenticatedRead<VisitorSourceRecord>("visitor_reports", "id,establishment_id,report_date,male_visitors,female_visitors,total_visitors,total_male,total_female,total_guests,residence_category,residence_type,status", "report_date.asc"),
     ]);

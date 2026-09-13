@@ -3,20 +3,31 @@ export type ReportStatus = "draft" | "submitted" | "validated" | "needs_review" 
 export type ResidenceCategory = "THIS_PROVINCE" | "OTHER_PROVINCE" | "FOREIGN";
 
 export const DAE_TYPE_CLASS: Record<string, string> = {
-  apartel: "APA",
-  apartelle: "APA",
-  condotel: "CON",
-  homestay: "HSS",
+  htl: "HTL",
   hotel: "HTL",
-  lodge: "OTH",
-  motel: "MOT",
-  "pension house": "PEN",
+  res: "RES",
   resort: "RES",
-  "serviced residence": "SER",
-  "tourist inn": "TIN",
-  inn: "TIN",
+  apa: "APA",
+  apartelle: "APA",
+  apartel: "APA",
+  "apartment hotel": "APA",
+  inn: "INN",
+  "tourist inn": "INN",
+  pen: "PEN",
+  "pension house": "PEN",
+  mot: "MOT",
+  motel: "MOT",
+  "motorist hotel / motel": "MOT",
+  eco: "ECO",
+  "eco-lodge": "ECO",
+  hms: "HMS",
+  homestay: "HMS",
+  "home stay site": "HMS",
+  cmp: "CMP",
+  "glamping / camp site": "CMP",
   others: "OTH",
   other: "OTH",
+  oth: "OTH",
 };
 
 export const PROVINCE = "Batangas";
@@ -26,6 +37,7 @@ export interface EstablishmentReportingRow {
   id: string;
   name: string;
   type?: string | null;
+  dot_classification?: string | null;
   reporting_mode?: ReportingMode | null;
   ae_id?: string | null;
   attraction_code?: string | null;
@@ -122,7 +134,8 @@ export const periodBounds = (year: number, month: number) => ({
 
 export const safeRatio = (numerator: number, denominator: number) => denominator > 0 ? numerator / denominator : 0;
 
-export const getTypeClass = (type?: string | null) => DAE_TYPE_CLASS[String(type || "").trim().toLowerCase()] || "OTH";
+export const getTypeClass = (type?: string | null, dotClassification?: string | null) =>
+  DAE_TYPE_CLASS[String(dotClassification || type || "").trim().toLowerCase()] || "OTH";
 
 export const getReportingMode = (establishment?: Pick<EstablishmentReportingRow, "reporting_mode" | "total_rooms"> | null): ReportingMode => {
   if (establishment?.reporting_mode === "accommodation" || establishment?.reporting_mode === "visitor" || establishment?.reporting_mode === "both") {
@@ -178,7 +191,7 @@ export const summarizeAccommodation = (
     establishmentId: establishment.id,
     establishmentName: establishment.name,
     aeId: establishment.ae_id || establishment.id,
-    typeClass: getTypeClass(establishment.type),
+    typeClass: getTypeClass(establishment.type, establishment.dot_classification),
     totalRooms,
     daysInPeriod: days,
     ...totals,
@@ -215,7 +228,7 @@ export const summarizeAnnualAccommodation = (
     establishmentId: establishment.id,
     establishmentName: establishment.name,
     aeId: establishment.ae_id || establishment.id,
-    typeClass: getTypeClass(establishment.type),
+    typeClass: getTypeClass(establishment.type, establishment.dot_classification),
     totalRooms,
     daysInPeriod: days,
     ...totals,
