@@ -615,21 +615,21 @@ export default function SubmitAccommodationReport() {
       {/* Computed Analytics */}
       <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4 sm:p-6">
         <h3 className="text-lg font-semibold text-gray-900 mb-4">Computed Analytics</h3>
-        <div className="grid grid-cols-1 gap-4 md:grid-cols-3 md:gap-6">
-          <div className="bg-[#EAF9FC] rounded-lg p-4 border border-[#BFEAF2]">
-            <p className="text-sm text-[#0F4C75] font-medium mb-1">Average Guest Night</p>
-            <p className="text-3xl font-bold text-[#0B2530]">{avgGuestNight}</p>
-            <p className="text-xs text-[#5D6F73] mt-1">nights per guest</p>
+        <div className="grid grid-cols-3 gap-2 sm:gap-6">
+          <div className="bg-[#EAF9FC] rounded-lg p-2 sm:p-4 border border-[#BFEAF2]">
+            <p className="text-[10px] sm:text-sm text-[#0F4C75] font-medium mb-1">Average Guest Night</p>
+            <p className="text-xl sm:text-3xl font-bold text-[#0B2530]">{avgGuestNight}</p>
+            <p className="text-[9px] sm:text-xs text-[#5D6F73] mt-1">nights per guest</p>
           </div>
-          <div className="bg-gray-50 rounded-lg p-4 border border-gray-200" data-hotel-report-daily-occupancy="selected-report-date">
-            <p className="text-sm text-gray-700 font-medium mb-1">Daily Room Occupancy Rate</p>
-            <p className="text-3xl font-bold text-gray-900">{avgOccupancyRate}%</p>
-            <p className="text-xs text-gray-500 mt-1">selected report date only</p>
+          <div className="bg-gray-50 rounded-lg p-2 sm:p-4 border border-gray-200" data-hotel-report-daily-occupancy="selected-report-date">
+            <p className="text-[10px] sm:text-sm text-gray-700 font-medium mb-1">Daily Room Occupancy Rate</p>
+            <p className="text-xl sm:text-3xl font-bold text-gray-900">{avgOccupancyRate}%</p>
+            <p className="text-[9px] sm:text-xs text-gray-500 mt-1">selected report date only</p>
           </div>
-          <div className="bg-gray-50 rounded-lg p-4 border border-gray-200">
-            <p className="text-sm text-gray-700 font-medium mb-1">Average Guest Per Room</p>
-            <p className="text-3xl font-bold text-gray-900">{avgGuestPerRoom}</p>
-            <p className="text-xs text-gray-500 mt-1">guests per room</p>
+          <div className="bg-gray-50 rounded-lg p-2 sm:p-4 border border-gray-200">
+            <p className="text-[10px] sm:text-sm text-gray-700 font-medium mb-1">Average Guest Per Room</p>
+            <p className="text-xl sm:text-3xl font-bold text-gray-900">{avgGuestPerRoom}</p>
+            <p className="text-[9px] sm:text-xs text-gray-500 mt-1">guests per room</p>
           </div>
         </div>
       </div>
