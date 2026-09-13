@@ -120,13 +120,6 @@ const leftAlignGrandTotalNames = (sheet: ExcelJS.Worksheet, startRow: number, en
 const clearCellBorders = (cell: ExcelJS.Cell) => {
   cell.border = { top: {}, left: {}, bottom: {}, right: {} };
 };
-const normalizeOvernightMetricFormats = (sheet: ExcelJS.Worksheet, startRow: number, endRow: number) => {
-  for (let row = startRow; row <= endRow; row += 1) {
-    // Average Guest/Night is a decimal ratio; occupancy is stored as an already-multiplied percentage.
-    sheet.getCell(row, 8).numFmt = "0.00";
-    sheet.getCell(row, 9).numFmt = '0.00"%"';
-  }
-};
 const normalizeReportTableFonts = (
   sheet: ExcelJS.Worksheet,
   daytourStartRow: number,
@@ -378,7 +371,6 @@ export const downloadOfficialArrivalsWorkbook = async ({
     leftAlignEstablishmentNames(sheet, 15, daytourTotalRow - 1);
     leftAlignEstablishmentNames(sheet, overnightStartRow, overnightTotalRow - 1);
     normalizeReportTableFonts(sheet, 15, daytourTotalRow - 1, overnightStartRow, overnightTotalRow - 1);
-    normalizeOvernightMetricFormats(sheet, overnightStartRow, overnightTotalRow - 1);
     autoFitExportColumns(sheet);
   }
   const grandTotal = workbook.getWorksheet("GRAND TOTAL");
