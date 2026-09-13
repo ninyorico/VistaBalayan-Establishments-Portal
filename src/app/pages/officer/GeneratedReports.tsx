@@ -96,6 +96,8 @@ const autoFitExportColumns = (sheet: ExcelJS.Worksheet) => {
     }
     sheet.getColumn(column).width = Math.min(limits.max, contentWidth);
   });
+  // Column J contains the third merged metric heading; merged cells are excluded from auto-fit.
+  sheet.getColumn(10).width = Math.max(sheet.getColumn(10).width || 0, 24);
 };
 const centerExportTable = (sheet: ExcelJS.Worksheet, startRow: number, endRow: number, startColumn: number, endColumn: number) => {
   for (let row = startRow; row <= endRow; row += 1) {
@@ -146,11 +148,9 @@ const normalizeOvernightMetricFormats = (sheet: ExcelJS.Worksheet, startRow: num
 };
 const normalizeOvernightThirdMetric = (sheet: ExcelJS.Worksheet, startRow: number, endRow: number) => {
   const title = "Average Number of Guest per room";
-  for (let row = 45; row <= 47; row += 1) {
-    const titleCell = sheet.getCell(row, 10);
-    titleCell.style = JSON.parse(JSON.stringify(sheet.getCell(row, 9).style));
-    titleCell.value = title;
-  }
+  const titleCell = sheet.getCell("J45");
+  titleCell.style = JSON.parse(JSON.stringify(sheet.getCell("I45").style));
+  titleCell.value = title;
   for (let row = startRow; row <= endRow; row += 1) {
     const valueCell = sheet.getCell(row, 10);
     valueCell.style = JSON.parse(JSON.stringify(sheet.getCell(row, 9).style));
