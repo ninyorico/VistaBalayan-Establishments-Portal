@@ -352,15 +352,17 @@ export default function Reports() {
       submissions.forEach((report) => {
         const establishmentId = String(report.details?.establishment_id || report.id);
         const joined = Array.isArray(report.details?.establishments) ? report.details.establishments[0] : report.details?.establishments;
+        const existingEstablishment = establishmentsById.get(establishmentId);
         establishmentsById.set(establishmentId, {
+          ...existingEstablishment,
           id: establishmentId,
-          name: report.establishment,
-          type: joined?.type || "resort",
-          reporting_mode: report.type === "Visitor Report" ? "visitor" : "accommodation",
-          ae_id: joined?.ae_id || "",
-          attraction_code: joined?.attraction_code || "",
-          total_rooms: Number(report.details?.total_rooms || joined?.total_rooms || 0),
-          status: "active",
+          name: existingEstablishment?.name || report.establishment,
+          type: existingEstablishment?.type || joined?.type || "resort",
+          reporting_mode: existingEstablishment?.reporting_mode || (report.type === "Visitor Report" ? "visitor" : "accommodation"),
+          ae_id: existingEstablishment?.ae_id || joined?.ae_id || "",
+          attraction_code: existingEstablishment?.attraction_code || joined?.attraction_code || "",
+          total_rooms: Number(existingEstablishment?.total_rooms || report.details?.total_rooms || joined?.total_rooms || 0),
+          status: existingEstablishment?.status || "active",
         });
         if (report.type === "Visitor Report") {
           visitors.push({
