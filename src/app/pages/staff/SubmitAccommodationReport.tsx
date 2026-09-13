@@ -36,8 +36,6 @@ export default function SubmitAccommodationReport() {
   const [roomTypes, setRoomTypes] = useState<EstablishmentRoomConfig[]>(DEFAULT_ROOM_CONFIG);
   const [establishmentAmenities, setEstablishmentAmenities] = useState<string>("");
   const [submitting, setSubmitting] = useState(false);
-  const [foreignGuestCheckIns, setForeignGuestCheckIns] = useState(0);
-  const [foreignGuestNights, setForeignGuestNights] = useState(0);
 
   const getTodayDate = () => {
     const today = new Date();
@@ -308,10 +306,6 @@ export default function SubmitAccommodationReport() {
       return;
     }
 
-    if (foreignGuestCheckIns > totalCheckIns || foreignGuestNights > totalGuestNights) {
-      toast.error("Foreign guest counts cannot exceed overall guest counts");
-      return;
-    }
 
     if (totalGuestNights < totalCheckIns) {
       toast.error("Guest nights cannot be lower than guest check-ins");
@@ -348,8 +342,6 @@ export default function SubmitAccommodationReport() {
         rooms_occupied: totalOccupiedRooms,
         guest_check_ins: totalCheckIns,
         guest_nights: totalGuestNights,
-        foreign_guest_check_ins: foreignGuestCheckIns,
-        foreign_guest_nights: foreignGuestNights,
         status: "submitted",
       })
       .select()
@@ -389,8 +381,7 @@ export default function SubmitAccommodationReport() {
         guestNights: 0,
       })));
       setReportDate(getTodayDate());
-      setForeignGuestCheckIns(0);
-      setForeignGuestNights(0);
+
     }
     setSubmitting(false);
   };
@@ -618,17 +609,6 @@ export default function SubmitAccommodationReport() {
               </tr>
             </tbody>
           </table>
-        </div>
-      </div>
-
-      <div className="grid grid-cols-1 gap-4 rounded-lg border border-gray-200 bg-white p-4 sm:grid-cols-2 sm:p-6">
-        <div>
-          <label className="mb-2 block text-sm font-medium text-gray-700">Foreign Guests Checked In</label>
-          <input type="number" min="0" value={foreignGuestCheckIns || ""} onChange={(event) => setForeignGuestCheckIns(Math.max(0, Number(event.target.value) || 0))} className="block w-full rounded-lg border border-gray-300 px-3 py-2" placeholder="0" />
-        </div>
-        <div>
-          <label className="mb-2 block text-sm font-medium text-gray-700">Foreign Guest Nights</label>
-          <input type="number" min="0" value={foreignGuestNights || ""} onChange={(event) => setForeignGuestNights(Math.max(0, Number(event.target.value) || 0))} className="block w-full rounded-lg border border-gray-300 px-3 py-2" placeholder="0" />
         </div>
       </div>
 
