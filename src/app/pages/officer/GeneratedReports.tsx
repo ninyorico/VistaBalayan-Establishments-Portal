@@ -302,10 +302,6 @@ export const downloadOfficialArrivalsWorkbook = async ({
     const overnightBaseTotalRow = 54 + daytourExtraRows;
     const overnightTotalRow = overnightBaseTotalRow + overnightExtraRows;
     const overnightDateRow = 41 + daytourExtraRows;
-    // Clear template labels left in rows displaced by inserted day-tour rows.
-    for (let row = 45; row < overnightStartRow; row += 1) {
-      for (let column = 2; column <= 9; column += 1) sheet.getCell(row, column).value = "";
-    }
     if (overnightExtraRows) {
       sheet.insertRows(overnightBaseTotalRow, Array.from({ length: overnightExtraRows }, () => Array(16).fill(null)), "i");
       shiftMergedRanges(sheet, overnightBaseTotalRow, overnightExtraRows);
