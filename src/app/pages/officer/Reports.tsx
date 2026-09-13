@@ -57,6 +57,7 @@ const getReportTypeLabel = (report: Submission) => report.type === "Visitor Repo
 const statusStyles = reportStatusClasses;
 const normalizeStatus = normalizeReportStatus;
 const formatStatus = reportStatusLabel;
+const AUTO_CHECK_STATUSES = ["submitted", "pending", "under_review", "needs_review", "on_hold"];
 
 const detectReportAnomalies = (report: Submission) => {
   const reasons: string[] = [];
@@ -468,11 +469,11 @@ export default function Reports() {
 
   const handleAutoCheckReports = async () => {
     const reportsToCheck = filteredReports.filter((report) =>
-      ["pending", "on_hold"].includes(normalizeStatus(report.status))
+      AUTO_CHECK_STATUSES.includes(normalizeStatus(report.status))
     );
 
     if (reportsToCheck.length === 0) {
-      toast.info("No pending or on-hold reports found in the selected filters");
+      toast.info("No actionable reports found in the selected filters");
       return;
     }
 
@@ -557,7 +558,7 @@ export default function Reports() {
   const onHoldCount = filteredReports.filter((s) => normalizeStatus(s.status) === "on_hold").length;
   const approvedCount = filteredReports.filter((s) => normalizeStatus(s.status) === "approved").length;
   const rejectedCount = filteredReports.filter((s) => normalizeStatus(s.status) === "rejected").length;
-  const autoCheckCount = pendingCount + onHoldCount;
+  const autoCheckCount = filteredReports.filter((report) => AUTO_CHECK_STATUSES.includes(normalizeStatus(report.status))).length;
   const totalVisitors = filteredReports.reduce((sum, report) => sum + report.visitors, 0);
   const establishmentsCovered = new Set(filteredReports.map((report) => report.establishment)).size;
   const topEstablishment = Object.entries(
@@ -663,7 +664,10 @@ export default function Reports() {
             className="px-3 py-1.5 border border-gray-300 rounded-lg text-sm"
           >
             <option value="all">All Status</option>
+            <option value="submitted">Submitted</option>
             <option value="pending">Pending</option>
+            <option value="under_review">Under Review</option>
+            <option value="needs_review">Needs Review</option>
             <option value="on_hold">On Hold</option>
             <option value="approved">Approved</option>
             <option value="rejected">Rejected</option>
