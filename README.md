@@ -40,6 +40,5 @@ Required browser variables:
 
 - `VITE_SUPABASE_URL`
 - `VITE_SUPABASE_ANON_KEY`
-- `VITE_GEMINI_API_KEY`
 
-Required server-only variables for deployed API functions are documented in `.env.example`. Never expose `SUPABASE_SERVICE_ROLE_KEY`, `OTP_HASH_SECRET`, `EMAILJS_PRIVATE_KEY`, or other server secrets through `VITE_` variables or source control.
+Required server-only variables for Vercel /api functions are documented in `.env.example`. Configure `GEMINI_API_KEY` only as a server environment variable. Never expose `SUPABASE_SERVICE_ROLE_KEY`, `GEMINI_API_KEY`, `OTP_HASH_SECRET`, `EMAILJS_PRIVATE_KEY`, or other server secrets through `VITE_` variables or source control.

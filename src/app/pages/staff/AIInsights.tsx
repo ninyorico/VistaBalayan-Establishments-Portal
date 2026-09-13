@@ -201,21 +201,10 @@ const loadCachedData = async (estId: string) => {
         }
       })
 
-      // Generate insights and anomalies for this establishment
-      const [newInsights, newAnomalies] = await Promise.all([
-        geminiService.generateAndSaveInsightsForEstablishment({
-          establishmentName,
-          establishmentId,
-          totalVisitors,
-          avgOccupancy,
-          monthlyTrends
-        }),
-        geminiService.generateAndSaveAnomaliesForEstablishment(
-          visitorData || [],
-          establishmentId,
-          establishmentName
-        )
-      ])
+      // Generate both result types with one authenticated server-side request.
+      const generated = await geminiService.generateForEstablishment()
+      const newInsights = generated.insights
+      const newAnomalies = generated.anomalies
 
       // Reload cached data
       await loadCachedData(establishmentId)

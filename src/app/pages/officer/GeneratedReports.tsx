@@ -22,7 +22,11 @@ import {
 const months = Array.from({ length: 12 }, (_, index) => new Date(2000, index, 1).toLocaleString("en-US", { month: "long" }));
 const currentYear = new Date().getFullYear();
 const statusLabel = (status: string) => status.replace(/_/g, " ").replace(/\b\w/g, (letter) => letter.toUpperCase());
-const isFinalized = (status?: string | null) => ["validated", "approved"].includes(String(status || "").toLowerCase());
+
+// Official exports contain only records that completed officer review.
+// Every other status is intentionally excluded, never relabeled.
+export const EXPORTABLE_REPORT_STATUSES = new Set(["approved", "validated"]);
+export const isExportableReportStatus = (status?: string | null) => EXPORTABLE_REPORT_STATUSES.has(String(status || "").trim().toLowerCase());
 
 const downloadBuffer = (filename: string, buffer: ArrayBuffer | Uint8Array) => {
   const url = URL.createObjectURL(new Blob([buffer], { type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" }));
@@ -301,8 +305,10 @@ export const downloadOfficialArrivalsWorkbook = async ({
       reporting_mode: establishment.reporting_mode || "both",
     }));
   const establishmentByKey = new Map(exportableEstablishments.map((establishment) => [exportNameKey(establishment.name), establishment]));
-  const visitorReportEstablishmentIds = new Set(visitors.map((report) => String(report.establishment_id)));
-  const accommodationReportEstablishmentIds = new Set(accommodation.map((report) => String(report.establishment_id)));
+  const exportableVisitors = visitors.filter((record) => isExportableReportStatus(record.status));
+  const exportableAccommodation = accommodation.filter((record) => isExportableReportStatus(record.status));
+  const visitorReportEstablishmentIds = new Set(exportableVisitors.map((report) => String(report.establishment_id)));
+  const accommodationReportEstablishmentIds = new Set(exportableAccommodation.map((report) => String(report.establishment_id)));
   const daytourEstablishments = exportableEstablishments.filter((establishment) =>
     ["visitor", "both"].includes(establishment.reporting_mode || "") || visitorReportEstablishmentIds.has(String(establishment.id))
   );
@@ -317,8 +323,8 @@ export const downloadOfficialArrivalsWorkbook = async ({
     if (weeklyStartDate && weeklyEndDate) return date >= weeklyStartDate && date <= weeklyEndDate;
     return date.startsWith(`${year}-${String(monthNumber).padStart(2, "0")}`);
   };
-  const visitorFor = (establishment: EstablishmentReportingRow, monthNumber: number) => visitors.filter((record) => record.establishment_id === establishment.id && inSelectedPeriod(record.report_date, monthNumber));
-  const accommodationFor = (establishment: EstablishmentReportingRow, monthNumber: number) => accommodation.filter((record) => record.establishment_id === establishment.id && inSelectedPeriod(record.report_date, monthNumber));
+  const visitorFor = (establishment: EstablishmentReportingRow, monthNumber: number) => exportableVisitors.filter((record) => record.establishment_id === establishment.id && inSelectedPeriod(record.report_date, monthNumber));
+  const accommodationFor = (establishment: EstablishmentReportingRow, monthNumber: number) => exportableAccommodation.filter((record) => record.establishment_id === establishment.id && inSelectedPeriod(record.report_date, monthNumber));
 
   for (const sheet of monthsToWrite) {
     const monthNumber = months.findIndex((value) => sheet.name.startsWith(value.toUpperCase())) + 1;
@@ -360,7 +366,7 @@ export const downloadOfficialArrivalsWorkbook = async ({
       }
       const establishment = establishmentByKey.get(exportNameKey(name));
       const source = includeData && establishment ? visitorFor(establishment, monthNumber) : [];
-      const reportSource = source.map((record) => ({ ...record, status: "validated" as const }));
+      const reportSource = source;
       const summary = establishment ? summarizeVisitors(establishment, reportSource) : null;
       const hasData = source.length > 0;
       const values = hasData && summary ? [summary.thisProvince.male, summary.thisProvince.female, summary.thisProvince.total, summary.otherProvince.male, summary.otherProvince.female, summary.otherProvince.total, summary.foreign.male, summary.foreign.female, summary.foreign.total, summary.grandTotal.male, summary.grandTotal.female, summary.grandTotal.total] : Array(12).fill("");
@@ -387,7 +393,7 @@ export const downloadOfficialArrivalsWorkbook = async ({
       }
       const establishment = establishmentByKey.get(exportNameKey(name));
       const source = includeData && establishment ? accommodationFor(establishment, monthNumber) : [];
-      const reportSource = source.map((record) => ({ ...record, status: "validated" as const }));
+      const reportSource = source;
       const summaryBase = establishment ? summarizeAccommodation(establishment, reportSource, year, monthNumber) : null;
       const summary = summaryBase && weeklyLabel ? { ...summaryBase, daysInPeriod: 7, availableRoomNights: summaryBase.totalRooms * 7, occupancyRate: summaryBase.totalRooms > 0 ? (summaryBase.roomsOccupied / (summaryBase.totalRooms * 7)) * 100 : 0 } : summaryBase;
       const hasData = source.length > 0;
