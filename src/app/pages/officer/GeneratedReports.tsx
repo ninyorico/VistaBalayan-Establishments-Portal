@@ -234,8 +234,14 @@ export const downloadOfficialArrivalsWorkbook = async ({
       reporting_mode: establishment.reporting_mode || "both",
     }));
   const establishmentByKey = new Map(exportableEstablishments.map((establishment) => [exportNameKey(establishment.name), establishment]));
-  const daytourEstablishments = exportableEstablishments.filter((establishment) => ["visitor", "both"].includes(establishment.reporting_mode || ""));
-  const overnightEstablishments = exportableEstablishments.filter((establishment) => ["accommodation", "both"].includes(establishment.reporting_mode || ""));
+  const visitorReportEstablishmentIds = new Set(visitors.map((report) => String(report.establishment_id)));
+  const accommodationReportEstablishmentIds = new Set(accommodation.map((report) => String(report.establishment_id)));
+  const daytourEstablishments = exportableEstablishments.filter((establishment) =>
+    ["visitor", "both"].includes(establishment.reporting_mode || "") || visitorReportEstablishmentIds.has(String(establishment.id))
+  );
+  const overnightEstablishments = exportableEstablishments.filter((establishment) =>
+    ["accommodation", "both"].includes(establishment.reporting_mode || "") || accommodationReportEstablishmentIds.has(String(establishment.id))
+  );
   const daytourExtraRows = Math.max(0, daytourEstablishments.length - 23);
   const overnightExtraRows = Math.max(0, overnightEstablishments.length - 9);
 
