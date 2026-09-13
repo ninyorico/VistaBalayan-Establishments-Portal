@@ -397,6 +397,19 @@ export default function Reports() {
           });
         }
       });
+      const visitorEstablishmentIds = new Set(visitors.map((report) => report.establishment_id));
+      const accommodationEstablishmentIds = new Set(accommodation.map((report) => report.establishment_id));
+      for (const establishmentId of new Set([...visitorEstablishmentIds, ...accommodationEstablishmentIds])) {
+        const establishment = establishmentsById.get(establishmentId);
+        if (!establishment) continue;
+        const hasVisitorReports = visitorEstablishmentIds.has(establishmentId);
+        const hasAccommodationReports = accommodationEstablishmentIds.has(establishmentId);
+        if (hasVisitorReports && hasAccommodationReports) {
+          establishment.reporting_mode = "both";
+        } else if (!establishment.reporting_mode) {
+          establishment.reporting_mode = hasVisitorReports ? "visitor" : "accommodation";
+        }
+      }
       const { startDate, endDate } = getReportRange();
       const exportStart = new Date(`${startDate}T00:00:00`);
       const exportEnd = new Date(`${endDate}T00:00:00`);
