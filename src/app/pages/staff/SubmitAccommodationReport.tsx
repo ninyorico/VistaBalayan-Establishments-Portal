@@ -205,14 +205,11 @@ export default function SubmitAccommodationReport() {
     localStorage.setItem(roomConfigStorageKey(profile?.establishment_id), JSON.stringify(config));
 
     if (profile?.establishment_id) {
-      const { error } = await supabase
-        .from("establishments")
-        .update({
-          amenities: nextAmenities,
-          total_rooms: nextTotalRooms,
-          updated_at: new Date(),
-        })
-        .eq("id", profile.establishment_id);
+      const { error } = await supabase.rpc('staff_update_room_configuration', {
+        p_establishment_id: profile.establishment_id,
+        p_amenities: nextAmenities,
+        p_total_rooms: nextTotalRooms,
+      });
 
       if (error) {
         toast.error("Could not save room configuration to the establishment record: " + error.message);

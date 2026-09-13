@@ -298,12 +298,10 @@ export default function Establishments() {
         let syncedStaffCount = 0;
 
         if (statusChanged && ["active", "inactive"].includes(establishmentForm.status)) {
-          const { data: syncedStaff, error: staffSyncError } = await supabase
-            .from('profiles')
-            .update({ status: establishmentForm.status })
-            .eq('establishment_id', editingEstablishment.id)
-            .eq('role', 'establishment_staff')
-            .select('id');
+          const { data: syncedStaffResult, error: staffSyncError } = await supabase.rpc('officer_sync_linked_staff_status', {
+            p_establishment_id: editingEstablishment.id,
+            p_status: establishmentForm.status,
+          });
 
           if (staffSyncError) {
             toast.error("Establishment updated, but failed to sync linked staff status: " + staffSyncError.message);
@@ -311,7 +309,7 @@ export default function Establishments() {
             return;
           }
 
-          syncedStaffCount = syncedStaff?.length || 0;
+          syncedStaffCount = Number(syncedStaffResult || 0);
         }
 
         toast.success(
@@ -555,15 +553,13 @@ export default function Establishments() {
     }
 
     if (editingUser) {
-      const { error } = await supabase
-        .from('profiles')
-        .update({
-          full_name: userForm.full_name,
-          role: userForm.role,
-          establishment_id: userForm.establishment_id || null,
-          status: userForm.status,
-        })
-        .eq('id', editingUser.id);
+      const { error } = await supabase.rpc('officer_update_user_profile', {
+        p_user_id: editingUser.id,
+        p_full_name: userForm.full_name.trim(),
+        p_role: userForm.role,
+        p_establishment_id: userForm.establishment_id || null,
+        p_status: userForm.status,
+      });
       
       if (error) {
         toast.error("Failed to update: " + error.message);
@@ -657,23 +653,9 @@ export default function Establishments() {
         });
 
         if (rpcError) {
-          // Older deployments may not have the RPC yet. Fall back to a direct
-          // officer update, but verify afterward before showing success.
-          const isMissingRpc = rpcError.code === '42883' || /remove_officer_user/i.test(rpcError.message || '');
-
-          if (isMissingRpc) {
-            const { error: fallbackError } = await supabase
-              .from('profiles')
-              .update({ status: 'inactive', establishment_id: null })
-              .eq('id', deleteTarget.id)
-              .eq('role', 'establishment_staff');
-
-            if (fallbackError) {
-              removeErrorMessage = fallbackError.message;
-            }
-          } else {
-            removeErrorMessage = rpcError.message;
-          }
+          removeErrorMessage = /remove_officer_user/i.test(rpcError.message || '')
+            ? "The verified user-removal database function is not installed yet. Apply the Supabase migration, then try removing the user again."
+            : rpcError.message;
         }
 
         if (!removeErrorMessage) {
@@ -1320,7 +1302,7 @@ export default function Establishments() {
             </div>
             <div className="p-6 space-y-4">
               <div><label className="block text-sm font-medium text-gray-700 mb-2">Full Name *</label><input type="text" value={userForm.full_name} onChange={(e) => setUserForm({ ...userForm, full_name: e.target.value })} className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#1CA7C9]/50 focus:border-[#1CA7C9] outline-none transition-all" placeholder="Enter full name" /></div>
-              <div><label className="block text-sm font-medium text-gray-700 mb-2">Email Address *</label><input type="email" value={userForm.email} onChange={(e) => setUserForm({ ...userForm, email: e.target.value })} className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#1CA7C9]/50 focus:border-[#1CA7C9] outline-none transition-all" placeholder="user@example.com" /></div>
+              <div><label className="block text-sm font-medium text-gray-700 mb-2">Email Address *</label><input type="email" value={userForm.email} onChange={(e) => setUserForm({ ...userForm, email: e.target.value })} disabled={Boolean(editingUser)} className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#1CA7C9]/50 focus:border-[#1CA7C9] outline-none transition-all disabled:bg-gray-100 disabled:text-gray-500" placeholder="user@example.com" />{editingUser && <p className="mt-1 text-xs text-gray-500">Email changes require a separate verified account process.</p>}</div>
               <div><label className="block text-sm font-medium text-gray-700 mb-2">Role *</label><select value={userForm.role} onChange={(e) => { const newRole = e.target.value; setUserForm({ ...userForm, role: newRole, establishment_id: newRole === "municipal_officer" ? "" : userForm.establishment_id }); }} className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#1CA7C9]/50 focus:border-[#1CA7C9] outline-none transition-all"><option value="municipal_officer">Municipal Tourism Officer</option><option value="establishment_staff">Establishment Staff</option></select></div>
               <div><label className="block text-sm font-medium text-gray-700 mb-2">Establishment</label><select value={userForm.establishment_id} onChange={(e) => setUserForm({ ...userForm, establishment_id: e.target.value })} className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#1CA7C9]/50 focus:border-[#1CA7C9] outline-none transition-all" disabled={userForm.role === "municipal_officer"}><option value="">Select an establishment</option>{establishments.map((est) => (<option key={est.id} value={est.id}>{est.name}</option>))}</select>{userForm.role === "establishment_staff" && <p className="text-xs text-gray-500 mt-1">Select the establishment this staff member belongs to</p>}</div>
               <div><label className="block text-sm font-medium text-gray-700 mb-2">Status</label><select value={userForm.status} onChange={(e) => setUserForm({ ...userForm, status: e.target.value })} className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#1CA7C9]/50 focus:border-[#1CA7C9] outline-none transition-all"><option value="active">Active</option><option value="inactive">Inactive</option></select></div>
