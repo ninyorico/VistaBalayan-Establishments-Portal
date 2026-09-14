@@ -389,7 +389,7 @@ export default function AccommodationMonitoring({ embedded = false }: { embedded
   const handleExport = () => {
     downloadCsv(
       datestampedFilename("accommodation-records"),
-      ["Date", "Month", "Establishment", "Total Rooms", "Reported Rooms", "Occupied Rooms", "Average Occupancy %", "Total Guests", "Guest Nights", "Days In Month"],
+      ["Date", "Month", "Establishment", "Total Rooms", "Reported Rooms", "Occupied Rooms", "Average Occupancy %", "Check-ins", "Guest Nights", "Days In Month"],
       filteredRecords.map((record) => [
         record.date,
         record.month,
@@ -434,7 +434,7 @@ export default function AccommodationMonitoring({ embedded = false }: { embedded
           <p className="text-3xl font-bold text-gray-900">{filteredStats.totalRooms}</p>
         </div>
         <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-          <p className="text-sm text-gray-600 mb-1">Total Guests (Check-ins)</p>
+          <p className="text-sm text-gray-600 mb-1">Check-ins</p>
           <p className="text-3xl font-bold text-blue-600">{filteredStats.totalGuests}</p>
         </div>
         <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
@@ -569,7 +569,7 @@ export default function AccommodationMonitoring({ embedded = false }: { embedded
                 <th className="px-6 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">Month(s)</th>
                 <th className="px-6 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">Total Rooms</th>
                 <th className="px-6 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">Avg Occupancy</th>
-                <th className="px-6 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">Total Guests</th>
+                <th className="px-6 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">Check-ins</th>
                 <th className="px-6 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">Guest Nights</th>
                 <th className="px-6 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">Avg Guest/Room</th>
                 <th className="px-6 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">Performance</th>
@@ -631,7 +631,7 @@ export default function AccommodationMonitoring({ embedded = false }: { embedded
                                     <th className="px-4 py-2 text-left text-xs font-semibold uppercase tracking-wider text-gray-600">Reported Rooms</th>
                                     <th className="px-4 py-2 text-left text-xs font-semibold uppercase tracking-wider text-gray-600">Occupied Rooms</th>
                                     <th className="px-4 py-2 text-left text-xs font-semibold uppercase tracking-wider text-gray-600">Avg Occupancy</th>
-                                    <th className="px-4 py-2 text-left text-xs font-semibold uppercase tracking-wider text-gray-600">Total Guests</th>
+                                    <th className="px-4 py-2 text-left text-xs font-semibold uppercase tracking-wider text-gray-600">Check-ins</th>
                                     <th className="px-4 py-2 text-left text-xs font-semibold uppercase tracking-wider text-gray-600">Guest Nights</th>
                                   </tr>
                                 </thead>
