@@ -354,11 +354,6 @@ export default function SubmitAccommodationReport() {
     }
 
 
-    if (totalGuestNights < totalCheckIns) {
-      toast.error("Guest nights cannot be lower than guest check-ins");
-      return;
-    }
-
     const invalidOccupiedRoom = roomData.find(
       (room) => Number(room.occupied || 0) > Number(room.numberOfRooms || 0)
     );

@@ -89,9 +89,7 @@ const detectReportAnomalies = (report: Submission) => {
     if (totalRooms <= 0) reasons.push("Accommodation report has no total rooms recorded");
     if (occupiedRooms > totalRooms) reasons.push(`Occupied rooms (${occupiedRooms}) exceed total rooms (${totalRooms})`);
     if (checkIns === 0) reasons.push("Accommodation report has zero check-ins");
-    if (guestNights > 0 && checkIns > 0 && guestNights < checkIns) {
-      reasons.push(`Guest nights (${guestNights}) are lower than check-ins (${checkIns})`);
-    }
+
     if (totalRooms > 0 && occupiedRooms > totalRooms * 0.98) {
       reasons.push("Occupancy is unusually close to or above full capacity");
     }

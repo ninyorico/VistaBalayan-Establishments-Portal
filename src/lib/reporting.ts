@@ -161,7 +161,6 @@ export const validateAccommodationRecord = (record: AccommodationSourceRecord, t
   const date = new Date(`${record.report_date}T00:00:00`);
   if (!record.report_date || Number.isNaN(date.getTime())) errors.push("Report date is invalid");
   for (const [label, value] of Object.entries(values)) if (value < 0) errors.push(`${label} cannot be negative`);
-  if (values.guestNights < values.guestCheckIns) errors.push("Guest nights cannot be lower than guest check-ins");
   if (values.roomsOccupied > totalRooms) errors.push("Rooms occupied cannot exceed total rooms");
   if (values.foreignGuestCheckIns > values.guestCheckIns) errors.push("Foreign check-ins cannot exceed total check-ins");
   if (values.foreignGuestNights > values.guestNights) errors.push("Foreign guest nights cannot exceed total guest nights");
