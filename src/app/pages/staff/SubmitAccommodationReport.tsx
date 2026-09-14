@@ -256,6 +256,18 @@ export default function SubmitAccommodationReport() {
     });
   };
 
+  const handleReportDateChange = async (date: string) => {
+    setReportDate(date);
+    if (!profile?.establishment_id || !date || roomTypes.length === 0) return;
+
+    const nextRoomData = await loadPreviousNightGuests(
+      profile.establishment_id,
+      getPreviousDate(date),
+      roomTypes,
+    );
+    setRoomData(nextRoomData);
+  };
+
   const [roomData, setRoomData] = useState<RoomOccupancy[]>(() => buildRoomData(DEFAULT_ROOM_CONFIG));
 
   const totalRooms = roomData.reduce(
@@ -639,7 +651,7 @@ export default function SubmitAccommodationReport() {
           </div>
           <div className="min-w-0">
             <label className="block text-sm font-medium text-gray-700 mb-2">Report Date</label>
-            <input type="date" value={reportDate} onChange={(e) => setReportDate(e.target.value)} className="block w-full min-w-0 max-w-full appearance-none px-4 py-2 border border-gray-300 rounded-lg" />
+            <input type="date" value={reportDate} onChange={(e) => void handleReportDateChange(e.target.value)} className="block w-full min-w-0 max-w-full appearance-none px-4 py-2 border border-gray-300 rounded-lg" />
           </div>
           <div className="min-w-0">
             <label className="block text-sm font-medium text-gray-700 mb-2">Total Number of Rooms</label>
