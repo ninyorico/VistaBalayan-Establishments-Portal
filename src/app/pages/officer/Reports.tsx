@@ -205,6 +205,13 @@ export default function Reports() {
       (a, b) => new Date(b.submitted).getTime() - new Date(a.submitted).getTime()
     );
     setSubmissions(combined);
+    const submittedReportYears = combined
+      .filter((report) => normalizeStatus(report.status) === "submitted")
+      .map((report) => Number(report.reportDate.slice(0, 4)))
+      .filter((year) => Number.isFinite(year));
+    if (submittedReportYears.length > 0) {
+      setSelectedYear(String(Math.max(...submittedReportYears)));
+    }
     setLoading(false);
   };
 
