@@ -38,6 +38,41 @@ export default function SubmitAccommodationReport() {
   const [submitting, setSubmitting] = useState(false);
   const submissionKeyRef = useRef(crypto.randomUUID());
 
+  const draftStorageKey = (userId?: string, establishmentId?: string) =>
+    userId && establishmentId ? `accommodationReportDraft:${userId}:${establishmentId}` : null;
+
+  const loadDraft = (userId: string, establishmentId: string) => {
+    const key = draftStorageKey(userId, establishmentId);
+    if (!key) return;
+
+    const saved = localStorage.getItem(key);
+    if (!saved) return;
+
+    try {
+      const draft = JSON.parse(saved) as { reportDate?: string; roomData?: RoomOccupancy[] };
+      if (!Array.isArray(draft.roomData) || draft.roomData.length === 0) return;
+
+      const validRooms = draft.roomData.filter((room) =>
+        room && typeof room.roomType === "string" && typeof room.roomCode === "string" &&
+        [room.numberOfRooms, room.occupied, room.checkIns, room.guestNights]
+          .every((value) => Number.isFinite(Number(value)) && Number(value) >= 0)
+      );
+      if (validRooms.length === 0) return;
+
+      setRoomData(validRooms.map((room) => ({
+        ...room,
+        numberOfRooms: Number(room.numberOfRooms) || 0,
+        occupied: Math.min(Number(room.occupied) || 0, Number(room.numberOfRooms) || 0),
+        checkIns: Number(room.checkIns) || 0,
+        guestNights: Number(room.guestNights) || 0,
+      })));
+      if (draft.reportDate) setReportDate(draft.reportDate);
+      toast.success("Saved accommodation draft restored");
+    } catch {
+      localStorage.removeItem(key);
+    }
+  };
+
   const getTodayDate = () => {
     const today = new Date();
     const year = today.getFullYear();
@@ -111,6 +146,7 @@ export default function SubmitAccommodationReport() {
     setRoomTypes(effectiveRoomConfig);
     setTempRoomConfig(effectiveRoomConfig);
     setRoomData(buildRoomData(effectiveRoomConfig));
+    loadDraft(profileData.id, profileData.establishment_id);
 
     setLoadingProfile(false);
   };
@@ -284,7 +320,20 @@ export default function SubmitAccommodationReport() {
       : "0.00";
 
   const handleSaveDraft = () => {
-    toast.success("Draft saved successfully");
+    const key = draftStorageKey(profile?.id, profile?.establishment_id);
+    if (!key) {
+      toast.error("Your account is not ready to save a draft");
+      return;
+    }
+
+    const draft = {
+      version: 1,
+      reportDate,
+      roomData,
+      savedAt: new Date().toISOString(),
+    };
+    localStorage.setItem(key, JSON.stringify(draft));
+    toast.success("Draft saved on this device and will be restored after you sign in again");
   };
 
   const handleSubmit = async () => {
@@ -352,6 +401,8 @@ export default function SubmitAccommodationReport() {
       toast.error("Failed to submit report: " + submitError.message);
     } else {
       toast.success("Hotel report submitted successfully");
+      const draftKey = draftStorageKey(profile.id, profile.establishment_id);
+      if (draftKey) localStorage.removeItem(draftKey);
       submissionKeyRef.current = crypto.randomUUID();
       setRoomData(roomData.map((room) => ({
         ...room,

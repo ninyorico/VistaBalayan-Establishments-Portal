@@ -37,6 +37,41 @@ export default function SubmitVisitorReport() {
   const [establishmentName, setEstablishmentName] = useState("Loading...");
   const [error, setError] = useState<string | null>(null);
 
+  const draftStorageKey = (userId?: string, establishmentId?: string) =>
+    userId && establishmentId ? `visitorReportDraft:${userId}:${establishmentId}` : null;
+
+  const loadDraft = (userId: string, establishmentId: string) => {
+    const key = draftStorageKey(userId, establishmentId);
+    if (!key) return;
+
+    const saved = localStorage.getItem(key);
+    if (!saved) return;
+
+    try {
+      const draft = JSON.parse(saved) as { reportDate?: string; entries?: VisitorEntry[] };
+      if (!Array.isArray(draft.entries)) return;
+
+      const validEntries = draft.entries.filter((entry) =>
+        entry && typeof entry.id === "number" && typeof entry.groupName === "string" &&
+        [entry.male, entry.female, entry.total].every((value) => Number.isFinite(Number(value))) &&
+        typeof entry.residenceType === "string" && typeof entry.placeOfResidence === "string"
+      );
+      if (validEntries.length === 0) return;
+
+      setEntries(validEntries.map((entry) => ({
+        ...entry,
+        male: Math.max(0, Number(entry.male) || 0),
+        female: Math.max(0, Number(entry.female) || 0),
+        total: Math.max(0, Number(entry.male) || 0) + Math.max(0, Number(entry.female) || 0),
+      })));
+      setNextId(Math.max(...validEntries.map((entry) => entry.id), 0) + 1);
+      if (draft.reportDate) setReportDate(draft.reportDate);
+      toast.success("Saved draft restored");
+    } catch {
+      localStorage.removeItem(key);
+    }
+  };
+
   useEffect(() => {
     loadProfile();
   }, []);
@@ -120,6 +155,7 @@ const loadProfile = async () => {
     }
     
     setProfile(profile);
+    loadDraft(profile.id, profile.establishment_id);
     
   } catch (err) {
     console.error('Unexpected error:', err);
@@ -238,6 +274,8 @@ const loadProfile = async () => {
       toast.error("Failed to submit: " + submitError.message);
     } else {
       toast.success(`${submissions.length} visitor record(s) submitted successfully`);
+      const draftKey = draftStorageKey(profile.id, profile.establishment_id);
+      if (draftKey) localStorage.removeItem(draftKey);
       // Reset form
       setEntries([{ id: 1, groupName: "", male: 0, female: 0, total: 0, residenceType: "THIS_PROVINCE", placeOfResidence: "" }]);
       setNextId(2);
@@ -247,12 +285,20 @@ const loadProfile = async () => {
   };
 
   const handleSaveDraft = () => {
+    const key = draftStorageKey(profile?.id, profile?.establishment_id);
+    if (!key) {
+      toast.error("Your account is not ready to save a draft");
+      return;
+    }
+
     const draft = {
+      version: 1,
       reportDate,
-      entries: entries.filter(e => e.total > 0 || e.groupName)
+      entries: entries.filter((entry) => entry.total > 0 || entry.groupName || entry.placeOfResidence),
+      savedAt: new Date().toISOString(),
     };
-    localStorage.setItem('visitorReportDraft', JSON.stringify(draft));
-    toast.success("Draft saved locally");
+    localStorage.setItem(key, JSON.stringify(draft));
+    toast.success("Draft saved on this device and will be restored after you sign in again");
   };
 
   if (loadingProfile) {
