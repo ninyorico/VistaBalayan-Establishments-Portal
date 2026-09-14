@@ -4,10 +4,8 @@ import {
   FileUp,
   Bed,
   CheckCircle,
-  Clock,
   AlertCircle,
   Calendar,
-  TrendingUp,
   ArrowRight,
   History,
   Moon,
@@ -21,9 +19,7 @@ import { EmptyState, LoadingState, MetricCard, PageHero, PanelCard } from "../..
 import DataState from "../../components/DataState";
 
 const statusStyles = {
-  approved: "bg-emerald-50 text-emerald-700 ring-emerald-200",
-  pending: "bg-amber-50 text-amber-700 ring-amber-200",
-  rejected: "bg-rose-50 text-rose-700 ring-rose-200",
+  submitted: "bg-emerald-50 text-emerald-700 ring-emerald-200",
 };
 
 export default function StaffDashboard() {
@@ -34,9 +30,6 @@ export default function StaffDashboard() {
   const [loadError, setLoadError] = useState<{ kind: "error" | "session-expired"; message: string } | null>(null);
   const [stats, setStats] = useState({
     total: 0,
-    pending: 0,
-    approved: 0,
-    rejected: 0,
   });
   const [hotelMetrics, setHotelMetrics] = useState({
     averageGuestNight: "0.00",
@@ -149,9 +142,6 @@ export default function StaffDashboard() {
 
       setStats({
         total: submissions.length,
-        pending: submissions.filter((r) => r.status === "pending").length,
-        approved: submissions.filter((r) => r.status === "approved").length,
-        rejected: submissions.filter((r) => r.status === "rejected").length,
       });
 
       setRecentSubmissions(submissions.slice(0, 5));
@@ -160,16 +150,13 @@ export default function StaffDashboard() {
     setLoading(false);
   };
 
-  const approvalRate = stats.total > 0 ? Math.round((stats.approved / stats.total) * 100) : 0;
+
   const showVisitorForm = canSubmitVisitorReport(establishment);
   const showAccommodationForm = canSubmitAccommodationReport(establishment);
   const reportFormLabel = getPrimaryReportFormLabel(establishment);
 
   const submissionStats = [
     { title: "Total submissions", value: stats.total.toString(), icon: CheckCircle, tone: "bg-sky-50 text-sky-700 ring-sky-100" },
-    { title: "Pending review", value: stats.pending.toString(), icon: Clock, tone: "bg-amber-50 text-amber-700 ring-amber-100" },
-    { title: "Rejected", value: stats.rejected.toString(), icon: AlertCircle, tone: "bg-rose-50 text-rose-700 ring-rose-100" },
-    { title: "Approval rate", value: `${approvalRate}%`, icon: TrendingUp, tone: "bg-emerald-50 text-emerald-700 ring-emerald-100" },
   ];
 
   const hotelPerformanceStats = [
@@ -304,7 +291,7 @@ export default function StaffDashboard() {
                     <p className="mt-1 text-sm text-[#5D6F73]">{submission.dataSummary}</p>
                   </div>
                   <div className="text-right">
-                    <span className={`inline-flex items-center rounded-full px-2.5 py-1 text-xs font-semibold capitalize ring-1 ${statusStyles[submission.status as keyof typeof statusStyles] || statusStyles.pending}`}>
+                    <span className={`inline-flex items-center rounded-full px-2.5 py-1 text-xs font-semibold capitalize ring-1 ${statusStyles[submission.status as keyof typeof statusStyles] || "bg-slate-50 text-slate-700 ring-slate-200"}`}>
                       {submission.status}
                     </span>
                     <p className="mt-1 text-xs text-[#5D6F73]">{submission.submittedDate}</p>

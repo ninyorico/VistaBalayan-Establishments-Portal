@@ -4,8 +4,6 @@ import {
   TrendingUp,
   Bed,
   AlertTriangle,
-  CheckCircle,
-  Clock,
   Building2,
 } from "lucide-react";
 import {
@@ -25,7 +23,7 @@ import {
 } from "recharts";
 import { supabase } from "../../../lib/supabase";
 import { calculateAccommodationOccupancy } from "../../../lib/reportMetrics";
-import { normalizeReportStatus } from "../../../lib/governance";
+
 import { Button } from "../../components/ui/button";
 import { EmptyState, LoadingState, MetricCard, PageHero, PanelCard } from "../../components/vista/PolishedShell";
 
@@ -100,12 +98,7 @@ export default function OfficerDashboard() {
   const [demographics, setDemographics] = useState<Demographic[]>([]);
   const [topEstablishments, setTopEstablishments] = useState<TopEstablishment[]>([]);
   const [anomalies, setAnomalies] = useState<any[]>([]);
-  const [workflowMetrics, setWorkflowMetrics] = useState({
-    activeReports: 0,
-    pendingReports: 0,
-    onHoldReports: 0,
-    resolvedReports: 0,
-  });
+
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -129,7 +122,7 @@ export default function OfficerDashboard() {
           const { data, error } = await supabase
             .from('visitor_reports')
             .select('report_date, total_guests, residence_type, place_of_residence, establishment_id, establishments(name)')
-            .in('status', ['pending', 'approved'])
+            .eq('status', 'submitted')
             .order('report_date', { ascending: true })
             .range(page * pageSize, page * pageSize + pageSize - 1);
           if (error) throw error;
@@ -144,7 +137,7 @@ export default function OfficerDashboard() {
           const { data, error } = await supabase
             .from('accommodation_reports')
             .select('total_rooms, total_occupied_rooms, report_date')
-            .in('status', ['pending', 'approved'])
+            .eq('status', 'submitted')
             .order('report_date', { ascending: true })
             .range(page * pageSize, page * pageSize + pageSize - 1);
           if (error) throw error;
@@ -283,13 +276,6 @@ setOccupancyRate(occupancyRate);
         })),
       ].sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
 
-      setWorkflowMetrics({
-        activeReports: combined.filter((report) => ["pending", "under_review", "on_hold"].includes(normalizeReportStatus(report.status))).length,
-        pendingReports: combined.filter((report) => normalizeReportStatus(report.status) === "pending").length,
-        onHoldReports: combined.filter((report) => normalizeReportStatus(report.status) === "on_hold").length,
-        resolvedReports: combined.filter((report) => ["approved", "rejected"].includes(normalizeReportStatus(report.status))).length,
-      });
-
       setRecentSubmissions(combined.slice(0, 5));
 
       // 7. Fetch anomalies
@@ -343,14 +329,11 @@ setOccupancyRate(occupancyRate);
 
       <section className="grid grid-cols-6 gap-2 sm:gap-3 lg:grid-cols-4 lg:gap-4" data-officer-dashboard-uniform-kpis="true">
         {[
-          { label: "Total visitors", value: totalVisitors.toLocaleString(), helper: "Approved and pending guests", icon: Users, tone: "bg-cyan-50 text-[#0E5A72] ring-cyan-100" },
+          { label: "Total visitors", value: totalVisitors.toLocaleString(), helper: "Submitted visitor records", icon: Users, tone: "bg-cyan-50 text-[#0E5A72] ring-cyan-100" },
           { label: "Monthly arrivals", value: monthlyArrivals.toLocaleString(), helper: "Latest reporting month", icon: TrendingUp, tone: "bg-slate-50 text-[#0B2530] ring-slate-200" },
           { label: "Occupancy rate", value: `${occupancyRate.toFixed(1)}%`, helper: "Average hotel occupancy", icon: Bed, tone: "bg-[#EAF2F1] text-[#0E5A72] ring-[#b8d2cf]" },
           { label: "Establishments", value: totalEstablishments.toString(), helper: "Tourism records", icon: Building2, tone: "bg-emerald-50 text-[#2F5F55] ring-emerald-100" },
-          { label: "Active reports", value: workflowMetrics.activeReports, helper: "Pending, review, or hold", icon: AlertTriangle, tone: "bg-amber-50 text-amber-700 ring-amber-100" },
-          { label: "Pending reports", value: workflowMetrics.pendingReports, helper: "Waiting for officer review", icon: Clock, tone: "bg-[#EAF2F1] text-[#0E5A72] ring-[#b8d2cf]" },
-          { label: "On hold", value: workflowMetrics.onHoldReports, helper: "Needs manual verification", icon: AlertTriangle, tone: "bg-rose-50 text-rose-700 ring-rose-100" },
-          { label: "Resolved reports", value: workflowMetrics.resolvedReports, helper: "Approved or rejected", icon: CheckCircle, tone: "bg-emerald-50 text-[#2F5F55] ring-emerald-100" },
+
         ].map((metric, index) => (
           <MetricCard
             key={metric.label}
@@ -472,11 +455,8 @@ setOccupancyRate(occupancyRate);
                   </div>
                   <div className="text-right">
                     <span className={`inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-xs font-semibold capitalize ring-1 ${
-                      sub.status === "approved" ? "bg-emerald-50 text-emerald-700 ring-emerald-200" :
-                      sub.status === "pending" ? "bg-amber-50 text-amber-700 ring-amber-200" : "bg-rose-50 text-rose-700 ring-rose-200"
+                      sub.status === "submitted" ? "bg-emerald-50 text-emerald-700 ring-emerald-200" : "bg-slate-50 text-slate-700 ring-slate-200"
                     }`}>
-                      {sub.status === "approved" && <CheckCircle className="h-3 w-3" />}
-                      {sub.status === "pending" && <Clock className="h-3 w-3" />}
                       {sub.status}
                     </span>
                     <p className="mt-1 text-xs text-[#5D6F73]">{sub.date}</p>
