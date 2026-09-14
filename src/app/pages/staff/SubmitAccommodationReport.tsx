@@ -370,44 +370,50 @@ export default function SubmitAccommodationReport() {
 
     setSubmitting(true);
 
-    const { error: submitError } = await supabase.rpc("staff_submit_accommodation_report", {
-      p_establishment_id: profile.establishment_id,
-      p_report_date: reportDate,
-      p_total_rooms: totalRooms,
-      p_total_occupied_rooms: totalOccupiedRooms,
-      p_total_check_ins: totalCheckIns,
-      p_total_guest_nights: totalGuestNights,
-      p_rooms_occupied: totalOccupiedRooms,
-      p_guest_check_ins: totalCheckIns,
-      p_guest_nights: totalGuestNights,
-      p_room_details: roomData.map((room) => ({
-        room_type: room.roomType,
-        room_code: room.roomCode,
-        number_of_rooms: room.numberOfRooms,
-        occupied_rooms: room.occupied,
-        check_ins: room.checkIns,
-        guest_nights: room.guestNights,
-        is_rent_mode: false,
-      })),
-      p_idempotency_key: submissionKeyRef.current,
-    });
+    try {
+      const { error: submitError } = await supabase.rpc("staff_submit_accommodation_report", {
+        p_establishment_id: profile.establishment_id,
+        p_report_date: reportDate,
+        p_total_rooms: totalRooms,
+        p_total_occupied_rooms: totalOccupiedRooms,
+        p_total_check_ins: totalCheckIns,
+        p_total_guest_nights: totalGuestNights,
+        p_rooms_occupied: totalOccupiedRooms,
+        p_guest_check_ins: totalCheckIns,
+        p_guest_nights: totalGuestNights,
+        p_room_details: roomData.map((room) => ({
+          room_type: room.roomType,
+          room_code: room.roomCode,
+          number_of_rooms: room.numberOfRooms,
+          occupied_rooms: room.occupied,
+          check_ins: room.checkIns,
+          guest_nights: room.guestNights,
+          is_rent_mode: false,
+        })),
+        p_idempotency_key: submissionKeyRef.current,
+      });
 
-    if (submitError) {
-      toast.error("Failed to submit report: " + submitError.message);
-    } else {
-      toast.success("Hotel report submitted successfully");
-      const draftKey = draftStorageKey(profile.id, profile.establishment_id);
-      if (draftKey) localStorage.removeItem(draftKey);
-      submissionKeyRef.current = crypto.randomUUID();
-      setRoomData(roomData.map((room) => ({
-        ...room,
-        occupied: 0,
-        checkIns: 0,
-        guestNights: 0,
-      })));
-      setReportDate(getTodayDate());
+      if (submitError) {
+        toast.error("Failed to submit report: " + submitError.message);
+      } else {
+        toast.success("Hotel report submitted successfully");
+        const draftKey = draftStorageKey(profile.id, profile.establishment_id);
+        if (draftKey) localStorage.removeItem(draftKey);
+        submissionKeyRef.current = crypto.randomUUID();
+        setRoomData(roomData.map((room) => ({
+          ...room,
+          occupied: 0,
+          checkIns: 0,
+          guestNights: 0,
+        })));
+        setReportDate(getTodayDate());
+      }
+    } catch (submitException) {
+      console.error("Accommodation report submission failed", submitException);
+      toast.error("Failed to submit report. Please check your connection and try again.");
+    } finally {
+      setSubmitting(false);
     }
-    setSubmitting(false);
   };
 
   if (loadingProfile) {
