@@ -12,6 +12,7 @@ interface RoomOccupancy {
   roomCode: string;
   numberOfRooms: number;
   occupied: number;
+  continuingGuests: number;
   checkIns: number;
   guestNights: number;
 }
@@ -54,7 +55,7 @@ export default function SubmitAccommodationReport() {
 
       const validRooms = draft.roomData.filter((room) =>
         room && typeof room.roomType === "string" && typeof room.roomCode === "string" &&
-        [room.numberOfRooms, room.occupied, room.checkIns, room.guestNights]
+        [room.numberOfRooms, room.occupied, room.checkIns, room.guestNights, room.continuingGuests ?? 0]
           .every((value) => Number.isFinite(Number(value)) && Number(value) >= 0)
       );
       if (validRooms.length === 0) return;
@@ -63,8 +64,9 @@ export default function SubmitAccommodationReport() {
         ...room,
         numberOfRooms: Number(room.numberOfRooms) || 0,
         occupied: Math.min(Number(room.occupied) || 0, Number(room.numberOfRooms) || 0),
+        continuingGuests: Number(room.continuingGuests ?? Math.max(0, Number(room.guestNights) - Number(room.checkIns))) || 0,
         checkIns: Number(room.checkIns) || 0,
-        guestNights: Number(room.guestNights) || 0,
+        guestNights: Number(room.continuingGuests ?? Math.max(0, Number(room.guestNights) - Number(room.checkIns))) + (Number(room.checkIns) || 0),
       })));
       if (draft.reportDate) setReportDate(draft.reportDate);
       toast.success("Saved accommodation draft restored");
@@ -145,7 +147,12 @@ export default function SubmitAccommodationReport() {
     const effectiveRoomConfig = mergeRoomConfig(officerRoomConfig, savedConfig);
     setRoomTypes(effectiveRoomConfig);
     setTempRoomConfig(effectiveRoomConfig);
-    setRoomData(buildRoomData(effectiveRoomConfig));
+    const previousNightRoomData = await loadPreviousNightGuests(
+      profileData.establishment_id,
+      getPreviousDate(reportDate),
+      effectiveRoomConfig
+    );
+    setRoomData(previousNightRoomData);
     loadDraft(profileData.id, profileData.establishment_id);
 
     setLoadingProfile(false);
@@ -190,9 +197,64 @@ export default function SubmitAccommodationReport() {
       roomCode: room.code,
       numberOfRooms: room.count ?? 0,
       occupied: 0,
+      continuingGuests: 0,
       checkIns: 0,
       guestNights: 0,
     }));
+
+  const getPreviousDate = (date: string) => {
+    const previous = new Date(`${date}T00:00:00`);
+    previous.setDate(previous.getDate() - 1);
+    return `${previous.getFullYear()}-${String(previous.getMonth() + 1).padStart(2, "0")}-${String(previous.getDate()).padStart(2, "0")}`;
+  };
+
+  const loadPreviousNightGuests = async (
+    establishmentId: string,
+    previousDate: string,
+    rooms: EstablishmentRoomConfig[],
+  ): Promise<RoomOccupancy[]> => {
+    const empty = rooms.map((room) => ({
+      roomType: room.type,
+      roomCode: room.code,
+      numberOfRooms: room.count ?? 0,
+      occupied: 0,
+      continuingGuests: 0,
+      checkIns: 0,
+      guestNights: 0,
+    }));
+
+    const { data: previousReport } = await supabase
+      .from("accommodation_reports")
+      .select("id")
+      .eq("establishment_id", establishmentId)
+      .eq("report_date", previousDate)
+      .maybeSingle();
+
+    if (!previousReport?.id) return empty;
+
+    const { data: previousDetails } = await supabase
+      .from("room_occupancy_details")
+      .select("room_code,guest_nights,occupied_rooms")
+      .eq("accommodation_report_id", previousReport.id);
+
+    const byCode = new Map((previousDetails || []).map((detail) => [
+      String(detail.room_code || ""),
+      {
+        guests: Math.max(0, Number(detail.guest_nights) || 0),
+        occupied: Math.max(0, Number(detail.occupied_rooms) || 0),
+      },
+    ]));
+
+    return empty.map((room) => {
+      const previous = byCode.get(room.roomCode);
+      return {
+        ...room,
+        continuingGuests: previous?.guests || 0,
+        guestNights: previous?.guests || 0,
+        occupied: Math.min(previous?.occupied || 0, room.numberOfRooms),
+      };
+    });
+  };
 
   const [roomData, setRoomData] = useState<RoomOccupancy[]>(() => buildRoomData(DEFAULT_ROOM_CONFIG));
 
@@ -266,8 +328,9 @@ export default function SubmitAccommodationReport() {
           roomCode: room.code,
           numberOfRooms: room.count || 0,
           occupied: existing?.occupied || 0,
+          continuingGuests: existing?.continuingGuests || 0,
           checkIns: existing?.checkIns || 0,
-          guestNights: existing?.guestNights || 0,
+          guestNights: (existing?.continuingGuests || 0) + (existing?.checkIns || 0),
         };
       })
     );
@@ -286,6 +349,10 @@ export default function SubmitAccommodationReport() {
           if (field === "occupied" && Number(numericValue) > Number(room.numberOfRooms || 0)) {
             toast.error("Occupied rooms cannot exceed configured rooms for this room type");
             return room;
+          }
+
+          if (field === "checkIns" || field === "continuingGuests") {
+            updatedRoom.guestNights = Number(updatedRoom.continuingGuests || 0) + Number(updatedRoom.checkIns || 0);
           }
 
           return updatedRoom;
@@ -403,6 +470,7 @@ export default function SubmitAccommodationReport() {
         setRoomData(roomData.map((room) => ({
           ...room,
           occupied: 0,
+          continuingGuests: 0,
           checkIns: 0,
           guestNights: 0,
         })));
@@ -587,24 +655,27 @@ export default function SubmitAccommodationReport() {
         <div className="p-4 sm:p-5 lg:p-6 border-b border-gray-200">
           <h3 className="text-lg font-semibold text-gray-900">Daily Room Occupancy</h3>
           <p className="mt-1 text-sm text-gray-500 lg:hidden">Compact full-width table for faster phone entry.</p>
+          <p className="mt-2 text-sm text-gray-600">Continuing guests came from the previous night. New guests arrived today. Staying tonight is calculated automatically from both numbers.</p>
         </div>
 
         <div className="overflow-x-auto overscroll-x-contain">
           <table className="w-full min-w-full table-fixed sm:min-w-[620px] lg:min-w-[760px]">
             <colgroup>
-              <col className="w-[21%]" />
-              <col className="w-[15%]" />
-              <col className="w-[21%]" />
-              <col className="w-[22%]" />
-              <col className="w-[21%]" />
+              <col className="w-[18%]" />
+              <col className="w-[14%]" />
+              <col className="w-[17%]" />
+              <col className="w-[17%]" />
+              <col className="w-[17%]" />
+              <col className="w-[17%]" />
             </colgroup>
             <thead className="bg-gray-50 border-b border-gray-200">
               <tr>
                 <th className="pl-3 pr-1 py-2 text-left text-[10px] font-semibold text-gray-700 sm:px-2 sm:text-[11px] lg:px-6 lg:py-3 lg:text-xs lg:uppercase">Room</th>
                 <th className="px-1 py-2 text-center text-[10px] font-semibold text-gray-700 sm:px-1.5 sm:text-[11px] lg:px-6 lg:py-3 lg:text-xs lg:uppercase">Rooms</th>
                 <th className="px-1 py-2 text-center text-[10px] font-semibold text-gray-700 sm:px-1.5 sm:text-[11px] lg:px-6 lg:py-3 lg:text-xs lg:uppercase">Occupied</th>
-                <th className="px-1 py-2 text-center text-[10px] font-semibold text-gray-700 sm:px-1.5 sm:text-[11px] lg:px-6 lg:py-3 lg:text-xs lg:uppercase">Check-ins</th>
-                <th className="px-1 py-2 text-center text-[10px] font-semibold text-gray-700 sm:px-1.5 sm:text-[11px] lg:px-6 lg:py-3 lg:text-xs lg:uppercase">Nights</th>
+                <th className="px-1 py-2 text-center text-[10px] font-semibold text-gray-700 sm:px-1.5 sm:text-[11px] lg:px-6 lg:py-3 lg:text-xs lg:uppercase">Continuing</th>
+                <th className="px-1 py-2 text-center text-[10px] font-semibold text-gray-700 sm:px-1.5 sm:text-[11px] lg:px-6 lg:py-3 lg:text-xs lg:uppercase">New Guests</th>
+                <th className="px-1 py-2 text-center text-[10px] font-semibold text-gray-700 sm:px-1.5 sm:text-[11px] lg:px-6 lg:py-3 lg:text-xs lg:uppercase">Staying Tonight</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-200">
@@ -622,10 +693,13 @@ export default function SubmitAccommodationReport() {
                       <input type="text" inputMode="numeric" pattern="[0-9]*" value={numericInputValue(room.occupied)} onChange={(e) => updateRoomData(index, "occupied", parseNonNegativeInteger(e.target.value))} className="mx-auto w-[82%] min-w-0 rounded-md border border-gray-300 px-1 py-1.5 text-center text-sm tabular-nums sm:w-full lg:px-3 lg:py-2" placeholder="0" />
                     </td>
                     <td className="px-0.5 py-2 sm:px-1.5 lg:px-6 lg:py-4">
-                      <input type="text" inputMode="numeric" pattern="[0-9]*" value={numericInputValue(room.checkIns)} onChange={(e) => updateRoomData(index, "checkIns", parseNonNegativeInteger(e.target.value))} className="mx-auto w-[82%] min-w-0 rounded-md border border-gray-300 px-1 py-1.5 text-center text-sm tabular-nums sm:w-full lg:px-3 lg:py-2" placeholder="0" />
+                      <input type="text" inputMode="numeric" pattern="[0-9]*" value={numericInputValue(room.continuingGuests)} onChange={(e) => updateRoomData(index, "continuingGuests", parseNonNegativeInteger(e.target.value))} className="mx-auto w-[82%] min-w-0 rounded-md border border-gray-300 px-1 py-1.5 text-center text-sm tabular-nums sm:w-full lg:px-3 lg:py-2" placeholder="0" aria-label={`${room.roomType} continuing guests`} />
+                    </td>
+                    <td className="px-0.5 py-2 sm:px-1.5 lg:px-6 lg:py-4">
+                      <input type="text" inputMode="numeric" pattern="[0-9]*" value={numericInputValue(room.checkIns)} onChange={(e) => updateRoomData(index, "checkIns", parseNonNegativeInteger(e.target.value))} className="mx-auto w-[82%] min-w-0 rounded-md border border-gray-300 px-1 py-1.5 text-center text-sm tabular-nums sm:w-full lg:px-3 lg:py-2" placeholder="0" aria-label={`${room.roomType} new guests`} />
                     </td>
                     <td className="pl-0.5 pr-1 py-2 sm:px-1.5 lg:px-6 lg:py-4">
-                      <input type="text" inputMode="numeric" pattern="[0-9]*" value={numericInputValue(room.guestNights)} onChange={(e) => updateRoomData(index, "guestNights", parseNonNegativeInteger(e.target.value))} className="mx-auto w-[82%] min-w-0 rounded-md border border-gray-300 px-1 py-1.5 text-center text-sm tabular-nums sm:w-full lg:px-3 lg:py-2" placeholder="0" />
+                      <div className="mx-auto w-[82%] min-w-0 rounded-md border border-blue-200 bg-blue-50 px-1 py-1.5 text-center text-sm font-semibold tabular-nums text-[#0F4C75] sm:w-full lg:px-3 lg:py-2" aria-label={`${room.roomType} staying tonight`}>{room.guestNights}</div>
                     </td>
                   </tr>
                 );
@@ -634,6 +708,7 @@ export default function SubmitAccommodationReport() {
                 <td className="px-1 py-2 sm:px-2 lg:px-6 lg:py-4">Total</td>
                 <td className="px-1 py-2 text-[#0F4C75] sm:px-1.5 lg:px-6 lg:py-4">{totalRooms}</td>
                 <td className="px-1 py-2 text-[#0F4C75] sm:px-1.5 lg:px-6 lg:py-4">{totalOccupiedRooms}</td>
+                <td className="px-1 py-2 text-[#0F4C75] sm:px-1.5 lg:px-6 lg:py-4">{roomData.reduce((sum, room) => sum + Number(room.continuingGuests || 0), 0)}</td>
                 <td className="px-1 py-2 text-[#0F4C75] sm:px-1.5 lg:px-6 lg:py-4">{totalCheckIns}</td>
                 <td className="px-1 py-2 text-[#0F4C75] sm:px-1.5 lg:px-6 lg:py-4">{totalGuestNights}</td>
               </tr>
