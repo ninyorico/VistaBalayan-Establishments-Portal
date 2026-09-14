@@ -1,16 +1,12 @@
 import { useState, useEffect } from "react";
 import {
   FileSpreadsheet,
-  CheckCircle,
-  XCircle,
   Eye,
   X,
   TrendingUp,
   TrendingDown,
   Users,
-  Bot,
   AlertTriangle,
-  Loader2,
 } from "lucide-react";
 import {
   LineChart,
@@ -29,7 +25,6 @@ import {
   normalizeReportStatus,
   reportStatusClasses,
   reportStatusLabel,
-  updateReportStatusWithAudit,
 } from "../../../lib/governance";
 
 const getCurrentYear = () => new Date().getFullYear().toString();
@@ -57,46 +52,6 @@ const getReportTypeLabel = (report: Submission) => report.type === "Visitor Repo
 const statusStyles = reportStatusClasses;
 const normalizeStatus = normalizeReportStatus;
 const formatStatus = reportStatusLabel;
-const AUTO_CHECK_STATUSES = ["submitted", "pending", "under_review", "needs_review", "on_hold"];
-
-const detectReportAnomalies = (report: Submission) => {
-  const reasons: string[] = [];
-  const reportDate = new Date(`${report.reportDate}T00:00:00`);
-
-  if (!report.reportDate || Number.isNaN(reportDate.getTime())) {
-    reasons.push("Invalid or missing report date");
-  }
-
-  if (!Number.isFinite(report.visitors) || report.visitors < 0) {
-    reasons.push("Invalid visitor/check-in total");
-  }
-
-  if (report.type === "Visitor Report") {
-    const male = Number(report.details?.total_male ?? 0);
-    const female = Number(report.details?.total_female ?? 0);
-    const guests = Number(report.details?.total_guests ?? report.visitors ?? 0);
-
-    if (guests === 0) reasons.push("Visitor report has zero guests");
-    if ((male > 0 || female > 0) && male + female !== guests) {
-      reasons.push(`Guest total mismatch: male + female is ${male + female}, but total guests is ${guests}`);
-    }
-  } else {
-    const totalRooms = Number(report.details?.total_rooms ?? 0);
-    const occupiedRooms = Number(report.details?.total_occupied_rooms ?? 0);
-    const checkIns = Number(report.details?.total_check_ins ?? report.visitors ?? 0);
-    const guestNights = Number(report.details?.total_guest_nights ?? 0);
-
-    if (totalRooms <= 0) reasons.push("Accommodation report has no total rooms recorded");
-    if (occupiedRooms > totalRooms) reasons.push(`Occupied rooms (${occupiedRooms}) exceed total rooms (${totalRooms})`);
-    if (checkIns === 0) reasons.push("Accommodation report has zero check-ins");
-
-    if (totalRooms > 0 && occupiedRooms > totalRooms * 0.98) {
-      reasons.push("Occupancy is unusually close to or above full capacity");
-    }
-  }
-
-  return reasons;
-};
 
 interface Submission {
   id: string;
@@ -126,9 +81,7 @@ export default function Reports() {
   const [accommodationReports, setAccommodationReports] = useState<any[]>([]);
   const [selectedSubmission, setSelectedSubmission] = useState<Submission | null>(null);
   const [showDetailModal, setShowDetailModal] = useState(false);
-  const [reviewNotes, setReviewNotes] = useState("");
   const [loading, setLoading] = useState(true);
-  const [autoChecking, setAutoChecking] = useState(false);
   
   const [chartData, setChartData] = useState<any[]>([]);
   const [visitorStats, setVisitorStats] = useState({
@@ -300,7 +253,7 @@ export default function Reports() {
     const { data } = await supabase
       .from("visitor_reports")
       .select("report_date, total_guests")
-      .in("status", ["pending", "approved"])
+      .eq("status", "submitted")
       .gte("report_date", startDate)
       .lte("report_date", endDate)
       .order("report_date", { ascending: true });
@@ -416,114 +369,9 @@ export default function Reports() {
 
   const handleViewDetails = (submission: Submission) => {
     setSelectedSubmission(submission);
-    setReviewNotes(submission.notes || "");
     setShowDetailModal(true);
   };
 
-  const handleApprove = async (id: string, type: string) => {
-    const table = type === "Visitor Report" ? "visitor_reports" : "accommodation_reports";
-
-    try {
-      await updateReportStatusWithAudit({
-        table,
-        id,
-        status: "approved",
-        notes: reviewNotes || null,
-        action: "report_approved",
-      });
-      toast.success("Submission approved");
-      fetchSubmissions();
-      setShowDetailModal(false);
-      setReviewNotes("");
-    } catch (error: any) {
-      toast.error("Failed to approve: " + (error?.message || "Unknown error"));
-    }
-  };
-
-  const handleReject = async (id: string, type: string) => {
-    if (!reviewNotes) {
-      toast.error("Please provide a reason for rejection");
-      return;
-    }
-
-    const table = type === "Visitor Report" ? "visitor_reports" : "accommodation_reports";
-
-    try {
-      await updateReportStatusWithAudit({
-        table,
-        id,
-        status: "rejected",
-        notes: reviewNotes,
-        action: "report_rejected",
-      });
-      toast.success("Submission rejected");
-      fetchSubmissions();
-      setShowDetailModal(false);
-      setReviewNotes("");
-    } catch (error: any) {
-      toast.error("Failed to reject: " + (error?.message || "Unknown error"));
-    }
-  };
-
-  const handleAutoCheckReports = async () => {
-    const reportsToCheck = filteredReports.filter((report) =>
-      AUTO_CHECK_STATUSES.includes(normalizeStatus(report.status))
-    );
-
-    if (reportsToCheck.length === 0) {
-      toast.info("No actionable reports found in the selected filters");
-      return;
-    }
-
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) {
-      toast.error("You must be logged in to auto-check reports");
-      return;
-    }
-
-    setAutoChecking(true);
-    let approved = 0;
-    let onHold = 0;
-    let failed = 0;
-
-    for (const report of reportsToCheck) {
-      const anomalies = detectReportAnomalies(report);
-      const table = report.type === "Visitor Report" ? "visitor_reports" : "accommodation_reports";
-      const nextStatus = anomalies.length ? "on_hold" : "approved";
-      const autoNotes = anomalies.length
-        ? `Auto-check placed this report on hold for municipal review. Detected: ${anomalies.join("; ")}`
-        : "Auto-check approved: no anomaly detected.";
-
-      try {
-        await updateReportStatusWithAudit({
-          table,
-          id: report.id,
-          status: nextStatus,
-          notes: autoNotes,
-          action: anomalies.length ? "report_auto_on_hold" : "report_auto_approved",
-        });
-
-        if (nextStatus === "on_hold") {
-          onHold += 1;
-        } else {
-          approved += 1;
-        }
-      } catch (error) {
-        console.error("Auto-check update error:", error);
-        failed += 1;
-      }
-    }
-
-    setAutoChecking(false);
-    await fetchSubmissions();
-    await fetchChartData();
-
-    if (failed) {
-      toast.error(`Auto-check finished with ${failed} failed update(s). Approved ${approved}, on hold ${onHold}.`);
-    } else {
-      toast.success(`Auto-check complete: ${approved} approved, ${onHold} on hold for review.`);
-    }
-  };
 
   // Get filter label for display
   const getFilterLabel = () => {
@@ -552,11 +400,6 @@ export default function Reports() {
   });
 
   const totalSubmissions = filteredReports.length;
-  const pendingCount = filteredReports.filter((s) => normalizeStatus(s.status) === "pending").length;
-  const onHoldCount = filteredReports.filter((s) => normalizeStatus(s.status) === "on_hold").length;
-  const approvedCount = filteredReports.filter((s) => normalizeStatus(s.status) === "approved").length;
-  const rejectedCount = filteredReports.filter((s) => normalizeStatus(s.status) === "rejected").length;
-  const autoCheckCount = filteredReports.filter((report) => AUTO_CHECK_STATUSES.includes(normalizeStatus(report.status))).length;
   const totalVisitors = filteredReports.reduce((sum, report) => sum + report.visitors, 0);
   const establishmentsCovered = new Set(filteredReports.map((report) => report.establishment)).size;
   const topEstablishment = Object.entries(
@@ -663,12 +506,6 @@ export default function Reports() {
           >
             <option value="all">All Status</option>
             <option value="submitted">Submitted</option>
-            <option value="pending">Pending</option>
-            <option value="under_review">Under Review</option>
-            <option value="needs_review">Needs Review</option>
-            <option value="on_hold">On Hold</option>
-            <option value="approved">Approved</option>
-            <option value="rejected">Rejected</option>
           </select>
 
           {/* Search */}
@@ -680,16 +517,6 @@ export default function Reports() {
             className="flex-1 min-w-[150px] px-3 py-1.5 border border-gray-300 rounded-lg text-sm"
           />
 
-          {/* Auto Check Button */}
-          <button
-            onClick={handleAutoCheckReports}
-            disabled={autoChecking || autoCheckCount === 0}
-            className="flex items-center gap-2 px-4 py-1.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-60 disabled:cursor-not-allowed text-sm"
-            title="Automatically approve normal pending/on-hold reports and keep structurally invalid reports on hold"
-          >
-            {autoChecking ? <Loader2 className="w-4 h-4 animate-spin" /> : <Bot className="w-4 h-4" />}
-            {autoChecking ? "Checking..." : `Auto Check (${autoCheckCount})`}
-          </button>
 
           {/* Export Button */}
           <button
@@ -753,31 +580,15 @@ export default function Reports() {
           </div>
         </div>
         <p className="mt-4 text-sm text-slate-600">
-          Summary: {approvedCount} approved, {pendingCount} pending, {onHoldCount} on hold, and {rejectedCount} rejected reports are included in this selected period.
+          Summary: {totalSubmissions} submitted reports are included in this selected period.
           {visitorStats.difference !== 0 && ` The latest chart period changed by ${visitorStats.difference.toLocaleString()} visitors/check-ins (${visitorStats.percentageChange}%).`}
         </p>
       </div>
 
       {/* KPI Cards */}
-      <div className="grid grid-cols-6 gap-2 sm:gap-4 md:grid-cols-4 lg:gap-6">
+      <div className="grid grid-cols-2 gap-2 sm:gap-4 md:grid-cols-3 lg:gap-6">
         <div className="col-span-2 min-w-0 rounded-lg border border-gray-200 bg-white p-3 shadow-sm sm:p-6 md:col-span-1">
-          <p className="mb-1 text-[11px] text-gray-600 sm:text-sm">Pending Review</p>
-          <p className="text-2xl font-bold text-yellow-600 sm:text-3xl">{pendingCount}</p>
-        </div>
-        <div className="col-span-2 min-w-0 rounded-lg border border-gray-200 bg-white p-3 shadow-sm sm:p-6 md:col-span-1">
-          <p className="mb-1 text-[11px] text-gray-600 sm:text-sm">On Hold</p>
-          <p className="text-2xl font-bold text-orange-600 sm:text-3xl">{onHoldCount}</p>
-        </div>
-        <div className="col-span-2 min-w-0 rounded-lg border border-gray-200 bg-white p-3 shadow-sm sm:p-6 md:col-span-1">
-          <p className="mb-1 text-[11px] text-gray-600 sm:text-sm">Approved</p>
-          <p className="text-2xl font-bold text-green-600 sm:text-3xl">{approvedCount}</p>
-        </div>
-        <div className="col-span-2 min-w-0 rounded-lg border border-gray-200 bg-white p-3 shadow-sm sm:p-6 md:col-span-1">
-          <p className="mb-1 text-[11px] text-gray-600 sm:text-sm">Rejected</p>
-          <p className="text-2xl font-bold text-red-600 sm:text-3xl">{rejectedCount}</p>
-        </div>
-        <div className="col-span-2 min-w-0 rounded-lg border border-gray-200 bg-white p-3 shadow-sm sm:p-6 md:col-span-1">
-          <p className="mb-1 text-[11px] text-gray-600 sm:text-sm">Total Submissions</p>
+          <p className="mb-1 text-[11px] text-gray-600 sm:text-sm">Submitted Reports</p>
           <p className="text-2xl font-bold text-gray-900 sm:text-3xl">{totalSubmissions}</p>
         </div>
         <div className="col-span-2 min-w-0 rounded-lg border border-gray-200 bg-white p-3 shadow-sm sm:p-6 md:col-span-1">
@@ -815,7 +626,7 @@ export default function Reports() {
       <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
         <div className="p-4 border-b border-gray-200">
           <h3 className="text-lg font-semibold text-gray-900">Submissions</h3>
-          <p className="text-sm text-gray-600">Use Auto Check to approve normal pending/on-hold reports and keep only structurally invalid reports on hold, then click Review when manual action is needed.</p>
+          <p className="text-sm text-gray-600">Daily reports submitted by establishments. Municipal officers can view the submitted records without approving or rejecting them.</p>
         </div>
         <div className="max-h-[28rem] overflow-auto overscroll-contain">
           {loading ? (
@@ -846,7 +657,7 @@ export default function Reports() {
                     </td>
                     <td className="px-4 py-3">
                       <button onClick={() => handleViewDetails(report)} className="text-blue-600 hover:text-blue-800 text-sm font-medium">
-                        Review
+                        View
                       </button>
                     </td>
                   </tr>
@@ -873,7 +684,7 @@ export default function Reports() {
                 <h2 className="text-xl font-bold text-gray-900">Review Submission</h2>
                 <p className="text-sm text-gray-600">{selectedSubmission.establishment} - {getReportTypeLabel(selectedSubmission)}</p>
               </div>
-              <button onClick={() => { setShowDetailModal(false); setReviewNotes(""); }} className="p-1 hover:bg-gray-100 rounded">
+              <button onClick={() => setShowDetailModal(false)} className="p-1 hover:bg-gray-100 rounded">
                 <X className="w-5 h-5" />
               </button>
             </div>
@@ -898,36 +709,12 @@ export default function Reports() {
                 </div>
               )}
               
-              {["pending", "on_hold"].includes(normalizeStatus(selectedSubmission.status)) && (
-                <div>
-                  <label className="text-sm font-medium text-gray-700">Review Notes</label>
-                  <textarea
-                    value={reviewNotes}
-                    onChange={(e) => setReviewNotes(e.target.value)}
-                    className="w-full mt-1 px-3 py-2 border border-gray-300 rounded-lg text-sm"
-                    rows={3}
-                    placeholder="Add notes (required for rejection)..."
-                  />
-                </div>
-              )}
             </div>
-            {["pending", "on_hold"].includes(normalizeStatus(selectedSubmission.status)) && (
-              <div className="p-6 border-t border-gray-200 flex justify-end gap-3">
-                <button onClick={() => handleReject(selectedSubmission.id, selectedSubmission.type)} className="px-4 py-2 border border-red-600 text-red-600 rounded-lg hover:bg-red-50 text-sm">
-                  Reject
-                </button>
-                <button onClick={() => handleApprove(selectedSubmission.id, selectedSubmission.type)} className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 text-sm">
-                  Approve
-                </button>
-              </div>
-            )}
-            {!(["pending", "on_hold"].includes(normalizeStatus(selectedSubmission.status))) && (
-              <div className="p-6 border-t border-gray-200 flex justify-end">
-                <button onClick={() => { setShowDetailModal(false); setReviewNotes(""); }} className="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 text-sm">
-                  Close
-                </button>
-              </div>
-            )}
+            <div className="p-6 border-t border-gray-200 flex justify-end">
+              <button onClick={() => setShowDetailModal(false)} className="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 text-sm">
+                Close
+              </button>
+            </div>
           </div>
         </div>
       )}

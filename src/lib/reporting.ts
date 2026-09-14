@@ -103,7 +103,7 @@ export interface AccommodationSummary {
   averageLengthOfStay: number;
   averageGuestsPerOccupiedRoom: number;
   sourceRecords: AccommodationSourceRecord[];
-  status: "missing" | "incomplete" | "needs_review" | "validated";
+  status: "missing" | "incomplete" | "needs_review" | "submitted";
 }
 
 export interface VisitorSummary {
@@ -115,7 +115,7 @@ export interface VisitorSummary {
   foreign: VisitorBucket;
   grandTotal: VisitorBucket;
   sourceRecords: VisitorSourceRecord[];
-  status: "missing" | "incomplete" | "needs_review" | "validated";
+  status: "missing" | "incomplete" | "needs_review" | "submitted";
 }
 
 export interface VisitorBucket { male: number; female: number; total: number }
@@ -175,9 +175,9 @@ export const summarizeAccommodation = (
 ): AccommodationSummary => {
   const days = daysInMonth(year, month);
   const totalRooms = numeric(records[0]?.total_rooms ?? establishment.total_rooms);
-  const validatedRecords = records.filter((record) => ["validated", "approved"].includes(String(record.status || "").toLowerCase()));
+  const submittedRecords = records.filter((record) => String(record.status || "").toLowerCase() === "submitted");
   const sourceRecords = records.length ? records : [];
-  const totals = validatedRecords.reduce((result, record) => {
+  const totals = submittedRecords.reduce((result, record) => {
     const values = accommodationValues(record);
     result.guestCheckIns += values.guestCheckIns;
     result.guestNights += values.guestNights;
@@ -188,7 +188,7 @@ export const summarizeAccommodation = (
   }, { guestCheckIns: 0, guestNights: 0, roomsOccupied: 0, foreignGuestCheckIns: 0, foreignGuestNights: 0 });
   const availableRoomNights = totalRooms * days;
   const invalid = records.flatMap((record) => validateAccommodationRecord(record, totalRooms));
-  const status = !records.length ? "missing" : invalid.length ? "needs_review" : validatedRecords.length !== records.length ? "incomplete" : "validated";
+  const status = !records.length ? "missing" : invalid.length ? "needs_review" : submittedRecords.length !== records.length ? "incomplete" : "submitted";
   return {
     establishmentId: establishment.id,
     establishmentName: establishment.name,
@@ -212,8 +212,8 @@ export const summarizeAnnualAccommodation = (
   year: number,
 ): AccommodationSummary => {
   const totalRooms = numeric(records[0]?.total_rooms ?? establishment.total_rooms);
-  const validatedRecords = records.filter((record) => ["validated", "approved"].includes(String(record.status || "").toLowerCase()));
-  const totals = validatedRecords.reduce((result, record) => {
+  const submittedRecords = records.filter((record) => String(record.status || "").toLowerCase() === "submitted");
+  const totals = submittedRecords.reduce((result, record) => {
     const values = accommodationValues(record);
     result.guestCheckIns += values.guestCheckIns;
     result.guestNights += values.guestNights;
@@ -224,7 +224,7 @@ export const summarizeAnnualAccommodation = (
   }, { guestCheckIns: 0, guestNights: 0, roomsOccupied: 0, foreignGuestCheckIns: 0, foreignGuestNights: 0 });
   const days = new Date(year, 1, 29).getDate() === 29 ? 366 : 365;
   const invalid = records.flatMap((record) => validateAccommodationRecord(record, numeric(record.total_rooms ?? totalRooms)));
-  const status = !records.length ? "missing" : invalid.length ? "needs_review" : validatedRecords.length !== records.length ? "incomplete" : "validated";
+  const status = !records.length ? "missing" : invalid.length ? "needs_review" : submittedRecords.length !== records.length ? "incomplete" : "submitted";
   const availableRoomNights = totalRooms * days;
   return {
     establishmentId: establishment.id,
@@ -268,7 +268,7 @@ export const summarizeVisitors = (establishment: EstablishmentReportingRow, reco
     OTHER_PROVINCE: { male: 0, female: 0, total: 0 },
     FOREIGN: { male: 0, female: 0, total: 0 },
   };
-  const finalized = records.filter((record) => ["validated", "approved"].includes(String(record.status || "").toLowerCase()));
+  const finalized = records.filter((record) => String(record.status || "").toLowerCase() === "submitted");
   const unclassified = { male: 0, female: 0, total: 0 };
   finalized.forEach((record) => {
     const male = numeric(record.male_visitors ?? record.total_male);
@@ -300,7 +300,7 @@ export const summarizeVisitors = (establishment: EstablishmentReportingRow, reco
     foreign: buckets.FOREIGN,
     grandTotal,
     sourceRecords: records,
-    status: !records.length ? "missing" : invalid.length ? "needs_review" : finalized.length !== records.length ? "incomplete" : "validated",
+    status: !records.length ? "missing" : invalid.length ? "needs_review" : finalized.length !== records.length ? "incomplete" : "submitted",
   };
 };
 
@@ -320,7 +320,7 @@ export interface DAE4Row {
 
 export const summarizeDAE4 = (summaries: AccommodationSummary[]): DAE4Row[] => {
   const grouped = new Map<string, AccommodationSummary[]>();
-  summaries.filter((summary) => summary.status === "validated").forEach((summary) => grouped.set(summary.typeClass, [...(grouped.get(summary.typeClass) || []), summary]));
+  summaries.filter((summary) => summary.status === "submitted").forEach((summary) => grouped.set(summary.typeClass, [...(grouped.get(summary.typeClass) || []), summary]));
   return [...grouped.entries()].map(([typeClass, rows]) => {
     const totalRooms = rows.reduce((sum, row) => sum + row.totalRooms, 0);
     const foreignGuestArrivals = rows.reduce((sum, row) => sum + row.foreignGuestCheckIns, 0);
@@ -341,7 +341,7 @@ export const summarizeDAE4 = (summaries: AccommodationSummary[]): DAE4Row[] => {
 
 export const summarizeAnnualDAE4 = (summaries: AccommodationSummary[]) => {
   const byType = new Map<string, AccommodationSummary[]>();
-  summaries.filter((summary) => summary.status === "validated").forEach((summary) => byType.set(summary.typeClass, [...(byType.get(summary.typeClass) || []), summary]));
+  summaries.filter((summary) => summary.status === "submitted").forEach((summary) => byType.set(summary.typeClass, [...(byType.get(summary.typeClass) || []), summary]));
   return [...byType.entries()].map(([typeClass, rows]) => {
     const total = (field: keyof AccommodationSummary) => rows.reduce((sum, row) => sum + numeric(row[field]), 0);
     const totalGuestArrivals = total("guestCheckIns");
