@@ -257,20 +257,41 @@ export default function Reports() {
   const fetchChartData = async () => {
     const { startDate, endDate } = getReportRange();
 
-    const { data } = await supabase
-      .from("visitor_reports")
-      .select("report_date, total_guests")
-      .eq("status", "submitted")
-      .gte("report_date", startDate)
-      .lte("report_date", endDate)
-      .order("report_date", { ascending: true });
+    const [{ data: visitorData, error: visitorError }, { data: accommodationData, error: accommodationError }] = await Promise.all([
+      supabase
+        .from("visitor_reports")
+        .select("report_date, total_guests")
+        .eq("status", "submitted")
+        .gte("report_date", startDate)
+        .lte("report_date", endDate)
+        .order("report_date", { ascending: true }),
+      supabase
+        .from("accommodation_reports")
+        .select("report_date, total_check_ins, guest_check_ins")
+        .eq("status", "submitted")
+        .gte("report_date", startDate)
+        .lte("report_date", endDate)
+        .order("report_date", { ascending: true }),
+    ]);
 
-    if (data && data.length) {
+    if (visitorError || accommodationError) {
+      console.error("Visitor trends loading error:", visitorError || accommodationError);
+    }
+
+    const trendRows = [
+      ...(visitorData || []).map((item: any) => ({ report_date: item.report_date, visitors: Number(item.total_guests || 0) })),
+      ...(accommodationData || []).map((item: any) => ({
+        report_date: item.report_date,
+        visitors: Number(item.total_check_ins ?? item.guest_check_ins ?? 0),
+      })),
+    ].sort((a, b) => a.report_date.localeCompare(b.report_date));
+
+    if (trendRows.length) {
       const grouped: Record<string, number> = {};
-      data.forEach((item: any) => {
+      trendRows.forEach((item) => {
         const date = new Date(item.report_date);
         const key = getChartPeriod(date, item.report_date);
-        grouped[key] = (grouped[key] || 0) + (item.total_guests || 0);
+        grouped[key] = (grouped[key] || 0) + item.visitors;
       });
 
       const chartDataArray = Object.entries(grouped).map(([period, visitors]) => ({
@@ -538,7 +559,7 @@ export default function Reports() {
       {/* Report Chart */}
       <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
         <h3 className="text-lg font-semibold text-gray-900 mb-4">
-          Visitor Trends ({getFilterLabel()})
+          Tourism Trends ({getFilterLabel()})
         </h3>
         {chartData.length > 0 ? (
           <ResponsiveContainer width="100%" height={350}>
