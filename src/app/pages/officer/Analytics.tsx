@@ -91,7 +91,7 @@ export default function Analytics() {
         place_of_residence,
         establishments (name)
       `)
-      .eq("status", "approved")
+      .eq("status", "submitted")
       .gte("report_date", currentYear.start)
       .lte("report_date", currentYear.end)
       .order("report_date", { ascending: true });
@@ -106,7 +106,7 @@ export default function Analytics() {
         total_occupied_rooms,
         establishments (name)
       `)
-      .eq("status", "approved")
+      .eq("status", "submitted")
       .gte("report_date", currentYear.start)
       .lte("report_date", currentYear.end)
       .order("report_date", { ascending: true });
