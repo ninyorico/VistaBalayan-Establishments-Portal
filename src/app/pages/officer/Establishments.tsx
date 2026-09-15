@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Plus, Search, Edit, Trash2, Building2, MapPin, Phone, UserCog, Mail, Shield, X, Loader2, FileImage, ExternalLink, Eye } from "lucide-react";
+import { Plus, Search, Edit, Trash2, Building2, MapPin, Phone, UserCog, Mail, Shield, X, Loader2, FileImage, ExternalLink } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "../../../lib/supabase";
 import { datestampedFilename, downloadCsv } from "../../../lib/exportCsv";
@@ -41,6 +41,7 @@ interface Establishment {
   contact_number: string;
   total_rooms: number;
   status: string;
+  business_permit_number?: string | null;
   staff_count?: number;
   business_permit_images?: string[];
   amenities?: string;
@@ -61,6 +62,7 @@ export default function Establishments() {
   const [searchTerm, setSearchTerm] = useState("");
   const [filterType, setFilterType] = useState("all");
   const [filterStatus, setFilterStatus] = useState("all");
+  const [filterPermit, setFilterPermit] = useState("all");
   const [filterRole, setFilterRole] = useState("all");
 
   const [establishments, setEstablishments] = useState<Establishment[]>([]);
@@ -90,6 +92,7 @@ export default function Establishments() {
     room_config: DEFAULT_ROOM_CONFIG,
     reporting_mode: "accommodation" as ReportingMode,
     status: "active",
+    business_permit_number: "",
   });
 
   const [userForm, setUserForm] = useState({
@@ -157,7 +160,9 @@ export default function Establishments() {
     const matchesSearch = est.name.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesType = filterType === "all" || est.type === filterType;
     const matchesStatus = filterStatus === "all" || est.status === filterStatus;
-    return matchesSearch && matchesType && matchesStatus;
+    const hasPermit = Boolean(est.business_permit_number?.trim());
+    const matchesPermit = filterPermit === "all" || (filterPermit === "has_permit" ? hasPermit : !hasPermit);
+    return matchesSearch && matchesType && matchesStatus && matchesPermit;
   });
 
   const filteredUsers = users.filter((user) => {
@@ -181,7 +186,8 @@ export default function Establishments() {
       room_config: DEFAULT_ROOM_CONFIG,
       reporting_mode: "accommodation" as ReportingMode,
       status: "active",
-    });
+      business_permit_number: "",
+      });
     setShowEstablishmentModal(true);
   };
 
@@ -198,7 +204,8 @@ export default function Establishments() {
       room_config: DEFAULT_ROOM_CONFIG,
       reporting_mode: "accommodation" as ReportingMode,
       status: "active",
-    });
+      business_permit_number: "",
+      });
     setNewAccountForm({
       full_name: "",
       email: "",
@@ -225,6 +232,7 @@ export default function Establishments() {
         room_config: getRoomConfigFromAmenities(establishment.amenities),
         reporting_mode: establishment.reporting_mode || (establishment.total_rooms > 0 ? "accommodation" : "visitor"),
         status: establishment.status,
+        business_permit_number: establishment.business_permit_number || "",
       });
       setShowEstablishmentModal(true);
     }
@@ -288,6 +296,7 @@ export default function Establishments() {
           contact_number: establishmentForm.contact_number,
           reporting_mode: establishmentForm.reporting_mode,
           status: establishmentForm.status,
+          business_permit_number: establishmentForm.business_permit_number.trim() || null,
         })
         .eq('id', editingEstablishment.id);
       
@@ -334,6 +343,7 @@ export default function Establishments() {
           reporting_mode: establishmentForm.reporting_mode,
           amenities: setRoomConfigInAmenities("", normalizedRoomConfig),
           status: establishmentForm.status,
+          business_permit_number: establishmentForm.business_permit_number.trim() || null,
         }]);
       
       if (error) {
@@ -363,7 +373,10 @@ export default function Establishments() {
     if (!rpcError && rpcId) {
       const { error: classificationError } = await supabase
         .from("establishments")
-        .update({ dot_classification: establishmentForm.dot_classification })
+        .update({
+          dot_classification: establishmentForm.dot_classification,
+          business_permit_number: establishmentForm.business_permit_number.trim() || null,
+        })
         .eq("id", rpcId);
       if (classificationError) throw classificationError;
       return rpcId as string;
@@ -381,6 +394,7 @@ export default function Establishments() {
         reporting_mode: payload.p_reporting_mode,
         amenities: payload.p_amenities,
         status: payload.p_status,
+        business_permit_number: establishmentForm.business_permit_number.trim() || null,
       }])
       .select('id')
       .single();
@@ -687,20 +701,22 @@ export default function Establishments() {
   };
 
   const handleExportEstablishments = () => {
+    const exportableEstablishments = filteredEstablishments.filter((establishment) => Boolean(establishment.business_permit_number?.trim()));
     downloadCsv(
       datestampedFilename("establishments"),
-      ["Name", "Type", "Address", "Contact", "Rooms", "Staff", "Status"],
-      filteredEstablishments.map((establishment) => [
+      ["Name", "Type", "Address", "Contact", "Rooms", "Business Permit Number", "Staff", "Status"],
+      exportableEstablishments.map((establishment) => [
         establishment.name,
         establishment.type,
         establishment.address,
         establishment.contact_number,
         establishment.total_rooms || 0,
+        establishment.business_permit_number,
         staffCountByEstablishment[establishment.id] || 0,
         establishment.status,
       ])
     );
-    toast.success(`Exported ${filteredEstablishments.length} establishment(s)`);
+    toast.success(`Exported ${exportableEstablishments.length} establishment(s) with permits`);
   };
 
   const handleExportUsers = () => {
@@ -825,6 +841,18 @@ export default function Establishments() {
                   <option value="inactive">Inactive</option>
                 </select>
               </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Business Permit</label>
+                <select
+                  value={filterPermit}
+                  onChange={(e) => setFilterPermit(e.target.value)}
+                  className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#1CA7C9]/50 focus:border-[#1CA7C9] outline-none transition-all"
+                >
+                  <option value="all">All Permit Status</option>
+                  <option value="has_permit">Has Permit</option>
+                  <option value="no_permit">No Permit</option>
+                </select>
+              </div>
             </div>
           </div>
 
@@ -904,14 +932,18 @@ export default function Establishments() {
                         </td>
                         <td className="px-6 py-4 text-gray-900">{establishment.total_rooms || "N/A"}</td>
                         <td className="px-6 py-4">
-                          {getBusinessPermitImages(establishment).length > 0 ? (
-                            <button
-                              onClick={() => setViewingPermitEstablishment(establishment)}
-                              className="inline-flex items-center gap-1 rounded-full bg-emerald-50 px-2.5 py-1 text-xs font-medium text-emerald-700 hover:bg-emerald-100"
-                            >
-                              <Eye className="w-3.5 h-3.5" />
-                              {getBusinessPermitImages(establishment).length} image(s)
-                            </button>
+                          {establishment.business_permit_number?.trim() ? (
+                            <div className="flex flex-col items-start gap-1">
+                              <span className="inline-flex items-center gap-1 rounded-full bg-emerald-50 px-2.5 py-1 text-xs font-medium text-emerald-700">
+                                Has permit
+                              </span>
+                              <span className="text-xs text-gray-600">{establishment.business_permit_number}</span>
+                              {getBusinessPermitImages(establishment).length > 0 && (
+                                <button onClick={() => setViewingPermitEstablishment(establishment)} className="text-xs text-blue-600 hover:underline">
+                                  View supporting image(s)
+                                </button>
+                              )}
+                            </div>
                           ) : (
                             <span className="inline-flex items-center gap-1 rounded-full bg-gray-100 px-2.5 py-1 text-xs font-medium text-gray-500">
                               <FileImage className="w-3.5 h-3.5" />
@@ -1177,6 +1209,7 @@ export default function Establishments() {
                       <div><label className="block text-sm font-medium text-gray-700 mb-2">Report Types *</label><select value={establishmentForm.reporting_mode} onChange={(e) => setEstablishmentForm({ ...establishmentForm, reporting_mode: e.target.value as ReportingMode })} className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#1CA7C9]/50 focus:border-[#1CA7C9] outline-none transition-all"><option value="accommodation">Overnight reports</option><option value="visitor">Day-tour reports</option><option value="both">Day-tour and overnight reports</option></select><p className="mt-1 text-xs text-gray-500">Choose both for day visitors and overnight guests.</p></div>
                       <div><label className="block text-sm font-medium text-gray-700 mb-2">Address *</label><input type="text" value={establishmentForm.address} onChange={(e) => setEstablishmentForm({ ...establishmentForm, address: e.target.value })} className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#1CA7C9]/50 focus:border-[#1CA7C9] outline-none transition-all" placeholder="Enter address" /></div>
                       <div><label className="block text-sm font-medium text-gray-700 mb-2">Contact Number *</label><input type="text" value={establishmentForm.contact_number} onChange={(e) => setEstablishmentForm({ ...establishmentForm, contact_number: e.target.value })} className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#1CA7C9]/50 focus:border-[#1CA7C9] outline-none transition-all" placeholder="+63 917 123 4567" /></div>
+                      <div><label className="block text-sm font-medium text-gray-700 mb-2">Business Permit Number</label><input type="text" value={establishmentForm.business_permit_number} onChange={(e) => setEstablishmentForm({ ...establishmentForm, business_permit_number: e.target.value })} className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#1CA7C9]/50 focus:border-[#1CA7C9] outline-none transition-all" placeholder="Enter only after officer verification" /><p className="mt-1 text-xs text-gray-500">Only a municipal tourism officer can record or change this number.</p></div>
                     </div>
                   </div>
                 </>
@@ -1243,6 +1276,11 @@ export default function Establishments() {
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">Contact Number *</label>
                 <input type="text" value={establishmentForm.contact_number} onChange={(e) => setEstablishmentForm({ ...establishmentForm, contact_number: e.target.value })} className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#1CA7C9]/50 focus:border-[#1CA7C9] outline-none transition-all" placeholder="+63 917 123 4567" />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Business Permit Number</label>
+                <input type="text" value={establishmentForm.business_permit_number} onChange={(e) => setEstablishmentForm({ ...establishmentForm, business_permit_number: e.target.value })} className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#1CA7C9]/50 focus:border-[#1CA7C9] outline-none transition-all" placeholder="Enter only after officer verification" />
+                <p className="mt-1 text-xs text-gray-500">Only a municipal tourism officer can record or change this number.</p>
               </div>
               {!editingEstablishment && (
                 <div data-establishment-room-fields="add-only">

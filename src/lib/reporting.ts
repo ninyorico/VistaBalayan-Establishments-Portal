@@ -46,6 +46,7 @@ export interface EstablishmentReportingRow {
   attraction_code?: string | null;
   total_rooms?: number | null;
   status?: string | null;
+  business_permit_number?: string | null;
 }
 
 export interface AccommodationSourceRecord {
