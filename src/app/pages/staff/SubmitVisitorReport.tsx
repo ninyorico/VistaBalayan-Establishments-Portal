@@ -65,9 +65,20 @@ export default function SubmitVisitorReport() {
       const draft = JSON.parse(saved) as { reportDate?: string; entries?: VisitorEntry[] };
       if (!Array.isArray(draft.entries)) return;
 
-      const validEntries = draft.entries.filter((entry) =>
-        entry && typeof entry.id === "number" && typeof entry.groupName === "string" && entry.breakdown
-      );
+      const validEntries = draft.entries.flatMap((entry) => {
+        if (!entry || typeof entry.id !== "number" || typeof entry.groupName !== "string") return [];
+        if (entry.breakdown) return [entry];
+        const legacy = entry as VisitorEntry & { male?: number; female?: number; residenceType?: string; placeOfResidence?: string };
+        if (!legacy.residenceType || !residenceTypes.some((type) => type.key === legacy.residenceType)) return [];
+        const breakdown = createEmptyBreakdown();
+        const residenceType = legacy.residenceType as keyof VisitorEntry["breakdown"];
+        breakdown[residenceType] = {
+          male: Math.max(0, Number(legacy.male) || 0),
+          female: Math.max(0, Number(legacy.female) || 0),
+          placeOfResidence: legacy.placeOfResidence || "",
+        };
+        return [{ id: entry.id, groupName: entry.groupName, breakdown }];
+      });
       if (validEntries.length === 0) return;
 
       setEntries(validEntries.map((entry) => ({
