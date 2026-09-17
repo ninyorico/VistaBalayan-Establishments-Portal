@@ -8,12 +8,28 @@ import { canSubmitVisitorReport } from "../../../lib/establishmentReportForms";
 interface VisitorEntry {
   id: number;
   groupName: string;
-  male: number;
-  female: number;
-  total: number;
-  residenceType: string;
-  placeOfResidence: string;
+  breakdown: {
+    THIS_PROVINCE: { male: number; female: number; placeOfResidence: string };
+    OTHER_PROVINCE: { male: number; female: number; placeOfResidence: string };
+    FOREIGN: { male: number; female: number; placeOfResidence: string };
+  };
 }
+
+const residenceTypes = [
+  { key: "THIS_PROVINCE", label: "This Province / Batangas", placeLabel: "" },
+  { key: "OTHER_PROVINCE", label: "Other Province / Domestic", placeLabel: "Province or municipality" },
+  { key: "FOREIGN", label: "Foreign Residence", placeLabel: "Country" },
+] as const;
+
+const createEmptyBreakdown = (): VisitorEntry["breakdown"] => ({
+  THIS_PROVINCE: { male: 0, female: 0, placeOfResidence: "" },
+  OTHER_PROVINCE: { male: 0, female: 0, placeOfResidence: "" },
+  FOREIGN: { male: 0, female: 0, placeOfResidence: "" },
+});
+
+const createEmptyEntry = (id: number): VisitorEntry => ({ id, groupName: "", breakdown: createEmptyBreakdown() });
+const residenceTotal = (entry: VisitorEntry, key: keyof VisitorEntry["breakdown"]) => entry.breakdown[key].male + entry.breakdown[key].female;
+const entryTotal = (entry: VisitorEntry) => residenceTypes.reduce((sum, type) => sum + residenceTotal(entry, type.key), 0);
 
 const parseNonNegativeInteger = (value: string) => {
   if (value.trim() === "") return 0;
@@ -30,9 +46,7 @@ export default function SubmitVisitorReport() {
   const [loadingProfile, setLoadingProfile] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [reportDate, setReportDate] = useState(new Date().toISOString().slice(0, 10));
-  const [entries, setEntries] = useState<VisitorEntry[]>([
-    { id: 1, groupName: "", male: 0, female: 0, total: 0, residenceType: "THIS_PROVINCE", placeOfResidence: "" }
-  ]);
+  const [entries, setEntries] = useState<VisitorEntry[]>([createEmptyEntry(1)]);
   const [nextId, setNextId] = useState(2);
   const [establishmentName, setEstablishmentName] = useState("Loading...");
   const [error, setError] = useState<string | null>(null);
@@ -52,17 +66,21 @@ export default function SubmitVisitorReport() {
       if (!Array.isArray(draft.entries)) return;
 
       const validEntries = draft.entries.filter((entry) =>
-        entry && typeof entry.id === "number" && typeof entry.groupName === "string" &&
-        [entry.male, entry.female, entry.total].every((value) => Number.isFinite(Number(value))) &&
-        typeof entry.residenceType === "string" && typeof entry.placeOfResidence === "string"
+        entry && typeof entry.id === "number" && typeof entry.groupName === "string" && entry.breakdown
       );
       if (validEntries.length === 0) return;
 
       setEntries(validEntries.map((entry) => ({
-        ...entry,
-        male: Math.max(0, Number(entry.male) || 0),
-        female: Math.max(0, Number(entry.female) || 0),
-        total: Math.max(0, Number(entry.male) || 0) + Math.max(0, Number(entry.female) || 0),
+        id: entry.id,
+        groupName: entry.groupName,
+        breakdown: residenceTypes.reduce((result, type) => ({
+          ...result,
+          [type.key]: {
+            male: Math.max(0, Number(entry.breakdown[type.key]?.male) || 0),
+            female: Math.max(0, Number(entry.breakdown[type.key]?.female) || 0),
+            placeOfResidence: String(entry.breakdown[type.key]?.placeOfResidence || ""),
+          },
+        }), createEmptyBreakdown()),
       })));
       setNextId(Math.max(...validEntries.map((entry) => entry.id), 0) + 1);
       if (draft.reportDate) setReportDate(draft.reportDate);
@@ -166,31 +184,18 @@ const loadProfile = async () => {
 };
 
   const updateEntry = (id: number, field: string, value: any) => {
-    setEntries(entries.map(entry => {
-      if (entry.id === id) {
-        const updated = { ...entry, [field]: value };
-        if (field === "residenceType" && value !== "OTHER_PROVINCE" && value !== "FOREIGN") {
-          updated.placeOfResidence = "";
-        }
-        if (field === "male" || field === "female") {
-          updated.total = (Number(updated.male) || 0) + (Number(updated.female) || 0);
-        }
-        return updated;
-      }
-      return entry;
-    }));
+    setEntries(entries.map(entry => entry.id === id ? { ...entry, groupName: value } : entry));
+  };
+
+  const updateResidence = (id: number, residenceType: keyof VisitorEntry["breakdown"], field: "male" | "female" | "placeOfResidence", value: string | number) => {
+    setEntries(entries.map(entry => entry.id === id ? {
+      ...entry,
+      breakdown: { ...entry.breakdown, [residenceType]: { ...entry.breakdown[residenceType], [field]: value } },
+    } : entry));
   };
 
   const addEntry = () => {
-    setEntries([...entries, {
-      id: nextId,
-      groupName: "",
-      male: 0,
-      female: 0,
-      total: 0,
-      residenceType: "THIS_PROVINCE",
-      placeOfResidence: ""
-    }]);
+    setEntries([...entries, createEmptyEntry(nextId)]);
     setNextId(nextId + 1);
   };
 
@@ -202,9 +207,7 @@ const loadProfile = async () => {
     }
   };
 
-  const calculateTotalVisitors = () => {
-    return entries.reduce((sum, entry) => sum + entry.total, 0);
-  };
+  const calculateTotalVisitors = () => entries.reduce((sum, entry) => sum + entryTotal(entry), 0);
 
   const handleSubmit = async () => {
     if (!profile?.establishment_id) {
@@ -212,7 +215,7 @@ const loadProfile = async () => {
       return;
     }
 
-    const hasValidEntry = entries.some(entry => entry.total > 0);
+    const hasValidEntry = entries.some(entry => entryTotal(entry) > 0);
     if (!hasValidEntry) {
       toast.error("Please enter visitor counts for at least one entry");
       return;
@@ -227,38 +230,41 @@ const loadProfile = async () => {
       return;
     }
 
-    const invalidResidence = entries.find((entry) =>
-      (entry.residenceType === "OTHER_PROVINCE" || entry.residenceType === "FOREIGN") && !entry.placeOfResidence.trim()
+    const invalidResidence = entries.flatMap((entry) => residenceTypes.map((type) => ({ entry, type }))).find(({ entry, type }) =>
+      residenceTotal(entry, type.key) > 0 && type.key !== "THIS_PROVINCE" && !entry.breakdown[type.key].placeOfResidence.trim()
     );
     if (invalidResidence) {
-      toast.error(invalidResidence.residenceType === "FOREIGN" ? "Country is required for foreign visitors" : "Province or municipality is required for domestic visitors");
+      toast.error(invalidResidence.type.key === "FOREIGN" ? "Country is required for foreign visitors" : "Province or municipality is required for domestic visitors");
       setSubmitting(false);
       return;
     }
 
-    const submissions = entries
-      .filter(entry => entry.total > 0)
-      .map(entry => ({
+    const submissions = entries.flatMap(entry => residenceTypes
+      .filter(type => residenceTotal(entry, type.key) > 0)
+      .map(type => {
+        const residence = entry.breakdown[type.key];
+        return {
         establishment_id: profile.establishment_id,
         submitted_by: profile.id,
         report_date: reportDate,
         guest_name: entry.groupName || null,
         guest_group_name: entry.groupName || null,
-        total_male: entry.male,
-        total_female: entry.female,
-        total_guests: entry.total,
-        male_visitors: entry.male,
-        female_visitors: entry.female,
-        total_visitors: entry.total,
-        residence_type: entry.residenceType,
-        residence_category: entry.residenceType,
-        place_of_residence: entry.placeOfResidence || null,
-        municipality: entry.residenceType === "THIS_PROVINCE" ? "Balayan" : null,
-        province: entry.residenceType === "OTHER_PROVINCE" ? entry.placeOfResidence || null : entry.residenceType === "THIS_PROVINCE" ? "Batangas" : null,
-        country: entry.residenceType === "FOREIGN" ? entry.placeOfResidence || null : null,
+        total_male: residence.male,
+        total_female: residence.female,
+        total_guests: residenceTotal(entry, type.key),
+        male_visitors: residence.male,
+        female_visitors: residence.female,
+        total_visitors: residenceTotal(entry, type.key),
+        residence_type: type.key,
+        residence_category: type.key,
+        place_of_residence: residence.placeOfResidence || null,
+        municipality: type.key === "THIS_PROVINCE" ? "Balayan" : null,
+        province: type.key === "OTHER_PROVINCE" ? residence.placeOfResidence || null : type.key === "THIS_PROVINCE" ? "Batangas" : null,
+        country: type.key === "FOREIGN" ? residence.placeOfResidence || null : null,
         status: "submitted"
-      }));
-
+        };
+      })
+    );
     if (submissions.length === 0) {
       toast.error("No valid entries to submit");
       setSubmitting(false);
@@ -277,7 +283,7 @@ const loadProfile = async () => {
       const draftKey = draftStorageKey(profile.id, profile.establishment_id);
       if (draftKey) localStorage.removeItem(draftKey);
       // Reset form
-      setEntries([{ id: 1, groupName: "", male: 0, female: 0, total: 0, residenceType: "THIS_PROVINCE", placeOfResidence: "" }]);
+      setEntries([createEmptyEntry(1)]);
       setNextId(2);
       setReportDate(new Date().toISOString().slice(0, 10));
     }
@@ -294,7 +300,7 @@ const loadProfile = async () => {
     const draft = {
       version: 1,
       reportDate,
-      entries: entries.filter((entry) => entry.total > 0 || entry.groupName || entry.placeOfResidence),
+      entries: entries.filter((entry) => entryTotal(entry) > 0 || entry.groupName),
       savedAt: new Date().toISOString(),
     };
     localStorage.setItem(key, JSON.stringify(draft));
@@ -353,70 +359,46 @@ const loadProfile = async () => {
       <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
         <div className="p-4 border-b border-gray-200 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <div>
-            <h3 className="text-lg font-semibold text-gray-900">Visitor Entries</h3>
-            <p className="mt-1 text-sm text-gray-500 md:hidden">Compact table for faster phone entry. Swipe only if your screen is very narrow.</p>
+            <h3 className="text-lg font-semibold text-gray-900">Visitor Groups</h3>
+            <p className="mt-1 text-sm text-gray-500">Enter each group once, then split its visitors by residence below.</p>
           </div>
           <button onClick={addEntry} className="inline-flex w-full sm:w-auto items-center justify-center gap-2 px-3 py-2 bg-[#1CA7C9] text-white rounded-lg hover:bg-[#0F4C75] text-sm font-medium transition">
-            <Plus className="w-4 h-4" /> Add Entry
+            <Plus className="w-4 h-4" /> Add Group
           </button>
         </div>
-
-        <div className="overflow-x-auto overscroll-x-contain">
-          <table className="w-full min-w-full table-fixed md:min-w-[720px]">
-            <colgroup>
-              <col className="w-[40%]" />
-              <col className="w-[16%]" />
-              <col className="w-[16%]" />
-              <col className="w-[16%]" />
-              <col className="w-[12%]" />
-            </colgroup>
-            <thead className="bg-gray-50">
-              <tr>
-                <th className="px-1.5 py-2 text-left text-[11px] font-semibold text-gray-700 md:px-3 md:text-xs">Group & Residence</th>
-                <th className="px-1 py-2 text-center text-[11px] font-semibold text-gray-700 md:px-3 md:text-xs">Male</th>
-                <th className="px-1 py-2 text-center text-[11px] font-semibold text-gray-700 md:px-3 md:text-xs">Female</th>
-                <th className="px-1.5 py-2 text-center text-[11px] font-semibold text-gray-700 md:px-3 md:text-xs">Total</th>
-                <th className="px-1 py-2 text-center text-[11px] font-semibold text-gray-700 md:px-3 md:text-xs">Action</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-gray-200">
-              {entries.map((entry) => (
-                <tr key={entry.id} className="hover:bg-gray-50">
-                  <td className="px-1.5 py-2 md:px-3">
-                    <input type="text" value={entry.groupName} onChange={(e) => updateEntry(entry.id, "groupName", e.target.value)} placeholder="Group optional" className="block w-full min-w-0 rounded-md border border-gray-300 px-1.5 py-1.5 text-xs md:text-sm" />
-                    <select value={entry.residenceType} onChange={(e) => updateEntry(entry.id, "residenceType", e.target.value)} className="mt-1 block w-full min-w-0 rounded-md border border-gray-300 px-1.5 py-1.5 text-xs md:text-sm">
-                      <option value="THIS_PROVINCE">This Province / Batangas</option>
-                      <option value="OTHER_PROVINCE">Other Province / Domestic</option>
-                      <option value="FOREIGN">Foreign Residence</option>
-                    </select>
-                    {(entry.residenceType === "OTHER_PROVINCE" || entry.residenceType === "FOREIGN") && (
-                      <input type="text" value={entry.placeOfResidence} onChange={(e) => updateEntry(entry.id, "placeOfResidence", e.target.value)} placeholder={entry.residenceType === "FOREIGN" ? "Country" : "Province / municipality"} required className="mt-1 block w-full min-w-0 rounded-md border border-gray-300 px-1.5 py-1.5 text-xs md:text-sm" />
-                    )}
-                  </td>
-                  <td className="px-1 py-2 md:px-3">
-                    <input type="text" inputMode="numeric" pattern="[0-9]*" value={numericInputValue(entry.male)} onChange={(e) => updateEntry(entry.id, "male", parseNonNegativeInteger(e.target.value))} className="w-full min-w-0 rounded-md border border-gray-300 px-1 py-1.5 text-center text-sm tabular-nums" placeholder="0" />
-                  </td>
-                  <td className="px-1 py-2 md:px-3">
-                    <input type="text" inputMode="numeric" pattern="[0-9]*" value={numericInputValue(entry.female)} onChange={(e) => updateEntry(entry.id, "female", parseNonNegativeInteger(e.target.value))} className="w-full min-w-0 rounded-md border border-gray-300 px-1 py-1.5 text-center text-sm tabular-nums" placeholder="0" />
-                  </td>
-                  <td className="px-1.5 py-2 text-center text-sm font-semibold text-[#0B2530] md:px-3 md:text-base">{entry.total}</td>
-                  <td className="px-1 py-2 text-center md:px-3">
-                    <button onClick={() => removeEntry(entry.id)} className="inline-flex p-1 text-red-600 hover:bg-red-50 rounded">
-                      <Trash2 className="w-4 h-4" />
-                    </button>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-            <tfoot className="bg-gray-50">
-              <tr>
-                <td colSpan={3} className="px-2 py-2 text-right text-sm font-semibold md:px-3">Total Visitors Today:</td>
-                <td className="px-1.5 py-2 text-center text-lg font-bold text-[#0F4C75] md:px-3">{calculateTotalVisitors()}</td>
-                <td></td>
-              </tr>
-            </tfoot>
-          </table>
+        <div className="space-y-4 p-4">
+          {entries.map((entry, entryIndex) => (
+            <section key={entry.id} className="rounded-lg border border-gray-200 bg-gray-50 p-3 sm:p-4">
+              <div className="mb-4 flex items-center gap-3">
+                <div className="flex-1">
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Group name <span className="font-normal text-gray-500">(optional)</span></label>
+                  <input type="text" value={entry.groupName} onChange={(e) => updateEntry(entry.id, "groupName", e.target.value)} placeholder={`Visitor group ${entryIndex + 1}`} className="block w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm" />
+                </div>
+                <button type="button" onClick={() => removeEntry(entry.id)} aria-label={`Remove visitor group ${entryIndex + 1}`} className="mt-6 inline-flex rounded p-2 text-red-600 hover:bg-red-50">
+                  <Trash2 className="w-4 h-4" />
+                </button>
+              </div>
+              <div className="grid grid-cols-1 gap-3 lg:grid-cols-3">
+                {residenceTypes.map((type) => {
+                  const residence = entry.breakdown[type.key];
+                  return (
+                    <div key={type.key} className="rounded-lg border border-white bg-white p-3 shadow-sm">
+                      <h4 className="text-sm font-semibold text-[#0F4C75]">{type.label}</h4>
+                      {type.placeLabel && <input type="text" value={residence.placeOfResidence} onChange={(e) => updateResidence(entry.id, type.key, "placeOfResidence", e.target.value)} placeholder={type.placeLabel} className="mt-2 block w-full rounded-md border border-gray-300 px-3 py-2 text-sm" />}
+                      <div className="mt-2 grid grid-cols-2 gap-2">
+                        <label className="text-xs text-gray-600">Male<input type="text" inputMode="numeric" pattern="[0-9]*" value={numericInputValue(residence.male)} onChange={(e) => updateResidence(entry.id, type.key, "male", parseNonNegativeInteger(e.target.value))} className="mt-1 w-full rounded-md border border-gray-300 px-2 py-2 text-center text-sm" placeholder="0" /></label>
+                        <label className="text-xs text-gray-600">Female<input type="text" inputMode="numeric" pattern="[0-9]*" value={numericInputValue(residence.female)} onChange={(e) => updateResidence(entry.id, type.key, "female", parseNonNegativeInteger(e.target.value))} className="mt-1 w-full rounded-md border border-gray-300 px-2 py-2 text-center text-sm" placeholder="0" /></label>
+                      </div>
+                      <div className="mt-3 flex items-center justify-between border-t border-gray-100 pt-2 text-sm"><span className="text-gray-600">Category total</span><strong className="text-[#0F4C75]">{residenceTotal(entry, type.key)}</strong></div>
+                    </div>
+                  );
+                })}
+              </div>
+              <div className="mt-3 flex justify-end text-sm font-semibold text-[#0F4C75]">Group total: {entryTotal(entry)}</div>
+            </section>
+          ))}
         </div>
+        <div className="border-t border-gray-200 bg-gray-50 px-4 py-3 text-right text-base font-bold text-[#0F4C75]">Total visitors today: {calculateTotalVisitors()}</div>
       </div>
 
       <div className="grid grid-cols-1 gap-3 sm:flex sm:gap-4">
