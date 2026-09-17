@@ -20,6 +20,7 @@ const residenceTypes = [
   { key: "OTHER_PROVINCE", label: "Other Province / Domestic", placeLabel: "Province or municipality" },
   { key: "FOREIGN", label: "Foreign Residence", placeLabel: "Country" },
 ] as const;
+type ResidenceTypeKey = typeof residenceTypes[number]["key"];
 
 const createEmptyBreakdown = (): VisitorEntry["breakdown"] => ({
   THIS_PROVINCE: { male: 0, female: 0, placeOfResidence: "" },
@@ -48,6 +49,7 @@ export default function SubmitVisitorReport() {
   const [reportDate, setReportDate] = useState(new Date().toISOString().slice(0, 10));
   const [entries, setEntries] = useState<VisitorEntry[]>([createEmptyEntry(1)]);
   const [nextId, setNextId] = useState(2);
+  const [visibleResidenceTypes, setVisibleResidenceTypes] = useState<Record<number, ResidenceTypeKey[]>>({ 1: ["THIS_PROVINCE"] });
   const [establishmentName, setEstablishmentName] = useState("Loading...");
   const [error, setError] = useState<string | null>(null);
 
@@ -93,6 +95,7 @@ export default function SubmitVisitorReport() {
           },
         }), createEmptyBreakdown()),
       })));
+      setVisibleResidenceTypes(Object.fromEntries(validEntries.map((entry) => [entry.id, residenceTypes.filter((type) => type.key === "THIS_PROVINCE" || residenceTotal(entry, type.key) > 0 || Boolean(entry.breakdown[type.key].placeOfResidence)).map((type) => type.key)])));
       setNextId(Math.max(...validEntries.map((entry) => entry.id), 0) + 1);
       if (draft.reportDate) setReportDate(draft.reportDate);
       toast.success("Saved draft restored");
@@ -207,15 +210,31 @@ const loadProfile = async () => {
 
   const addEntry = () => {
     setEntries([...entries, createEmptyEntry(nextId)]);
+    setVisibleResidenceTypes((current) => ({ ...current, [nextId]: ["THIS_PROVINCE"] }));
     setNextId(nextId + 1);
   };
 
   const removeEntry = (id: number) => {
     if (entries.length > 1) {
       setEntries(entries.filter(entry => entry.id !== id));
+      setVisibleResidenceTypes((current) => { const next = { ...current }; delete next[id]; return next; });
     } else {
       toast.error("At least one entry is required");
     }
+  };
+
+  const addResidenceCategory = (entryId: number) => {
+    setVisibleResidenceTypes((current) => {
+      const visible = current[entryId] || ["THIS_PROVINCE"];
+      const next = residenceTypes.find((type) => !visible.includes(type.key));
+      return next ? { ...current, [entryId]: [...visible, next.key] } : current;
+    });
+  };
+
+  const removeResidenceCategory = (entryId: number, residenceType: ResidenceTypeKey) => {
+    if (residenceType === "THIS_PROVINCE") return;
+    setVisibleResidenceTypes((current) => ({ ...current, [entryId]: (current[entryId] || ["THIS_PROVINCE"]).filter((key) => key !== residenceType) }));
+    setEntries(entries.map((entry) => entry.id === entryId ? { ...entry, breakdown: { ...entry.breakdown, [residenceType]: { male: 0, female: 0, placeOfResidence: "" } } } : entry));
   };
 
   const calculateTotalVisitors = () => entries.reduce((sum, entry) => sum + entryTotal(entry), 0);
@@ -295,6 +314,7 @@ const loadProfile = async () => {
       if (draftKey) localStorage.removeItem(draftKey);
       // Reset form
       setEntries([createEmptyEntry(1)]);
+      setVisibleResidenceTypes({ 1: ["THIS_PROVINCE"] });
       setNextId(2);
       setReportDate(new Date().toISOString().slice(0, 10));
     }
@@ -389,12 +409,16 @@ const loadProfile = async () => {
                   <Trash2 className="w-4 h-4" />
                 </button>
               </div>
+              <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
+                <span className="text-xs text-gray-500">Add another category only if this group includes more residences.</span>
+                {(visibleResidenceTypes[entry.id] || ["THIS_PROVINCE"]).length < residenceTypes.length && <button type="button" onClick={() => addResidenceCategory(entry.id)} className="rounded-md border border-[#1CA7C9] px-3 py-1.5 text-xs font-medium text-[#0F4C75] hover:bg-cyan-50">+ Add residence category</button>}
+              </div>
               <div className="grid grid-cols-1 gap-3 lg:grid-cols-3">
-                {residenceTypes.map((type) => {
+                {residenceTypes.filter((type) => (visibleResidenceTypes[entry.id] || ["THIS_PROVINCE"]).includes(type.key)).map((type) => {
                   const residence = entry.breakdown[type.key];
                   return (
                     <div key={type.key} className="rounded-lg border border-white bg-white p-3 shadow-sm">
-                      <h4 className="text-sm font-semibold text-[#0F4C75]">{type.label}</h4>
+                      <div className="flex items-start justify-between gap-2"><h4 className="text-sm font-semibold text-[#0F4C75]">{type.label}</h4>{type.key !== "THIS_PROVINCE" && <button type="button" onClick={() => removeResidenceCategory(entry.id, type.key)} className="text-xs text-gray-500 hover:text-red-600">Remove</button>}</div>
                       {type.placeLabel && <input type="text" value={residence.placeOfResidence} onChange={(e) => updateResidence(entry.id, type.key, "placeOfResidence", e.target.value)} placeholder={type.placeLabel} className="mt-2 block w-full rounded-md border border-gray-300 px-3 py-2 text-sm" />}
                       <div className="mt-2 grid grid-cols-2 gap-2">
                         <label className="text-xs text-gray-600">Male<input type="text" inputMode="numeric" pattern="[0-9]*" value={numericInputValue(residence.male)} onChange={(e) => updateResidence(entry.id, type.key, "male", parseNonNegativeInteger(e.target.value))} className="mt-1 w-full rounded-md border border-gray-300 px-2 py-2 text-center text-sm" placeholder="0" /></label>
