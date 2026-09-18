@@ -15,6 +15,7 @@ interface RoomOccupancy {
   continuingGuests: number;
   checkIns: number;
   guestNights: number;
+  previousNewGuests?: number;
 }
 
 const parseNonNegativeInteger = (value: string) => {
@@ -67,6 +68,7 @@ export default function SubmitAccommodationReport() {
         continuingGuests: Number(room.continuingGuests ?? Math.max(0, Number(room.guestNights) - Number(room.checkIns))) || 0,
         checkIns: Number(room.checkIns) || 0,
         guestNights: Number(room.continuingGuests ?? Math.max(0, Number(room.guestNights) - Number(room.checkIns))) + (Number(room.checkIns) || 0),
+        previousNewGuests: Math.max(0, Number(room.previousNewGuests) || 0),
       })));
       if (draft.reportDate) setReportDate(draft.reportDate);
       toast.success("Saved accommodation draft restored");
@@ -234,13 +236,14 @@ export default function SubmitAccommodationReport() {
 
     const { data: previousDetails } = await supabase
       .from("room_occupancy_details")
-      .select("room_code,guest_nights,occupied_rooms")
+      .select("room_code,guest_nights,check_ins,occupied_rooms")
       .eq("accommodation_report_id", previousReport.id);
 
     const byCode = new Map((previousDetails || []).map((detail) => [
       String(detail.room_code || ""),
       {
         guests: Math.max(0, Number(detail.guest_nights) || 0),
+        newGuests: Math.max(0, Number(detail.check_ins) || 0),
         occupied: Math.max(0, Number(detail.occupied_rooms) || 0),
       },
     ]));
@@ -250,6 +253,7 @@ export default function SubmitAccommodationReport() {
       return {
         ...room,
         continuingGuests: previous?.guests || 0,
+        previousNewGuests: Math.min(previous?.newGuests || 0, previous?.guests || 0),
         guestNights: previous?.guests || 0,
         occupied: Math.min(previous?.occupied || 0, room.numberOfRooms),
       };
@@ -705,6 +709,10 @@ export default function SubmitAccommodationReport() {
                       <input type="text" inputMode="numeric" pattern="[0-9]*" value={numericInputValue(room.occupied)} onChange={(e) => updateRoomData(index, "occupied", parseNonNegativeInteger(e.target.value))} className="mx-auto w-[82%] min-w-0 rounded-md border border-gray-300 px-1 py-1.5 text-center text-sm tabular-nums sm:w-full lg:px-3 lg:py-2" placeholder="0" />
                     </td>
                     <td className="px-0.5 py-2 sm:px-1.5 lg:px-6 lg:py-4">
+                      <div className="mb-1 flex min-h-5 items-center justify-center gap-1 text-[10px] leading-none sm:text-[11px]" aria-label={`${room.roomType} previous day guest breakdown`}>
+                        {(room.previousNewGuests || 0) > 0 && <span className="inline-flex h-5 min-w-5 items-center justify-center rounded-full border-2 border-red-500 px-1 font-semibold text-red-600" title="Previous day new guests">{room.previousNewGuests}</span>}
+                        <span className="font-normal text-gray-600">old {Math.max(0, room.continuingGuests - (room.previousNewGuests || 0))}</span>
+                      </div>
                       <input type="text" inputMode="numeric" pattern="[0-9]*" value={numericInputValue(room.continuingGuests)} onChange={(e) => updateRoomData(index, "continuingGuests", parseNonNegativeInteger(e.target.value))} className="mx-auto w-[82%] min-w-0 rounded-md border border-gray-300 px-1 py-1.5 text-center text-sm tabular-nums sm:w-full lg:px-3 lg:py-2" placeholder="0" aria-label={`${room.roomType} continuing guests`} />
                     </td>
                     <td className="px-0.5 py-2 sm:px-1.5 lg:px-6 lg:py-4">
