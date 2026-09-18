@@ -675,61 +675,59 @@ export default function SubmitAccommodationReport() {
         </div>
 
         <div className="overflow-x-auto overscroll-x-contain">
-          <table className="w-full min-w-full table-fixed sm:min-w-[620px] lg:min-w-[760px]">
-            <colgroup>
-              <col className="w-[18%]" />
-              <col className="w-[14%]" />
-              <col className="w-[17%]" />
-              <col className="w-[17%]" />
-              <col className="w-[17%]" />
-              <col className="w-[17%]" />
-            </colgroup>
+          <table className="w-full min-w-[760px] border-collapse">
             <thead className="bg-gray-50 border-b border-gray-200">
               <tr>
-                <th className="pl-3 pr-1 py-2 text-left text-[10px] font-semibold text-gray-700 sm:px-2 sm:text-[11px] lg:px-6 lg:py-3 lg:text-xs lg:uppercase">Room</th>
-                <th className="px-1 py-2 text-center text-[10px] font-semibold text-gray-700 sm:px-1.5 sm:text-[11px] lg:px-6 lg:py-3 lg:text-xs lg:uppercase">Rooms</th>
-                <th className="px-1 py-2 text-center text-[10px] font-semibold text-gray-700 sm:px-1.5 sm:text-[11px] lg:px-6 lg:py-3 lg:text-xs lg:uppercase">Occupied</th>
-                <th className="px-1 py-2 text-center text-[10px] font-semibold text-gray-700 sm:px-1.5 sm:text-[11px] lg:px-6 lg:py-3 lg:text-xs lg:uppercase">Continuing</th>
-                <th className="px-1 py-2 text-center text-[10px] font-semibold text-gray-700 sm:px-1.5 sm:text-[11px] lg:px-6 lg:py-3 lg:text-xs lg:uppercase">New Guests</th>
-                <th className="px-1 py-2 text-center text-[10px] font-semibold text-gray-700 sm:px-1.5 sm:text-[11px] lg:px-6 lg:py-3 lg:text-xs lg:uppercase">Staying Tonight</th>
+                <th className="sticky left-0 z-10 min-w-[150px] border-r border-gray-200 bg-gray-50 px-3 py-3 text-left text-xs font-semibold uppercase text-gray-700">Field</th>
+                {roomData.map((room, index) => (
+                  <th key={index} className="min-w-[125px] border-r border-gray-200 px-3 py-3 text-center text-xs font-semibold text-gray-700">
+                    <div className="truncate">{room.roomType}</div>
+                    <span className="mt-1 inline-block rounded bg-gray-100 px-2 py-0.5 font-mono text-[10px] font-normal text-gray-600">{room.roomCode}</span>
+                  </th>
+                ))}
+                <th className="min-w-[110px] px-3 py-3 text-center text-xs font-semibold uppercase text-[#0F4C75]">Total</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-200">
-              {roomData.map((room, index) => {
-                return (
-                  <tr key={index} className="hover:bg-gray-50">
-                    <td className="pl-3 pr-0.5 py-2 sm:px-2 lg:px-6 lg:py-4">
-                      <p className="max-w-full truncate text-[11px] font-semibold text-gray-900 sm:text-xs lg:text-base">{room.roomType}</p>
-                      <span className="mt-1 inline-block max-w-full truncate rounded bg-gray-100 px-1 py-0.5 font-mono text-[10px] text-gray-700 sm:px-2 sm:text-[11px] lg:px-3 lg:py-1 lg:text-sm">{room.roomCode}</span>
-                    </td>
-                    <td className="px-0.5 py-2 sm:px-1.5 lg:px-6 lg:py-4">
-                      <div className="mx-auto w-[78%] min-w-0 rounded-md border border-gray-200 bg-gray-50 px-1 py-1.5 text-center text-sm font-semibold tabular-nums text-gray-900 sm:w-full lg:px-3 lg:py-2">{room.numberOfRooms}</div>
-                    </td>
-                    <td className="px-0.5 py-2 sm:px-1.5 lg:px-6 lg:py-4">
-                      <input type="text" inputMode="numeric" pattern="[0-9]*" value={numericInputValue(room.occupied)} onChange={(e) => updateRoomData(index, "occupied", parseNonNegativeInteger(e.target.value))} className="mx-auto w-[82%] min-w-0 rounded-md border border-gray-300 px-1 py-1.5 text-center text-sm tabular-nums sm:w-full lg:px-3 lg:py-2" placeholder="0" />
-                    </td>
-                    <td className="px-0.5 py-2 sm:px-1.5 lg:px-6 lg:py-4">
-                      <div className="relative mx-auto w-[82%] sm:w-full">
-                        <input type="text" inputMode="numeric" pattern="[0-9]*" value={numericInputValue(room.continuingGuests)} onChange={(e) => updateRoomData(index, "continuingGuests", parseNonNegativeInteger(e.target.value))} className={`w-full min-w-0 rounded-md border border-gray-300 px-1 py-1.5 text-center text-sm tabular-nums sm:px-2 lg:px-3 lg:py-2 ${(room.previousNewGuests || 0) > 0 ? "text-transparent" : ""}`} placeholder="0" aria-label={`${room.roomType} continuing guests`} />
-                        {(room.previousNewGuests || 0) > 0 && <span className="pointer-events-none absolute left-1/2 top-1/2 inline-flex h-7 min-w-7 -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full border-2 border-red-500 px-1 font-normal text-red-600" aria-label={`${room.previousNewGuests} previous day new guests`}>{room.continuingGuests}</span>}
-                      </div>
-                    </td>
-                    <td className="px-0.5 py-2 sm:px-1.5 lg:px-6 lg:py-4">
-                      <input type="text" inputMode="numeric" pattern="[0-9]*" value={numericInputValue(room.checkIns)} onChange={(e) => updateRoomData(index, "checkIns", parseNonNegativeInteger(e.target.value))} className="mx-auto w-[82%] min-w-0 rounded-md border border-gray-300 px-1 py-1.5 text-center text-sm tabular-nums sm:w-full lg:px-3 lg:py-2" placeholder="0" aria-label={`${room.roomType} new guests`} />
-                    </td>
-                    <td className="pl-0.5 pr-1 py-2 sm:px-1.5 lg:px-6 lg:py-4">
-                      <div className="mx-auto w-[82%] min-w-0 rounded-md border border-blue-200 bg-blue-50 px-1 py-1.5 text-center text-sm font-semibold tabular-nums text-[#0F4C75] sm:w-full lg:px-3 lg:py-2" aria-label={`${room.roomType} staying tonight`}>{room.guestNights}</div>
-                    </td>
-                  </tr>
-                );
-              })}
-              <tr className="bg-gray-50 font-semibold">
-                <td className="px-1 py-2 sm:px-2 lg:px-6 lg:py-4">Total</td>
-                <td className="px-1 py-2 text-[#0F4C75] sm:px-1.5 lg:px-6 lg:py-4">{totalRooms}</td>
-                <td className="px-1 py-2 text-[#0F4C75] sm:px-1.5 lg:px-6 lg:py-4">{totalOccupiedRooms}</td>
-                <td className="px-1 py-2 text-[#0F4C75] sm:px-1.5 lg:px-6 lg:py-4">{roomData.reduce((sum, room) => sum + Number(room.continuingGuests || 0), 0)}</td>
-                <td className="px-1 py-2 text-[#0F4C75] sm:px-1.5 lg:px-6 lg:py-4">{totalCheckIns}</td>
-                <td className="px-1 py-2 text-[#0F4C75] sm:px-1.5 lg:px-6 lg:py-4">{totalGuestNights}</td>
+              <tr>
+                <th className="sticky left-0 z-10 border-r border-gray-200 bg-white px-3 py-3 text-left text-xs font-semibold text-gray-700">Rooms available</th>
+                {roomData.map((room, index) => <td key={index} className="border-r border-gray-200 px-3 py-3 text-center text-sm font-semibold tabular-nums text-gray-900">{room.numberOfRooms}</td>)}
+                <td className="px-3 py-3 text-center text-sm font-semibold tabular-nums text-[#0F4C75]">{totalRooms}</td>
+              </tr>
+              <tr>
+                <th className="sticky left-0 z-10 border-r border-gray-200 bg-white px-3 py-3 text-left text-xs font-semibold text-gray-700">Occupied rooms</th>
+                {roomData.map((room, index) => (
+                  <td key={index} className="border-r border-gray-200 px-3 py-3 text-center">
+                    <input type="text" inputMode="numeric" pattern="[0-9]*" value={numericInputValue(room.occupied)} onChange={(e) => updateRoomData(index, "occupied", parseNonNegativeInteger(e.target.value))} className="w-full rounded-md border border-gray-300 px-2 py-2 text-center text-sm tabular-nums" placeholder="0" aria-label={`${room.roomType} occupied rooms`} />
+                  </td>
+                ))}
+                <td className="px-3 py-3 text-center text-sm font-semibold tabular-nums text-[#0F4C75]">{totalOccupiedRooms}</td>
+              </tr>
+              <tr className="bg-blue-50/30">
+                <th className="sticky left-0 z-10 border-r border-gray-200 bg-blue-50/30 px-3 py-3 text-left text-xs font-semibold text-[#0F4C75]">Continuing guests</th>
+                {roomData.map((room, index) => (
+                  <td key={index} className="border-r border-gray-200 px-3 py-3 text-center">
+                    <div className="relative mx-auto w-full">
+                      <input type="text" inputMode="numeric" pattern="[0-9]*" value={numericInputValue(room.continuingGuests)} onChange={(e) => updateRoomData(index, "continuingGuests", parseNonNegativeInteger(e.target.value))} className={`w-full rounded-md border border-gray-300 px-2 py-2 text-center text-sm tabular-nums ${(room.previousNewGuests || 0) > 0 ? "text-transparent" : ""}`} placeholder="0" aria-label={`${room.roomType} continuing guests`} />
+                      {(room.previousNewGuests || 0) > 0 && <span className="pointer-events-none absolute left-1/2 top-1/2 inline-flex h-7 min-w-7 -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full border-2 border-red-500 px-1 font-normal text-red-600" aria-label={`${room.previousNewGuests} previous day new guests`}>{room.continuingGuests}</span>}
+                    </div>
+                  </td>
+                ))}
+                <td className="px-3 py-3 text-center text-sm font-semibold tabular-nums text-[#0F4C75]">{roomData.reduce((sum, room) => sum + Number(room.continuingGuests || 0), 0)}</td>
+              </tr>
+              <tr>
+                <th className="sticky left-0 z-10 border-r border-gray-200 bg-white px-3 py-3 text-left text-xs font-semibold text-gray-700">New guests</th>
+                {roomData.map((room, index) => (
+                  <td key={index} className="border-r border-gray-200 px-3 py-3 text-center">
+                    <input type="text" inputMode="numeric" pattern="[0-9]*" value={numericInputValue(room.checkIns)} onChange={(e) => updateRoomData(index, "checkIns", parseNonNegativeInteger(e.target.value))} className="w-full rounded-md border border-gray-300 px-2 py-2 text-center text-sm tabular-nums" placeholder="0" aria-label={`${room.roomType} new guests`} />
+                  </td>
+                ))}
+                <td className="px-3 py-3 text-center text-sm font-semibold tabular-nums text-[#0F4C75]">{totalCheckIns}</td>
+              </tr>
+              <tr className="bg-blue-50 font-semibold">
+                <th className="sticky left-0 z-10 border-r border-blue-200 bg-blue-50 px-3 py-3 text-left text-xs font-semibold text-[#0F4C75]">Staying tonight</th>
+                {roomData.map((room, index) => <td key={index} className="border-r border-blue-200 px-3 py-3 text-center text-sm tabular-nums text-[#0F4C75]">{room.guestNights}</td>)}
+                <td className="px-3 py-3 text-center text-sm tabular-nums text-[#0F4C75]">{totalGuestNights}</td>
               </tr>
             </tbody>
           </table>
