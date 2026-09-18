@@ -709,11 +709,11 @@ export default function SubmitAccommodationReport() {
                       <input type="text" inputMode="numeric" pattern="[0-9]*" value={numericInputValue(room.occupied)} onChange={(e) => updateRoomData(index, "occupied", parseNonNegativeInteger(e.target.value))} className="mx-auto w-[82%] min-w-0 rounded-md border border-gray-300 px-1 py-1.5 text-center text-sm tabular-nums sm:w-full lg:px-3 lg:py-2" placeholder="0" />
                     </td>
                     <td className="px-0.5 py-2 sm:px-1.5 lg:px-6 lg:py-4">
-                      <div className="mb-1 flex min-h-5 items-center justify-center gap-1 text-[10px] leading-none sm:text-[11px]" aria-label={`${room.roomType} previous day guest breakdown`}>
+                      <input type="text" inputMode="numeric" pattern="[0-9]*" value={numericInputValue(room.continuingGuests)} onChange={(e) => updateRoomData(index, "continuingGuests", parseNonNegativeInteger(e.target.value))} className="mx-auto w-[82%] min-w-0 rounded-md border border-gray-300 px-1 py-1.5 text-center text-sm tabular-nums sm:w-full lg:px-3 lg:py-2" placeholder="0" aria-label={`${room.roomType} continuing guests`} />
+                      <div className="mt-1 flex min-h-5 items-center justify-center gap-1 text-[10px] leading-none sm:text-[11px]" aria-label={`${room.roomType} previous day guest breakdown`}>
                         {(room.previousNewGuests || 0) > 0 && <span className="inline-flex h-5 min-w-5 items-center justify-center rounded-full border-2 border-red-500 px-1 font-semibold text-red-600" title="Previous day new guests">{room.previousNewGuests}</span>}
                         <span className="font-normal text-gray-600">old {Math.max(0, room.continuingGuests - (room.previousNewGuests || 0))}</span>
                       </div>
-                      <input type="text" inputMode="numeric" pattern="[0-9]*" value={numericInputValue(room.continuingGuests)} onChange={(e) => updateRoomData(index, "continuingGuests", parseNonNegativeInteger(e.target.value))} className="mx-auto w-[82%] min-w-0 rounded-md border border-gray-300 px-1 py-1.5 text-center text-sm tabular-nums sm:w-full lg:px-3 lg:py-2" placeholder="0" aria-label={`${room.roomType} continuing guests`} />
                     </td>
                     <td className="px-0.5 py-2 sm:px-1.5 lg:px-6 lg:py-4">
                       <input type="text" inputMode="numeric" pattern="[0-9]*" value={numericInputValue(room.checkIns)} onChange={(e) => updateRoomData(index, "checkIns", parseNonNegativeInteger(e.target.value))} className="mx-auto w-[82%] min-w-0 rounded-md border border-gray-300 px-1 py-1.5 text-center text-sm tabular-nums sm:w-full lg:px-3 lg:py-2" placeholder="0" aria-label={`${room.roomType} new guests`} />
