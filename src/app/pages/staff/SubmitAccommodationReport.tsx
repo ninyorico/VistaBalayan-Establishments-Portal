@@ -28,6 +28,8 @@ const parseNonNegativeInteger = (value: string) => {
 };
 
 const numericInputValue = (value: number) => (value === 0 ? "" : String(value));
+const getGeneratedRoomNumber = (roomCode: string) => roomCode.match(/-(\d+)$/)?.[1] || roomCode;
+const getBaseRoomCode = (roomCode: string) => roomCode.replace(/-\d+$/, "");
 
 export default function SubmitAccommodationReport() {
   const navigate = useNavigate();
@@ -198,15 +200,16 @@ export default function SubmitAccommodationReport() {
   };
 
   const buildRoomData = (rooms = roomTypes) =>
-    rooms.map((room) => ({
+    rooms.flatMap((room) => Array.from({ length: room.count ?? 0 }, (_, index) => ({
       roomType: room.type,
-      roomCode: room.code,
-      numberOfRooms: room.count ?? 0,
+      roomCode: `${room.code}-${index + 1}`,
+      numberOfRooms: 1,
       occupied: 0,
       continuingGuests: 0,
       checkIns: 0,
       guestNights: 0,
-    }));
+      isNewGuest: false,
+    })));
 
   const getPreviousDate = (date: string) => {
     const previous = new Date(`${date}T00:00:00`);
@@ -219,15 +222,7 @@ export default function SubmitAccommodationReport() {
     previousDate: string,
     rooms: EstablishmentRoomConfig[],
   ): Promise<RoomOccupancy[]> => {
-    const empty = rooms.map((room) => ({
-      roomType: room.type,
-      roomCode: room.code,
-      numberOfRooms: room.count ?? 0,
-      occupied: 0,
-      continuingGuests: 0,
-      checkIns: 0,
-      guestNights: 0,
-    }));
+    const empty = buildRoomData(rooms);
 
     const { data: previousReport } = await supabase
       .from("accommodation_reports")
@@ -253,7 +248,8 @@ export default function SubmitAccommodationReport() {
     ]));
 
     return empty.map((room) => {
-      const previous = byCode.get(room.roomCode);
+      const baseCode = room.roomCode.replace(/-\d+$/, "");
+      const previous = byCode.get(room.roomCode) || (room.roomCode.endsWith("-1") ? byCode.get(baseCode) : undefined);
       return {
         ...room,
         continuingGuests: previous?.guests || 0,
@@ -343,17 +339,9 @@ export default function SubmitAccommodationReport() {
     setRoomTypes(config);
     setTempRoomConfig(config);
     setRoomData(
-      config.map((room) => {
-        const existing = roomData.find((currentRoom) => currentRoom.roomCode === room.code);
-        return {
-          roomType: room.type,
-          roomCode: room.code,
-          numberOfRooms: room.count || 0,
-          occupied: existing?.occupied || 0,
-          continuingGuests: existing?.continuingGuests || 0,
-          checkIns: existing?.checkIns || 0,
-          guestNights: (existing?.continuingGuests || 0) + (existing?.checkIns || 0),
-        };
+      buildRoomData(config).map((room) => {
+        const existing = roomData.find((currentRoom) => currentRoom.roomCode === room.roomCode);
+        return existing ? { ...room, ...existing, numberOfRooms: 1 } : room;
       })
     );
 
@@ -701,8 +689,8 @@ export default function SubmitAccommodationReport() {
               <article key={index} className="rounded-xl border border-gray-200 bg-white p-3 shadow-sm">
                 <div className="mb-3 flex items-center justify-between border-b border-gray-100 pb-2">
                   <div>
-                    <div className="text-sm font-semibold text-gray-900">Room {room.numberOfRooms}</div>
-                    <div className="font-mono text-xs text-gray-500">{room.roomCode}</div>
+                    <div className="text-sm font-semibold text-gray-900">Room {getGeneratedRoomNumber(room.roomCode)}</div>
+                    <div className="font-mono text-xs text-gray-500">{getBaseRoomCode(room.roomCode)}</div>
                   </div>
                   <div className="text-right text-xs text-gray-500">Staying tonight<strong className="ml-1 text-sm text-[#0F4C75]">{room.guestNights}</strong></div>
                 </div>
@@ -732,8 +720,8 @@ export default function SubmitAccommodationReport() {
                 <th className="sticky left-0 z-10 min-w-[150px] border-r border-gray-200 bg-gray-50 px-3 py-3 text-left text-xs font-semibold uppercase text-gray-700">Date</th>
                 {roomData.map((room, index) => (
                   <th key={index} className="min-w-[145px] border-r border-gray-200 px-3 py-3 text-center text-xs font-semibold text-gray-700">
-                    <div className="truncate">Room {room.numberOfRooms}</div>
-                    <span className="mt-1 inline-block rounded bg-gray-100 px-2 py-0.5 font-mono text-[10px] font-normal text-gray-600">{room.roomCode}</span>
+                    <div className="truncate">Room {getGeneratedRoomNumber(room.roomCode)}</div>
+                    <span className="mt-1 inline-block rounded bg-gray-100 px-2 py-0.5 font-mono text-[10px] font-normal text-gray-600">{getBaseRoomCode(room.roomCode)}</span>
 
                   </th>
                 ))}
