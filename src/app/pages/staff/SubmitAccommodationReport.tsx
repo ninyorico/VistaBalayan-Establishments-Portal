@@ -47,7 +47,7 @@ export default function SubmitAccommodationReport() {
   const draftStorageKey = (userId?: string, establishmentId?: string) =>
     userId && establishmentId ? `accommodationReportDraft:${userId}:${establishmentId}` : null;
 
-  const loadDraft = (userId: string, establishmentId: string) => {
+  const loadDraft = (userId: string, establishmentId: string, rooms: EstablishmentRoomConfig[]) => {
     const key = draftStorageKey(userId, establishmentId);
     if (!key) return;
 
@@ -65,17 +65,28 @@ export default function SubmitAccommodationReport() {
       );
       if (validRooms.length === 0) return;
 
-      setRoomData(validRooms.map((room) => ({
-        ...room,
-        numberOfRooms: Number(room.numberOfRooms) || 0,
-        occupied: Math.min(Number(room.occupied) || 0, Number(room.numberOfRooms) || 0),
-        continuingGuests: Number(room.continuingGuests ?? Math.max(0, Number(room.guestNights) - Number(room.checkIns))) || 0,
-        checkIns: Number(room.checkIns) || 0,
-        guestNights: Number(room.continuingGuests ?? Math.max(0, Number(room.guestNights) - Number(room.checkIns))) + (Number(room.checkIns) || 0),
-        previousNewGuests: Math.max(0, Number(room.previousNewGuests) || 0),
-        previousGuestNights: Math.max(0, Number(room.previousGuestNights) || 0),
-        isNewGuest: Boolean(room.isNewGuest),
-      })));
+      const savedByCode = new Map(validRooms.map((room) => [room.roomCode, room]));
+      const authoritativeRoomData = buildRoomData(rooms).map((room) => {
+        const savedRoom = savedByCode.get(room.roomCode);
+        return savedRoom
+          ? {
+              ...room,
+              ...savedRoom,
+              roomType: room.roomType,
+              roomCode: room.roomCode,
+              numberOfRooms: 1,
+              occupied: 0,
+              continuingGuests: Number(savedRoom.continuingGuests ?? 0) || 0,
+              checkIns: Number(savedRoom.checkIns) || 0,
+              guestNights: (Number(savedRoom.continuingGuests) || 0) + (Number(savedRoom.checkIns) || 0),
+              previousNewGuests: Math.max(0, Number(savedRoom.previousNewGuests) || 0),
+              previousGuestNights: Math.max(0, Number(savedRoom.previousGuestNights) || 0),
+              isNewGuest: Boolean(savedRoom.isNewGuest),
+            }
+          : room;
+      });
+
+      setRoomData(authoritativeRoomData);
       if (draft.reportDate) setReportDate(draft.reportDate);
       toast.success("Saved accommodation draft restored");
     } catch {
@@ -151,8 +162,7 @@ export default function SubmitAccommodationReport() {
 
     setEstablishmentAmenities(typeof est.amenities === "string" ? est.amenities : "");
     const officerRoomConfig = getRoomConfigFromAmenities(est.amenities);
-    const savedConfig = loadRoomConfig(profileData.establishment_id);
-    const effectiveRoomConfig = mergeRoomConfig(officerRoomConfig, savedConfig);
+    const effectiveRoomConfig = normalizeRoomConfig(officerRoomConfig);
     setRoomTypes(effectiveRoomConfig);
     setTempRoomConfig(effectiveRoomConfig);
     const previousNightRoomData = await loadPreviousNightGuests(
@@ -161,42 +171,9 @@ export default function SubmitAccommodationReport() {
       effectiveRoomConfig
     );
     setRoomData(previousNightRoomData);
-    loadDraft(profileData.id, profileData.establishment_id);
+    loadDraft(profileData.id, profileData.establishment_id, effectiveRoomConfig);
 
     setLoadingProfile(false);
-  };
-
-  const roomConfigStorageKey = (establishmentId?: string) =>
-    establishmentId ? `roomConfiguration:${establishmentId}` : "roomConfiguration";
-
-  const loadRoomConfig = (establishmentId?: string) => {
-    const saved = localStorage.getItem(roomConfigStorageKey(establishmentId));
-    if (!saved) return null;
-
-    try {
-      return JSON.parse(saved);
-    } catch {
-      return null;
-    }
-  };
-
-  const mergeRoomConfig = (
-    baseRooms: EstablishmentRoomConfig[],
-    savedConfig: unknown
-  ): EstablishmentRoomConfig[] => {
-    if (Array.isArray(savedConfig)) {
-      return normalizeRoomConfig(savedConfig);
-    }
-
-    if (savedConfig && typeof savedConfig === "object") {
-      const savedCounts = savedConfig as Record<string, number>;
-      return baseRooms.map((room) => ({
-        ...room,
-        count: Math.max(0, Number(savedCounts[room.code] ?? room.count ?? 0) || 0),
-      }));
-    }
-
-    return normalizeRoomConfig(baseRooms);
   };
 
   const buildRoomData = (rooms = roomTypes) =>
@@ -318,8 +295,6 @@ export default function SubmitAccommodationReport() {
 
     const nextTotalRooms = config.reduce((sum, room) => sum + Number(room.count || 0), 0);
     const nextAmenities = setRoomConfigInAmenities(establishmentAmenities, config);
-
-    localStorage.setItem(roomConfigStorageKey(profile?.establishment_id), JSON.stringify(config));
 
     if (profile?.establishment_id) {
       const { error } = await supabase.rpc('staff_update_room_configuration', {
