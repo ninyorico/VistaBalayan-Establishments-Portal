@@ -410,14 +410,13 @@ const loadProfile = async () => {
               </div>
               <div className="mb-3 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
                 <span className="text-xs text-gray-500">Add another category after entering the Batangas count.</span>
-                {residenceTypes.filter((type) => !(visibleResidenceTypes[entry.id] || ["THIS_PROVINCE"]).includes(type.key)).length > 0 && (
+                {residenceTotal(entry, "THIS_PROVINCE") > 0 && residenceTypes.filter((type) => !(visibleResidenceTypes[entry.id] || ["THIS_PROVINCE"]).includes(type.key)).length > 0 && (
                   <select
                     value=""
-                    disabled={residenceTotal(entry, "THIS_PROVINCE") === 0}
                     onChange={(e) => {
                       if (e.target.value) addResidenceCategory(entry.id, e.target.value as ResidenceTypeKey);
                     }}
-                    className="rounded-md border border-[#1CA7C9] bg-white px-3 py-2 text-xs font-medium text-[#0F4C75] disabled:cursor-not-allowed disabled:opacity-50"
+                    className="rounded-md border border-[#1CA7C9] bg-white px-3 py-2 text-xs font-medium text-[#0F4C75] hover:bg-cyan-50"
                     aria-label="Add residence category"
                   >
                     <option value="">+ Add residence category</option>
