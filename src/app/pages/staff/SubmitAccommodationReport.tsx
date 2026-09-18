@@ -16,6 +16,7 @@ interface RoomOccupancy {
   checkIns: number;
   guestNights: number;
   previousNewGuests?: number;
+  previousGuestNights?: number;
 }
 
 const parseNonNegativeInteger = (value: string) => {
@@ -69,6 +70,7 @@ export default function SubmitAccommodationReport() {
         checkIns: Number(room.checkIns) || 0,
         guestNights: Number(room.continuingGuests ?? Math.max(0, Number(room.guestNights) - Number(room.checkIns))) + (Number(room.checkIns) || 0),
         previousNewGuests: Math.max(0, Number(room.previousNewGuests) || 0),
+        previousGuestNights: Math.max(0, Number(room.previousGuestNights) || 0),
       })));
       if (draft.reportDate) setReportDate(draft.reportDate);
       toast.success("Saved accommodation draft restored");
@@ -254,6 +256,7 @@ export default function SubmitAccommodationReport() {
         ...room,
         continuingGuests: previous?.guests || 0,
         previousNewGuests: Math.min(previous?.newGuests || 0, previous?.guests || 0),
+        previousGuestNights: previous?.guests || 0,
         guestNights: previous?.guests || 0,
         occupied: Math.min(previous?.occupied || 0, room.numberOfRooms),
       };
@@ -678,56 +681,63 @@ export default function SubmitAccommodationReport() {
           <table className="w-full min-w-[760px] border-collapse">
             <thead className="bg-gray-50 border-b border-gray-200">
               <tr>
-                <th className="sticky left-0 z-10 min-w-[150px] border-r border-gray-200 bg-gray-50 px-3 py-3 text-left text-xs font-semibold uppercase text-gray-700">Field</th>
+                <th className="sticky left-0 z-10 min-w-[150px] border-r border-gray-200 bg-gray-50 px-3 py-3 text-left text-xs font-semibold uppercase text-gray-700">Date</th>
                 {roomData.map((room, index) => (
-                  <th key={index} className="min-w-[125px] border-r border-gray-200 px-3 py-3 text-center text-xs font-semibold text-gray-700">
+                  <th key={index} className="min-w-[145px] border-r border-gray-200 px-3 py-3 text-center text-xs font-semibold text-gray-700">
                     <div className="truncate">{room.roomType}</div>
                     <span className="mt-1 inline-block rounded bg-gray-100 px-2 py-0.5 font-mono text-[10px] font-normal text-gray-600">{room.roomCode}</span>
+                    <div className="mt-2 text-[10px] font-normal text-gray-500">Continuing / New</div>
                   </th>
                 ))}
                 <th className="min-w-[110px] px-3 py-3 text-center text-xs font-semibold uppercase text-[#0F4C75]">Total</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-200">
-              <tr>
-                <th className="sticky left-0 z-10 border-r border-gray-200 bg-white px-3 py-3 text-left text-xs font-semibold text-gray-700">Rooms available</th>
-                {roomData.map((room, index) => <td key={index} className="border-r border-gray-200 px-3 py-3 text-center text-sm font-semibold tabular-nums text-gray-900">{room.numberOfRooms}</td>)}
-                <td className="px-3 py-3 text-center text-sm font-semibold tabular-nums text-[#0F4C75]">{totalRooms}</td>
-              </tr>
-              <tr>
-                <th className="sticky left-0 z-10 border-r border-gray-200 bg-white px-3 py-3 text-left text-xs font-semibold text-gray-700">Occupied rooms</th>
-                {roomData.map((room, index) => (
-                  <td key={index} className="border-r border-gray-200 px-3 py-3 text-center">
-                    <input type="text" inputMode="numeric" pattern="[0-9]*" value={numericInputValue(room.occupied)} onChange={(e) => updateRoomData(index, "occupied", parseNonNegativeInteger(e.target.value))} className="w-full rounded-md border border-gray-300 px-2 py-2 text-center text-sm tabular-nums" placeholder="0" aria-label={`${room.roomType} occupied rooms`} />
-                  </td>
-                ))}
-                <td className="px-3 py-3 text-center text-sm font-semibold tabular-nums text-[#0F4C75]">{totalOccupiedRooms}</td>
+              <tr className="bg-gray-50">
+                <th className="sticky left-0 z-10 border-r border-gray-200 bg-gray-50 px-3 py-4 text-left text-xs font-semibold text-gray-700">
+                  <div>Previous date</div>
+                  <div className="mt-1 font-normal text-gray-500">{getPreviousDate(reportDate)}</div>
+                </th>
+                {roomData.map((room, index) => {
+                  const previousTotal = room.previousGuestNights || 0;
+                  const previousNew = Math.min(room.previousNewGuests || 0, previousTotal);
+                  const previousContinuing = Math.max(0, previousTotal - previousNew);
+                  return (
+                    <td key={index} className="border-r border-gray-200 px-3 py-4 text-center">
+                      <div className="flex items-center justify-center gap-2 text-sm tabular-nums">
+                        <span className="font-normal text-gray-700">{previousContinuing}</span>
+                        <span className="inline-flex h-7 min-w-7 items-center justify-center rounded-full border-2 border-red-500 px-1 font-normal text-red-600" aria-label={`${room.roomType} previous date new guests`}>{previousNew}</span>
+                      </div>
+                    </td>
+                  );
+                })}
+                <td className="px-3 py-4 text-center text-sm font-semibold tabular-nums text-[#0F4C75]">{roomData.reduce((sum, room) => sum + Number(room.previousGuestNights || 0), 0)}</td>
               </tr>
               <tr className="bg-blue-50/30">
-                <th className="sticky left-0 z-10 border-r border-gray-200 bg-blue-50/30 px-3 py-3 text-left text-xs font-semibold text-[#0F4C75]">Continuing guests</th>
+                <th className="sticky left-0 z-10 border-r border-gray-200 bg-blue-50/30 px-3 py-4 text-left text-xs font-semibold text-[#0F4C75]">
+                  <div>Current date</div>
+                  <div className="mt-1 font-normal text-gray-500">{reportDate}</div>
+                </th>
                 {roomData.map((room, index) => (
-                  <td key={index} className="border-r border-gray-200 px-3 py-3 text-center">
-                    <div className="relative mx-auto w-full">
-                      <input type="text" inputMode="numeric" pattern="[0-9]*" value={numericInputValue(room.continuingGuests)} onChange={(e) => updateRoomData(index, "continuingGuests", parseNonNegativeInteger(e.target.value))} className={`w-full rounded-md border border-gray-300 px-2 py-2 text-center text-sm tabular-nums ${(room.previousNewGuests || 0) > 0 ? "text-transparent" : ""}`} placeholder="0" aria-label={`${room.roomType} continuing guests`} />
-                      {(room.previousNewGuests || 0) > 0 && <span className="pointer-events-none absolute left-1/2 top-1/2 inline-flex h-7 min-w-7 -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full border-2 border-red-500 px-1 font-normal text-red-600" aria-label={`${room.previousNewGuests} previous day new guests`}>{room.continuingGuests}</span>}
+                  <td key={index} className="border-r border-gray-200 px-3 py-3">
+                    <div className="grid grid-cols-3 gap-1">
+                      <label className="text-center text-[9px] font-normal text-gray-600">
+                        Occupied
+                        <input type="text" inputMode="numeric" pattern="[0-9]*" value={numericInputValue(room.occupied)} onChange={(e) => updateRoomData(index, "occupied", parseNonNegativeInteger(e.target.value))} className="mt-1 w-full rounded-md border border-gray-300 bg-white px-1 py-2 text-center text-sm font-normal tabular-nums" placeholder="0" aria-label={`${room.roomType} occupied rooms`} />
+                      </label>
+                      <label className="text-center text-[9px] font-normal text-gray-600">
+                        Continuing
+                        <input type="text" inputMode="numeric" pattern="[0-9]*" value={numericInputValue(room.continuingGuests)} onChange={(e) => updateRoomData(index, "continuingGuests", parseNonNegativeInteger(e.target.value))} className="mt-1 w-full rounded-md border border-gray-300 bg-white px-1 py-2 text-center text-sm font-normal tabular-nums" placeholder="0" aria-label={`${room.roomType} current continuing guests`} />
+                      </label>
+                      <label className="text-center text-[9px] font-normal text-gray-600">
+                        New
+                        <input type="text" inputMode="numeric" pattern="[0-9]*" value={numericInputValue(room.checkIns)} onChange={(e) => updateRoomData(index, "checkIns", parseNonNegativeInteger(e.target.value))} className="mt-1 w-full rounded-full border-2 border-red-500 bg-white px-1 py-2 text-center text-sm font-normal tabular-nums text-red-600" placeholder="0" aria-label={`${room.roomType} current new guests`} />
+                      </label>
                     </div>
+                    <div className="mt-1 text-center text-[10px] font-semibold text-[#0F4C75]">Staying: {room.guestNights}</div>
                   </td>
                 ))}
-                <td className="px-3 py-3 text-center text-sm font-semibold tabular-nums text-[#0F4C75]">{roomData.reduce((sum, room) => sum + Number(room.continuingGuests || 0), 0)}</td>
-              </tr>
-              <tr>
-                <th className="sticky left-0 z-10 border-r border-gray-200 bg-white px-3 py-3 text-left text-xs font-semibold text-gray-700">New guests</th>
-                {roomData.map((room, index) => (
-                  <td key={index} className="border-r border-gray-200 px-3 py-3 text-center">
-                    <input type="text" inputMode="numeric" pattern="[0-9]*" value={numericInputValue(room.checkIns)} onChange={(e) => updateRoomData(index, "checkIns", parseNonNegativeInteger(e.target.value))} className="w-full rounded-md border border-gray-300 px-2 py-2 text-center text-sm tabular-nums" placeholder="0" aria-label={`${room.roomType} new guests`} />
-                  </td>
-                ))}
-                <td className="px-3 py-3 text-center text-sm font-semibold tabular-nums text-[#0F4C75]">{totalCheckIns}</td>
-              </tr>
-              <tr className="bg-blue-50 font-semibold">
-                <th className="sticky left-0 z-10 border-r border-blue-200 bg-blue-50 px-3 py-3 text-left text-xs font-semibold text-[#0F4C75]">Staying tonight</th>
-                {roomData.map((room, index) => <td key={index} className="border-r border-blue-200 px-3 py-3 text-center text-sm tabular-nums text-[#0F4C75]">{room.guestNights}</td>)}
-                <td className="px-3 py-3 text-center text-sm tabular-nums text-[#0F4C75]">{totalGuestNights}</td>
+                <td className="px-3 py-4 text-center text-sm font-semibold tabular-nums text-[#0F4C75]">{totalGuestNights}</td>
               </tr>
             </tbody>
           </table>
