@@ -681,79 +681,29 @@ export default function SubmitAccommodationReport() {
           <p className="mt-2 text-sm text-gray-600">Each room uses one guest value. Double-click the current value to mark it as a new guest; leave it normal for continuing guests.</p>
         </div>
 
-        <div className="space-y-3 p-3 md:hidden">
-          {roomData.map((room, index) => {
-            const previousTotal = room.previousGuestNights || 0;
-            const previousNew = Math.min(room.previousNewGuests || 0, previousTotal);
-            return (
-              <article key={index} className="rounded-xl border border-gray-200 bg-white p-3 shadow-sm">
-                <div className="mb-3 flex items-center justify-between border-b border-gray-100 pb-2">
-                  <div>
-                    <div className="text-sm font-semibold text-gray-900">Room {getGeneratedRoomNumber(room.roomCode)}</div>
-                    <div className="font-mono text-xs text-gray-500">{getBaseRoomCode(room.roomCode)}</div>
-                  </div>
-                  <div className="text-right text-xs text-gray-500">Staying tonight<strong className="ml-1 text-sm text-[#0F4C75]">{room.guestNights}</strong></div>
-                </div>
-                <div className="grid grid-cols-2 gap-3">
-                  <div className="rounded-lg bg-gray-50 p-3 text-center">
-                    <div className="text-[11px] font-medium text-gray-500">Previous date</div>
-                    <div className="mt-2 text-lg tabular-nums">
-                      <span className={previousNew > 0 ? "inline-flex h-9 min-w-9 items-center justify-center rounded-full border-2 border-red-500 px-2 text-red-600" : "font-normal text-gray-700"}>{previousTotal}</span>
-                    </div>
-                    <div className="mt-1 text-[10px] text-gray-400">{getPreviousDate(reportDate)}</div>
-                  </div>
-                  <div className="rounded-lg border border-cyan-100 bg-cyan-50/40 p-3 text-center">
-                    <div className="text-[11px] font-medium text-[#0F4C75]">Current date</div>
-                    <input type="text" inputMode="numeric" pattern="[0-9]*" value={numericInputValue(room.isNewGuest ? room.checkIns : room.continuingGuests)} onChange={(e) => updateSingleGuestValue(index, parseNonNegativeInteger(e.target.value))} onDoubleClick={() => toggleGuestType(index)} className={room.isNewGuest ? "mt-2 w-full rounded-full border-2 border-red-500 bg-white px-2 py-2 text-center text-lg font-normal tabular-nums text-red-600" : "mt-2 w-full rounded-lg border border-gray-300 bg-white px-2 py-2 text-center text-lg font-normal tabular-nums text-gray-700"} placeholder="0" aria-label={`${room.roomCode} current guest value`} />
-                    <div className="mt-1 text-[10px] text-gray-400">Double-tap to switch</div>
-                  </div>
-                </div>
-              </article>
-            );
-          })}
-        </div>
-
-        <div className="hidden overflow-x-auto overscroll-x-contain md:block">
-          <table className="w-full min-w-[760px] border-collapse">
+        <div className="overflow-x-auto overscroll-x-contain">
+          <table className="w-full min-w-[520px] border-collapse">
             <thead className="bg-gray-50 border-b border-gray-200">
               <tr>
-                <th className="sticky left-0 z-10 min-w-[150px] border-r border-gray-200 bg-gray-50 px-3 py-3 text-left text-xs font-semibold uppercase text-gray-700">Date</th>
-                {roomData.map((room, index) => (
-                  <th key={index} className="min-w-[145px] border-r border-gray-200 px-3 py-3 text-center text-xs font-semibold text-gray-700">
-                    <div className="truncate">Room {getGeneratedRoomNumber(room.roomCode)}</div>
-                    <span className="mt-1 inline-block rounded bg-gray-100 px-2 py-0.5 font-mono text-[10px] font-normal text-gray-600">{getBaseRoomCode(room.roomCode)}</span>
-
-                  </th>
-                ))}
-                <th className="min-w-[110px] px-3 py-3 text-center text-xs font-semibold uppercase text-[#0F4C75]">Total</th>
+                <th className="sticky left-0 z-10 w-[34%] min-w-[150px] border-r border-gray-200 bg-gray-50 px-2 py-3 text-left text-xs font-semibold uppercase text-gray-700 sm:px-3">Room / Code</th>
+                <th className="w-[33%] min-w-[150px] border-r border-gray-200 px-2 py-3 text-center text-xs font-semibold uppercase text-gray-700 sm:px-3">Previous Date<div className="mt-1 text-[10px] font-normal normal-case text-gray-500">{getPreviousDate(reportDate)}</div></th>
+                <th className="w-[33%] min-w-[150px] px-2 py-3 text-center text-xs font-semibold uppercase text-[#0F4C75] sm:px-3">Current Date<div className="mt-1 text-[10px] font-normal normal-case text-gray-500">{reportDate}</div></th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-200">
-              <tr className="bg-gray-50">
-                <th className="sticky left-0 z-10 border-r border-gray-200 bg-gray-50 px-3 py-4 text-left text-xs font-semibold text-gray-700">
-                  <div>Previous date</div>
-                  <div className="mt-1 font-normal text-gray-500">{getPreviousDate(reportDate)}</div>
-                </th>
-                {roomData.map((room, index) => {
+              {roomData.map((room, index) => {
                   const previousTotal = room.previousGuestNights || 0;
                   const previousNew = Math.min(room.previousNewGuests || 0, previousTotal);
                   return (
-                    <td key={index} className="border-r border-gray-200 px-3 py-4 text-center">
-                      <div className="flex items-center justify-center text-sm tabular-nums">
-                        <span className={previousNew > 0 ? "inline-flex h-7 min-w-7 items-center justify-center rounded-full border-2 border-red-500 px-1 font-normal text-red-600" : "font-normal text-gray-700"} aria-label={`${room.roomType} previous date guest value`}>{previousTotal}</span>
-                      </div>
-                    </td>
-                  );
-                })}
-                <td className="px-3 py-4 text-center text-sm font-semibold tabular-nums text-[#0F4C75]">{roomData.reduce((sum, room) => sum + Number(room.previousGuestNights || 0), 0)}</td>
-              </tr>
-              <tr className="bg-blue-50/30">
-                <th className="sticky left-0 z-10 border-r border-gray-200 bg-blue-50/30 px-3 py-4 text-left text-xs font-semibold text-[#0F4C75]">
-                  <div>Current date</div>
-                  <div className="mt-1 font-normal text-gray-500">{reportDate}</div>
-                </th>
-                {roomData.map((room, index) => (
-                  <td key={index} className="border-r border-gray-200 px-3 py-3 text-center">
+                    <tr key={index} className="bg-white">
+                      <th className="sticky left-0 z-10 border-r border-gray-200 bg-white px-2 py-3 text-left sm:px-3">
+                        <div className="text-sm font-semibold text-gray-900">Room {getGeneratedRoomNumber(room.roomCode)}</div>
+                        <div className="mt-1 inline-block rounded bg-gray-100 px-2 py-0.5 font-mono text-[10px] font-normal text-gray-600">{getBaseRoomCode(room.roomCode)}</div>
+                      </th>
+                      <td className="border-r border-gray-200 px-2 py-3 text-center sm:px-3">
+                        <span className={previousNew > 0 ? "inline-flex h-8 min-w-8 items-center justify-center rounded-full border-2 border-red-500 px-2 text-sm font-normal tabular-nums text-red-600" : "text-sm font-normal tabular-nums text-gray-700"} aria-label={`${room.roomType} previous date guest value`}>{previousTotal}</span>
+                      </td>
+                      <td className="bg-blue-50/30 px-2 py-2 text-center sm:px-3">
                     <input
                       type="text"
                       inputMode="numeric"
@@ -761,15 +711,15 @@ export default function SubmitAccommodationReport() {
                       value={numericInputValue(room.isNewGuest ? room.checkIns : room.continuingGuests)}
                       onChange={(e) => updateSingleGuestValue(index, parseNonNegativeInteger(e.target.value))}
                       onDoubleClick={() => toggleGuestType(index)}
-                      className={room.isNewGuest ? "mx-auto w-full rounded-full border-2 border-red-500 px-2 py-2 text-center text-sm font-normal tabular-nums text-red-600" : "mx-auto w-full rounded-md border border-gray-300 px-2 py-2 text-center text-sm font-normal tabular-nums text-gray-700"}
+                      className={room.isNewGuest ? "mx-auto w-full max-w-[150px] rounded-full border-2 border-red-500 bg-white px-2 py-2 text-center text-sm font-normal tabular-nums text-red-600" : "mx-auto w-full max-w-[150px] rounded-md border border-gray-300 bg-white px-2 py-2 text-center text-sm font-normal tabular-nums text-gray-700"}
                       placeholder="0"
                       title="Double-click to switch between continuing and new guest"
                       aria-label={`${room.roomType} current ${room.isNewGuest ? "new" : "continuing"} guest value. Double-click to switch type.`}
                     />
-                  </td>
-                ))}
-                <td className="px-3 py-4 text-center text-sm font-semibold tabular-nums text-[#0F4C75]">{totalGuestNights}</td>
-              </tr>
+                      </td>
+                    </tr>
+                  );
+                })}
             </tbody>
           </table>
         </div>
