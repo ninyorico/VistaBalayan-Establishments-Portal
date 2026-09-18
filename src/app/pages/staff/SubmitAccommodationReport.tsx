@@ -734,7 +734,7 @@ export default function SubmitAccommodationReport() {
                   <th key={index} className="min-w-[145px] border-r border-gray-200 px-3 py-3 text-center text-xs font-semibold text-gray-700">
                     <div className="truncate">Room {room.numberOfRooms}</div>
                     <span className="mt-1 inline-block rounded bg-gray-100 px-2 py-0.5 font-mono text-[10px] font-normal text-gray-600">{room.roomCode}</span>
-                    <div className="mt-2 text-[10px] font-normal text-gray-500">Guest value</div>
+
                   </th>
                 ))}
                 <th className="min-w-[110px] px-3 py-3 text-center text-xs font-semibold uppercase text-[#0F4C75]">Total</th>
