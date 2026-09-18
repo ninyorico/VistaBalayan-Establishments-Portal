@@ -381,8 +381,10 @@ export default function SubmitAccommodationReport() {
     );
   };
 
+  const getAutomaticallyOccupiedRooms = (room: RoomOccupancy) => room.guestNights > 0 ? 1 : 0;
+
   const totalOccupiedRooms = roomData.reduce(
-    (sum, r) => sum + Number(r.occupied || 0),
+    (sum, r) => sum + getAutomaticallyOccupiedRooms(r),
     0
   );
   const totalCheckIns = roomData.reduce(
@@ -440,20 +442,6 @@ export default function SubmitAccommodationReport() {
     }
 
 
-    const invalidOccupiedRoom = roomData.find(
-      (room) => Number(room.occupied || 0) > Number(room.numberOfRooms || 0)
-    );
-
-    if (invalidOccupiedRoom) {
-      toast.error(`${invalidOccupiedRoom.roomType} occupied rooms cannot exceed configured rooms`);
-      return;
-    }
-
-    if (totalOccupiedRooms > totalRooms) {
-      toast.error("Total occupied rooms cannot exceed total configured rooms");
-      return;
-    }
-
     setSubmitting(true);
 
     try {
@@ -471,7 +459,7 @@ export default function SubmitAccommodationReport() {
           room_type: room.roomType,
           room_code: room.roomCode,
           number_of_rooms: room.numberOfRooms,
-          occupied_rooms: room.occupied,
+          occupied_rooms: getAutomaticallyOccupiedRooms(room),
           check_ins: room.checkIns,
           guest_nights: room.guestNights,
           is_rent_mode: false,
@@ -720,16 +708,12 @@ export default function SubmitAccommodationReport() {
                 </th>
                 {roomData.map((room, index) => (
                   <td key={index} className="border-r border-gray-200 px-3 py-3">
-                    <div className="grid grid-cols-3 gap-1">
-                      <label className="text-center text-[9px] font-normal text-gray-600">
-                        Occupied
-                        <input type="text" inputMode="numeric" pattern="[0-9]*" value={numericInputValue(room.occupied)} onChange={(e) => updateRoomData(index, "occupied", parseNonNegativeInteger(e.target.value))} className="mt-1 w-full rounded-md border border-gray-300 bg-white px-1 py-2 text-center text-sm font-normal tabular-nums" placeholder="0" aria-label={`${room.roomType} occupied rooms`} />
-                      </label>
-                      <label className="text-center text-[9px] font-normal text-gray-600">
+                    <div className="grid grid-cols-2 gap-2">
+                      <label className="text-center text-[10px] font-normal text-gray-600">
                         Continuing
                         <input type="text" inputMode="numeric" pattern="[0-9]*" value={numericInputValue(room.continuingGuests)} onChange={(e) => updateRoomData(index, "continuingGuests", parseNonNegativeInteger(e.target.value))} className="mt-1 w-full rounded-md border border-gray-300 bg-white px-1 py-2 text-center text-sm font-normal tabular-nums" placeholder="0" aria-label={`${room.roomType} current continuing guests`} />
                       </label>
-                      <label className="text-center text-[9px] font-normal text-gray-600">
+                      <label className="text-center text-[10px] font-normal text-gray-600">
                         New
                         <input type="text" inputMode="numeric" pattern="[0-9]*" value={numericInputValue(room.checkIns)} onChange={(e) => updateRoomData(index, "checkIns", parseNonNegativeInteger(e.target.value))} className="mt-1 w-full rounded-full border-2 border-red-500 bg-white px-1 py-2 text-center text-sm font-normal tabular-nums text-red-600" placeholder="0" aria-label={`${room.roomType} current new guests`} />
                       </label>
