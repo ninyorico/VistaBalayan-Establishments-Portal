@@ -236,6 +236,22 @@ const loadProfile = async () => {
     setEntries(entries.map((entry) => entry.id === entryId ? { ...entry, breakdown: { ...entry.breakdown, [residenceType]: { male: 0, female: 0, placeOfResidence: "" } } } : entry));
   };
 
+  const switchResidenceCategory = (entryId: number, from: ResidenceTypeKey, to: ResidenceTypeKey) => {
+    setVisibleResidenceTypes((current) => {
+      const visible = current[entryId] || ["THIS_PROVINCE"];
+      if (visible.includes(to)) return current;
+      return { ...current, [entryId]: visible.map((key) => key === from ? to : key) };
+    });
+    setEntries(entries.map((entry) => entry.id === entryId ? {
+      ...entry,
+      breakdown: {
+        ...entry.breakdown,
+        [from]: { male: 0, female: 0, placeOfResidence: "" },
+        [to]: { ...entry.breakdown[to] },
+      },
+    } : entry));
+  };
+
   const calculateTotalVisitors = () => entries.reduce((sum, entry) => sum + entryTotal(entry), 0);
 
   const handleSubmit = async () => {
@@ -431,7 +447,27 @@ const loadProfile = async () => {
                   const residence = entry.breakdown[type.key];
                   return (
                     <div key={type.key} className="rounded-lg border border-white bg-white p-3 shadow-sm">
-                      <div className="flex items-start justify-between gap-2"><h4 className="text-sm font-semibold text-[#0F4C75]">{type.label}</h4>{type.key !== "THIS_PROVINCE" && <button type="button" onClick={() => removeResidenceCategory(entry.id, type.key)} className="text-xs text-gray-500 hover:text-red-600">Remove</button>}</div>
+                      <div className="flex items-start justify-between gap-2">
+                        <h4 className="text-sm font-semibold text-[#0F4C75]">{type.label}</h4>
+                        <div className="flex items-center gap-2">
+                          {residence.male === 0 && residence.female === 0 && (
+                            <select
+                              value=""
+                              onChange={(e) => {
+                                if (e.target.value) switchResidenceCategory(entry.id, type.key, e.target.value as ResidenceTypeKey);
+                              }}
+                              className="max-w-[150px] rounded border border-gray-300 bg-white px-2 py-1 text-[10px] text-gray-600"
+                              aria-label={`Switch ${type.label} residence`}
+                            >
+                              <option value="">Switch residence</option>
+                              {residenceTypes.filter((candidate) => candidate.key !== type.key && !(visibleResidenceTypes[entry.id] || ["THIS_PROVINCE"]).includes(candidate.key)).map((candidate) => (
+                                <option key={candidate.key} value={candidate.key}>{candidate.label}</option>
+                              ))}
+                            </select>
+                          )}
+                          {type.key !== "THIS_PROVINCE" && <button type="button" onClick={() => removeResidenceCategory(entry.id, type.key)} className="text-xs text-gray-500 hover:text-red-600">Remove</button>}
+                        </div>
+                      </div>
                       {type.placeLabel && <input type="text" value={residence.placeOfResidence} onChange={(e) => updateResidence(entry.id, type.key, "placeOfResidence", e.target.value)} placeholder={type.placeLabel} className="mt-2 block w-full rounded-md border border-gray-300 px-3 py-2 text-sm" />}
                       <div className="mt-2 grid grid-cols-2 gap-2">
                         <label className="text-xs text-gray-600">Male<input type="text" inputMode="numeric" pattern="[0-9]*" value={numericInputValue(residence.male)} onChange={(e) => updateResidence(entry.id, type.key, "male", parseNonNegativeInteger(e.target.value))} className="mt-1 w-full rounded-md border border-gray-300 px-2 py-2 text-center text-sm" placeholder="0" /></label>
