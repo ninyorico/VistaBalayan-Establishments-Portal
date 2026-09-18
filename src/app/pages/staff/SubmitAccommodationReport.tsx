@@ -17,6 +17,7 @@ interface RoomOccupancy {
   guestNights: number;
   previousNewGuests?: number;
   previousGuestNights?: number;
+  isNewGuest?: boolean;
 }
 
 const parseNonNegativeInteger = (value: string) => {
@@ -71,6 +72,7 @@ export default function SubmitAccommodationReport() {
         guestNights: Number(room.continuingGuests ?? Math.max(0, Number(room.guestNights) - Number(room.checkIns))) + (Number(room.checkIns) || 0),
         previousNewGuests: Math.max(0, Number(room.previousNewGuests) || 0),
         previousGuestNights: Math.max(0, Number(room.previousGuestNights) || 0),
+        isNewGuest: Boolean(room.isNewGuest),
       })));
       if (draft.reportDate) setReportDate(draft.reportDate);
       toast.success("Saved accommodation draft restored");
@@ -257,6 +259,7 @@ export default function SubmitAccommodationReport() {
         continuingGuests: previous?.guests || 0,
         previousNewGuests: Math.min(previous?.newGuests || 0, previous?.guests || 0),
         previousGuestNights: previous?.guests || 0,
+        isNewGuest: false,
         guestNights: previous?.guests || 0,
         occupied: Math.min(previous?.occupied || 0, room.numberOfRooms),
       };
@@ -379,6 +382,31 @@ export default function SubmitAccommodationReport() {
         return room;
       })
     );
+  };
+
+  const updateSingleGuestValue = (index: number, value: number) => {
+    setRoomData(roomData.map((room, i) => {
+      if (i !== index) return room;
+      const updatedRoom = room.isNewGuest
+        ? { ...room, checkIns: value }
+        : { ...room, continuingGuests: value };
+      return { ...updatedRoom, guestNights: Number(updatedRoom.continuingGuests || 0) + Number(updatedRoom.checkIns || 0) };
+    }));
+  };
+
+  const toggleGuestType = (index: number) => {
+    setRoomData(roomData.map((room, i) => {
+      if (i !== index) return room;
+      const nextIsNewGuest = !room.isNewGuest;
+      const currentValue = room.isNewGuest ? room.checkIns : room.continuingGuests;
+      return {
+        ...room,
+        continuingGuests: nextIsNewGuest ? 0 : currentValue,
+        checkIns: nextIsNewGuest ? currentValue : 0,
+        isNewGuest: nextIsNewGuest,
+        guestNights: currentValue,
+      };
+    }));
   };
 
   const getAutomaticallyOccupiedRooms = (room: RoomOccupancy) => room.guestNights > 0 ? 1 : 0;
@@ -689,12 +717,10 @@ export default function SubmitAccommodationReport() {
                 {roomData.map((room, index) => {
                   const previousTotal = room.previousGuestNights || 0;
                   const previousNew = Math.min(room.previousNewGuests || 0, previousTotal);
-                  const previousContinuing = Math.max(0, previousTotal - previousNew);
                   return (
                     <td key={index} className="border-r border-gray-200 px-3 py-4 text-center">
-                      <div className="flex items-center justify-center gap-2 text-sm tabular-nums">
-                        <span className="font-normal text-gray-700">{previousContinuing}</span>
-                        <span className="inline-flex h-7 min-w-7 items-center justify-center rounded-full border-2 border-red-500 px-1 font-normal text-red-600" aria-label={`${room.roomType} previous date new guests`}>{previousNew}</span>
+                      <div className="flex items-center justify-center text-sm tabular-nums">
+                        <span className={previousNew > 0 ? "inline-flex h-7 min-w-7 items-center justify-center rounded-full border-2 border-red-500 px-1 font-normal text-red-600" : "font-normal text-gray-700"} aria-label={`${room.roomType} previous date guest value`}>{previousTotal}</span>
                       </div>
                     </td>
                   );
@@ -707,18 +733,19 @@ export default function SubmitAccommodationReport() {
                   <div className="mt-1 font-normal text-gray-500">{reportDate}</div>
                 </th>
                 {roomData.map((room, index) => (
-                  <td key={index} className="border-r border-gray-200 px-3 py-3">
-                    <div className="grid grid-cols-2 gap-2">
-                      <label className="text-center text-[10px] font-normal text-gray-600">
-                        Continuing
-                        <input type="text" inputMode="numeric" pattern="[0-9]*" value={numericInputValue(room.continuingGuests)} onChange={(e) => updateRoomData(index, "continuingGuests", parseNonNegativeInteger(e.target.value))} className="mt-1 w-full rounded-md border border-gray-300 bg-white px-1 py-2 text-center text-sm font-normal tabular-nums" placeholder="0" aria-label={`${room.roomType} current continuing guests`} />
-                      </label>
-                      <label className="text-center text-[10px] font-normal text-gray-600">
-                        New
-                        <input type="text" inputMode="numeric" pattern="[0-9]*" value={numericInputValue(room.checkIns)} onChange={(e) => updateRoomData(index, "checkIns", parseNonNegativeInteger(e.target.value))} className="mt-1 w-full rounded-full border-2 border-red-500 bg-white px-1 py-2 text-center text-sm font-normal tabular-nums text-red-600" placeholder="0" aria-label={`${room.roomType} current new guests`} />
-                      </label>
-                    </div>
-                    <div className="mt-1 text-center text-[10px] font-semibold text-[#0F4C75]">Staying: {room.guestNights}</div>
+                  <td key={index} className="border-r border-gray-200 px-3 py-3 text-center">
+                    <input
+                      type="text"
+                      inputMode="numeric"
+                      pattern="[0-9]*"
+                      value={numericInputValue(room.isNewGuest ? room.checkIns : room.continuingGuests)}
+                      onChange={(e) => updateSingleGuestValue(index, parseNonNegativeInteger(e.target.value))}
+                      onDoubleClick={() => toggleGuestType(index)}
+                      className={room.isNewGuest ? "mx-auto w-full rounded-full border-2 border-red-500 px-2 py-2 text-center text-sm font-normal tabular-nums text-red-600" : "mx-auto w-full rounded-md border border-gray-300 px-2 py-2 text-center text-sm font-normal tabular-nums text-gray-700"}
+                      placeholder="0"
+                      title="Double-click to switch between continuing and new guest"
+                      aria-label={`${room.roomType} current ${room.isNewGuest ? "new" : "continuing"} guest value. Double-click to switch type.`}
+                    />
                   </td>
                 ))}
                 <td className="px-3 py-4 text-center text-sm font-semibold tabular-nums text-[#0F4C75]">{totalGuestNights}</td>
