@@ -690,19 +690,51 @@ export default function SubmitAccommodationReport() {
         <div className="p-4 sm:p-5 lg:p-6 border-b border-gray-200">
           <h3 className="text-lg font-semibold text-gray-900">Daily Room Occupancy</h3>
           <p className="mt-1 text-sm text-gray-500 lg:hidden">Compact full-width table for faster phone entry.</p>
-          <p className="mt-2 text-sm text-gray-600">Continuing guests came from the previous night. New guests arrived today. Staying tonight is calculated automatically from both numbers.</p>
+          <p className="mt-2 text-sm text-gray-600">Each room uses one guest value. Double-click the current value to mark it as a new guest; leave it normal for continuing guests.</p>
         </div>
 
-        <div className="overflow-x-auto overscroll-x-contain">
+        <div className="space-y-3 p-3 md:hidden">
+          {roomData.map((room, index) => {
+            const previousTotal = room.previousGuestNights || 0;
+            const previousNew = Math.min(room.previousNewGuests || 0, previousTotal);
+            return (
+              <article key={index} className="rounded-xl border border-gray-200 bg-white p-3 shadow-sm">
+                <div className="mb-3 flex items-center justify-between border-b border-gray-100 pb-2">
+                  <div>
+                    <div className="text-sm font-semibold text-gray-900">Room {room.numberOfRooms}</div>
+                    <div className="font-mono text-xs text-gray-500">{room.roomCode}</div>
+                  </div>
+                  <div className="text-right text-xs text-gray-500">Staying tonight<strong className="ml-1 text-sm text-[#0F4C75]">{room.guestNights}</strong></div>
+                </div>
+                <div className="grid grid-cols-2 gap-3">
+                  <div className="rounded-lg bg-gray-50 p-3 text-center">
+                    <div className="text-[11px] font-medium text-gray-500">Previous date</div>
+                    <div className="mt-2 text-lg tabular-nums">
+                      <span className={previousNew > 0 ? "inline-flex h-9 min-w-9 items-center justify-center rounded-full border-2 border-red-500 px-2 text-red-600" : "font-normal text-gray-700"}>{previousTotal}</span>
+                    </div>
+                    <div className="mt-1 text-[10px] text-gray-400">{getPreviousDate(reportDate)}</div>
+                  </div>
+                  <div className="rounded-lg border border-cyan-100 bg-cyan-50/40 p-3 text-center">
+                    <div className="text-[11px] font-medium text-[#0F4C75]">Current date</div>
+                    <input type="text" inputMode="numeric" pattern="[0-9]*" value={numericInputValue(room.isNewGuest ? room.checkIns : room.continuingGuests)} onChange={(e) => updateSingleGuestValue(index, parseNonNegativeInteger(e.target.value))} onDoubleClick={() => toggleGuestType(index)} className={room.isNewGuest ? "mt-2 w-full rounded-full border-2 border-red-500 bg-white px-2 py-2 text-center text-lg font-normal tabular-nums text-red-600" : "mt-2 w-full rounded-lg border border-gray-300 bg-white px-2 py-2 text-center text-lg font-normal tabular-nums text-gray-700"} placeholder="0" aria-label={`${room.roomCode} current guest value`} />
+                    <div className="mt-1 text-[10px] text-gray-400">Double-tap to switch</div>
+                  </div>
+                </div>
+              </article>
+            );
+          })}
+        </div>
+
+        <div className="hidden overflow-x-auto overscroll-x-contain md:block">
           <table className="w-full min-w-[760px] border-collapse">
             <thead className="bg-gray-50 border-b border-gray-200">
               <tr>
                 <th className="sticky left-0 z-10 min-w-[150px] border-r border-gray-200 bg-gray-50 px-3 py-3 text-left text-xs font-semibold uppercase text-gray-700">Date</th>
                 {roomData.map((room, index) => (
                   <th key={index} className="min-w-[145px] border-r border-gray-200 px-3 py-3 text-center text-xs font-semibold text-gray-700">
-                    <div className="truncate">{room.roomType}</div>
+                    <div className="truncate">Room {room.numberOfRooms}</div>
                     <span className="mt-1 inline-block rounded bg-gray-100 px-2 py-0.5 font-mono text-[10px] font-normal text-gray-600">{room.roomCode}</span>
-                    <div className="mt-2 text-[10px] font-normal text-gray-500">Continuing / New</div>
+                    <div className="mt-2 text-[10px] font-normal text-gray-500">Guest value</div>
                   </th>
                 ))}
                 <th className="min-w-[110px] px-3 py-3 text-center text-xs font-semibold uppercase text-[#0F4C75]">Total</th>
