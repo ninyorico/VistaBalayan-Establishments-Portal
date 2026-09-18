@@ -685,7 +685,7 @@ export default function SubmitAccommodationReport() {
           <table className="w-full min-w-0 table-fixed border-collapse">
             <thead className="bg-gray-50 border-b border-gray-200">
               <tr>
-                <th className="sticky left-0 z-10 w-[34%] border-r border-gray-200 bg-gray-50 px-1.5 py-2 text-left text-[10px] font-semibold uppercase leading-tight text-gray-700 sm:px-3 sm:py-3 sm:text-xs">Room / Code</th>
+                <th className="sticky left-0 z-10 w-[34%] border-r border-gray-200 bg-gray-50 px-1.5 py-2 text-center text-[10px] font-semibold uppercase leading-tight text-gray-700 sm:px-3 sm:py-3 sm:text-xs">Room / Code</th>
                 <th className="w-[33%] border-r border-gray-200 px-1.5 py-2 text-center text-[10px] font-semibold uppercase leading-tight text-gray-700 sm:px-3 sm:py-3 sm:text-xs">Previous Date<div className="mt-1 text-[9px] font-normal normal-case text-gray-500 sm:text-[10px]">{getPreviousDate(reportDate)}</div></th>
                 <th className="w-[33%] px-1.5 py-2 text-center text-[10px] font-semibold uppercase leading-tight text-[#0F4C75] sm:px-3 sm:py-3 sm:text-xs">Current Date<div className="mt-1 text-[9px] font-normal normal-case text-gray-500 sm:text-[10px]">{reportDate}</div></th>
               </tr>
@@ -696,7 +696,7 @@ export default function SubmitAccommodationReport() {
                   const previousNew = Math.min(room.previousNewGuests || 0, previousTotal);
                   return (
                     <tr key={index} className="bg-white">
-                      <th className="sticky left-0 z-10 border-r border-gray-200 bg-white px-1.5 py-2 text-left sm:px-3 sm:py-3">
+                      <th className="sticky left-0 z-10 border-r border-gray-200 bg-white px-1.5 py-2 text-center sm:px-3 sm:py-3">
                         <div className="truncate text-xs font-semibold text-gray-900 sm:text-sm">Room {getGeneratedRoomNumber(room.roomCode)}</div>
                         <div className="mt-0.5 inline-block max-w-full truncate rounded bg-gray-100 px-1.5 py-0.5 font-mono text-[9px] font-normal text-gray-600 sm:mt-1 sm:px-2 sm:text-[10px]">{getBaseRoomCode(room.roomCode)}</div>
                       </th>
