@@ -417,10 +417,9 @@ const loadProfile = async () => {
             <section key={entry.id} className="rounded-lg border border-gray-200 bg-gray-50 p-3 sm:p-4">
               <div className="mb-4 flex items-center gap-3">
                 <div className="flex-1">
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Group name <span className="font-normal text-gray-500">(optional)</span></label>
-                  <input type="text" value={entry.groupName} onChange={(e) => updateEntry(entry.id, "groupName", e.target.value)} placeholder={`Visitor group ${entryIndex + 1}`} className="block w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm" />
+                  <p className="text-sm font-medium text-gray-700">Visitor group {entryIndex + 1}</p>
                 </div>
-                <button type="button" onClick={() => removeEntry(entry.id)} aria-label={`Remove visitor group ${entryIndex + 1}`} className="mt-6 inline-flex rounded p-2 text-red-600 hover:bg-red-50">
+                <button type="button" onClick={() => removeEntry(entry.id)} aria-label={`Remove visitor group ${entryIndex + 1}`} className="inline-flex rounded p-2 text-red-600 hover:bg-red-50">
                   <Trash2 className="w-4 h-4" />
                 </button>
               </div>
@@ -449,6 +448,7 @@ const loadProfile = async () => {
                     <div key={type.key} className="rounded-lg border border-white bg-white p-3 shadow-sm">
                       <div className="flex items-start justify-between gap-2">
                         <h4 className="text-sm font-semibold text-[#0F4C75]">{type.label}</h4>
+                        {type.key === "THIS_PROVINCE" && <p className="mt-1 flex-1 text-[11px] leading-4 text-gray-500">Start with Batangas visitors. Switch this section before entering a number if the visitors are from another province or country.</p>}
                         <div className="flex items-center gap-2">
                           {residence.male === 0 && residence.female === 0 && (
                             <select
