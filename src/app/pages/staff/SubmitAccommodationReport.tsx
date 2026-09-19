@@ -560,7 +560,7 @@ export default function SubmitAccommodationReport() {
                 {tempRoomConfig.map((room, index) => (
                   <div key={`${room.code}-${index}`} className="grid grid-cols-1 gap-3 rounded-lg border border-gray-200 p-4 sm:grid-cols-[1fr_130px_110px_auto] sm:items-end">
                     <div className="min-w-0">
-                      <label className="mb-1 block text-sm font-medium text-gray-700">Room category</label>
+                      <label className="mb-1 block text-sm font-medium text-gray-700">Room Name</label>
                       <input
                         type="text"
                         value={room.type}
@@ -570,7 +570,7 @@ export default function SubmitAccommodationReport() {
                       />
                     </div>
                     <div className="min-w-0">
-                      <label className="mb-1 block text-sm font-medium text-gray-700">Room code</label>
+                      <label className="mb-1 block text-sm font-medium text-gray-700">Room Type</label>
                       <input
                         type="text"
                         value={room.code}
@@ -580,7 +580,7 @@ export default function SubmitAccommodationReport() {
                       />
                     </div>
                     <div className="min-w-0">
-                      <label className="mb-1 block text-sm font-medium text-gray-700">Number of rooms</label>
+                      <label className="mb-1 block text-sm font-medium text-gray-700">Rooms</label>
                                             <input
                                               type="text"
                         inputMode="numeric"
@@ -656,10 +656,6 @@ export default function SubmitAccommodationReport() {
           <h3 className="text-lg font-semibold text-gray-900">Daily Room Occupancy</h3>
           <p className="mt-1 text-sm text-gray-500 lg:hidden">Compact full-width table for faster phone entry.</p>
           <p className="mt-2 text-sm text-gray-600">Each room uses one guest value. Double-click the current value to mark it as a new guest; leave it normal for continuing guests.</p>
-          <div className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-2 text-xs text-gray-600" aria-label="Guest status legend">
-            <span className="inline-flex items-center gap-1.5"><span className="font-medium text-gray-700">Normal number</span><span>= continuing guests</span></span>
-            <span className="inline-flex items-center gap-1.5"><span className="inline-flex h-5 min-w-5 items-center justify-center rounded-full border-2 border-red-500 px-1 text-red-600">2</span><span>= new guests</span></span>
-          </div>
         </div>
 
         <div className="overflow-x-auto overscroll-x-contain">
