@@ -503,20 +503,18 @@ export default function GeneratedReports() {
       return { establishments: [], accommodation: [], visitors: [] };
     }
     const authenticatedRead = async <T,>(table: string, select: string, order: string) => {
-      const params = new URLSearchParams({ select, order });
       const rows: T[] = [];
       const pageSize = 1000;
+      const orderColumn = order.replace(/\.(asc|desc)$/, "");
+      const ascending = !order.endsWith(".desc");
       for (let offset = 0; ; offset += pageSize) {
-        const response = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/rest/v1/${table}?${params.toString()}`, {
-          headers: {
-            apikey: import.meta.env.VITE_SUPABASE_ANON_KEY,
-            Authorization: `Bearer ${session.access_token}`,
-            Range: `${offset}-${offset + pageSize - 1}`,
-          },
-        });
-        const data = await response.json();
-        if (!response.ok) return { data: null, error: { message: data?.message || `Request failed with status ${response.status}` } };
-        const page = data as T[];
+        const { data, error } = await supabase
+          .from(table)
+          .select(select)
+          .order(orderColumn, { ascending })
+          .range(offset, offset + pageSize - 1);
+        if (error) return { data: null, error: { message: error.message } };
+        const page = (data || []) as T[];
         rows.push(...page);
         if (page.length < pageSize) break;
       }
@@ -586,11 +584,15 @@ export default function GeneratedReports() {
   const exportReport = async () => {
     try {
       const freshData = await loadReports();
+      if (freshData.establishments.length === 0) {
+        throw new Error("No establishments were loaded for export. Refresh your session and try again.");
+      }
+      const exportMonth = Math.min(12, Math.max(1, Number(month) || 1));
       const annual = reportKind.includes("annual");
       await downloadOfficialArrivalsWorkbook({
-        filename: annual ? `Balayan_Official_Arrivals_Annual_${year}.xlsx` : `Balayan_Official_Arrivals_${year}-${String(month).padStart(2, "0")}.xlsx`,
+        filename: annual ? `Balayan_Official_Arrivals_Annual_${year}.xlsx` : `Balayan_Official_Arrivals_${year}-${String(exportMonth).padStart(2, "0")}.xlsx`,
         year,
-        selectedMonth: annual ? undefined : month,
+        selectedMonth: annual ? undefined : exportMonth,
         ...freshData,
       });
       toast.success("Official arrivals template exported from submitted source data");
