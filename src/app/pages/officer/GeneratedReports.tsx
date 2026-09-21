@@ -37,16 +37,7 @@ const downloadBuffer = (filename: string, buffer: ArrayBuffer | Uint8Array) => {
   URL.revokeObjectURL(url);
 };
 
-const normalizeExportName = (value: string) => value.toUpperCase().replace(/[^A-Z0-9]/g, "");
 const normalizeExportText = (value: string) => value.replace(/\s+/g, " ").trim();
-const exportNameAliases: Record<string, string> = {
-  MYPLACERESORTPAVILLION: "MYPLACERESORTPAVILLION",
-  MYPLACERESORTPAVILION: "MYPLACERESORTPAVILLION",
-  VILLABEADOYRESORTPAVILION: "VILLABEADOYRESORTPAVILLION",
-  VILLABEADOYRESORTPAVILLION: "VILLABEADOYRESORTPAVILLION",
-  SOGGIORNOLORENZANA: "SOGGIORNS",
-};
-const exportNameKey = (value: string) => exportNameAliases[normalizeExportName(value)] || normalizeExportName(value);
 const addFullBorders = (sheet: ExcelJS.Worksheet, startRow: number, rowCount: number, startColumn: number, endColumn: number) => {
   for (let row = startRow; row < startRow + rowCount; row += 1) {
     for (let column = startColumn; column <= endColumn; column += 1) {
@@ -301,13 +292,12 @@ export const downloadOfficialArrivalsWorkbook = async ({
   const exportableEstablishments = establishments
     .filter((establishment) =>
       !["inactive", "deleted"].includes(String(establishment.status || "").toLowerCase())
-      && Boolean(establishment.business_permit_number?.trim())
+      && String(establishment.business_permit_number ?? "").trim().length > 0
     )
     .map((establishment) => ({
       ...establishment,
       reporting_mode: establishment.reporting_mode || "both",
     }));
-  const establishmentByKey = new Map(exportableEstablishments.map((establishment) => [exportNameKey(establishment.name), establishment]));
   const exportableVisitors = visitors.filter((record) => isExportableReportStatus(record.status));
   const exportableAccommodation = accommodation.filter((record) => isExportableReportStatus(record.status));
   const visitorReportEstablishmentIds = new Set(exportableVisitors.map((report) => String(report.establishment_id)));
@@ -326,8 +316,8 @@ export const downloadOfficialArrivalsWorkbook = async ({
     if (weeklyStartDate && weeklyEndDate) return date >= weeklyStartDate && date <= weeklyEndDate;
     return date.startsWith(`${year}-${String(monthNumber).padStart(2, "0")}`);
   };
-  const visitorFor = (establishment: EstablishmentReportingRow, monthNumber: number) => exportableVisitors.filter((record) => record.establishment_id === establishment.id && inSelectedPeriod(record.report_date, monthNumber));
-  const accommodationFor = (establishment: EstablishmentReportingRow, monthNumber: number) => exportableAccommodation.filter((record) => record.establishment_id === establishment.id && inSelectedPeriod(record.report_date, monthNumber));
+  const visitorFor = (establishment: EstablishmentReportingRow, monthNumber: number) => exportableVisitors.filter((record) => String(record.establishment_id) === String(establishment.id) && inSelectedPeriod(record.report_date, monthNumber));
+  const accommodationFor = (establishment: EstablishmentReportingRow, monthNumber: number) => exportableAccommodation.filter((record) => String(record.establishment_id) === String(establishment.id) && inSelectedPeriod(record.report_date, monthNumber));
 
   for (const sheet of monthsToWrite) {
     const monthNumber = months.findIndex((value) => sheet.name.startsWith(value.toUpperCase())) + 1;
@@ -367,7 +357,7 @@ export const downloadOfficialArrivalsWorkbook = async ({
         for (let column = 4; column <= 16; column += 1) sheet.getCell(rowNumber, column).value = "";
         continue;
       }
-      const establishment = establishmentByKey.get(exportNameKey(name));
+      const establishment = rowEstablishment;
       const source = includeData && establishment ? visitorFor(establishment, monthNumber) : [];
       const reportSource = source;
       const summary = establishment ? summarizeVisitors(establishment, reportSource) : null;
@@ -394,7 +384,7 @@ export const downloadOfficialArrivalsWorkbook = async ({
         for (let column = 4; column <= 10; column += 1) sheet.getCell(rowNumber, column).value = "";
         continue;
       }
-      const establishment = establishmentByKey.get(exportNameKey(name));
+      const establishment = rowEstablishment;
       const source = includeData && establishment ? accommodationFor(establishment, monthNumber) : [];
       const reportSource = source;
       const summaryBase = establishment ? summarizeAccommodation(establishment, reportSource, year, monthNumber) : null;
