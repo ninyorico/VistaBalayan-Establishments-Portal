@@ -143,7 +143,7 @@ const normalizeOvernightMetricFormats = (sheet: ExcelJS.Worksheet, startRow: num
 };
 const normalizeOvernightThirdMetric = (sheet: ExcelJS.Worksheet, startRow: number, endRow: number) => {
   const title = "Average Number of Guest per room";
-  const titleCell = sheet.getCell("J45");
+  const titleCell = sheet.getCell("J42");
   titleCell.style = JSON.parse(JSON.stringify(sheet.getCell("I45").style));
   titleCell.value = title;
   for (let row = startRow; row <= endRow; row += 1) {
