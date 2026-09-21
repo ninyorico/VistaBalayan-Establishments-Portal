@@ -500,7 +500,7 @@ export default function GeneratedReports() {
       setAccommodation([]);
       setVisitors([]);
       setLoading(false);
-      return;
+      return { establishments: [], accommodation: [], visitors: [] };
     }
     const authenticatedRead = async <T,>(table: string, select: string, order: string) => {
       const params = new URLSearchParams({ select, order });
@@ -536,6 +536,11 @@ export default function GeneratedReports() {
     setVisitors((visitorResult.data || []) as VisitorSourceRecord[]);
     setGeneratedAt(new Date().toISOString());
     setLoading(false);
+    return {
+      establishments: (establishmentResult.data || []) as EstablishmentReportingRow[],
+      accommodation: (accommodationResult.data || []) as AccommodationSourceRecord[],
+      visitors: (visitorResult.data || []) as VisitorSourceRecord[],
+    };
   };
 
   useEffect(() => {
@@ -580,14 +585,13 @@ export default function GeneratedReports() {
 
   const exportReport = async () => {
     try {
+      const freshData = await loadReports();
       const annual = reportKind.includes("annual");
       await downloadOfficialArrivalsWorkbook({
         filename: annual ? `Balayan_Official_Arrivals_Annual_${year}.xlsx` : `Balayan_Official_Arrivals_${year}-${String(month).padStart(2, "0")}.xlsx`,
         year,
         selectedMonth: annual ? undefined : month,
-        establishments,
-        accommodation,
-        visitors,
+        ...freshData,
       });
       toast.success("Official arrivals template exported from submitted source data");
     } catch (error) {
