@@ -131,7 +131,7 @@ export default function Reports() {
       for (let offset = 0; ; offset += pageSize) {
         const { data, error } = await supabase
           .from("establishments")
-          .select("id,name,type,dot_classification,reporting_mode,ae_id,attraction_code,total_rooms,status")
+          .select("id,name,type,dot_classification,reporting_mode,ae_id,attraction_code,total_rooms,status,business_permit_number")
           .order("name", { ascending: true })
           .range(offset, offset + pageSize - 1);
         if (error) throw error;
