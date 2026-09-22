@@ -20,7 +20,7 @@ import {
 } from "recharts";
 import { toast } from "sonner";
 import { supabase } from "../../../lib/supabase";
-import { downloadOfficialArrivalsWorkbook } from "./GeneratedReports";
+import { downloadOfficialArrivalsWorkbook } from "../../../lib/officialArrivalsExport";
 import {
   normalizeReportStatus,
   reportStatusClasses,

@@ -1,12 +1,6 @@
-import { useEffect, useMemo, useState } from "react";
 import * as ExcelJS from "exceljs";
-import { Download, FileSpreadsheet, RefreshCw } from "lucide-react";
-import { toast } from "sonner";
-import { supabase } from "../../../lib/supabase";
-import { useAuth } from "../../../contexts/AuthContext";
+
 import {
-  buildVAR3MRow,
-  daysInMonth,
   summarizeAccommodation,
   summarizeAnnualAccommodation,
   summarizeDAE4,
@@ -14,15 +8,11 @@ import {
   summarizeVisitors,
   OFFICIAL_REPORT_STATUS,
   type AccommodationSourceRecord,
-
   type EstablishmentReportingRow,
   type VisitorSourceRecord,
-  type VisitorSummary,
-} from "../../../lib/reporting";
+} from "./reporting";
 
 const months = Array.from({ length: 12 }, (_, index) => new Date(2000, index, 1).toLocaleString("en-US", { month: "long" }));
-const currentYear = new Date().getFullYear();
-const statusLabel = (status: string) => status.replace(/_/g, " ").replace(/\b\w/g, (letter) => letter.toUpperCase());
 
 // Official exports contain submitted source records.
 // Other statuses remain visible for monitoring but are excluded from exports.
@@ -480,140 +470,3 @@ export const downloadOfficialArrivalsWorkbook = async ({
   const buffer = await workbook.xlsx.writeBuffer();
   downloadBuffer(filename, buffer);
 };
-
-export default function GeneratedReports() {
-  const { user, profile, loading: authLoading } = useAuth();
-  const [reportKind, setReportKind] = useState("dae3");
-  const [year, setYear] = useState(currentYear);
-  const [month, setMonth] = useState(new Date().getMonth() + 1);
-  const [establishments, setEstablishments] = useState<EstablishmentReportingRow[]>([]);
-  const [accommodation, setAccommodation] = useState<AccommodationSourceRecord[]>([]);
-  const [visitors, setVisitors] = useState<VisitorSourceRecord[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [generatedAt, setGeneratedAt] = useState<string | null>(null);
-
-
-  const loadReports = async () => {
-    setLoading(true);
-    const { data: { session }, error: authError } = await supabase.auth.refreshSession();
-    if (authError || !session?.user) {
-      setEstablishments([]);
-      setAccommodation([]);
-      setVisitors([]);
-      setLoading(false);
-      return { establishments: [], accommodation: [], visitors: [] };
-    }
-    const authenticatedRead = async <T,>(table: string, select: string, order: string) => {
-      const rows: T[] = [];
-      const pageSize = 1000;
-      const orderColumn = order.replace(/\.(asc|desc)$/, "");
-      const ascending = !order.endsWith(".desc");
-      for (let offset = 0; ; offset += pageSize) {
-        const { data, error } = await supabase
-          .from(table)
-          .select(select)
-          .order(orderColumn, { ascending })
-          .range(offset, offset + pageSize - 1);
-        if (error) return { data: null, error: { message: error.message } };
-        const page = (data || []) as T[];
-        rows.push(...page);
-        if (page.length < pageSize) break;
-      }
-      return { data: rows, error: null };
-    };
-
-    const [establishmentResult, accommodationResult, visitorResult] = await Promise.all([
-      authenticatedRead<EstablishmentReportingRow>("establishments", "id,name,type,dot_classification,reporting_mode,ae_id,attraction_code,total_rooms,status,business_permit_number", "name.asc"),
-      authenticatedRead<AccommodationSourceRecord>("accommodation_reports", "id,establishment_id,report_date,total_rooms,total_check_ins,total_guest_nights,total_occupied_rooms,guest_check_ins,guest_nights,rooms_occupied,foreign_guest_check_ins,foreign_guest_nights,status", "report_date.asc"),
-      authenticatedRead<VisitorSourceRecord>("visitor_reports", "id,establishment_id,report_date,male_visitors,female_visitors,total_visitors,total_male,total_female,total_guests,residence_category,residence_type,status", "report_date.asc"),
-    ]);
-    const error = establishmentResult.error || accommodationResult.error || visitorResult.error;
-
-    if (error) toast.error(`Could not load reporting data: ${error.message}`);
-    setEstablishments((establishmentResult.data || []) as EstablishmentReportingRow[]);
-    setAccommodation((accommodationResult.data || []) as AccommodationSourceRecord[]);
-    setVisitors((visitorResult.data || []) as VisitorSourceRecord[]);
-    setGeneratedAt(new Date().toISOString());
-    setLoading(false);
-    return {
-      establishments: (establishmentResult.data || []) as EstablishmentReportingRow[],
-      accommodation: (accommodationResult.data || []) as AccommodationSourceRecord[],
-      visitors: (visitorResult.data || []) as VisitorSourceRecord[],
-    };
-  };
-
-  useEffect(() => {
-    if (authLoading) return;
-    if (user && profile?.role === "municipal_officer") {
-      void loadReports();
-    } else {
-      setLoading(false);
-    }
-  }, [authLoading, profile?.role, user?.id]);
-
-  const accommodationSummaries = useMemo(() => establishments
-    .filter((establishment) => ["accommodation", "both"].includes(establishment.reporting_mode || ""))
-    .map((establishment) => summarizeAccommodation(
-      establishment,
-      accommodation.filter((record) => record.establishment_id === establishment.id && record.report_date?.startsWith(`${year}-${String(month).padStart(2, "0")}`)),
-      year,
-      month,
-    )), [accommodation, establishments, month, year]);
-
-  const visitorSummaries = useMemo(() => establishments
-    .filter((establishment) => ["visitor", "both"].includes(establishment.reporting_mode || ""))
-    .map((establishment) => summarizeVisitors(
-      establishment,
-      visitors.filter((record) => record.establishment_id === establishment.id && record.report_date?.startsWith(`${year}-${String(month).padStart(2, "0")}`)),
-    )), [establishments, month, visitors, year]);
-
-  const annualVisitorRows = useMemo(() => months.map((_, index) => {
-    const monthly = establishments.filter((establishment) => ["visitor", "both"].includes(establishment.reporting_mode || "")).map((establishment) => summarizeVisitors(establishment, visitors.filter((record) => record.establishment_id === establishment.id && record.report_date?.startsWith(`${year}-${String(index + 1).padStart(2, "0")}`))));
-    return buildVAR3MRow(index + 1, monthly);
-  }), [establishments, visitors, year]);
-
-  const annualAccommodationSummaries = useMemo(() => establishments
-    .filter((establishment) => ["accommodation", "both"].includes(establishment.reporting_mode || ""))
-    .map((establishment) => summarizeAnnualAccommodation(establishment, accommodation.filter((record) => record.establishment_id === establishment.id && record.report_date?.startsWith(`${year}-`)), year)), [accommodation, establishments, year]);
-
-  const annualAccommodation = useMemo(() => summarizeAnnualDAE4(annualAccommodationSummaries), [annualAccommodationSummaries]);
-
-  const coverage: any[] = reportKind.startsWith("var") ? visitorSummaries : reportKind === "dae4-annual" ? annualAccommodationSummaries : accommodationSummaries;
-  const counts = coverage.reduce<Record<string, number>>((result, item) => { result[item.status] = (result[item.status] || 0) + 1; return result; }, {});
-
-
-  const exportReport = async () => {
-    try {
-      const freshData = await loadReports();
-      if (freshData.establishments.length === 0) {
-        throw new Error("No establishments were loaded for export. Refresh your session and try again.");
-      }
-      const exportMonth = Math.min(12, Math.max(1, Number(month) || 1));
-      const annual = reportKind.includes("annual");
-      await downloadOfficialArrivalsWorkbook({
-        filename: annual ? `Balayan_Official_Arrivals_Annual_${year}.xlsx` : `Balayan_Official_Arrivals_${year}-${String(exportMonth).padStart(2, "0")}.xlsx`,
-        year,
-        selectedMonth: annual ? undefined : exportMonth,
-        ...freshData,
-      });
-      toast.success("Official arrivals template exported from submitted source data");
-    } catch (error) {
-      toast.error(error instanceof Error ? error.message : "Official arrivals export failed");
-    }
-  };
-
-  const reportTitle = { dae3: "Monthly DAE-3", dae4: "Monthly DAE-4", "dae4-annual": "Annual DAE-4", var2m: "Monthly VAR-2M", "var3m-annual": "Annual VAR-3M" }[reportKind];
-  if (loading) return <div className="flex h-96 items-center justify-center text-slate-600">Loading reporting data…</div>;
-
-  return <div className="space-y-6">
-    <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
-      <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
-        <div><p className="text-sm font-semibold uppercase tracking-wider text-[#0E5A72]">MCTAO Reports</p><h1 className="mt-1 text-3xl font-bold text-slate-950">{reportTitle}</h1><p className="mt-2 text-sm text-slate-600">The Excel export uses the official Balayan arrivals template and combines submitted day-tour and overnight source records. Missing submissions remain distinct from zero values.</p></div>
-        <div className="flex flex-wrap gap-2"><select value={reportKind} onChange={(event) => setReportKind(event.target.value)} className="rounded-xl border border-slate-300 px-3 py-2 text-sm"><option value="dae3">Monthly DAE-3</option><option value="dae4">Monthly DAE-4</option><option value="dae4-annual">Annual DAE-4</option><option value="var2m">Monthly VAR-2M</option><option value="var3m-annual">Annual VAR-3M</option></select><select value={year} onChange={(event) => setYear(Number(event.target.value))} className="rounded-xl border border-slate-300 px-3 py-2 text-sm">{[currentYear - 2, currentYear - 1, currentYear, currentYear + 1].map((value) => <option key={value}>{value}</option>)}</select>{!reportKind.includes("annual") && <select value={month} onChange={(event) => setMonth(Number(event.target.value))} className="rounded-xl border border-slate-300 px-3 py-2 text-sm">{months.map((value, index) => <option key={value} value={index + 1}>{value}</option>)}</select>}<button type="button" onClick={() => void loadReports()} className="rounded-xl border border-slate-300 p-2 text-slate-600" title="Refresh"><RefreshCw className="h-5 w-5" /></button><button type="button" onClick={() => void exportReport()} className="inline-flex items-center gap-2 rounded-xl bg-[#0E5A72] px-4 py-2 text-sm font-semibold text-white"><Download className="h-4 w-4" /> Export Official Excel</button></div>
-      </div>
-    </div>
-    <div className="grid grid-cols-1 gap-3 md:grid-cols-3">{["submitted", "missing", "incomplete"].map((status) => <div key={status} className="rounded-2xl border border-slate-200 bg-white p-4"><p className="text-xs font-semibold uppercase tracking-wide text-slate-500">{statusLabel(status)}</p><p className="mt-2 text-2xl font-bold text-slate-950">{counts[status] || 0}</p></div>)}</div>
-    {reportKind === "var3m-annual" ? <div className="overflow-x-auto rounded-2xl border border-slate-200 bg-white"><table className="w-full min-w-[700px] text-sm"><thead className="bg-slate-50"><tr>{["Month", "Domestic Male", "Domestic Female", "Foreign Male", "Foreign Female", "Grand Total"].map((header) => <th key={header} className="px-4 py-3 text-left font-semibold">{header}</th>)}</tr></thead><tbody>{annualVisitorRows.map((row) => <tr key={row.month} className="border-t border-slate-100"><td className="px-4 py-3">{months[row.month - 1]}</td><td className="px-4 py-3">{row.domesticMale}</td><td className="px-4 py-3">{row.domesticFemale}</td><td className="px-4 py-3">{row.foreignMale}</td><td className="px-4 py-3">{row.foreignFemale}</td><td className="px-4 py-3 font-bold">{row.grandTotal}</td></tr>)}</tbody></table></div> : <div className="overflow-x-auto rounded-2xl border border-slate-200 bg-white"><table className="w-full min-w-[980px] text-sm"><thead className="bg-slate-50"><tr>{(reportKind.startsWith("var") ? ["Attraction", "Code", "This Province", "Other Province", "Foreign", "Grand Total", "Status"] : ["Establishment", "AE-ID", "Type-Class", "Rooms", "Check-ins", "Guest Nights", "Occupied Rooms", "Occupancy", "ALOS", "Status"]).map((header) => <th key={header} className="px-4 py-3 text-left font-semibold">{header}</th>)}</tr></thead><tbody>{coverage.map((row) => <tr key={row.establishmentId} className="border-t border-slate-100"><td className="px-4 py-3 font-medium">{row.establishmentName}</td>{reportKind.startsWith("var") ? <><td className="px-4 py-3">{(row as VisitorSummary).attractionCode}</td><td className="px-4 py-3">{(row as VisitorSummary).thisProvince.total}</td><td className="px-4 py-3">{(row as VisitorSummary).otherProvince.total}</td><td className="px-4 py-3">{(row as VisitorSummary).foreign.total}</td><td className="px-4 py-3 font-bold">{row.grandTotal.total}</td></> : <><td className="px-4 py-3">{row.aeId}</td><td className="px-4 py-3">{row.typeClass}</td><td className="px-4 py-3">{row.totalRooms}</td><td className="px-4 py-3">{row.guestCheckIns}</td><td className="px-4 py-3">{row.guestNights}</td><td className="px-4 py-3">{row.roomsOccupied}</td><td className="px-4 py-3">{row.occupancyRate.toFixed(2)}%</td><td className="px-4 py-3">{row.averageLengthOfStay.toFixed(2)}</td></>}<td className="px-4 py-3"><span className="rounded-full bg-slate-100 px-2 py-1 text-xs font-semibold capitalize">{statusLabel(row.status)}</span></td></tr>)}</tbody></table></div>}
-    <p className="text-xs text-slate-500">Generated {generatedAt ? new Date(generatedAt).toLocaleString() : "—"}. Export includes submitted records; inspect source records in Report Monitoring for traceability.</p>
-  </div>;
-}
