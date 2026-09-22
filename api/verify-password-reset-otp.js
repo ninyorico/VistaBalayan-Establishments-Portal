@@ -1,5 +1,6 @@
 import {
   consumeOtp,
+  enforceOtpRateLimit,
   findAuthUserByEmail,
   getSupabaseAdmin,
   normalizeEmail,
@@ -27,6 +28,7 @@ export default async function handler(req, res) {
       return sendJson(res, 400, { error: 'Password must be at least 8 characters.' });
     }
 
+    enforceOtpRateLimit(req, { email, purpose: 'password_reset', action: 'verify' });
     const supabaseAdmin = getSupabaseAdmin();
     await consumeOtp(supabaseAdmin, { email, purpose: 'password_reset', code });
 
@@ -42,6 +44,6 @@ export default async function handler(req, res) {
     return sendJson(res, 200, { ok: true });
   } catch (error) {
     console.error('verify-password-reset-otp failed', error);
-    return sendJson(res, 500, { error: error instanceof Error ? error.message : 'Failed to reset password.' });
+    return sendJson(res, error?.statusCode || 500, { error: error?.statusCode === 401 ? 'Invalid or expired OTP.' : 'Failed to reset password.' });
   }
 }

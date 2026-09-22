@@ -5,7 +5,11 @@
   "type": "module",
   "scripts": {
     "build": "vite build",
-    "dev": "vite"
+    "dev": "vite",
+    "test:e2e": "playwright test",
+    "test:a11y": "playwright test tests/e2e/accessibility.spec.ts",
+    "test:keyboard": "playwright test tests/e2e/keyboard.spec.ts",
+    "test:devices": "playwright test tests/e2e/device.spec.ts --project=desktop-chromium --project=android-chrome --project=ios-safari-home-screen"
   },
   "dependencies": {
     "@emotion/react": "11.14.0",
@@ -71,6 +75,8 @@
     "vaul": "1.1.2"
   },
   "devDependencies": {
+    "@axe-core/playwright": "^4.13.0",
+    "@playwright/test": "^1.63.0",
     "@types/leaflet": "^1.9.22",
     "@types/node": "^25.9.2",
     "@vitejs/plugin-react": "4.7.0",

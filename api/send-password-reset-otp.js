@@ -1,5 +1,5 @@
 import {
-  describeError,
+  enforceOtpRateLimit,
   findAuthUserByEmail,
   generateOtp,
   getSupabaseAdmin,
@@ -22,6 +22,7 @@ export default async function handler(req, res) {
       return sendJson(res, 400, { error: 'Enter a valid email address.' });
     }
 
+    enforceOtpRateLimit(req, { email, purpose: 'password_reset', action: 'send' });
     const supabaseAdmin = getSupabaseAdmin();
     const user = await findAuthUserByEmail(supabaseAdmin, email);
 
@@ -40,6 +41,6 @@ export default async function handler(req, res) {
     return sendJson(res, 200, { ok: true });
   } catch (error) {
     console.error('send-password-reset-otp failed', error);
-    return sendJson(res, 500, { error: describeError(error, 'Failed to send reset OTP.') });
+    return sendJson(res, error?.statusCode || 500, { error: error?.statusCode === 429 ? error.message : 'Failed to send reset OTP.' });
   }
 }

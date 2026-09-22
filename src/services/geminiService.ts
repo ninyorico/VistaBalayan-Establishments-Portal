@@ -19,6 +19,7 @@ type Anomaly = {
 }
 
 const callGenerationApi = async (scope: 'municipality' | 'establishment') => {
+  const requestId = crypto.randomUUID()
   const { data: sessionData, error: sessionError } = await supabase.auth.getSession()
   const accessToken = sessionData.session?.access_token
   if (sessionError || !accessToken) throw new Error('Your session expired. Please sign in again.')
@@ -29,7 +30,7 @@ const callGenerationApi = async (scope: 'municipality' | 'establishment') => {
       'Content-Type': 'application/json',
       Authorization: `Bearer ${accessToken}`,
     },
-    body: JSON.stringify({ scope }),
+    body: JSON.stringify({ scope, request_id: requestId }),
   })
   const result = await response.json().catch(() => ({}))
   if (!response.ok) throw new Error(result.error || 'AI generation failed')

@@ -1,6 +1,6 @@
 import {
   consumeOtp,
-  describeError,
+  enforceOtpRateLimit,
   findAuthUserByEmail,
   getSupabaseAdmin,
   normalizeEmail,
@@ -46,6 +46,7 @@ export default async function handler(req, res) {
       return sendJson(res, 400, { error: 'Enter the 6-digit OTP.' });
     }
 
+    enforceOtpRateLimit(req, { email, purpose: 'email_verification', action: 'verify' });
     const supabaseAdmin = getSupabaseAdmin();
     const { user, profile } = await getActiveStaffFromRequest(req, supabaseAdmin);
 
@@ -67,7 +68,7 @@ export default async function handler(req, res) {
       throw new Error('Another Supabase auth account already uses this work email address.');
     }
 
-    const otpRow = await consumeOtp(supabaseAdmin, { email, purpose: 'staff_creation', code });
+    const otpRow = await consumeOtp(supabaseAdmin, { email, purpose: 'email_verification', code });
     if (otpRow.metadata?.flow !== 'email_verification' || otpRow.metadata?.userId !== user.id) {
       throw new Error('This OTP was not requested by the signed-in staff account.');
     }
@@ -96,6 +97,6 @@ export default async function handler(req, res) {
     return sendJson(res, 200, { ok: true, email, verifiedAt });
   } catch (error) {
     console.error('verify-staff-email-otp failed', error);
-    return sendJson(res, 500, { error: describeError(error, 'Failed to verify work email OTP.') });
+    return sendJson(res, error?.statusCode || 500, { error: error?.statusCode === 401 ? 'Invalid or expired OTP.' : 'Failed to verify work email OTP.' });
   }
 }

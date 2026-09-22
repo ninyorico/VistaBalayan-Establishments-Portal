@@ -1,0 +1,84 @@
+name: Portal quality and browser tests
+
+on:
+  pull_request:
+  push:
+    branches: [master]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: portal-quality-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  quality-and-browser-tests:
+    name: Type-check, build, axe, keyboard, and device-profile tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    environment: VistaBalayan
+    env:
+      PLAYWRIGHT_BASE_URL: ${{ secrets.PLAYWRIGHT_BASE_URL }}
+      VISTABALAYAN_OFFICER_EMAIL: ${{ secrets.VISTABALAYAN_OFFICER_EMAIL }}
+      VISTABALAYAN_HOTEL_EMAIL: ${{ secrets.VISTABALAYAN_HOTEL_EMAIL }}
+      VISTABALAYAN_RESORT_EMAIL: ${{ secrets.VISTABALAYAN_RESORT_EMAIL }}
+      VISTABALAYAN_TEST_PASSWORD: ${{ secrets.VISTABALAYAN_TEST_PASSWORD }}
+    steps:
+      - name: Check out source
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Verify required authenticated test secrets exist
+        shell: bash
+        run: |
+          set -euo pipefail
+          for name in \
+            VISTABALAYAN_OFFICER_EMAIL \
+            VISTABALAYAN_HOTEL_EMAIL \
+            VISTABALAYAN_RESORT_EMAIL \
+            VISTABALAYAN_TEST_PASSWORD; do
+            if [ -z "${!name:-}" ]; then
+              echo "Missing required repository secret: $name" >&2
+              exit 1
+            fi
+          done
+          echo "All required authenticated test secrets are configured."
+
+      - name: Install Playwright Chromium and WebKit
+        run: npx playwright install --with-deps chromium webkit
+
+      - name: Type-check
+        run: npx tsc --noEmit
+
+      - name: Build production bundle
+        run: npm run build
+
+      - name: Run axe accessibility tests
+        run: npm run test:a11y
+
+      - name: Run keyboard regression tests
+        run: npm run test:keyboard
+
+      - name: Run desktop, Android-profile, and iOS-WebKit-profile tests
+        run: npm run test:devices
+
+      - name: Upload Playwright report and test artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-report-${{ github.run_id }}
+          path: |
+            playwright-report/
+            test-results/
+          if-no-files-found: warn
+          retention-days: 14

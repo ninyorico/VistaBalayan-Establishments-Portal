@@ -1,5 +1,5 @@
 import {
-  describeError,
+  enforceOtpRateLimit,
   generateOtp,
   getSupabaseAdmin,
   normalizeEmail,
@@ -26,6 +26,7 @@ export default async function handler(req, res) {
       return sendJson(res, 400, { error: 'Full name is required.' });
     }
 
+    enforceOtpRateLimit(req, { email, purpose: 'staff_creation', action: 'send' });
     const supabaseAdmin = getSupabaseAdmin();
     const officer = await verifyOfficerToken(req, supabaseAdmin);
 
@@ -57,6 +58,6 @@ export default async function handler(req, res) {
     return sendJson(res, 200, { ok: true });
   } catch (error) {
     console.error('send-staff-otp failed', error);
-    return sendJson(res, 500, { error: describeError(error, 'Failed to send OTP.') });
+    return sendJson(res, error?.statusCode || 500, { error: error?.statusCode === 429 ? error.message : 'Failed to send OTP.' });
   }
 }

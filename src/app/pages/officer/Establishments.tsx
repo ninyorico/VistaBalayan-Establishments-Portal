@@ -1228,7 +1228,7 @@ export default function Establishments() {
             </div>
             <div className="p-6 border-t border-gray-100 flex justify-end gap-3 sticky bottom-0 bg-white rounded-b-2xl">
               <button onClick={() => setShowOnboardingModal(false)} className="px-5 py-2.5 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors font-medium text-gray-700" disabled={onboardingSaving}>Cancel</button>
-              <button onClick={onboardingStep === "form" ? handleCreateStaffWithEstablishment : handleVerifyOnboardingOtp} disabled={onboardingSaving} className="inline-flex items-center gap-2 px-5 py-2.5 bg-gradient-to-r from-[#1293B8] to-[#1CA7C9] text-white rounded-lg hover:shadow-lg hover:shadow-[#1CA7C9]/30 transition-all font-medium disabled:opacity-60 disabled:cursor-not-allowed">
+              <button onClick={onboardingStep === "form" ? handleCreateStaffWithEstablishment : handleVerifyOnboardingOtp} disabled={onboardingSaving} className="inline-flex items-center gap-2 px-5 py-2.5 bg-gradient-to-r from-[#0F4C75] to-[#0E5A72] text-white rounded-lg hover:shadow-lg hover:shadow-[#1CA7C9]/30 transition-all font-medium disabled:opacity-60 disabled:cursor-not-allowed">
                 {onboardingSaving && <Loader2 className="w-4 h-4 animate-spin" />}
                 {onboardingStep === "form" ? "Create Account" : "Confirm OTP and Create Account"}
               </button>
@@ -1324,7 +1324,7 @@ export default function Establishments() {
             </div>
             <div className="p-6 border-t border-gray-100 flex justify-end gap-3 sticky bottom-0 bg-white rounded-b-2xl">
               <button onClick={() => setShowEstablishmentModal(false)} className="px-5 py-2.5 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors font-medium text-gray-700">Cancel</button>
-              <button onClick={handleSaveEstablishment} className="px-5 py-2.5 bg-gradient-to-r from-[#1293B8] to-[#1CA7C9] text-white rounded-lg hover:shadow-lg hover:shadow-[#1CA7C9]/30 transition-all font-medium">{editingEstablishment ? "Update" : "Add"} Establishment</button>
+              <button onClick={handleSaveEstablishment} className="px-5 py-2.5 bg-gradient-to-r from-[#0F4C75] to-[#0E5A72] text-white rounded-lg hover:shadow-lg hover:shadow-[#1CA7C9]/30 transition-all font-medium">{editingEstablishment ? "Update" : "Add"} Establishment</button>
             </div>
           </div>
         </div>
@@ -1347,7 +1347,7 @@ export default function Establishments() {
             </div>
             <div className="p-6 border-t border-gray-100 flex justify-end gap-3 sticky bottom-0 bg-white rounded-b-2xl">
               <button onClick={() => setShowUserModal(false)} className="px-5 py-2.5 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors font-medium text-gray-700">Cancel</button>
-              <button onClick={handleSaveUser} className="px-5 py-2.5 bg-gradient-to-r from-[#1293B8] to-[#1CA7C9] text-white rounded-lg hover:shadow-lg hover:shadow-[#1CA7C9]/30 transition-all font-medium">{editingUser ? "Update" : "Add"} User</button>
+              <button onClick={handleSaveUser} className="px-5 py-2.5 bg-gradient-to-r from-[#0F4C75] to-[#0E5A72] text-white rounded-lg hover:shadow-lg hover:shadow-[#1CA7C9]/30 transition-all font-medium">{editingUser ? "Update" : "Add"} User</button>
             </div>
           </div>
         </div>

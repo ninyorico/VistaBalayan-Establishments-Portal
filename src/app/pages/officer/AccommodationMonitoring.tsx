@@ -5,6 +5,7 @@ import DataState from "../../components/DataState";
 import { supabase } from "../../../lib/supabase";
 import { datestampedFilename, downloadCsv } from "../../../lib/exportCsv";
 import { calculateAccommodationOccupancy, calculateAverageAccommodationOccupancy } from "../../../lib/reportMetrics";
+import { useDialogFocus } from "../../../hooks/useDialogFocus";
 
 interface AccommodationRecord {
   id: string;
@@ -31,6 +32,7 @@ export default function AccommodationMonitoring({ embedded = false }: { embedded
   const [establishmentTotalRooms, setEstablishmentTotalRooms] = useState(0);
   const [expandedEstablishments, setExpandedEstablishments] = useState<Set<string>>(new Set());
   const [selectedAccommodationGroupKey, setSelectedAccommodationGroupKey] = useState<string | null>(null);
+  const accommodationDialogRef = useRef<HTMLDivElement>(null);
   const tableTouchRef = useRef<{ x: number; y: number; lastX: number; axis: "x" | "y" | null }>({
     x: 0,
     y: 0,
@@ -351,6 +353,8 @@ export default function AccommodationMonitoring({ embedded = false }: { embedded
     [groupedRecords, selectedAccommodationGroupKey]
   );
 
+  useDialogFocus(Boolean(selectedAccommodationGroup), accommodationDialogRef, () => setSelectedAccommodationGroupKey(null));
+
   const monthLabel = specificMonth
     ? new Date(`${specificMonth}-01T00:00:00`).toLocaleString("default", { month: "long", year: "numeric" })
     : "all available months";
@@ -581,7 +585,20 @@ export default function AccommodationMonitoring({ embedded = false }: { embedded
                   const isExpanded = expandedEstablishments.has(group.key);
                   return (
                     <Fragment key={group.key}>
-                      <tr className="cursor-pointer hover:bg-gray-50" onClick={() => toggleEstablishment(group.key)}>
+                      <tr
+                        className="cursor-pointer hover:bg-gray-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-blue-600"
+                        role="button"
+                        tabIndex={0}
+                        aria-expanded={isExpanded}
+                        aria-label={`${isExpanded ? "Collapse" : "Expand"} ${group.establishment} accommodation records`}
+                        onClick={() => toggleEstablishment(group.key)}
+                        onKeyDown={(event) => {
+                          if (event.key === "Enter" || event.key === " ") {
+                            event.preventDefault();
+                            toggleEstablishment(group.key);
+                          }
+                        }}
+                      >
                         <td className="px-6 py-4 font-medium text-gray-900">
                           <div className="flex items-center gap-2">
                             {isExpanded ? <ChevronDown className="h-4 w-4 text-gray-500" /> : <ChevronRight className="h-4 w-4 text-gray-500" />}
@@ -670,12 +687,12 @@ export default function AccommodationMonitoring({ embedded = false }: { embedded
       </div>
 
       {selectedAccommodationGroup && (
-        <div className="fixed inset-0 z-[100] flex items-end justify-center bg-slate-950/60 p-0 backdrop-blur-sm sm:items-center sm:p-4" onClick={() => setSelectedAccommodationGroupKey(null)}>
+        <div ref={accommodationDialogRef} className="fixed inset-0 z-[100] flex items-end justify-center bg-slate-950/60 p-0 backdrop-blur-sm sm:items-center sm:p-4" role="dialog" aria-modal="true" aria-labelledby="accommodation-records-dialog-title" tabIndex={-1} onClick={() => setSelectedAccommodationGroupKey(null)}>
           <div className="max-h-[90dvh] w-full overflow-hidden rounded-t-2xl bg-white shadow-2xl sm:max-w-6xl sm:rounded-2xl" onClick={(event) => event.stopPropagation()}>
             <div className="flex items-start justify-between gap-4 border-b border-gray-200 bg-gray-50 px-4 py-4 sm:px-6">
               <div className="min-w-0">
                 <p className="text-xs font-semibold uppercase tracking-wider text-blue-600">Hotel accommodation records</p>
-                <h3 className="mt-1 truncate text-lg font-semibold text-gray-900 sm:text-xl">{selectedAccommodationGroup.establishment}</h3>
+                <h3 id="accommodation-records-dialog-title" className="mt-1 truncate text-lg font-semibold text-gray-900 sm:text-xl">{selectedAccommodationGroup.establishment}</h3>
                 <p className="mt-1 text-xs text-gray-600 sm:text-sm">{selectedAccommodationGroup.records.length} record(s) for {monthLabel}</p>
               </div>
               <button

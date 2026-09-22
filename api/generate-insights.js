@@ -1,3 +1,4 @@
+import crypto from 'node:crypto';
 import { GoogleGenerativeAI } from '@google/generative-ai';
 import { getBearerToken, getSupabaseAdmin, readBody, sendJson } from './_utils/emailjs.js';
 
@@ -94,7 +95,23 @@ const generate = async (model, data, scope) => {
   return { insights, anomalies };
 };
 
-const insertResults = async (supabaseAdmin, results, scope, establishmentId) => {
+const findCachedResults = async (supabaseAdmin, scope, establishmentId, requestId) => {
+  const query = supabaseAdmin
+    .from('ai_insights_cache')
+    .select('data, expires_at')
+    .contains('data', { request_id: requestId })
+    .gt('expires_at', new Date().toISOString())
+    .order('generated_at', { ascending: false })
+    .limit(1);
+  const scopedQuery = scope === 'establishment'
+    ? query.eq('establishment_id', establishmentId)
+    : query.is('establishment_id', null);
+  const { data, error } = await scopedQuery.maybeSingle();
+  if (error) throw new Error('Unable to load AI request status');
+  return data?.data?.results || null;
+};
+
+const insertResults = async (supabaseAdmin, results, scope, establishmentId, requestId) => {
   const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString();
   if (results.insights.length) {
     const rows = results.insights.map((item) => ({ ...item, model_name: MODEL_NAME, establishment_id: scope === 'establishment' ? establishmentId : null, status: 'active', expires_at: expiresAt }));
@@ -106,7 +123,7 @@ const insertResults = async (supabaseAdmin, results, scope, establishmentId) => 
     const { error } = await supabaseAdmin.from('ai_anomalies_cache').insert(rows);
     if (error) throw new Error('Unable to save generated anomalies');
   }
-  const { error: cacheError } = await supabaseAdmin.from('ai_insights_cache').insert({ insight_type: 'recommendations', establishment_id: scope === 'establishment' ? establishmentId : null, data: { insights: results.insights, scope }, generated_at: new Date().toISOString(), expires_at: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString() });
+  const { error: cacheError } = await supabaseAdmin.from('ai_insights_cache').insert({ insight_type: 'recommendations', establishment_id: scope === 'establishment' ? establishmentId : null, data: { insights: results.insights, anomalies: results.anomalies, scope, request_id: requestId, results }, generated_at: new Date().toISOString(), expires_at: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString() });
   if (cacheError) throw new Error('Unable to save generated insight cache');
 };
 
@@ -123,15 +140,19 @@ export default async function handler(req, res) {
     if (!rateLimit(userData.user.id)) return sendJson(res, 429, { error: 'Too many AI requests. Please try again later.' });
     const body = await readBody(req);
     const scope = body.scope === 'establishment' ? 'establishment' : body.scope === 'municipality' ? 'municipality' : null;
+    const requestId = String(body.request_id || '').trim() || crypto.randomUUID();
     if (!scope || (scope === 'municipality' && !isOfficer(profile)) || (scope === 'establishment' && !isStaff(profile))) return sendJson(res, 403, { error: 'You are not authorized for this AI scope' });
+    if (requestId.length > 100) return sendJson(res, 400, { error: 'Invalid AI request identifier' });
+    const cachedResults = await findCachedResults(supabaseAdmin, scope, profile.establishment_id, requestId);
+    if (cachedResults) return sendJson(res, 200, cachedResults);
     const apiKey = process.env.GEMINI_API_KEY;
     if (!apiKey) return sendJson(res, 503, { error: 'AI service is not configured' });
     const data = await getScopedData(supabaseAdmin, profile, scope);
     const results = await generate(new GoogleGenerativeAI(apiKey).getGenerativeModel({ model: MODEL_NAME }), data, scope);
-    await insertResults(supabaseAdmin, results, scope, profile.establishment_id);
+    await insertResults(supabaseAdmin, results, scope, profile.establishment_id, requestId);
     return sendJson(res, 200, results);
   } catch (error) {
     console.error('AI generation failed:', error instanceof Error ? error.message : 'unknown error');
-    return sendJson(res, 500, { error: 'AI generation failed. Please try again.' });
+    return sendJson(res, error?.statusCode || 500, { error: error?.statusCode === 400 ? error.message : 'AI generation failed. Please try again.' });
   }
 }

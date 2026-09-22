@@ -1,5 +1,6 @@
 import {
   consumeOtp,
+  enforceOtpRateLimit,
   findAuthUserByEmail,
   getSupabaseAdmin,
   normalizeEmail,
@@ -29,6 +30,7 @@ export default async function handler(req, res) {
       return sendJson(res, 400, { error: 'Password must be at least 8 characters.' });
     }
 
+    enforceOtpRateLimit(req, { email, purpose: 'staff_creation', action: 'verify' });
     const supabaseAdmin = getSupabaseAdmin();
     await verifyOfficerToken(req, supabaseAdmin);
     await consumeOtp(supabaseAdmin, { email, purpose: 'staff_creation', code });
@@ -68,6 +70,6 @@ export default async function handler(req, res) {
     return sendJson(res, 200, { ok: true, userId });
   } catch (error) {
     console.error('verify-staff-otp failed', error);
-    return sendJson(res, 500, { error: error instanceof Error ? error.message : 'Failed to verify OTP.' });
+    return sendJson(res, error?.statusCode || 500, { error: error?.statusCode === 401 ? 'Invalid or expired OTP.' : 'Failed to verify OTP.' });
   }
 }

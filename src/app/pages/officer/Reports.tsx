@@ -109,6 +109,7 @@ export default function Reports() {
   const fetchSubmissions = async () => {
     setLoading(true);
     
+    const { startDate, endDate } = getReportRange();
     const fetchAllReports = async (table: "visitor_reports" | "accommodation_reports") => {
       const rows: any[] = [];
       const pageSize = 1000;
@@ -117,6 +118,8 @@ export default function Reports() {
           .from(table)
           .select(`*, establishments!${table === "visitor_reports" ? "visitor_reports_establishment_id_fkey" : "accommodation_reports_establishment_id_fkey"} (name, type, dot_classification, total_rooms, ae_id, attraction_code)`)
           .order("created_at", { ascending: false })
+          .gte("report_date", startDate)
+          .lte("report_date", endDate)
           .range(offset, offset + pageSize - 1);
         if (error) throw error;
         rows.push(...(data || []));
@@ -325,7 +328,7 @@ export default function Reports() {
 
   useEffect(() => {
     fetchSubmissions();
-  }, []);
+  }, [filterType, selectedYear, selectedQuarter, selectedMonth, selectedWeek]);
 
   useEffect(() => {
     fetchChartData();

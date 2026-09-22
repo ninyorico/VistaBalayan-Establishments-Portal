@@ -242,7 +242,7 @@ const loadCachedData = async (estId: string) => {
           <p className="text-gray-600 mb-4">{error}</p>
           <button
             onClick={loadUserAndData}
-            className="px-4 py-2 bg-[#1CA7C9] text-white rounded-lg hover:bg-[#0F4C75] transition"
+            className="px-4 py-2 bg-[#0F4C75] text-white rounded-lg hover:bg-[#0F4C75] transition"
           >
             Try Again
           </button>

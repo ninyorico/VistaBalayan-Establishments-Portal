@@ -10,7 +10,7 @@ import {
   LogOut,
   Menu,
 } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 import NotificationCenter from "../components/NotificationCenter";
 import { useAuth } from "../../contexts/AuthContext";
@@ -29,6 +29,16 @@ export default function OfficerLayout() {
   const { profile, signOut } = useAuth();
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [profileDropdownOpen, setProfileDropdownOpen] = useState(false);
+
+  useEffect(() => {
+    const handleEscape = (event: KeyboardEvent) => {
+      if (event.key !== "Escape") return;
+      setSidebarOpen(false);
+      setProfileDropdownOpen(false);
+    };
+    document.addEventListener("keydown", handleEscape);
+    return () => document.removeEventListener("keydown", handleEscape);
+  }, []);
 
   const handleLogout = async () => {
     await signOut();
@@ -52,7 +62,9 @@ export default function OfficerLayout() {
     <div className="min-h-[100dvh] tourism-shell text-slate-950">
       {/* Mobile Overlay */}
       {sidebarOpen && (
-        <div
+        <button
+          type="button"
+          aria-label="Close navigation menu"
           className="fixed inset-0 bg-black/50 z-[45] lg:hidden"
           onClick={() => setSidebarOpen(false)}
         />
@@ -103,6 +115,8 @@ export default function OfficerLayout() {
           <div className="px-4 sm:px-6 py-4 flex items-center justify-between">
             <div className="flex items-center gap-4">
               <button
+                type="button"
+                aria-label={sidebarOpen ? "Close navigation menu" : "Open navigation menu"}
                 onClick={() => setSidebarOpen(!sidebarOpen)}
                 className="rounded-2xl bg-[#0E5A72] p-2.5 shadow-lg shadow-teal-950/15 transition-all duration-200 hover:bg-[#073B4C] lg:hidden"
               >
@@ -118,6 +132,8 @@ export default function OfficerLayout() {
 
               <div className="relative">
                 <button
+                  type="button"
+                  aria-label="Open account menu"
                   onClick={() => setProfileDropdownOpen(!profileDropdownOpen)}
                   className="flex items-center gap-2 rounded-2xl px-2 py-1.5 transition-colors hover:bg-slate-100 sm:gap-3"
                 >

@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate } from "react-router";
 import { Bell, CheckCheck, Clock, ExternalLink, FileText, Loader2, RefreshCw, Sparkles } from "lucide-react";
 import { supabase } from "../../lib/supabase";
@@ -101,6 +101,18 @@ export default function NotificationCenter({ role }: NotificationCenterProps) {
   const [dbNotifications, setDbNotifications] = useState<AppNotification[]>([]);
   const [systemNotifications, setSystemNotifications] = useState<AppNotification[]>([]);
   const [localReadIds, setLocalReadIds] = useState<Set<string>>(() => getLocalReadIds(user?.id));
+  const triggerRef = useRef<HTMLButtonElement>(null);
+
+  useEffect(() => {
+    if (!open) return;
+    const handleEscape = (event: KeyboardEvent) => {
+      if (event.key !== "Escape") return;
+      setOpen(false);
+      triggerRef.current?.focus();
+    };
+    document.addEventListener("keydown", handleEscape);
+    return () => document.removeEventListener("keydown", handleEscape);
+  }, [open]);
 
   useEffect(() => {
     setLocalReadIds(getLocalReadIds(user?.id));
@@ -388,6 +400,7 @@ export default function NotificationCenter({ role }: NotificationCenterProps) {
   return (
     <div className="relative">
       <button
+        ref={triggerRef}
         type="button"
         aria-label={`Notifications${unreadCount ? `, ${unreadCount} unread` : ""}`}
         onClick={() => setOpen((current) => !current)}

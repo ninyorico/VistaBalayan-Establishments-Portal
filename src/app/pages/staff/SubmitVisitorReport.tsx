@@ -373,7 +373,7 @@ const loadProfile = async () => {
           <p className="text-gray-600 mb-4">{error}</p>
           <button
             onClick={loadProfile}
-            className="px-4 py-2 bg-[#1CA7C9] text-white rounded-lg hover:bg-[#0F4C75] transition"
+            className="px-4 py-2 bg-[#0F4C75] text-white rounded-lg hover:bg-[#0F4C75] transition"
           >
             Try Again
           </button>
@@ -408,7 +408,7 @@ const loadProfile = async () => {
             <h3 className="text-lg font-semibold text-gray-900">Visitor Groups</h3>
             <p className="mt-1 text-sm text-gray-500">Enter each group once, then split its visitors by residence below.</p>
           </div>
-          <button onClick={addEntry} className="inline-flex w-full sm:w-auto items-center justify-center gap-2 px-3 py-2 bg-[#1CA7C9] text-white rounded-lg hover:bg-[#0F4C75] text-sm font-medium transition">
+          <button type="button" onClick={addEntry} className="inline-flex w-full sm:w-auto items-center justify-center gap-2 px-3 py-2 bg-[#0F4C75] text-white rounded-lg hover:bg-[#0F4C75] text-sm font-medium transition">
             <Plus className="w-4 h-4" /> Add Group
           </button>
         </div>
@@ -490,7 +490,7 @@ const loadProfile = async () => {
         <button onClick={handleSaveDraft} className="flex w-full sm:w-auto items-center justify-center gap-2 px-6 py-3 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200">
           <Save className="w-5 h-5" /> Save Draft
         </button>
-        <button onClick={handleSubmit} disabled={submitting} className="flex w-full sm:w-auto items-center justify-center gap-2 px-6 py-3 bg-[#1CA7C9] text-white rounded-lg hover:bg-[#0F4C75] disabled:cursor-not-allowed disabled:opacity-60">
+        <button onClick={handleSubmit} disabled={submitting} className="flex w-full sm:w-auto items-center justify-center gap-2 px-6 py-3 bg-[#0F4C75] text-white rounded-lg hover:bg-[#0F4C75] disabled:cursor-not-allowed disabled:opacity-60">
           <Send className="w-5 h-5" /> {submitting ? "Submitting..." : "Submit Resort Report"}
         </button>
       </div>

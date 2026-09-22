@@ -21,7 +21,14 @@ export const readBody = async (req) => {
   const chunks = [];
   for await (const chunk of req) chunks.push(Buffer.from(chunk));
   const raw = Buffer.concat(chunks).toString('utf8');
-  return raw ? JSON.parse(raw) : {};
+  if (!raw) return {};
+  try {
+    return JSON.parse(raw);
+  } catch {
+    const error = new Error('Invalid JSON request body.');
+    error.statusCode = 400;
+    throw error;
+  }
 };
 
 export const sendJson = json;
@@ -62,6 +69,33 @@ export const getSupabaseAdmin = () => {
 };
 
 export const normalizeEmail = (email = '') => String(email).trim().toLowerCase();
+
+const otpRateLimits = new Map();
+const OTP_RATE_WINDOW_MS = 10 * 60 * 1000;
+const OTP_RATE_LIMITS = { send: 3, verify: 10 };
+
+export const getClientIp = (req) => {
+  const forwarded = req.headers['x-forwarded-for'] || req.headers['X-Forwarded-For'] || '';
+  return String(forwarded).split(',')[0].trim() || req.socket?.remoteAddress || 'unknown';
+};
+
+export const enforceOtpRateLimit = (req, { email, purpose, action }) => {
+  const now = Date.now();
+  const key = `${action}:${purpose}:${normalizeEmail(email)}:${getClientIp(req)}`;
+  const current = otpRateLimits.get(key);
+  if (!current || now - current.startedAt >= OTP_RATE_WINDOW_MS) {
+    otpRateLimits.set(key, { startedAt: now, count: 1 });
+    return;
+  }
+  const limit = OTP_RATE_LIMITS[action] || 5;
+  if (current.count >= limit) {
+    const error = new Error('Too many OTP requests. Please try again later.');
+    error.statusCode = 429;
+    throw error;
+  }
+  current.count += 1;
+  otpRateLimits.set(key, current);
+};
 
 export const generateOtp = () => String(crypto.randomInt(100000, 1000000));
 
@@ -132,6 +166,7 @@ export const consumeOtp = async (supabaseAdmin, { email, purpose, code }) => {
   const normalizedEmail = normalizeEmail(email);
   const otpHash = hashOtp(normalizedEmail, code, purpose);
   const now = new Date().toISOString();
+  const maxAttempts = 5;
 
   const { data: row, error } = await supabaseAdmin
     .from('email_otps')
@@ -146,14 +181,39 @@ export const consumeOtp = async (supabaseAdmin, { email, purpose, code }) => {
     .maybeSingle();
 
   if (error) throw error;
-  if (!row) throw new Error('Invalid or expired OTP');
+  if (row) {
+    const { error: consumeError } = await supabaseAdmin
+      .from('email_otps')
+      .update({ consumed_at: now, attempts: Number(row.attempts || 0) + 1 })
+      .eq('id', row.id)
+      .is('consumed_at', null);
+    if (consumeError) throw consumeError;
+    return row;
+  }
 
-  await supabaseAdmin
+  // Count invalid attempts against the newest active OTP. The database migration
+  // should replace this read/update pair with an atomic RPC for multi-instance use.
+  const { data: latest, error: latestError } = await supabaseAdmin
     .from('email_otps')
-    .update({ consumed_at: now, attempts: Number(row.attempts || 0) + 1 })
-    .eq('id', row.id);
-
-  return row;
+    .select('id, attempts, expires_at')
+    .eq('email', normalizedEmail)
+    .eq('purpose', purpose)
+    .is('consumed_at', null)
+    .gt('expires_at', now)
+    .order('created_at', { ascending: false })
+    .limit(1)
+    .maybeSingle();
+  if (latestError) throw latestError;
+  if (latest) {
+    const attempts = Number(latest.attempts || 0) + 1;
+    const { error: attemptError } = await supabaseAdmin
+      .from('email_otps')
+      .update({ attempts, ...(attempts >= maxAttempts ? { consumed_at: now } : {}) })
+      .eq('id', latest.id)
+      .is('consumed_at', null);
+    if (attemptError) throw attemptError;
+  }
+  throw Object.assign(new Error('Invalid or expired OTP'), { statusCode: 401 });
 };
 
 export const findAuthUserByEmail = async (supabaseAdmin, email) => {

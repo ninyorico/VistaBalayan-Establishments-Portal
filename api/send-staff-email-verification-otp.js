@@ -1,5 +1,6 @@
 import {
   describeError,
+  enforceOtpRateLimit,
   generateOtp,
   getSupabaseAdmin,
   normalizeEmail,
@@ -43,6 +44,7 @@ export default async function handler(req, res) {
       return sendJson(res, 400, { error: 'Use a valid work email address.' });
     }
 
+    enforceOtpRateLimit(req, { email, purpose: 'email_verification', action: 'send' });
     const supabaseAdmin = getSupabaseAdmin();
     const { user } = await getActiveStaffFromRequest(req, supabaseAdmin);
 
@@ -62,7 +64,7 @@ export default async function handler(req, res) {
     const code = generateOtp();
     await storeOtp(supabaseAdmin, {
       email,
-      purpose: 'staff_creation',
+      purpose: 'email_verification',
       code,
       metadata: {
         flow: 'email_verification',

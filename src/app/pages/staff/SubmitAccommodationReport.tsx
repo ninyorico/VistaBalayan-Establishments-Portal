@@ -6,6 +6,7 @@ import { supabase } from "../../../lib/supabase";
 import { calculateAccommodationOccupancy } from "../../../lib/reportMetrics";
 import { canSubmitAccommodationReport } from "../../../lib/establishmentReportForms";
 import { DEFAULT_ROOM_CONFIG, getRoomConfigFromAmenities, normalizeRoomConfig, setRoomConfigInAmenities, type EstablishmentRoomConfig } from "../../../lib/establishmentRoomConfig";
+import { useDialogFocus } from "../../../hooks/useDialogFocus";
 
 interface RoomOccupancy {
   roomType: string;
@@ -38,6 +39,8 @@ export default function SubmitAccommodationReport() {
   const [error, setError] = useState<string | null>(null);
   const [establishmentName, setEstablishmentName] = useState("Loading...");
   const [showRoomSetup, setShowRoomSetup] = useState(false);
+  const roomSetupTriggerRef = useRef<HTMLButtonElement>(null);
+  const roomDialogRef = useRef<HTMLDivElement>(null);
   const [tempRoomConfig, setTempRoomConfig] = useState<EstablishmentRoomConfig[]>(DEFAULT_ROOM_CONFIG);
   const [roomTypes, setRoomTypes] = useState<EstablishmentRoomConfig[]>(DEFAULT_ROOM_CONFIG);
   const [establishmentAmenities, setEstablishmentAmenities] = useState<string>("");
@@ -102,6 +105,8 @@ export default function SubmitAccommodationReport() {
     return `${year}-${month}-${day}`;
   };
 
+  useDialogFocus(showRoomSetup, roomDialogRef, () => setShowRoomSetup(false));
+
   const [reportDate, setReportDate] = useState(getTodayDate());
 
   useEffect(() => {
@@ -162,7 +167,7 @@ export default function SubmitAccommodationReport() {
 
     setEstablishmentAmenities(typeof est.amenities === "string" ? est.amenities : "");
     const officerRoomConfig = getRoomConfigFromAmenities(est.amenities);
-    const effectiveRoomConfig = normalizeRoomConfig(officerRoomConfig);
+    const effectiveRoomConfig = expandRoomConfig(normalizeRoomConfig(officerRoomConfig));
     setRoomTypes(effectiveRoomConfig);
     setTempRoomConfig(effectiveRoomConfig);
     const previousNightRoomData = await loadPreviousNightGuests(
@@ -176,17 +181,29 @@ export default function SubmitAccommodationReport() {
     setLoadingProfile(false);
   };
 
+  const expandRoomConfig = (rooms: EstablishmentRoomConfig[]) => {
+    let nextRoomNumber = 1;
+    return rooms.flatMap((room) => {
+      const count = Math.max(0, room.count || 0);
+      return Array.from({ length: count }, () => ({
+        type: String(nextRoomNumber++),
+        code: room.code,
+        count: 1,
+      }));
+    });
+  };
+
   const buildRoomData = (rooms = roomTypes) =>
-    rooms.flatMap((room) => Array.from({ length: room.count ?? 0 }, (_, index) => ({
-      roomType: room.type,
-      roomCode: `${room.code}-${index + 1}`,
+    rooms.map((room) => ({
+      roomType: room.code,
+      roomCode: `${room.code}-${room.type}`,
       numberOfRooms: 1,
       occupied: 0,
       continuingGuests: 0,
       checkIns: 0,
       guestNights: 0,
       isNewGuest: false,
-    })));
+    }));
 
   const getPreviousDate = (date: string) => {
     const previous = new Date(`${date}T00:00:00`);
@@ -272,10 +289,10 @@ export default function SubmitAccommodationReport() {
   };
 
   const addRoomConfigRow = () => {
-    setTempRoomConfig((rooms) => [
-      ...rooms,
-      { type: "", code: `R${rooms.length + 1}`, count: 0 },
-    ]);
+    setTempRoomConfig((rooms) => {
+      const nextRoomNumber = rooms.reduce((max, room) => Math.max(max, Number.parseInt(room.type, 10) || 0), 0) + 1;
+      return [...rooms, { type: String(nextRoomNumber), code: "", count: 1 }];
+    });
   };
 
   const removeRoomConfigRow = (index: number) => {
@@ -283,17 +300,22 @@ export default function SubmitAccommodationReport() {
   };
 
   const saveRoomConfiguration = async () => {
-    const config = normalizeRoomConfig(tempRoomConfig);
-    const duplicatedCode = config.find((room, index) =>
-      config.some((other, otherIndex) => otherIndex !== index && other.code === room.code)
-    );
+    const hasMissingCode = tempRoomConfig.some((room) => !String(room.code || "").trim());
+    const config = normalizeRoomConfig(tempRoomConfig).map((room) => ({ ...room, count: 1 }));
+    const duplicatedName = config.find((room, index) => config.some((other, otherIndex) => otherIndex !== index && other.type === room.type));
 
-    if (duplicatedCode) {
-      toast.error(`Room type code ${duplicatedCode.code} is duplicated. Please use unique codes.`);
+    if (hasMissingCode) {
+      const missingRoom = tempRoomConfig.find((room) => !String(room.code || "").trim());
+      toast.error(`Enter a room type code for room ${missingRoom?.type || "this room"}.`);
       return;
     }
 
-    const nextTotalRooms = config.reduce((sum, room) => sum + Number(room.count || 0), 0);
+    if (duplicatedName) {
+      toast.error(`Room name ${duplicatedName.type} is duplicated. Please use a unique room name.`);
+      return;
+    }
+
+    const nextTotalRooms = config.length;
     const nextAmenities = setRoomConfigInAmenities(establishmentAmenities, config);
 
     if (profile?.establishment_id) {
@@ -435,6 +457,22 @@ export default function SubmitAccommodationReport() {
     }
 
 
+    const roomCodes = new Set<string>();
+    const invalidRoom = roomData.find((room) => {
+      const roomCode = String(room.roomCode || "").trim();
+      const rooms = Number(room.numberOfRooms || 0);
+      const occupied = Number(getAutomaticallyOccupiedRooms(room) || 0);
+      const checkIns = Number(room.checkIns || 0);
+      const guestNights = Number(room.guestNights || 0);
+      if (!roomCode || roomCodes.has(roomCode)) return true;
+      roomCodes.add(roomCode);
+      return rooms <= 0 || occupied < 0 || occupied > rooms || checkIns < 0 || guestNights < checkIns;
+    });
+    if (invalidRoom) {
+      toast.error("Each room must have a unique code, valid room count, and consistent occupancy values");
+      return;
+    }
+
     setSubmitting(true);
 
     try {
@@ -504,7 +542,7 @@ export default function SubmitAccommodationReport() {
           <p className="text-gray-600 mb-4">{error}</p>
           <button
             onClick={loadProfile}
-            className="px-4 py-2 bg-[#1CA7C9] text-white rounded-lg hover:bg-[#0F4C75] transition"
+            className="px-4 py-2 bg-[#0F4C75] text-white rounded-lg hover:bg-[#0F4C75] transition"
           >
             Try Again
           </button>
@@ -525,6 +563,9 @@ export default function SubmitAccommodationReport() {
             </p>
         </div>
         <button
+          ref={roomSetupTriggerRef}
+          type="button"
+          aria-label="Configure Rooms"
           onClick={() => setShowRoomSetup(true)}
           className="flex items-center justify-center gap-2 px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition font-medium"
         >
@@ -536,10 +577,10 @@ export default function SubmitAccommodationReport() {
 
       {/* Room Setup Modal */}
       {showRoomSetup && (
-        <div className="fixed inset-0 z-50 flex items-end justify-center overflow-hidden bg-black bg-opacity-50 p-2 sm:items-center sm:p-4" data-room-config-mobile-scroll="body-owned">
+        <div ref={roomDialogRef} className="fixed inset-0 z-50 flex items-end justify-center overflow-hidden bg-black bg-opacity-50 p-2 sm:items-center sm:p-4" role="dialog" aria-modal="true" aria-labelledby="room-configuration-title" tabIndex={-1} data-room-config-mobile-scroll="body-owned">
           <div className="flex max-h-[calc(100dvh-1rem)] w-full max-w-2xl flex-col overflow-hidden rounded-t-2xl bg-white shadow-xl sm:max-h-[92vh] sm:rounded-lg">
             <div className="shrink-0 border-b border-gray-200 p-4 sm:p-6">
-              <h2 className="text-xl sm:text-2xl font-bold text-gray-900">Room Configuration</h2>
+              <h2 id="room-configuration-title" className="text-xl sm:text-2xl font-bold text-gray-900">Room Configuration</h2>
               <p className="text-gray-600 mt-1">
                 Set each room name, room type/code, and number of rooms. This will be saved for future reports.
               </p>
@@ -558,7 +599,7 @@ export default function SubmitAccommodationReport() {
               </div>
               <div className="space-y-4">
                 {tempRoomConfig.map((room, index) => (
-                  <div key={`${room.code}-${index}`} className="grid grid-cols-1 gap-3 rounded-lg border border-gray-200 p-4 sm:grid-cols-[1fr_130px_110px_auto] sm:items-end">
+                  <div key={`${room.type}-${room.code}-${index}`} className="grid grid-cols-1 gap-3 rounded-lg border border-gray-200 p-4 sm:grid-cols-[1fr_1fr_auto] sm:items-end">
                     <div className="min-w-0">
                       <label className="mb-1 block text-sm font-medium text-gray-700">Room Name</label>
                       <input
@@ -566,29 +607,17 @@ export default function SubmitAccommodationReport() {
                         value={room.type}
                         onChange={(e) => updateTempRoomConfig(index, "type", e.target.value)}
                         className="block w-full min-w-0 rounded-lg border border-gray-300 px-3 py-2 text-sm"
-                        placeholder="e.g. Deluxe"
+                        placeholder="1"
                       />
                     </div>
                     <div className="min-w-0">
-                      <label className="mb-1 block text-sm font-medium text-gray-700">Room Type</label>
+                      <label className="mb-1 block text-sm font-medium text-gray-700">Room Type Code</label>
                       <input
                         type="text"
                         value={room.code}
                         onChange={(e) => updateTempRoomConfig(index, "code", e.target.value)}
                         className="block w-full min-w-0 rounded-lg border border-gray-300 px-3 py-2 text-sm uppercase"
-                        placeholder="Code"
-                      />
-                    </div>
-                    <div className="min-w-0">
-                      <label className="mb-1 block text-sm font-medium text-gray-700">Rooms</label>
-                                            <input
-                                              type="text"
-                        inputMode="numeric"
-                        pattern="[0-9]*"
-                        value={numericInputValue(room.count || 0)}
-                        onChange={(e) => updateTempRoomConfig(index, "count", e.target.value)}
-                        className="block w-full min-w-0 rounded-lg border border-gray-300 px-3 py-2 text-sm"
-                        placeholder="0"
+                        placeholder="D = Deluxe"
                       />
                     </div>
                     <button
@@ -603,13 +632,6 @@ export default function SubmitAccommodationReport() {
                   </div>
                 ))}
               </div>
-
-              <div className="mt-6 p-4 bg-blue-50 border border-blue-200 rounded-lg">
-                <p className="text-sm text-blue-800">
-                  <strong>Total Rooms:</strong>{" "}
-                  {tempRoomConfig.reduce((sum, room) => sum + Number(room.count || 0), 0)}
-                </p>
-              </div>
             </div>
 
             <div className="shrink-0 p-4 sm:p-6 border-t border-gray-200 grid grid-cols-1 gap-3 sm:flex sm:justify-end">
@@ -621,7 +643,7 @@ export default function SubmitAccommodationReport() {
               </button>
               <button
                 onClick={saveRoomConfiguration}
-                className="px-6 py-2 bg-[#1CA7C9] text-white rounded-lg hover:bg-[#0F4C75]"
+                className="px-6 py-2 bg-[#0F4C75] text-white rounded-lg hover:bg-[#0F4C75]"
               >
                 Save Configuration
               </button>
@@ -729,7 +751,7 @@ export default function SubmitAccommodationReport() {
         <button onClick={handleSaveDraft} className="flex w-full sm:w-auto items-center justify-center gap-2 px-6 py-3 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200">
           <Save className="w-5 h-5" /> Save Draft
         </button>
-        <button onClick={handleSubmit} disabled={submitting} className="flex w-full sm:w-auto items-center justify-center gap-2 px-6 py-3 bg-[#1CA7C9] text-white rounded-lg hover:bg-[#0F4C75] disabled:cursor-not-allowed disabled:opacity-60">
+        <button onClick={handleSubmit} disabled={submitting} className="flex w-full sm:w-auto items-center justify-center gap-2 px-6 py-3 bg-[#0F4C75] text-white rounded-lg hover:bg-[#0F4C75] disabled:cursor-not-allowed disabled:opacity-60">
           <Send className="w-5 h-5" /> {submitting ? "Submitting..." : "Submit Hotel Report"}
         </button>
       </div>
