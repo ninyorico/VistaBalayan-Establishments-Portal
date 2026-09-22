@@ -70,6 +70,7 @@ jobs:
         run: npm run test:keyboard
 
       - name: Run desktop, Android-profile, and iOS-WebKit-profile tests
+        if: always()
         run: npm run test:devices
 
       - name: Upload Playwright report and test artifacts
