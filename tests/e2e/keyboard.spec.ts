@@ -1,20 +1,20 @@
 import { expect } from "@playwright/test";
-import { test, loginAs } from "./accessibility-helpers";
+import { test, gotoAuthenticated, loginAs } from "./accessibility-helpers";
 
 test("keyboard: mobile navigation opens and Escape closes it", async ({ authenticatedPage }) => {
-  await authenticatedPage.goto("/officer");
+  await gotoAuthenticated(authenticatedPage, "/officer");
   const open = authenticatedPage.getByRole("button", { name: "Open navigation menu" });
   await open.focus();
   await authenticatedPage.keyboard.press("Enter");
-  await expect(authenticatedPage.getByRole("button", { name: "Close navigation menu" })).toBeVisible();
+  await expect(authenticatedPage.locator('button[aria-label="Close navigation menu"]:visible')).toHaveCount(1);
   await expect(authenticatedPage.getByRole("link", { name: "Report Monitoring" })).toBeVisible();
   await authenticatedPage.keyboard.press("Escape");
   await expect(authenticatedPage.getByRole("button", { name: "Open navigation menu" })).toBeVisible();
-  await expect(authenticatedPage.getByRole("button", { name: "Close navigation menu" })).toHaveCount(0);
+  await expect(authenticatedPage.locator('button[aria-label="Close navigation menu"]:visible')).toHaveCount(0);
 });
 
 test("keyboard: account menu opens with Enter and closes with Escape", async ({ authenticatedPage }) => {
-  await authenticatedPage.goto("/officer");
+  await gotoAuthenticated(authenticatedPage, "/officer");
   const account = authenticatedPage.getByRole("button", { name: "Open account menu" });
   await account.focus();
   await authenticatedPage.keyboard.press("Enter");
@@ -25,7 +25,7 @@ test("keyboard: account menu opens with Enter and closes with Escape", async ({ 
 });
 
 test("keyboard: notification center opens, closes, and restores focus", async ({ authenticatedPage }) => {
-  await authenticatedPage.goto("/officer");
+  await gotoAuthenticated(authenticatedPage, "/officer");
   const notificationButton = authenticatedPage.getByRole("button", { name: /notifications/i });
   await notificationButton.focus();
   await authenticatedPage.keyboard.press("Enter");
@@ -36,7 +36,7 @@ test("keyboard: notification center opens, closes, and restores focus", async ({
 });
 
 test("keyboard: report table exposes focusable controls and ordered tab stops", async ({ authenticatedPage }) => {
-  await authenticatedPage.goto("/officer/report-monitoring");
+  await gotoAuthenticated(authenticatedPage, "/officer/report-monitoring");
   const table = authenticatedPage.getByRole("table").first();
   await expect(table).toBeVisible();
   const controls = table.locator("button, a, input, select, textarea");
@@ -48,7 +48,7 @@ test("keyboard: report table exposes focusable controls and ordered tab stops", 
 });
 
 test("keyboard: monitoring rows activate with Enter and dialogs trap focus", async ({ authenticatedPage }) => {
-  await authenticatedPage.goto("/officer/report-monitoring");
+  await gotoAuthenticated(authenticatedPage, "/officer/report-monitoring");
   const row = authenticatedPage.locator('tr[role="button"]').first();
   if (await row.count() === 0) test.skip(true, "No populated monitoring row is available in the current test dataset.");
   await row.focus();

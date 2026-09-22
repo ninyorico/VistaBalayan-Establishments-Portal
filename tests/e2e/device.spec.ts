@@ -1,5 +1,5 @@
 import { expect } from "@playwright/test";
-import { test, expectNoSeriousA11yViolations, loginAs } from "./accessibility-helpers";
+import { test, expectNoSeriousA11yViolations, gotoAuthenticated, loginAs } from "./accessibility-helpers";
 
 const deviceProjects = new Set(["desktop-chromium", "android-chrome", "ios-safari-home-screen"]);
 
@@ -9,7 +9,7 @@ function requireDeviceProject(projectName: string) {
 
 test("device smoke: authenticated officer dashboard remains usable", async ({ authenticatedPage }, testInfo) => {
   requireDeviceProject(testInfo.project.name);
-  await authenticatedPage.goto("/officer");
+  await gotoAuthenticated(authenticatedPage, "/officer");
   await expect(authenticatedPage.locator("main")).toBeVisible();
   const dimensions = await authenticatedPage.evaluate(() => ({
     width: window.innerWidth,
@@ -29,7 +29,7 @@ test("device smoke: authenticated officer dashboard remains usable", async ({ au
 
 test("device smoke: navigation and notifications work without pointer-only interaction", async ({ authenticatedPage }, testInfo) => {
   requireDeviceProject(testInfo.project.name);
-  await authenticatedPage.goto("/officer");
+  await gotoAuthenticated(authenticatedPage, "/officer");
   const menu = authenticatedPage.getByRole("button", { name: /navigation menu/i });
   if (await menu.isVisible()) {
     await menu.tap().catch(async () => menu.click());

@@ -36,6 +36,13 @@ export async function loginAs(page: Page, emailVariable: string) {
   await expect(page).toHaveURL(/\/(staff|officer)(?:$|\/)/);
 }
 
+export async function gotoAuthenticated(page: Page, route: string, emailVariable = "VISTABALAYAN_OFFICER_EMAIL") {
+  await page.goto(route);
+  if (new URL(page.url()).pathname === "/admin/login") {
+    await loginAs(page, emailVariable);
+    await page.goto(route);
+  }
+}
 export const test = base.extend<{ authenticatedPage: Page }>({
   authenticatedPage: async ({ page }, use, testInfo) => {
     const role = testInfo.project.name === "mobile" ? "VISTABALAYAN_OFFICER_EMAIL" : "VISTABALAYAN_OFFICER_EMAIL";
