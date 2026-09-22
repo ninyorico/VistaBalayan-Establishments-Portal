@@ -3,6 +3,7 @@ import { AlertTriangle, Loader2 } from 'lucide-react'
 import { supabase } from '../../../lib/supabase'
 import { geminiService } from '../../../services/geminiService'
 import { calculateAverageAccommodationOccupancy } from '../../../lib/reportMetrics'
+import { OFFICIAL_REPORT_STATUS } from '../../../lib/reporting'
 import {
   AiAnomalyCard,
   AiEmptyState,
@@ -168,7 +169,7 @@ const loadCachedData = async (estId: string) => {
         .from('visitor_reports')
         .select('report_date, total_guests, residence_type')
         .eq('establishment_id', establishmentId)
-        .eq('status', 'approved')
+        .eq('status', OFFICIAL_REPORT_STATUS)
         .order('report_date', { ascending: false })
         .limit(200)
 
@@ -181,7 +182,7 @@ const loadCachedData = async (estId: string) => {
         .from('accommodation_reports')
         .select('id, report_date, total_rooms, total_occupied_rooms')
         .eq('establishment_id', establishmentId)
-        .eq('status', 'approved')
+        .eq('status', OFFICIAL_REPORT_STATUS)
 
       if (accError) {
         console.error('Accommodation data error:', accError)

@@ -314,7 +314,7 @@ export default function StaffDashboard() {
               <div>
                 <p className="font-semibold text-[#0B2530]">Daily reports keep analytics reliable</p>
                 <p className="mt-1 text-sm leading-6 text-[#5D6F73]">
-                  Submit resort and hotel data after business close. The tourism office uses approved records for reports, analytics, and AI insights.
+                  Submit resort and hotel data after business close. The tourism office uses submitted records for reports, analytics, and AI insights.
                 </p>
               </div>
             </div>

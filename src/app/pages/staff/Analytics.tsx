@@ -15,6 +15,7 @@ import {
 import { supabase } from "../../../lib/supabase";
 import { calculateAccommodationOccupancy, calculateAverageAccommodationOccupancy } from "../../../lib/reportMetrics";
 import { canSubmitAccommodationReport, canSubmitVisitorReport } from "../../../lib/establishmentReportForms";
+import { OFFICIAL_REPORT_STATUS } from "../../../lib/reporting";
 import { LoadingState, MetricCard } from "../../components/vista/PolishedShell";
 import DataState from "../../components/DataState";
 
@@ -130,16 +131,16 @@ export default function Analytics() {
 
   const showVisitorAnalytics = canSubmitVisitorReport(establishment);
   const showAccommodationAnalytics = canSubmitAccommodationReport(establishment);
-  const approvedVisitorReports = visitorReports.filter((report) => (report.status || "pending") === "approved");
-  const approvedAccommodationReports = accommodationReports.filter((report) => (report.status || "pending") === "approved");
+  const submittedVisitorReports = visitorReports.filter((report) => (report.status || "pending") === OFFICIAL_REPORT_STATUS);
+  const submittedAccommodationReports = accommodationReports.filter((report) => (report.status || "pending") === OFFICIAL_REPORT_STATUS);
 
   const currentMonthKey = new Date().toISOString().slice(0, 7);
-  const totalVisitors = approvedVisitorReports.reduce((sum, report) => sum + toNumber(report.total_guests), 0);
-  const currentMonthVisitors = approvedVisitorReports
+  const totalVisitors = submittedVisitorReports.reduce((sum, report) => sum + toNumber(report.total_guests), 0);
+  const currentMonthVisitors = submittedVisitorReports
     .filter((report) => (report.report_date || report.created_at || "").startsWith(currentMonthKey))
     .reduce((sum, report) => sum + toNumber(report.total_guests), 0);
-  const totalMale = approvedVisitorReports.reduce((sum, report) => sum + toNumber(report.total_male), 0);
-  const totalFemale = approvedVisitorReports.reduce((sum, report) => sum + toNumber(report.total_female), 0);
+  const totalMale = submittedVisitorReports.reduce((sum, report) => sum + toNumber(report.total_male), 0);
+  const totalFemale = submittedVisitorReports.reduce((sum, report) => sum + toNumber(report.total_female), 0);
   const totalDemographics = totalMale + totalFemale;
   const demographicKpi =
     totalDemographics === 0
@@ -151,7 +152,7 @@ export default function Analytics() {
   const visitorTrendData = useMemo(() => {
     const monthMap = new Map<string, { month: string; visitors: number; male: number; female: number }>();
 
-    approvedVisitorReports.forEach((report) => {
+    submittedVisitorReports.forEach((report) => {
       const key = (report.report_date || report.created_at || "No date").slice(0, 7);
       const current = monthMap.get(key) || { month: monthLabel(report.report_date || report.created_at), visitors: 0, male: 0, female: 0 };
       current.visitors += toNumber(report.total_guests);
@@ -163,35 +164,35 @@ export default function Analytics() {
     return Array.from(monthMap.entries())
       .sort(([a], [b]) => a.localeCompare(b))
       .map(([, value]) => value);
-  }, [approvedVisitorReports]);
+  }, [submittedVisitorReports]);
 
   const residenceData = useMemo(() => {
     const residenceMap = new Map<string, number>();
 
-    approvedVisitorReports.forEach((report) => {
+    submittedVisitorReports.forEach((report) => {
       const label = report.residence_type || "Unspecified";
       residenceMap.set(label, (residenceMap.get(label) || 0) + toNumber(report.total_guests));
     });
 
     return Array.from(residenceMap.entries()).map(([residence, visitors]) => ({ residence, visitors }));
-  }, [approvedVisitorReports]);
+  }, [submittedVisitorReports]);
 
   const bestVisitorMonth = visitorTrendData.reduce(
     (best, current) => (current.visitors > best.visitors ? current : best),
     { month: "No data", visitors: 0, male: 0, female: 0 }
   );
 
-  const currentMonthAccommodationReports = approvedAccommodationReports.filter((report) =>
+  const currentMonthAccommodationReports = submittedAccommodationReports.filter((report) =>
     (report.report_date || "").startsWith(currentMonthKey)
   );
   const monthlyAverageOccupancy = calculateAverageAccommodationOccupancy(currentMonthAccommodationReports);
-  const totalCheckIns = approvedAccommodationReports.reduce((sum, report) => sum + toNumber(report.total_check_ins), 0);
-  const totalGuestNights = approvedAccommodationReports.reduce((sum, report) => sum + toNumber(report.total_guest_nights), 0);
+  const totalCheckIns = submittedAccommodationReports.reduce((sum, report) => sum + toNumber(report.total_check_ins), 0);
+  const totalGuestNights = submittedAccommodationReports.reduce((sum, report) => sum + toNumber(report.total_guest_nights), 0);
 
   const accommodationTrendData = useMemo(() => {
     const monthMap = new Map<string, { month: string; checkIns: number; guestNights: number; occupancyRates: number[] }>();
 
-    approvedAccommodationReports.forEach((report) => {
+    submittedAccommodationReports.forEach((report) => {
       const key = (report.report_date || "No date").slice(0, 7);
       const current = monthMap.get(key) || { month: monthLabel(report.report_date), checkIns: 0, guestNights: 0, occupancyRates: [] };
       current.checkIns += toNumber(report.total_check_ins);
@@ -213,7 +214,7 @@ export default function Analytics() {
           ? Number((value.occupancyRates.reduce((sum, rate) => sum + rate, 0) / value.occupancyRates.length).toFixed(1))
           : 0,
       }));
-  }, [approvedAccommodationReports]);
+  }, [submittedAccommodationReports]);
 
   const bestAccommodationMonth = accommodationTrendData.reduce(
     (best, current) => (current.checkIns > best.checkIns ? current : best),
@@ -237,14 +238,14 @@ export default function Analytics() {
       <div>
         <h1 className="text-3xl font-bold text-gray-900">Establishment Analytics</h1>
         <p className="mt-1 text-gray-600">
-          Track {establishment?.name || "your establishment"} performance from approved submitted reports.
+          Track {establishment?.name || "your establishment"} performance from submitted reports.
         </p>
       </div>
 
       {showVisitorAnalytics && (
         <>
           <div className="grid grid-cols-1 gap-6 md:grid-cols-3">
-            <MetricCard label="Visitor Count" value={totalVisitors.toLocaleString()} helper="approved visitor reports" icon={UsersRound} tone="bg-emerald-50 text-emerald-700 ring-emerald-100" />
+            <MetricCard label="Visitor Count" value={totalVisitors.toLocaleString()} helper="submitted visitor reports" icon={UsersRound} tone="bg-emerald-50 text-emerald-700 ring-emerald-100" />
             <MetricCard label="Monthly Arrivals" value={currentMonthVisitors.toLocaleString()} helper="current month visitors" icon={Calendar} tone="bg-sky-50 text-sky-700 ring-sky-100" />
             <MetricCard label="Demographics" value={demographicKpi} helper={`${totalMale.toLocaleString()} male · ${totalFemale.toLocaleString()} female`} icon={PieChart} tone="bg-violet-50 text-violet-700 ring-violet-100" />
           </div>
@@ -311,9 +312,9 @@ export default function Analytics() {
       {showAccommodationAnalytics && (
         <>
           <div className="grid grid-cols-1 gap-6 md:grid-cols-3">
-            <MetricCard label="Monthly Average Occupancy Rate" value={`${monthlyAverageOccupancy.toFixed(1)}%`} helper="current month approved hotel reports" icon={Percent} tone="bg-violet-50 text-violet-700 ring-violet-100" />
-            <MetricCard label="Total Check-ins" value={totalCheckIns.toLocaleString()} helper="approved accommodation reports" icon={UsersRound} tone="bg-emerald-50 text-emerald-700 ring-emerald-100" />
-            <MetricCard label="Guest Nights" value={totalGuestNights.toLocaleString()} helper="approved accommodation reports" icon={TrendingUp} tone="bg-sky-50 text-sky-700 ring-sky-100" />
+            <MetricCard label="Monthly Average Occupancy Rate" value={`${monthlyAverageOccupancy.toFixed(1)}%`} helper="current month submitted hotel reports" icon={Percent} tone="bg-violet-50 text-violet-700 ring-violet-100" />
+            <MetricCard label="Total Check-ins" value={totalCheckIns.toLocaleString()} helper="submitted accommodation reports" icon={UsersRound} tone="bg-emerald-50 text-emerald-700 ring-emerald-100" />
+            <MetricCard label="Guest Nights" value={totalGuestNights.toLocaleString()} helper="submitted accommodation reports" icon={TrendingUp} tone="bg-sky-50 text-sky-700 ring-sky-100" />
           </div>
 
           <div className="rounded-lg border border-gray-200 bg-white p-6 shadow-sm">

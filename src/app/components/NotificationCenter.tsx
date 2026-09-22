@@ -3,6 +3,7 @@ import { useNavigate } from "react-router";
 import { Bell, CheckCheck, Clock, ExternalLink, FileText, Loader2, RefreshCw, Sparkles } from "lucide-react";
 import { supabase } from "../../lib/supabase";
 import { useAuth } from "../../contexts/AuthContext";
+import { OFFICIAL_REPORT_STATUS } from "../../lib/reporting";
 
 type NotificationCenterProps = {
   role: "municipal_officer" | "establishment_staff";
@@ -263,17 +264,17 @@ export default function NotificationCenter({ role }: NotificationCenterProps) {
     } else {
       const canSubmitAccommodation = Boolean(profile?.establishment_id);
       if (profile?.establishment_id) {
-        const [pendingVisitor, pendingAccommodation, approvedVisitor, approvedAccommodation, onHoldVisitor, onHoldAccommodation] = await Promise.all([
+        const [pendingVisitor, pendingAccommodation, submittedVisitor, submittedAccommodation, onHoldVisitor, onHoldAccommodation] = await Promise.all([
           supabase.from("visitor_reports").select("id,created_at", { count: "exact" }).eq("establishment_id", profile.establishment_id).eq("status", "pending").order("created_at", { ascending: false }).limit(1),
           supabase.from("accommodation_reports").select("id,created_at", { count: "exact" }).eq("establishment_id", profile.establishment_id).eq("status", "pending").order("created_at", { ascending: false }).limit(1),
-          supabase.from("visitor_reports").select("id,created_at", { count: "exact" }).eq("establishment_id", profile.establishment_id).eq("status", "approved").gte("created_at", monthStart).order("created_at", { ascending: false }).limit(1),
-          supabase.from("accommodation_reports").select("id,created_at", { count: "exact" }).eq("establishment_id", profile.establishment_id).eq("status", "approved").gte("created_at", monthStart).order("created_at", { ascending: false }).limit(1),
+          supabase.from("visitor_reports").select("id,created_at", { count: "exact" }).eq("establishment_id", profile.establishment_id).eq("status", OFFICIAL_REPORT_STATUS).gte("created_at", monthStart).order("created_at", { ascending: false }).limit(1),
+          supabase.from("accommodation_reports").select("id,created_at", { count: "exact" }).eq("establishment_id", profile.establishment_id).eq("status", OFFICIAL_REPORT_STATUS).gte("created_at", monthStart).order("created_at", { ascending: false }).limit(1),
           supabase.from("visitor_reports").select("id,created_at", { count: "exact" }).eq("establishment_id", profile.establishment_id).eq("status", "on_hold").order("created_at", { ascending: false }).limit(1),
           supabase.from("accommodation_reports").select("id,created_at", { count: "exact" }).eq("establishment_id", profile.establishment_id).eq("status", "on_hold").order("created_at", { ascending: false }).limit(1),
         ]);
 
         const pendingTotal = countOf(pendingVisitor, pendingAccommodation);
-        const approvedTotal = countOf(approvedVisitor, approvedAccommodation);
+        const submittedTotal = countOf(submittedVisitor, submittedAccommodation);
         const onHoldTotal = countOf(onHoldVisitor, onHoldAccommodation);
         if (pendingTotal > 0) {
           dynamic.push({
@@ -299,15 +300,15 @@ export default function NotificationCenter({ role }: NotificationCenterProps) {
             isRead: false,
           });
         }
-        if (approvedTotal > 0) {
+        if (submittedTotal > 0) {
           dynamic.push({
-            id: `staff-approved-${profile.establishment_id}-${approvedTotal}-${newestCreatedAt(approvedVisitor.data, approvedAccommodation.data)}`,
+            id: `staff-submitted-${profile.establishment_id}-${submittedTotal}-${newestCreatedAt(submittedVisitor.data, submittedAccommodation.data)}`,
             source: "system",
-            title: "Reports approved this month",
-            message: `${approvedTotal} report${approvedTotal === 1 ? "" : "s"} from your establishment were approved this month.`,
+            title: "Reports included this month",
+            message: `${submittedTotal} submitted report${submittedTotal === 1 ? "" : "s"} from your establishment are included in official data this month.`,
             type: "success",
             actionPath: "/staff/submission-history",
-            createdAt: newestCreatedAt(approvedVisitor.data, approvedAccommodation.data),
+            createdAt: newestCreatedAt(submittedVisitor.data, submittedAccommodation.data),
             isRead: false,
           });
         }

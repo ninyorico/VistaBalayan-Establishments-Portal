@@ -1,5 +1,6 @@
 export type ReportingMode = "accommodation" | "visitor" | "both";
 export type ReportStatus = "draft" | "submitted" | "validated" | "needs_review" | "on_hold" | "approved" | "rejected" | "archived";
+export const OFFICIAL_REPORT_STATUS = "submitted" as const;
 export type ResidenceCategory = "THIS_PROVINCE" | "OTHER_PROVINCE" | "FOREIGN";
 
 export const DAE_TYPE_CLASS: Record<string, string> = {

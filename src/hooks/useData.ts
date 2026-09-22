@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
+import { OFFICIAL_REPORT_STATUS } from '../lib/reporting';
 
 export function useEstablishments() {
   const [data, setData] = useState<any[]>([]);
@@ -111,7 +112,7 @@ export function useAnalytics() {
     let visitorQuery = supabase
       .from('visitor_reports')
       .select('report_date, total_guests, establishment_id')
-      .eq('status', 'approved')
+      .eq('status', OFFICIAL_REPORT_STATUS)
       .order('report_date');
 
     if (profile?.role === 'establishment_staff' && profile.establishment_id) {
@@ -132,7 +133,7 @@ export function useAnalytics() {
     let occQuery = supabase
       .from('accommodation_reports')
       .select('total_rooms, total_occupied_rooms, establishment_id')
-      .eq('status', 'approved');
+      .eq('status', OFFICIAL_REPORT_STATUS);
 
     if (profile?.role === 'establishment_staff' && profile.establishment_id) {
       occQuery = occQuery.eq('establishment_id', profile.establishment_id);

@@ -12,6 +12,7 @@ import {
   summarizeDAE4,
   summarizeAnnualDAE4,
   summarizeVisitors,
+  OFFICIAL_REPORT_STATUS,
   type AccommodationSourceRecord,
 
   type EstablishmentReportingRow,
@@ -23,9 +24,9 @@ const months = Array.from({ length: 12 }, (_, index) => new Date(2000, index, 1)
 const currentYear = new Date().getFullYear();
 const statusLabel = (status: string) => status.replace(/_/g, " ").replace(/\b\w/g, (letter) => letter.toUpperCase());
 
-// Official exports contain only records that completed officer review.
-// Every other status is intentionally excluded, never relabeled.
-export const EXPORTABLE_REPORT_STATUSES = new Set(["submitted"]);
+// Official exports contain submitted source records.
+// Other statuses remain visible for monitoring but are excluded from exports.
+export const EXPORTABLE_REPORT_STATUSES = new Set<string>([OFFICIAL_REPORT_STATUS]);
 export const isExportableReportStatus = (status?: string | null) => EXPORTABLE_REPORT_STATUSES.has(String(status || "").trim().toLowerCase());
 
 const downloadBuffer = (filename: string, buffer: ArrayBuffer | Uint8Array) => {

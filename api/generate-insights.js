@@ -2,6 +2,7 @@ import { GoogleGenerativeAI } from '@google/generative-ai';
 import { getBearerToken, getSupabaseAdmin, readBody, sendJson } from './_utils/emailjs.js';
 
 const MODEL_NAME = 'gemini-3.6-flash';
+const OFFICIAL_REPORT_STATUS = 'submitted';
 const requestCounts = new Map();
 const WINDOW_MS = 60 * 1000;
 const MAX_REQUESTS_PER_WINDOW = 5;
@@ -51,20 +52,20 @@ const getScopedData = async (supabaseAdmin, profile, scope) => {
   const visitorQuery = supabaseAdmin
     .from('visitor_reports')
     .select('report_date,total_guests,residence_type,establishments(name)')
-    .eq('status', 'approved')
+    .eq('status', OFFICIAL_REPORT_STATUS)
     .order('report_date', { ascending: false })
     .limit(500);
   const accommodationQuery = supabaseAdmin
     .from('accommodation_reports')
     .select('report_date,total_rooms,total_occupied_rooms')
-    .eq('status', 'approved')
+    .eq('status', OFFICIAL_REPORT_STATUS)
     .limit(500);
   if (establishmentFilter) {
     visitorQuery.eq('establishment_id', establishmentFilter);
     accommodationQuery.eq('establishment_id', establishmentFilter);
   }
   const [{ data: visitorData, error: visitorError }, { data: accommodationData, error: accommodationError }] = await Promise.all([visitorQuery, accommodationQuery]);
-  if (visitorError || accommodationError) throw new Error('Unable to load approved tourism data');
+  if (visitorError || accommodationError) throw new Error('Unable to load submitted tourism data');
 
   const visitors = visitorData || [];
   const accommodation = accommodationData || [];
@@ -85,8 +86,8 @@ const getScopedData = async (supabaseAdmin, profile, scope) => {
 };
 
 const generate = async (model, data, scope) => {
-  const insightsPrompt = `You are a tourism data analyst for ${data.establishmentName}. Based only on these aggregate approved-report values, return exactly ${scope === 'establishment' ? 3 : 4} concise recommendations as JSON: {"insights":[{"title":"max 6 words","description":"one sentence max 18 words with evidence","impact":"high|medium|low","category":"Seasonal|Operations|Marketing|Infrastructure","recommended_action":"one action sentence max 14 words","confidence_score":0.0}]}. Total visitors: ${data.totalVisitors}. Average occupancy: ${data.avgOccupancy}%. Monthly trends: ${JSON.stringify(data.monthlyTrends)}. Do not include personal data or invent facts.`;
-  const anomalyPrompt = `You are a tourism data analyst for ${data.establishmentName}. Analyze only these approved aggregate visitor rows and return JSON {"anomalies":[{"type":"Unusual Drop","severity":"high|medium|low","description":"brief evidence-based description","recommendation":"brief action","establishment":"${data.establishmentName}","confidence_score":0.0}]}. Data: ${JSON.stringify(data.visitors.slice(0, 50))}. Do not include personal data or invent facts.`;
+  const insightsPrompt = `You are a tourism data analyst for ${data.establishmentName}. Based only on these aggregate submitted-report values, return exactly ${scope === 'establishment' ? 3 : 4} concise recommendations as JSON: {"insights":[{"title":"max 6 words","description":"one sentence max 18 words with evidence","impact":"high|medium|low","category":"Seasonal|Operations|Marketing|Infrastructure","recommended_action":"one action sentence max 14 words","confidence_score":0.0}]}. Total visitors: ${data.totalVisitors}. Average occupancy: ${data.avgOccupancy}%. Monthly trends: ${JSON.stringify(data.monthlyTrends)}. Do not include personal data or invent facts.`;
+  const anomalyPrompt = `You are a tourism data analyst for ${data.establishmentName}. Analyze only these submitted aggregate visitor rows and return JSON {"anomalies":[{"type":"Unusual Drop","severity":"high|medium|low","description":"brief evidence-based description","recommendation":"brief action","establishment":"${data.establishmentName}","confidence_score":0.0}]}. Data: ${JSON.stringify(data.visitors.slice(0, 50))}. Do not include personal data or invent facts.`;
   const [insightResult, anomalyResult] = await Promise.all([model.generateContent(insightsPrompt), model.generateContent(anomalyPrompt)]);
   const insights = normalizeInsights(jsonObject(await insightResult.response.text()).insights);
   const anomalies = normalizeAnomalies(jsonObject(await anomalyResult.response.text()).anomalies);
