@@ -3,7 +3,7 @@ import { Plus, Search, Edit, Trash2, Building2, MapPin, Phone, UserCog, Mail, Sh
 import { toast } from "sonner";
 import { supabase } from "../../../lib/supabase";
 import { datestampedFilename, downloadCsv } from "../../../lib/exportCsv";
-import { getBusinessPermitImages } from "../../../lib/businessPermitImages";
+import { compressBusinessPermitImage, getBusinessPermitAssets, setBusinessPermitAssetsInAmenities } from "../../../lib/businessPermitImages";
 import { DEFAULT_ROOM_CONFIG, EstablishmentRoomConfig, getRoomConfigFromAmenities, setRoomConfigInAmenities } from "../../../lib/establishmentRoomConfig";
 
 type ReportingMode = "accommodation" | "visitor" | "both";
@@ -79,6 +79,7 @@ export default function Establishments() {
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [editingEstablishment, setEditingEstablishment] = useState<Establishment | null>(null);
   const [viewingPermitEstablishment, setViewingPermitEstablishment] = useState<Establishment | null>(null);
+  const [permitUploading, setPermitUploading] = useState(false);
   const [editingUser, setEditingUser] = useState<Profile | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<{ type: "establishment" | "user"; id: string } | null>(null);
 
@@ -700,6 +701,57 @@ export default function Establishments() {
     setDeleteTarget(null);
   };
 
+  const handleBusinessPermitUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const establishment = viewingPermitEstablishment;
+    const files = Array.from(event.target.files || []);
+    event.target.value = "";
+    if (!establishment || files.length === 0) return;
+
+    setPermitUploading(true);
+    try {
+      const assets = getBusinessPermitAssets(establishment);
+      for (const file of files) {
+        const allowed = file.type.startsWith("image/") || ["application/pdf", "application/msword", "application/vnd.openxmlformats-officedocument.wordprocessingml.document"].includes(file.type);
+        if (!allowed) {
+          toast.error(`${file.name}: upload an image, PDF, DOC, or DOCX file.`);
+          continue;
+        }
+        if (file.size > 2_000_000) {
+          toast.error(`${file.name}: maximum file size is 2 MB.`);
+          continue;
+        }
+
+        const url = file.type.startsWith("image/")
+          ? await compressBusinessPermitImage(file)
+          : await new Promise<string>((resolve, reject) => {
+              const reader = new FileReader();
+              reader.onerror = () => reject(new Error(`Could not read ${file.name}`));
+              reader.onload = () => resolve(String(reader.result));
+              reader.readAsDataURL(file);
+            });
+        if (file.type.startsWith("image/") && url.length > 900_000) {
+          toast.error(`${file.name}: compressed image is still too large. Use a cropped photo.`);
+          continue;
+        }
+        assets.push({ url, name: file.name, type: file.type, kind: file.type.startsWith("image/") ? "image" : "file" });
+      }
+
+      if (assets.length === getBusinessPermitAssets(establishment).length) return;
+      const amenities = setBusinessPermitAssetsInAmenities(establishment.amenities, assets);
+      const { error } = await supabase.from("establishments").update({ amenities, updated_at: new Date().toISOString() }).eq("id", establishment.id);
+      if (error) throw error;
+
+      const updated = { ...establishment, amenities };
+      setViewingPermitEstablishment(updated);
+      setEstablishments((current) => current.map((item) => item.id === updated.id ? updated : item));
+      toast.success(`${assets.length - getBusinessPermitAssets(establishment).length} permit file(s) uploaded.`);
+    } catch (error) {
+      toast.error(`Failed to upload permit files: ${error instanceof Error ? error.message : "Unknown error"}`);
+    } finally {
+      setPermitUploading(false);
+    }
+  };
+
   const handleExportEstablishments = () => {
     const exportableEstablishments = filteredEstablishments.filter((establishment) => Boolean(establishment.business_permit_number?.trim()));
     downloadCsv(
@@ -938,11 +990,9 @@ export default function Establishments() {
                                 Has permit
                               </span>
                               <span className="text-xs text-gray-600">{establishment.business_permit_number}</span>
-                              {getBusinessPermitImages(establishment).length > 0 && (
-                                <button onClick={() => setViewingPermitEstablishment(establishment)} className="text-xs text-blue-600 hover:underline">
-                                  View supporting image(s)
-                                </button>
-                              )}
+                              <button type="button" onClick={() => setViewingPermitEstablishment(establishment)} className="text-xs font-medium text-blue-600 hover:underline">
+                                Manage permit files
+                              </button>
                             </div>
                           ) : (
                             <span className="inline-flex items-center gap-1 rounded-full bg-gray-100 px-2.5 py-1 text-xs font-medium text-gray-500">
@@ -1136,42 +1186,60 @@ export default function Establishments() {
 
 
       {/* Business Permit Viewer */}
-      {viewingPermitEstablishment && (
-        <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-2xl shadow-2xl max-w-4xl w-full max-h-[90vh] overflow-y-auto">
-            <div className="p-6 border-b border-gray-100 flex items-center justify-between sticky top-0 bg-white rounded-t-2xl">
-              <div>
-                <h2 className="text-2xl font-bold text-gray-900">Business Permit</h2>
-                <p className="text-sm text-gray-500 mt-1">{viewingPermitEstablishment.name}</p>
+      {viewingPermitEstablishment && (() => {
+        const permitAssets = getBusinessPermitAssets(viewingPermitEstablishment);
+        return (
+          <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+            <div className="bg-white rounded-2xl shadow-2xl max-w-4xl w-full max-h-[90vh] overflow-y-auto" role="dialog" aria-modal="true" aria-labelledby="business-permit-title">
+              <div className="p-6 border-b border-gray-100 flex items-center justify-between sticky top-0 bg-white rounded-t-2xl">
+                <div>
+                  <h2 id="business-permit-title" className="text-2xl font-bold text-gray-900">Business Permit Files</h2>
+                  <p className="text-sm text-gray-500 mt-1">{viewingPermitEstablishment.name}</p>
+                </div>
+                <button type="button" onClick={() => setViewingPermitEstablishment(null)} className="p-2 hover:bg-gray-100 rounded-lg transition-colors" aria-label="Close business permit files">
+                  <X className="w-5 h-5 text-gray-500" />
+                </button>
               </div>
-              <button onClick={() => setViewingPermitEstablishment(null)} className="p-2 hover:bg-gray-100 rounded-lg transition-colors">
-                <X className="w-5 h-5 text-gray-500" />
-              </button>
-            </div>
-            <div className="p-6">
-              {getBusinessPermitImages(viewingPermitEstablishment).length > 0 ? (
-                <div className="grid grid-cols-1 gap-5 md:grid-cols-2">
-                  {getBusinessPermitImages(viewingPermitEstablishment).map((imageUrl, index) => (
-                    <div key={imageUrl} className="rounded-xl border border-gray-200 bg-gray-50 p-3">
-                      <a href={imageUrl} target="_blank" rel="noreferrer" className="block overflow-hidden rounded-lg bg-white">
-                        <img src={imageUrl} alt={`${viewingPermitEstablishment.name} business permit ${index + 1}`} className="max-h-[60vh] w-full object-contain" />
-                      </a>
-                      <a href={imageUrl} target="_blank" rel="noreferrer" className="mt-3 inline-flex items-center gap-2 text-sm font-medium text-blue-600 hover:text-blue-700">
-                        <ExternalLink className="w-4 h-4" />
-                        Open full-size permit image {index + 1}
-                      </a>
-                    </div>
-                  ))}
+              <div className="p-6">
+                <div className="mb-5 flex flex-col gap-3 rounded-xl border border-blue-100 bg-blue-50 p-4 sm:flex-row sm:items-center sm:justify-between">
+                  <p className="text-sm text-blue-900">Upload clear permit photos or the original PDF/DOC/DOCX file. Files are kept for municipal review.</p>
+                  <label className="inline-flex cursor-pointer items-center justify-center gap-2 rounded-lg bg-[#0F4C75] px-4 py-2 text-sm font-semibold text-white hover:bg-[#0E5A72]">
+                    <FileImage className="h-4 w-4" />
+                    {permitUploading ? "Uploading..." : "Upload permit files"}
+                    <input type="file" accept="image/*,.pdf,.doc,.docx" multiple onChange={handleBusinessPermitUpload} disabled={permitUploading} className="hidden" />
+                  </label>
                 </div>
-              ) : (
-                <div className="rounded-xl border border-dashed border-gray-300 bg-gray-50 p-10 text-center text-gray-500">
-                  No business permit pictures have been uploaded for this establishment.
-                </div>
-              )}
+                {permitAssets.length > 0 ? (
+                  <div className="grid grid-cols-1 gap-5 md:grid-cols-2">
+                    {permitAssets.map((asset, index) => (
+                      <div key={`${asset.name}-${index}`} className="rounded-xl border border-gray-200 bg-gray-50 p-3">
+                        {asset.kind === "image" ? (
+                          <a href={asset.url} target="_blank" rel="noreferrer" className="block overflow-hidden rounded-lg bg-white">
+                            <img src={asset.url} alt={`${viewingPermitEstablishment.name} business permit ${index + 1}`} className="max-h-[60vh] w-full object-contain" />
+                          </a>
+                        ) : (
+                          <div className="flex min-h-40 items-center justify-center rounded-lg bg-white p-6 text-center">
+                            <FileImage className="mr-2 h-6 w-6 text-[#0F4C75]" />
+                            <span className="break-all text-sm text-gray-700">{asset.name}</span>
+                          </div>
+                        )}
+                        <a href={asset.url} target="_blank" rel="noreferrer" className="mt-3 inline-flex items-center gap-2 text-sm font-medium text-blue-600 hover:text-blue-700">
+                          <ExternalLink className="w-4 h-4" />
+                          Open {asset.name}
+                        </a>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="rounded-xl border border-dashed border-gray-300 bg-gray-50 p-10 text-center text-gray-500">
+                    No business permit files have been uploaded for this establishment.
+                  </div>
+                )}
+              </div>
             </div>
           </div>
-        </div>
-      )}
+        );
+      })()}
 
       {/* Combined Staff + Establishment Modal */}
       {showOnboardingModal && (

@@ -1,8 +1,7 @@
 import { useState, useEffect } from "react";
-import { Save, User, Mail, Building2, MapPin, Upload, Trash2, ExternalLink, FileImage } from "lucide-react";
+import { Save, User, Mail, Building2, MapPin } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "../../../lib/supabase";
-import { getBusinessPermitImages, setBusinessPermitImagesInAmenities } from "../../../lib/businessPermitImages";
 
 interface ProfileData {
   id: string;
@@ -14,44 +13,12 @@ interface ProfileData {
   establishment_address: string;
   establishment_type: string;
   establishment_id: string | null;
-  business_permit_images: string[];
-  establishment_amenities: string;
 }
-
-const compressPermitImage = (file: File): Promise<string> => {
-  return new Promise((resolve, reject) => {
-    const reader = new FileReader();
-    reader.onerror = () => reject(new Error("Unable to read image file"));
-    reader.onload = () => {
-      const img = new Image();
-      img.onerror = () => reject(new Error("Unable to process image file"));
-      img.onload = () => {
-        const maxDimension = 1400;
-        const scale = Math.min(1, maxDimension / Math.max(img.width, img.height));
-        const canvas = document.createElement("canvas");
-        canvas.width = Math.max(1, Math.round(img.width * scale));
-        canvas.height = Math.max(1, Math.round(img.height * scale));
-
-        const context = canvas.getContext("2d");
-        if (!context) {
-          reject(new Error("Unable to prepare image preview"));
-          return;
-        }
-
-        context.drawImage(img, 0, 0, canvas.width, canvas.height);
-        resolve(canvas.toDataURL("image/jpeg", 0.72));
-      };
-      img.src = String(reader.result || "");
-    };
-    reader.readAsDataURL(file);
-  });
-};
 
 export default function Profile() {
   const [profile, setProfile] = useState<ProfileData | null>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
-  const [uploadingPermit, setUploadingPermit] = useState(false);
   const [emailOtp, setEmailOtp] = useState("");
   const [emailVerificationStep, setEmailVerificationStep] = useState<"idle" | "otp">("idle");
   const [gmailVerified, setGmailVerified] = useState(false);
@@ -98,9 +65,8 @@ export default function Profile() {
     let establishmentName = "N/A";
     let establishmentAddress = "N/A";
     let establishmentType = "N/A";
-    let establishmentAmenities = "";
-    let businessPermitImages: string[] = [];
-    
+
+
     if (profileData.establishment_id) {
       const { data: estData } = await supabase
         .from("establishments")
@@ -112,8 +78,6 @@ export default function Profile() {
         establishmentName = estData.name;
         establishmentAddress = estData.address;
         establishmentType = estData.type;
-        establishmentAmenities = estData.amenities || "";
-        businessPermitImages = getBusinessPermitImages(estData);
       }
     }
     
@@ -127,8 +91,6 @@ export default function Profile() {
       establishment_address: establishmentAddress,
       establishment_type: establishmentType,
       establishment_id: profileData.establishment_id || null,
-      business_permit_images: businessPermitImages,
-      establishment_amenities: establishmentAmenities,
     });
     
     setFormData({
@@ -257,73 +219,6 @@ export default function Profile() {
     }
   };
 
-
-  const persistBusinessPermitImages = async (nextImages: string[]) => {
-    if (!profile?.establishment_id) {
-      toast.error("No establishment linked to this account");
-      return false;
-    }
-
-    const nextAmenities = setBusinessPermitImagesInAmenities(profile.establishment_amenities, nextImages);
-
-    const { error } = await supabase
-      .from("establishments")
-      .update({
-        amenities: nextAmenities,
-        updated_at: new Date(),
-      })
-      .eq("id", profile.establishment_id);
-
-    if (error) {
-      toast.error("Failed to save business permit images: " + error.message);
-      return false;
-    }
-
-    setProfile(prev => prev ? { ...prev, business_permit_images: nextImages, establishment_amenities: nextAmenities } : prev);
-    return true;
-  };
-
-  const handleBusinessPermitUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const files = e.target.files;
-    if (!files || files.length === 0 || !profile?.establishment_id) return;
-
-    setUploadingPermit(true);
-    const nextImages = [...(profile.business_permit_images || [])];
-
-    try {
-      for (const file of Array.from(files)) {
-        if (!file.type.startsWith("image/")) {
-          toast.error(`${file.name} is not an image file`);
-          continue;
-        }
-
-        const compressedImage = await compressPermitImage(file);
-        if (compressedImage.length > 900_000) {
-          toast.error(`${file.name} is too large. Please use a clearer cropped photo or a smaller image.`);
-          continue;
-        }
-
-        nextImages.push(compressedImage);
-      }
-
-      if (nextImages.length !== (profile.business_permit_images || []).length) {
-        const saved = await persistBusinessPermitImages(nextImages);
-        if (saved) toast.success("Business permit image uploaded");
-      }
-    } catch (error) {
-      const message = error instanceof Error ? error.message : "Unable to process business permit image";
-      toast.error(message);
-    } finally {
-      e.target.value = "";
-      setUploadingPermit(false);
-    }
-  };
-
-  const removeBusinessPermitImage = async (index: number) => {
-    const nextImages = (profile?.business_permit_images || []).filter((_, i) => i !== index);
-    const saved = await persistBusinessPermitImages(nextImages);
-    if (saved) toast.success("Business permit image removed");
-  };
 
   const handleChangePassword = async () => {
     if (!formData.new_password) {
@@ -531,61 +426,6 @@ export default function Profile() {
             </div>
           </div>
 
-          <div className="mt-6 border-t border-gray-100 pt-6">
-            <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-              <div>
-                <h4 className="text-base font-semibold text-gray-900 flex items-center gap-2">
-                  <FileImage className="w-5 h-5 text-emerald-600" />
-                  Business Permit Pictures
-                </h4>
-                <p className="text-sm text-gray-500 mt-1">
-                  Upload clear pictures of your business permit for municipal officer review. These are not shown on the public tourism page.
-                </p>
-              </div>
-              <label className="inline-flex cursor-pointer items-center justify-center gap-2 rounded-lg bg-emerald-600 px-4 py-2 text-sm font-medium text-white transition hover:bg-emerald-700 disabled:opacity-50">
-                <Upload className="w-4 h-4" />
-                {uploadingPermit ? "Uploading..." : "Upload Permit"}
-                <input
-                  type="file"
-                  accept="image/*"
-                  multiple
-                  onChange={handleBusinessPermitUpload}
-                  disabled={uploadingPermit}
-                  className="hidden"
-                />
-              </label>
-            </div>
-
-            {(profile?.business_permit_images || []).length > 0 ? (
-              <div className="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-                {(profile?.business_permit_images || []).map((imageUrl, index) => (
-                  <div key={imageUrl} className="rounded-xl border border-gray-200 bg-gray-50 p-3">
-                    <a href={imageUrl} target="_blank" rel="noreferrer" className="block overflow-hidden rounded-lg bg-white">
-                      <img src={imageUrl} alt={`Business permit ${index + 1}`} className="h-40 w-full object-cover" />
-                    </a>
-                    <div className="mt-3 flex items-center justify-between gap-2">
-                      <a href={imageUrl} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1 text-sm font-medium text-blue-600 hover:text-blue-700">
-                        <ExternalLink className="w-4 h-4" />
-                        View full image
-                      </a>
-                      <button
-                        type="button"
-                        onClick={() => removeBusinessPermitImage(index)}
-                        className="inline-flex items-center gap-1 rounded-lg px-2 py-1 text-sm font-medium text-red-600 hover:bg-red-50"
-                      >
-                        <Trash2 className="w-4 h-4" />
-                        Remove
-                      </button>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            ) : (
-              <div className="mt-4 rounded-xl border border-dashed border-gray-300 bg-gray-50 p-6 text-center text-sm text-gray-500">
-                No business permit pictures uploaded yet.
-              </div>
-            )}
-          </div>
         </div>
       )}
 
