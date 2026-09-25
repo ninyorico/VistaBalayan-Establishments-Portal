@@ -160,7 +160,7 @@ export default function Establishments() {
     const matchesSearch = est.name.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesType = filterType === "all" || est.type === filterType;
     const matchesStatus = filterStatus === "all" || est.status === filterStatus;
-    const hasPermit = Boolean(est.business_permit_number?.trim());
+    const hasPermit = Boolean(est.business_permit_number?.trim()) || getBusinessPermitAssets(est).length > 0;
     const matchesPermit = filterPermit === "all" || (filterPermit === "has_permit" ? hasPermit : !hasPermit);
     return matchesSearch && matchesType && matchesStatus && matchesPermit;
   });
@@ -982,7 +982,17 @@ export default function Establishments() {
                           </div>
                         </td>
                         <td className="px-6 py-4 text-gray-900">{establishment.total_rooms || "N/A"}</td>
-                        <td className="px-6 py-4 text-sm text-gray-400">—</td>
+                        <td className="px-6 py-4">
+                          {Boolean(establishment.business_permit_number?.trim()) || getBusinessPermitAssets(establishment).length > 0 ? (
+                            <span className="inline-flex items-center rounded-full border border-[#B8D2C4] bg-[#E7F0EA] px-2.5 py-1 text-xs font-semibold text-[#4E765F] shadow-[inset_2px_2px_4px_rgba(163,177,198,0.22),inset_-2px_-2px_4px_rgba(255,255,255,0.6)]">
+                              Has permit
+                            </span>
+                          ) : (
+                            <span className="inline-flex items-center rounded-full border border-slate-200 bg-slate-50 px-2.5 py-1 text-xs font-medium text-slate-500">
+                              No permit
+                            </span>
+                          )}
+                        </td>
                         <td className="px-6 py-4 text-gray-900">{staffCountByEstablishment[establishment.id] || 0}</td>
                         <td className="px-6 py-4">
                           <span className={`inline-flex px-2.5 py-1 rounded-full text-xs font-medium ${
