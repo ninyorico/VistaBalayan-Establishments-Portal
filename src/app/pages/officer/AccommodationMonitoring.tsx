@@ -642,7 +642,7 @@ export default function AccommodationMonitoring({ embedded = false }: { embedded
                                 <thead className="sticky top-0 z-10 bg-white border-b border-gray-200">
                                   <tr>
                                     <th className="px-4 py-2 text-left text-xs font-semibold uppercase tracking-wider text-gray-600">Date</th>
-                                    <th className="px-4 py-2 text-left text-xs font-semibold uppercase tracking-wider text-gray-600">Month</th>
+
                                     <th className="px-4 py-2 text-left text-xs font-semibold uppercase tracking-wider text-gray-600">Total Rooms</th>
                                     <th className="px-4 py-2 text-left text-xs font-semibold uppercase tracking-wider text-gray-600">Reported Rooms</th>
                                     <th className="px-4 py-2 text-left text-xs font-semibold uppercase tracking-wider text-gray-600">Occupied Rooms</th>
@@ -655,7 +655,7 @@ export default function AccommodationMonitoring({ embedded = false }: { embedded
                                   {group.records.map((record) => (
                                     <tr key={record.id}>
                                       <td className="px-4 py-3 text-sm text-gray-600">{record.date}</td>
-                                      <td className="px-4 py-3 text-sm text-gray-600">{record.month}</td>
+
                                       <td className="px-4 py-3 text-sm text-gray-900">{record.totalRooms}</td>
                                       <td className="px-4 py-3 text-sm text-gray-900">{record.reportedRooms}</td>
                                       <td className="px-4 py-3 text-sm font-medium text-gray-900">{record.occupiedRooms}</td>
@@ -733,9 +733,9 @@ export default function AccommodationMonitoring({ embedded = false }: { embedded
                 onTouchMove={handleTableTouchMove}
               >
                 <div className="min-w-[860px] sm:min-w-[980px]">
-                  <div className="grid grid-cols-[14%_17%_12%_13%_13%_12%_10%_9%] border-b border-gray-200 bg-white shadow-[0_1px_0_rgba(148,163,184,0.35)]" data-accommodation-records-table-modal="phone-fixed-header">
+                  <div className="grid grid-cols-[17%_14%_15%_15%_15%_14%_10%] border-b border-gray-200 bg-white shadow-[0_1px_0_rgba(148,163,184,0.35)]" data-accommodation-records-table-modal="phone-fixed-header">
                     <div className="flex min-h-10 items-center justify-center px-2 py-2 text-center text-[10px] font-semibold uppercase leading-tight tracking-wider text-gray-600 sm:min-h-0 sm:px-4 sm:text-xs">Date</div>
-                    <div className="flex min-h-10 items-center justify-center px-2 py-2 text-center text-[10px] font-semibold uppercase leading-tight tracking-wider text-gray-600 sm:min-h-0 sm:px-4 sm:text-xs">Month</div>
+
                     <div className="flex min-h-10 items-center justify-center px-2 py-2 text-center text-[10px] font-semibold uppercase leading-tight tracking-wider text-gray-600 sm:min-h-0 sm:px-4 sm:text-xs">Total Rooms</div>
                     <div className="flex min-h-10 items-center justify-center px-2 py-2 text-center text-[10px] font-semibold uppercase leading-tight tracking-wider text-gray-600 sm:min-h-0 sm:px-4 sm:text-xs">Reported Rooms</div>
                     <div className="flex min-h-10 items-center justify-center px-2 py-2 text-center text-[10px] font-semibold uppercase leading-tight tracking-wider text-gray-600 sm:min-h-0 sm:px-4 sm:text-xs">Occupied Rooms</div>
@@ -745,9 +745,9 @@ export default function AccommodationMonitoring({ embedded = false }: { embedded
                   </div>
                   <div className="max-h-[48dvh] divide-y divide-gray-100 overflow-y-auto overflow-x-hidden overscroll-y-contain [-webkit-overflow-scrolling:touch] sm:max-h-[54vh]">
                     {selectedAccommodationGroup.records.map((record) => (
-                      <div key={record.id} className="grid grid-cols-[14%_17%_12%_13%_13%_12%_10%_9%] align-top">
+                      <div key={record.id} className="grid grid-cols-[17%_14%_15%_15%_15%_14%_10%] align-top">
                         <div className="break-words px-2 py-2 text-[11px] text-gray-600 sm:px-4 sm:py-3 sm:text-sm">{record.date}</div>
-                        <div className="break-words px-2 py-2 text-[11px] text-gray-600 sm:px-4 sm:py-3 sm:text-sm">{record.month}</div>
+
                         <div className="px-2 py-2 text-[11px] text-gray-900 sm:px-4 sm:py-3 sm:text-sm">{record.totalRooms}</div>
                         <div className="px-2 py-2 text-[11px] text-gray-900 sm:px-4 sm:py-3 sm:text-sm">{record.reportedRooms}</div>
                         <div className="px-2 py-2 text-[11px] font-medium text-gray-900 sm:px-4 sm:py-3 sm:text-sm">{record.occupiedRooms}</div>
