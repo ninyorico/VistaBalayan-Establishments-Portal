@@ -126,8 +126,8 @@ export function AiSectionCard({
   children: ReactNode;
 }) {
   return (
-    <Card className="overflow-hidden rounded-[1.5rem] border-0 bg-[#E0E5EC] shadow-[8px_8px_18px_rgba(163,177,198,0.45),-8px_-8px_18px_rgba(255,255,255,0.62)]">
-      <CardHeader className="border-b border-[#D2D8E0] bg-[#E0E5EC]/70 px-4 py-4 sm:px-6">
+    <Card className="isolate !overflow-hidden !rounded-[1.5rem] border-0 bg-[#E0E5EC] shadow-[8px_8px_18px_rgba(163,177,198,0.45),-8px_-8px_18px_rgba(255,255,255,0.62)]">
+      <CardHeader className="rounded-t-[1.5rem] border-b border-[#D2D8E0] bg-[#E0E5EC]/70 px-4 py-4 sm:px-6">
         <div className="flex min-w-0 items-start justify-between gap-3">
           <CardTitle className="flex min-w-0 items-center gap-2 text-lg font-black tracking-[-0.025em] text-slate-950 sm:text-xl">
             {icon}
@@ -140,7 +140,7 @@ export function AiSectionCard({
           )}
         </div>
       </CardHeader>
-      <CardContent className="px-4 py-4 sm:px-6 sm:py-5">{children}</CardContent>
+      <CardContent className="rounded-b-[1.5rem] px-4 py-4 sm:px-6 sm:py-5">{children}</CardContent>
     </Card>
   );
 }
