@@ -308,6 +308,61 @@
     box-shadow: 6px 6px 12px rgba(163,177,198,.62), -6px -6px 12px rgba(255,255,255,.55) !important;
   }
 
+  /* Recess bright icon tiles and tinted KPI cards into the same material. */
+  .dashboard-neumorphic [class~="bg-sky-50"],
+  .dashboard-neumorphic [class~="bg-emerald-50"],
+  .dashboard-neumorphic [class~="bg-amber-50"],
+  .dashboard-neumorphic [class~="bg-rose-50"],
+  .dashboard-neumorphic [class~="bg-blue-50"],
+  .dashboard-neumorphic [class~="bg-purple-50"],
+  .dashboard-neumorphic [class~="bg-green-50"],
+  .dashboard-neumorphic [class~="bg-red-50"],
+  .dashboard-neumorphic [class~="bg-yellow-50"],
+  .dashboard-neumorphic [class~="bg-orange-50"],
+  .dashboard-neumorphic [class~="bg-teal-50"],
+  .dashboard-neumorphic [class~="bg-cyan-50"],
+  .dashboard-neumorphic [class~="bg-violet-50"] {
+    background-color: var(--neu-surface) !important;
+    color: var(--neu-muted) !important;
+    box-shadow: inset 4px 4px 8px rgba(163,177,198,.38), inset -4px -4px 8px rgba(255,255,255,.48) !important;
+  }
+
+  .dashboard-neumorphic [class~="text-sky-700"],
+  .dashboard-neumorphic [class~="text-blue-600"],
+  .dashboard-neumorphic [class~="text-blue-700"],
+  .dashboard-neumorphic [class~="text-purple-600"],
+  .dashboard-neumorphic [class~="text-purple-700"],
+  .dashboard-neumorphic [class~="text-cyan-700"],
+  .dashboard-neumorphic [class~="text-teal-600"] {
+    color: #6474a5 !important;
+  }
+
+  .dashboard-neumorphic [class~="text-emerald-700"],
+  .dashboard-neumorphic [class~="text-green-600"],
+  .dashboard-neumorphic [class~="text-green-700"] {
+    color: #4f9276 !important;
+  }
+
+  .dashboard-neumorphic [class~="text-amber-700"],
+  .dashboard-neumorphic [class~="text-orange-600"],
+  .dashboard-neumorphic [class~="text-yellow-700"] {
+    color: #a8734b !important;
+  }
+
+  .dashboard-neumorphic [class~="text-rose-700"],
+  .dashboard-neumorphic [class~="text-red-600"],
+  .dashboard-neumorphic [class~="text-red-700"] {
+    color: #b86b78 !important;
+  }
+
+  .dashboard-neumorphic [class~="bg-[#FF6B6B]"],
+  .dashboard-neumorphic [class~="bg-[#FFD93D]"],
+  .dashboard-neumorphic [class~="bg-[#C4B5FD]"] {
+    background-color: var(--neu-surface) !important;
+    color: var(--neu-text) !important;
+    box-shadow: 8px 8px 15px rgba(163,177,198,.48), -8px -8px 15px rgba(255,255,255,.48) !important;
+  }
+
   @media (max-width: 640px) { .dashboard-neumorphic .tourism-card, .dashboard-neumorphic .tourism-panel-dark, .dashboard-neumorphic .vb-neu-sidebar { box-shadow: 5px 5px 10px rgba(163,177,198,.58), -5px -5px 10px rgba(255,255,255,.52) !important; } }
 }
 
