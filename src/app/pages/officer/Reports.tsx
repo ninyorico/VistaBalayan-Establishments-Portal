@@ -9,8 +9,8 @@ import {
   AlertTriangle,
 } from "lucide-react";
 import {
-  LineChart,
-  Line,
+  AreaChart,
+  Area,
   XAxis,
   YAxis,
   CartesianGrid,
@@ -553,14 +553,20 @@ export default function Reports() {
         </h3>
         {chartData.length > 0 ? (
           <ResponsiveContainer width="100%" height={350}>
-            <LineChart data={chartData}>
-              <CartesianGrid strokeDasharray="3 3" />
+            <AreaChart data={chartData}>
+              <defs>
+                <linearGradient id="reportsVisitorFill" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="5%" stopColor="#6C63FF" stopOpacity={0.34} />
+                  <stop offset="95%" stopColor="#6C63FF" stopOpacity={0.03} />
+                </linearGradient>
+              </defs>
+              <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
               <XAxis dataKey="period" />
               <YAxis />
               <Tooltip />
               <Legend />
-              <Line type="monotone" dataKey="visitors" stroke="#6474A5" strokeWidth={2} name="Visitors" />
-            </LineChart>
+              <Area type="monotone" dataKey="visitors" stroke="#6C63FF" fill="url(#reportsVisitorFill)" strokeWidth={3} name="Visitors" />
+            </AreaChart>
           </ResponsiveContainer>
         ) : (
           <div className="text-center py-12 text-gray-500">No data available for the selected period</div>
