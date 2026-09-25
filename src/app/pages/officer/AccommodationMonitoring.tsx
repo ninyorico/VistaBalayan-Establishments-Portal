@@ -506,9 +506,9 @@ export default function AccommodationMonitoring({ embedded = false }: { embedded
       <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
         <div className="border-b border-gray-200 bg-gray-50 px-6 py-4">
           <h2 className="font-semibold text-gray-900">Accommodation records by establishment</h2>
-          <p className="mt-1 text-sm text-gray-600">Tap an establishment on phone to open the full {monthLabel} record in a table modal. Desktop rows still expand inline.</p>
+          <p className="mt-1 text-sm text-gray-600">Click an establishment to open the full {monthLabel} record in a modal table.</p>
         </div>
-        <div className="overflow-x-auto overscroll-x-contain sm:hidden">
+        <div className="block overflow-x-auto overscroll-x-contain">
           <table className="w-full min-w-[760px]">
             <thead className="border-b border-gray-200 bg-gray-50">
               <tr>
@@ -563,7 +563,7 @@ export default function AccommodationMonitoring({ embedded = false }: { embedded
           </table>
         </div>
 
-        <div className="hidden overflow-x-auto sm:block">
+        <div className="hidden">
           <table className="w-full min-w-[920px]">
             <thead className="bg-gray-50 border-b border-gray-200">
               <tr>
@@ -704,22 +704,22 @@ export default function AccommodationMonitoring({ embedded = false }: { embedded
               </button>
             </div>
 
-            <div className="grid grid-cols-3 gap-2 border-b border-gray-100 px-4 py-3 text-center sm:grid-cols-4 sm:px-6">
-              <div className="rounded-lg bg-green-50 px-3 py-2">
-                <p className="text-[10px] font-medium uppercase tracking-wide text-green-700 sm:text-xs">Avg Occupancy</p>
-                <p className="text-lg font-bold text-green-700 sm:text-2xl">{selectedAccommodationGroup.avgOccupancy.toFixed(1)}%</p>
+            <div className="grid grid-cols-2 gap-2 border-b border-gray-100 px-4 py-3 text-center sm:grid-cols-4 sm:px-6">
+              <div className="rounded-2xl bg-[#E0E5EC] px-3 py-3 shadow-[inset_4px_4px_8px_rgba(163,177,198,.38),inset_-4px_-4px_8px_rgba(255,255,255,.48)]">
+                <p className="text-[10px] font-medium uppercase tracking-wide text-[#6474A5] sm:text-xs">Occupied Rooms</p>
+                <p className="text-lg font-bold text-[#3D4852] sm:text-2xl">{selectedAccommodationGroup.occupiedRooms}</p>
               </div>
-              <div className="rounded-lg bg-blue-50 px-3 py-2">
-                <p className="text-[10px] font-medium uppercase tracking-wide text-blue-700 sm:text-xs">Guests</p>
-                <p className="text-lg font-bold text-blue-700 sm:text-2xl">{selectedAccommodationGroup.totalGuests}</p>
+              <div className="rounded-2xl bg-[#E0E5EC] px-3 py-3 shadow-[inset_4px_4px_8px_rgba(163,177,198,.38),inset_-4px_-4px_8px_rgba(255,255,255,.48)]">
+                <p className="text-[10px] font-medium uppercase tracking-wide text-[#6474A5] sm:text-xs">Avg Occupancy</p>
+                <p className="text-lg font-bold text-[#3D4852] sm:text-2xl">{selectedAccommodationGroup.avgOccupancy.toFixed(1)}%</p>
               </div>
-              <div className="rounded-lg bg-purple-50 px-3 py-2">
-                <p className="text-[10px] font-medium uppercase tracking-wide text-purple-700 sm:text-xs">Guest Nights</p>
-                <p className="text-lg font-bold text-purple-700 sm:text-2xl">{selectedAccommodationGroup.guestNights}</p>
+              <div className="rounded-2xl bg-[#E0E5EC] px-3 py-3 shadow-[inset_4px_4px_8px_rgba(163,177,198,.38),inset_-4px_-4px_8px_rgba(255,255,255,.48)]">
+                <p className="text-[10px] font-medium uppercase tracking-wide text-[#6474A5] sm:text-xs">Check-ins</p>
+                <p className="text-lg font-bold text-[#3D4852] sm:text-2xl">{selectedAccommodationGroup.totalGuests}</p>
               </div>
-              <div className="hidden rounded-lg bg-teal-50 px-3 py-2 sm:block">
-                <p className="text-[10px] font-medium uppercase tracking-wide text-teal-700 sm:text-xs">Avg Guest/Room</p>
-                <p className="text-lg font-bold text-teal-700 sm:text-2xl">{selectedAccommodationGroup.avgGuestsPerRoom.toFixed(2)}</p>
+              <div className="rounded-2xl bg-[#E0E5EC] px-3 py-3 shadow-[inset_4px_4px_8px_rgba(163,177,198,.38),inset_-4px_-4px_8px_rgba(255,255,255,.48)]">
+                <p className="text-[10px] font-medium uppercase tracking-wide text-[#6474A5] sm:text-xs">Guest Nights</p>
+                <p className="text-lg font-bold text-[#3D4852] sm:text-2xl">{selectedAccommodationGroup.guestNights}</p>
               </div>
             </div>
 

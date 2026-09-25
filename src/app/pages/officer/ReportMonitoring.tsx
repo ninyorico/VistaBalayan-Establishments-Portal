@@ -62,8 +62,8 @@ export default function ReportMonitoring() {
                   onClick={() => setActiveTab(tab.id)}
                   className={`inline-flex items-center gap-2 rounded-xl px-3 py-2 text-sm font-semibold transition sm:px-4 ${
                     isActive
-                      ? "bg-white text-[#0F4C75] shadow-sm"
-                      : "text-slate-600 hover:text-slate-950"
+                                          ? "bg-[#E0E5EC] text-[#6474A5] shadow-[inset_3px_3px_6px_rgba(163,177,198,.45),inset_-3px_-3px_6px_rgba(255,255,255,.5)]"
+                                          : "text-slate-600 hover:bg-[#E0E5EC]/70 hover:text-[#3D4852]"
                   }`}
                   aria-pressed={isActive}
                 >
@@ -87,12 +87,12 @@ export default function ReportMonitoring() {
                 onClick={() => setActiveTab(tab.id)}
                 className={`rounded-2xl border p-4 text-left transition ${
                   isActive
-                    ? "border-[#0F4C75] bg-cyan-50/70"
-                    : "border-slate-200 bg-slate-50 hover:border-slate-300 hover:bg-white"
+                                      ? "border-[#C3CBD7] bg-[#E0E5EC] shadow-[inset_5px_5px_10px_rgba(163,177,198,.45),inset_-5px_-5px_10px_rgba(255,255,255,.5)]"
+                                      : "border-transparent bg-[#E0E5EC]/45 hover:border-[#C3CBD7] hover:bg-[#E0E5EC]"
                 }`}
               >
                 <div className="flex items-start gap-3">
-                  <div className={`rounded-xl p-2 ${isActive ? "bg-[#0F4C75] text-white" : "bg-white text-slate-500"}`}>
+                  <div className={`rounded-xl p-2 ${isActive ? "bg-[#6C63FF] text-white shadow-[3px_3px_7px_rgba(163,177,198,.5),-3px_-3px_7px_rgba(255,255,255,.45)]" : "bg-[#E0E5EC] text-slate-500 shadow-[inset_3px_3px_6px_rgba(163,177,198,.35),inset_-3px_-3px_6px_rgba(255,255,255,.45)]"}`}>
                     <Icon className="h-4 w-4" />
                   </div>
                   <div>
