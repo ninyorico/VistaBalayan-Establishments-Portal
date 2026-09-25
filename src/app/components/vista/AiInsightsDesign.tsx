@@ -40,27 +40,27 @@ interface AiRecommendationCardProps {
 const severityTone = (severity?: string) => {
   if (severity === "high") {
     return {
-      rail: "from-red-500 via-rose-400 to-red-300",
-      badge: "border-red-200 bg-red-50 text-red-700",
-      icon: "text-red-600",
-      soft: "bg-red-50/70",
+      rail: "from-[#92727D] via-[#B49AA3] to-[#D7C8CD]",
+      badge: "border-[#D6C4C9] bg-[#E9E0E3] text-[#76535D]",
+      icon: "text-[#8A626D]",
+      soft: "bg-[#F1EBED]",
     };
   }
 
   if (severity === "medium") {
     return {
-      rail: "from-amber-500 via-yellow-400 to-amber-200",
-      badge: "border-amber-200 bg-amber-50 text-amber-700",
-      icon: "text-amber-600",
-      soft: "bg-amber-50/70",
+      rail: "from-[#A68A5B] via-[#C1AE87] to-[#DDD2B8]",
+      badge: "border-[#D8CDB7] bg-[#EEE9DC] text-[#776648]",
+      icon: "text-[#937A4F]",
+      soft: "bg-[#F3F0E7]",
     };
   }
 
   return {
-    rail: "from-sky-500 via-cyan-400 to-sky-200",
-    badge: "border-sky-200 bg-sky-50 text-sky-700",
-    icon: "text-sky-600",
-    soft: "bg-sky-50/70",
+    rail: "from-[#75849A] via-[#9DA9B8] to-[#D0D7DF]",
+    badge: "border-[#C7D0DA] bg-[#E8EDF2] text-[#536477]",
+    icon: "text-[#687B91]",
+    soft: "bg-[#F0F3F6]",
   };
 };
 
@@ -75,13 +75,13 @@ export function AiInsightsShell({
   return (
     <main className="w-full max-w-full overflow-x-hidden" data-ai-insights-redesign="shadcn-taste-editorial">
       <div className="space-y-5 sm:space-y-7">
-        <section className="relative overflow-hidden rounded-[1.75rem] border border-slate-200/80 bg-[radial-gradient(circle_at_top_left,rgba(28,167,201,0.16),transparent_34%),linear-gradient(135deg,#ffffff_0%,#f8fbfc_52%,#eef8fa_100%)] p-4 shadow-sm sm:p-6 lg:p-7">
-          <div className="pointer-events-none absolute -right-12 -top-16 h-40 w-40 rounded-full bg-cyan-200/35 blur-3xl" />
-          <div className="pointer-events-none absolute -bottom-20 left-1/3 h-44 w-44 rounded-full bg-slate-200/50 blur-3xl" />
+        <section className="relative overflow-hidden rounded-[1.75rem] border border-[#D2D8E0] bg-[#E0E5EC] p-4 shadow-[10px_10px_24px_rgba(163,177,198,0.55),-10px_-10px_24px_rgba(255,255,255,0.72)] sm:p-6 lg:p-7">
+          <div className="pointer-events-none absolute -right-12 -top-16 h-40 w-40 rounded-full bg-[#C8CED8]/35 blur-3xl" />
+          <div className="pointer-events-none absolute -bottom-20 left-1/3 h-44 w-44 rounded-full bg-white/35 blur-3xl" />
           <div className="relative flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
             <div className="max-w-3xl">
               <div className="mb-3 inline-flex items-center gap-2 rounded-full border border-slate-200 bg-white/80 px-3 py-1 text-xs font-medium tracking-[0.18em] text-slate-500 shadow-sm backdrop-blur">
-                <span className="h-1.5 w-1.5 rounded-full bg-[#1CA7C9]" />
+                <span className="h-1.5 w-1.5 rounded-full bg-[#6C63FF]" />
                 GEMINI OPERATIONS DESK
               </div>
               <h1 className="max-w-5xl text-[clamp(2.35rem,7vw,4.75rem)] font-black leading-[0.92] tracking-[-0.06em] text-slate-950">
@@ -100,7 +100,7 @@ export function AiInsightsShell({
               type="button"
               onClick={onRefresh}
               disabled={refreshing}
-              className="h-12 rounded-2xl bg-[#0F4C75] px-5 text-white shadow-lg shadow-cyan-900/10 hover:bg-[#123f5e] sm:h-11"
+              className="h-12 rounded-2xl bg-[#6C63FF] px-5 text-white shadow-[5px_5px_12px_rgba(163,177,198,0.55),-5px_-5px_12px_rgba(255,255,255,0.65)] hover:bg-[#5B54D6] sm:h-11"
             >
               {refreshing ? <Loader2 className="size-4 animate-spin" /> : <RefreshCw className="size-4" />}
               {refreshing ? "Refreshing" : "Refresh Analysis"}
@@ -126,8 +126,8 @@ export function AiSectionCard({
   children: ReactNode;
 }) {
   return (
-    <Card className="overflow-hidden rounded-[1.5rem] border-slate-200 bg-white shadow-sm">
-      <CardHeader className="border-b border-slate-100 bg-slate-50/70 px-4 py-4 sm:px-6">
+    <Card className="overflow-hidden rounded-[1.5rem] border-[#D2D8E0] bg-[#E0E5EC] shadow-[8px_8px_18px_rgba(163,177,198,0.45),-8px_-8px_18px_rgba(255,255,255,0.62)]">
+      <CardHeader className="border-b border-[#D2D8E0] bg-[#E0E5EC]/70 px-4 py-4 sm:px-6">
         <div className="flex min-w-0 items-start justify-between gap-3">
           <CardTitle className="flex min-w-0 items-center gap-2 text-lg font-black tracking-[-0.025em] text-slate-950 sm:text-xl">
             {icon}
@@ -149,7 +149,7 @@ export function AiAnomalyCard(anomaly: AiAnomalyCardProps) {
   const tone = severityTone(anomaly.severity);
 
   return (
-    <article className="group relative overflow-hidden rounded-2xl border border-slate-200 bg-white p-0 shadow-[0_14px_40px_rgba(15,23,42,0.05)] transition-all duration-500 hover:-translate-y-0.5 hover:shadow-[0_18px_55px_rgba(15,23,42,0.08)]" data-ai-card-layout="shadcn-anomaly-editorial">
+    <article className="group relative overflow-hidden rounded-2xl border border-[#D2D8E0] bg-[#E0E5EC] p-0 shadow-[8px_8px_18px_rgba(163,177,198,0.42),-8px_-8px_18px_rgba(255,255,255,0.6)] transition-all duration-500 hover:-translate-y-0.5 hover:shadow-[10px_10px_22px_rgba(163,177,198,0.48),-10px_-10px_22px_rgba(255,255,255,0.66)]" data-ai-card-layout="shadcn-anomaly-editorial">
       <div className={cn("absolute inset-y-0 left-0 w-1.5 bg-gradient-to-b", tone.rail)} />
       <div className="p-4 pl-5 sm:p-5 sm:pl-6">
         <div className="flex min-w-0 items-start justify-between gap-3">
@@ -181,7 +181,7 @@ export function AiAnomalyCard(anomaly: AiAnomalyCardProps) {
             <AiFormattedText text={anomaly.description} />
           </p>
           {anomaly.recommendation && (
-            <div className="rounded-2xl border border-slate-200 bg-slate-50/80 p-3 text-justify leading-6 hyphens-auto" data-ai-action-note="editorial-shadcn">
+            <div className="rounded-2xl border border-[#D2D8E0] bg-[#E0E5EC] p-3 text-justify leading-6 shadow-inner hyphens-auto" data-ai-action-note="editorial-shadcn">
               <span className="font-bold text-slate-950">Recommendation:</span>{" "}
               <AiFormattedText text={anomaly.recommendation} tone="action" />
             </div>
@@ -198,8 +198,8 @@ export function AiRecommendationCard(insight: AiRecommendationCardProps) {
   const isHighImpact = insight.impact === "high";
 
   return (
-    <article className="group relative overflow-hidden rounded-2xl border border-slate-200 bg-white p-0 shadow-[0_14px_40px_rgba(15,23,42,0.05)] transition-all duration-500 hover:-translate-y-0.5 hover:shadow-[0_18px_55px_rgba(15,23,42,0.08)] sm:p-0" data-ai-card-layout="shadcn-recommendation-editorial">
-      <div className="absolute inset-y-0 left-0 w-1.5 bg-[#6C63FF]" />
+    <article className="group relative overflow-hidden rounded-2xl border border-[#D2D8E0] bg-[#E0E5EC] p-0 shadow-[8px_8px_18px_rgba(163,177,198,0.42),-8px_-8px_18px_rgba(255,255,255,0.6)] transition-all duration-500 hover:-translate-y-0.5 hover:shadow-[10px_10px_22px_rgba(163,177,198,0.48),-10px_-10px_22px_rgba(255,255,255,0.66)] sm:p-0" data-ai-card-layout="shadcn-recommendation-editorial">
+      <div className="absolute inset-y-0 left-0 w-1.5 bg-[#7B74D8]" />
       <div className="relative p-4 pl-5 sm:p-5 sm:pl-6">
         <div className="mb-3 flex items-start justify-between gap-3">
           <div className="flex min-w-0 items-start gap-3">
@@ -214,7 +214,7 @@ export function AiRecommendationCard(insight: AiRecommendationCardProps) {
             variant="outline"
             className={cn(
               "rounded-full px-2.5 py-1 capitalize",
-              isHighImpact ? "border-purple-200 bg-purple-50 text-purple-700" : "border-cyan-200 bg-cyan-50 text-cyan-700"
+              isHighImpact ? "border-[#C7C4E8] bg-[#E8E7F5] text-[#5D58A2]" : "border-[#C7D0DA] bg-[#E8EDF2] text-[#536477]"
             )}
           >
             {insight.impact || "measured"} impact
@@ -225,7 +225,7 @@ export function AiRecommendationCard(insight: AiRecommendationCardProps) {
           <AiFormattedText text={summary} />
         </p>
         {action && (
-          <div className="mt-3 rounded-2xl border border-slate-200 bg-slate-50/80 p-3 text-justify text-sm leading-6 text-slate-800 hyphens-auto" data-ai-action-note="editorial-shadcn">
+          <div className="mt-3 rounded-2xl border border-[#D2D8E0] bg-[#E0E5EC] p-3 text-justify text-sm leading-6 text-slate-800 shadow-inner hyphens-auto" data-ai-action-note="editorial-shadcn">
             <span className="font-bold text-slate-950">Action:</span>{" "}
             <AiFormattedText text={action} tone="action" />
           </div>
@@ -245,8 +245,8 @@ export function AiEmptyState({ variant }: { variant: "gaps" | "recommendations" 
   const isGaps = variant === "gaps";
 
   return (
-    <div className="flex items-start gap-3 rounded-2xl border border-emerald-200 bg-emerald-50/80 p-4 text-sm leading-6 text-emerald-900">
-      {isGaps ? <CheckCircle2 className="mt-0.5 size-5 shrink-0 text-emerald-600" /> : <Sparkles className="mt-0.5 size-5 shrink-0 text-emerald-600" />}
+    <div className="flex items-start gap-3 rounded-2xl border border-[#C7D2CC] bg-[#E7EEE9] p-4 text-sm leading-6 text-[#3F5F50] shadow-[5px_5px_12px_rgba(163,177,198,0.35),-5px_-5px_12px_rgba(255,255,255,0.55)]">
+      {isGaps ? <CheckCircle2 className="mt-0.5 size-5 shrink-0 text-[#5E8A75]" /> : <Sparkles className="mt-0.5 size-5 shrink-0 text-[#5E8A75]" />}
       <p>
         {isGaps
           ? "No service gaps or operational challenges are active right now."
@@ -263,7 +263,7 @@ export function AiShowMoreButton({ children, onClick }: { children: ReactNode; o
         type="button"
         variant="outline"
         onClick={onClick}
-        className="rounded-full border-slate-200 bg-white px-5 text-slate-700 shadow-sm hover:bg-slate-50"
+        className="rounded-full border-[#D2D8E0] bg-[#E0E5EC] px-5 text-slate-700 shadow-[4px_4px_10px_rgba(163,177,198,0.4),-4px_-4px_10px_rgba(255,255,255,0.58)] hover:bg-[#D9DEE6]"
       >
         {children}
       </Button>
