@@ -50,6 +50,7 @@ interface Demographic {
 const DEMOGRAPHIC_COLORS = ["#5E8A75", "#6C63FF", "#B28B52", "#6474A5", "#B86B78", "#7D89A5"];
 
 const MAX_VISIBLE_DEMOGRAPHICS = 4;
+const VIOLET_BAR_SHADES = ["#6C63FF", "#776FFF", "#827BFF", "#8D87FF", "#9893FF", "#A39FFF"];
 
 const getDemographicColor = (name: string, index: number) => {
   const normalized = name.toLowerCase();
@@ -364,8 +365,8 @@ setOccupancyRate(occupancyRate);
                   <AreaChart data={visitorTrends} margin={{ top: 5, right: 8, bottom: 0, left: 16 }}>
                     <defs>
                       <linearGradient id="visitorFill" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="5%" stopColor="#0E5A72" stopOpacity={0.32} />
-                        <stop offset="95%" stopColor="#0E5A72" stopOpacity={0.02} />
+                        <stop offset="5%" stopColor="#6C63FF" stopOpacity={0.34} />
+                        <stop offset="95%" stopColor="#6C63FF" stopOpacity={0.03} />
                       </linearGradient>
                     </defs>
                     <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
@@ -373,7 +374,7 @@ setOccupancyRate(occupancyRate);
                     <YAxis hide domain={[0, visitorTrendMax]} ticks={visitorTrendTicks} />
                     <Tooltip />
                     <Legend />
-                    <Area type="monotone" dataKey="visitors" stroke="#0E5A72" fill="url(#visitorFill)" strokeWidth={3} name="Visitors" />
+                    <Area type="monotone" dataKey="visitors" stroke="#6C63FF" fill="url(#visitorFill)" strokeWidth={3} name="Visitors" />
                   </AreaChart>
                 </ResponsiveContainer>
                 </div>
@@ -435,7 +436,11 @@ setOccupancyRate(occupancyRate);
               <YAxis stroke="#64748b" />
               <Tooltip />
               <Legend />
-              <Bar dataKey="visitors" fill="#0E5A72" radius={[10, 10, 0, 0]} name="Visitors" />
+              <Bar dataKey="visitors" radius={[10, 10, 0, 0]} name="Visitors">
+                {topEstablishments.map((entry, index) => (
+                  <Cell key={`${entry.name}-${index}`} fill={VIOLET_BAR_SHADES[index % VIOLET_BAR_SHADES.length]} />
+                ))}
+              </Bar>
             </BarChart>
           </ResponsiveContainer>
         ) : (
