@@ -33,8 +33,6 @@ interface Props {
   canSubmitAccommodation: boolean;
   searchTerm: string;
   setSearchTerm: (value: string) => void;
-  filterStatus: string;
-  setFilterStatus: (value: string) => void;
   selectedYear: number;
   setSelectedYear: (value: number) => void;
   selectedMonth: number;
@@ -65,7 +63,6 @@ const getDateParts = (value?: string | null) => {
 const matchesCommonFilters = (
   record: { report_date?: string | null; created_at?: string | null; status?: string | null },
   searchTerm: string,
-  filterStatus: string,
   selectedYear: number,
   selectedMonth: number,
   extraText: string
@@ -75,8 +72,7 @@ const matchesCommonFilters = (
   return (
     parts?.year === selectedYear &&
     parts.month === selectedMonth &&
-    searchText.includes(searchTerm.toLowerCase()) &&
-    (filterStatus === "all" || (record.status || "pending").toLowerCase() === filterStatus)
+    searchText.includes(searchTerm.toLowerCase())
   );
 };
 
@@ -87,8 +83,6 @@ export default function EstablishmentSubmissionRecords({
   canSubmitAccommodation,
   searchTerm,
   setSearchTerm,
-  filterStatus,
-  setFilterStatus,
   selectedYear,
   setSelectedYear,
   selectedMonth,
@@ -105,7 +99,6 @@ export default function EstablishmentSubmissionRecords({
     matchesCommonFilters(
       record,
       searchTerm,
-      filterStatus,
       selectedYear,
       selectedMonth,
       [record.guest_name, record.residence_type, record.place_of_residence].join(" ")
@@ -115,7 +108,6 @@ export default function EstablishmentSubmissionRecords({
     matchesCommonFilters(
       record,
       searchTerm,
-      filterStatus,
       selectedYear,
       selectedMonth,
       [record.total_rooms, record.total_check_ins, record.total_guest_nights].join(" ")
@@ -212,14 +204,6 @@ export default function EstablishmentSubmissionRecords({
           </select>
           <select value={selectedMonth} onChange={(event) => setSelectedMonth(Number(event.target.value))} className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm" aria-label="Filter by month">
             {monthNames.map((month, index) => <option key={month} value={index}>{month}</option>)}
-          </select>
-          <select value={filterStatus} onChange={(event) => setFilterStatus(event.target.value)} className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm" aria-label="Filter by status">
-            <option value="all">All status</option>
-            <option value="approved">Approved</option>
-            <option value="pending">Pending</option>
-            <option value="rejected">Rejected</option>
-            <option value="submitted">Submitted</option>
-            <option value="validated">Validated</option>
           </select>
         </div>
       </div>

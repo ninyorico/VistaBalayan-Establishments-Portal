@@ -160,7 +160,7 @@ export default function StaffDashboard() {
   ];
 
   const hotelPerformanceStats = [
-    { title: "Average Guest Night", value: hotelMetrics.averageGuestNight, subtitle: "nights per guest", icon: Moon, tone: "bg-sky-50 text-sky-700 ring-sky-100" },
+    { title: "Average Guest Night", value: hotelMetrics.averageGuestNight, subtitle: "nights per guest", icon: Moon, tone: "bg-[#FBE7BA] text-[#193364] ring-[#B88A52]/30" },
     { title: "Monthly Average Occupancy Rate", value: `${hotelMetrics.monthlyOccupancyRate}%`, subtitle: "current month average", icon: Percent, tone: "bg-violet-50 text-violet-700 ring-violet-100" },
     { title: "Average Guest Per Room", value: hotelMetrics.averageGuestPerRoom, subtitle: "guests per room", icon: UsersRound, tone: "bg-emerald-50 text-emerald-700 ring-emerald-100" },
   ];
@@ -274,7 +274,7 @@ export default function StaffDashboard() {
       )}
 
       <section className="grid grid-cols-1 gap-6 xl:grid-cols-[1.2fr_0.8fr]">
-        <div className="rounded-3xl border border-[#d7e5e2] bg-white/88 p-6 shadow-tourism backdrop-blur-xl">
+        <div className="rounded-3xl border border-[#AFB3B5]/45 bg-[#F5F8FF]/88 p-6 shadow-tourism backdrop-blur-xl">
           <div className="flex items-center justify-between gap-4">
             <div>
               <h3 className="text-lg font-bold text-[#0B2530]">Recent submissions</h3>
@@ -285,7 +285,7 @@ export default function StaffDashboard() {
           <div className="mt-5 space-y-3">
             {recentSubmissions.length > 0 ? (
               recentSubmissions.map((submission) => (
-                <div key={submission.id} className="flex items-center justify-between gap-4 rounded-2xl border border-[#d7e5e2]/70 bg-[#f8fbf8] p-4">
+                <div key={submission.id} className="flex items-center justify-between gap-4 rounded-2xl border border-[#AFB3B5]/45 bg-[#E5E8E1]/70 p-4">
                   <div>
                     <p className="font-semibold text-[#0B2530]">{submission.type}</p>
                     <p className="mt-1 text-sm text-[#5D6F73]">{submission.dataSummary}</p>
@@ -299,14 +299,14 @@ export default function StaffDashboard() {
                 </div>
               ))
             ) : (
-              <div className="rounded-2xl border border-dashed border-[#b8d2cf] bg-[#f8fbf8] p-8 text-center text-sm text-[#5D6F73]">
+              <div className="rounded-2xl border border-dashed border-[#AFB3B5] bg-[#E5E8E1]/70 p-8 text-center text-sm text-[#5D6F73]">
                 No submissions yet. Start by submitting a resort or hotel report.
               </div>
             )}
           </div>
         </div>
 
-        <div className="rounded-3xl border border-[#d7e5e2] bg-white/88 p-6 shadow-tourism backdrop-blur-xl">
+        <div className="rounded-3xl border border-[#AFB3B5]/45 bg-[#F5F8FF]/88 p-6 shadow-tourism backdrop-blur-xl">
           <h3 className="text-lg font-bold text-[#0B2530]">Reporting reminder</h3>
           <div className="mt-5 rounded-2xl bg-cyan-50 p-4 ring-1 ring-cyan-100">
             <div className="flex items-start gap-3">

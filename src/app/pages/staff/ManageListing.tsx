@@ -597,13 +597,13 @@ export default function ManageListing() {
 
                 <Separator className="bg-slate-100" />
 
-                <div className="rounded-[1.35rem] border border-cyan-100 bg-cyan-50/50 p-3 sm:p-4" data-manage-listing-pin-ui="provider-neutral-exact-pin">
+                <div className="rounded-[1.35rem] border border-[#AFB3B5]/45 bg-[#E5E8E1]/70 p-3 sm:p-4" data-manage-listing-pin-ui="provider-neutral-exact-pin">
                   <div className="mb-3 flex items-start justify-between gap-3">
                     <div>
                       <h3 className="text-base font-black tracking-[-0.02em] text-slate-950">Exact Location Pin</h3>
                       <p className="mt-1 text-sm leading-6 text-slate-600">Search, use your current location, click the map, or drag the marker before publishing.</p>
                     </div>
-                    <Badge variant="outline" className={hasExactCoordinates ? 'rounded-full border-cyan-200 bg-white text-cyan-800' : 'rounded-full border-amber-200 bg-amber-50 text-amber-800'}>
+                    <Badge variant="outline" className={hasExactCoordinates ? 'rounded-full border-[#6C9772]/45 bg-[#F5F8FF] text-[#0F3B2D]' : 'rounded-full border-[#B88A52]/45 bg-[#FBE7BA] text-[#193364]'}>
                       {hasExactCoordinates ? 'Pin ready' : 'Needs pin'}
                     </Badge>
                   </div>
@@ -638,10 +638,10 @@ export default function ManageListing() {
                     </Button>
                   </div>
                   <div className="mt-4 space-y-3">
-                    <div className="manage-listing-map relative isolate z-0 overflow-hidden rounded-[1.25rem] border border-cyan-100 bg-white shadow-sm">
+                    <div className="manage-listing-map relative isolate z-0 overflow-hidden rounded-[1.25rem] border border-[#AFB3B5]/45 bg-[#F5F8FF] shadow-sm">
                       <div ref={mapContainerRef} className="h-72 w-full sm:h-80" />
                       {mapStatus === 'searching' && (
-                        <div className="absolute inset-0 flex items-center justify-center bg-white/75 text-sm font-medium text-[#0E5A72]">
+                        <div className="absolute inset-0 flex items-center justify-center bg-[#F5F8FF]/85 text-sm font-medium text-[#193364]">
                           Searching location...
                         </div>
                       )}
@@ -720,8 +720,8 @@ export default function ManageListing() {
           </div>
 
           <aside className="space-y-5">
-            <Card className="overflow-hidden rounded-[1.5rem] border-slate-200 bg-white shadow-sm">
-              <CardHeader className="border-b border-slate-100 bg-slate-50/70 px-4 py-4 sm:px-5">
+            <Card className="overflow-hidden rounded-[1.5rem] border-[#AFB3B5]/45 bg-[#F5F8FF] shadow-sm">
+                          <CardHeader className="border-b border-[#AFB3B5]/35 bg-[#E5E8E1]/70 px-4 py-4 sm:px-5">
                 <div className="flex items-center justify-between gap-3">
                   <CardTitle className="text-xl font-black tracking-[-0.025em] text-slate-950">Photo gallery</CardTitle>
                   <Badge variant="outline" className="rounded-full border-slate-200 bg-white text-slate-700">{images.length} photos</Badge>

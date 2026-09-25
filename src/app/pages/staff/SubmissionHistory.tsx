@@ -92,7 +92,6 @@ export default function SubmissionHistory() {
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState<{ kind: "error" | "session-expired"; message: string } | null>(null);
   const [searchTerm, setSearchTerm] = useState("");
-  const [filterStatus, setFilterStatus] = useState("all");
   const [allowedForms, setAllowedForms] = useState({ visitor: false, accommodation: false });
   const now = new Date();
   const [selectedYear, setSelectedYear] = useState(now.getFullYear());
@@ -208,9 +207,8 @@ export default function SubmissionHistory() {
       .join(" ")
       .toLowerCase();
     const matchesSearch = searchText.includes(searchTerm.toLowerCase());
-    const matchesStatus = filterStatus === "all" || sub.status.toLowerCase() === filterStatus.toLowerCase();
     const matchesDate = dateParts?.year === selectedYear && dateParts.month === selectedMonth;
-    return matchesSearch && matchesStatus && matchesDate;
+    return matchesSearch && matchesDate;
   });
 
   const filterReportRecord = (
@@ -232,9 +230,8 @@ export default function SubmissionHistory() {
       .toLowerCase();
 
     const matchesSearch = searchText.includes(searchTerm.toLowerCase());
-    const matchesStatus = filterStatus === "all" || (record.status || "pending").toLowerCase() === filterStatus.toLowerCase();
     const matchesDate = dateParts?.year === selectedYear && dateParts.month === selectedMonth;
-    return matchesSearch && matchesStatus && matchesDate;
+    return matchesSearch && matchesDate;
   };
 
   const filteredVisitorReports = visitorReports.filter((record) => filterReportRecord(record, "Visitor Report"));
@@ -429,8 +426,6 @@ export default function SubmissionHistory() {
       canSubmitAccommodation={showHotelExport}
       searchTerm={searchTerm}
       setSearchTerm={setSearchTerm}
-      filterStatus={filterStatus}
-      setFilterStatus={setFilterStatus}
       selectedYear={selectedYear}
       setSelectedYear={(year) => { setSelectedYear(year); setExpandedSubmissionId(null); }}
       selectedMonth={selectedMonth}
