@@ -599,7 +599,7 @@ export default function SubmitAccommodationReport() {
               </div>
               <div className="space-y-4">
                 {tempRoomConfig.map((room, index) => (
-                  <div key={`${room.type}-${room.code}-${index}`} className="grid grid-cols-1 gap-3 rounded-lg border border-gray-200 p-4 sm:grid-cols-[1fr_1fr_auto] sm:items-end">
+                  <div key={`room-config-${index}`} className="grid grid-cols-1 gap-3 rounded-lg border border-gray-200 p-4 sm:grid-cols-[1fr_1fr_auto] sm:items-end">
                     <div className="min-w-0">
                       <label className="mb-1 block text-sm font-medium text-gray-700">Room Name</label>
                       <input
