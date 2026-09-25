@@ -206,9 +206,11 @@
   }
 
   .dashboard-neumorphic .tourism-panel-dark { border-radius: 28px !important; }
-  .dashboard-neumorphic .text-white,
-  .dashboard-neumorphic .text-slate-200,
-  .dashboard-neumorphic .text-cyan-100 { color: var(--neu-text) !important; }
+  /* Keep explicit white text on colored buttons, statuses, and banners readable. */
+  .dashboard-neumorphic .tourism-panel-dark h1,
+  .dashboard-neumorphic .tourism-panel-dark h2,
+  .dashboard-neumorphic .tourism-panel-dark h3,
+  .dashboard-neumorphic .tourism-panel-dark p { color: var(--neu-text) !important; }
   .dashboard-neumorphic .tourism-card:hover { box-shadow: 12px 12px 20px rgba(163,177,198,.68), -12px -12px 20px rgba(255,255,255,.62) !important; }
   .dashboard-neumorphic .vb-neu-sidebar { background: var(--neu-surface) !important; border: 0 !important; box-shadow: 9px 9px 16px rgba(163,177,198,.6), -9px -9px 16px rgba(255,255,255,.55) !important; }
   .dashboard-neumorphic .vb-neu-brand,
