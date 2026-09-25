@@ -218,22 +218,32 @@ export default function SubmitAccommodationReport() {
   ): Promise<RoomOccupancy[]> => {
     const empty = buildRoomData(rooms);
 
-    const { data: previousReport } = await supabase
+    const { data: previousReport, error: previousReportError } = await supabase
       .from("accommodation_reports")
-      .select("id")
+      .select("id,created_at")
       .eq("establishment_id", establishmentId)
       .eq("report_date", previousDate)
+      .order("created_at", { ascending: false })
+      .limit(1)
       .maybeSingle();
 
-    if (!previousReport?.id) return empty;
+    if (previousReportError || !previousReport?.id) {
+      if (previousReportError) console.error("Could not load previous accommodation report:", previousReportError);
+      return empty;
+    }
 
-    const { data: previousDetails } = await supabase
+    const { data: previousDetails, error: previousDetailsError } = await supabase
       .from("room_occupancy_details")
       .select("room_code,guest_nights,check_ins,occupied_rooms")
       .eq("accommodation_report_id", previousReport.id);
 
+    if (previousDetailsError) {
+      console.error("Could not load previous room occupancy details:", previousDetailsError);
+      return empty;
+    }
+
     const byCode = new Map((previousDetails || []).map((detail) => [
-      String(detail.room_code || ""),
+      String(detail.room_code || "").trim().toUpperCase(),
       {
         guests: Math.max(0, Number(detail.guest_nights) || 0),
         newGuests: Math.max(0, Number(detail.check_ins) || 0),
@@ -242,8 +252,9 @@ export default function SubmitAccommodationReport() {
     ]));
 
     return empty.map((room) => {
-      const baseCode = room.roomCode.replace(/-\d+$/, "");
-      const previous = byCode.get(room.roomCode) || (room.roomCode.endsWith("-1") ? byCode.get(baseCode) : undefined);
+      const normalizedRoomCode = room.roomCode.trim().toUpperCase();
+      const baseCode = normalizedRoomCode.replace(/-\d+$/, "");
+      const previous = byCode.get(normalizedRoomCode) || (normalizedRoomCode.endsWith("-1") ? byCode.get(baseCode) : undefined);
       return {
         ...room,
         continuingGuests: previous?.guests || 0,
