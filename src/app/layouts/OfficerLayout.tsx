@@ -59,7 +59,7 @@ export default function OfficerLayout() {
   };
 
   return (
-    <div className="min-h-[100dvh] vb-dashboard-canvas text-black">
+    <div className="dashboard-neumorphic min-h-[100dvh] tourism-shell text-slate-950">
       {/* Mobile Overlay */}
       {sidebarOpen && (
         <button
@@ -72,21 +72,21 @@ export default function OfficerLayout() {
 
       {/* Sidebar */}
       <aside
-        className={`vb-dashboard-sidebar fixed left-0 top-0 lg:top-0 h-full lg:h-full transition-all duration-300 ${
+        className={`vb-neu-sidebar fixed left-0 top-0 lg:top-0 h-full lg:h-full transition-all duration-300 ${
           sidebarOpen ? "w-[82vw] max-w-80 z-50" : "w-0 lg:w-64 z-40"
         } overflow-hidden`}
       >
-        <div className="vb-dashboard-sidebar-brand p-6">
+        <div className="vb-neu-brand p-6">
           <div className="flex items-center gap-3">
-            <div className="vb-dashboard-avatar flex h-11 w-11 items-center justify-center text-sm font-black text-[#6C63FF]">VB</div>
+            <div className="vb-neu-avatar flex h-11 w-11 items-center justify-center text-sm font-black">VB</div>
             <div>
-              <h1 className="text-xl font-black tracking-[-0.035em] text-black">VistaBalayan</h1>
-              <p className="mt-0.5 text-xs font-black uppercase tracking-widest text-black">Tourism Officer</p>
+              <h1 className="text-xl font-semibold tracking-[-0.035em] text-[#0B2530]">VistaBalayan</h1>
+              <p className="mt-0.5 text-sm font-medium text-[#0E5A72]">Tourism Officer Portal</p>
             </div>
           </div>
         </div>
 
-        <nav className="h-[calc(100vh-130px)] space-y-2 overflow-y-auto bg-[#FFFDF5] p-4 lg:h-auto">
+        <nav className="h-[calc(100vh-130px)] space-y-1.5 overflow-y-auto bg-white p-4 lg:h-auto lg:bg-transparent">
           {menuItems.map((item) => (
             <NavLink
               key={item.path}
@@ -94,10 +94,10 @@ export default function OfficerLayout() {
               end={item.path === "/officer"}
               onClick={closeSidebarOnMobile}
               className={({ isActive }) =>
-                `vb-dashboard-nav-item flex items-center gap-3 rounded-lg px-4 py-3 transition-all duration-200 ${
+                `vb-neu-nav-item flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 ${
                   isActive
-                    ? "vb-dashboard-nav-active"
-                    : "text-black"
+                    ? "vb-neu-nav-active"
+                    : ""
                 }`
               }
             >
@@ -111,14 +111,14 @@ export default function OfficerLayout() {
       {/* Main Content */}
       <div className="lg:ml-64">
         {/* Top Navbar */}
-        <header className="vb-dashboard-topbar sticky top-0 z-40">
+        <header className="vb-neu-topbar sticky top-0 z-40">
           <div className="px-4 sm:px-6 py-4 flex items-center justify-between">
             <div className="flex items-center gap-4">
               <button
                 type="button"
                 aria-label={sidebarOpen ? "Close navigation menu" : "Open navigation menu"}
                 onClick={() => setSidebarOpen(!sidebarOpen)}
-                className="vb-dashboard-button bg-[#E0E5EC] p-2.5 lg:hidden"
+                className="vb-neu-control p-2.5 transition-all duration-200 lg:hidden"
               >
                 <Menu className="w-5 h-5 text-[#6C63FF]" />
               </button>
@@ -128,16 +128,16 @@ export default function OfficerLayout() {
             <div className="flex items-center gap-3">
               <NotificationCenter role="municipal_officer" />
 
-              <div className="h-8 w-px bg-black"></div>
+              <div className="h-8 w-px bg-slate-200"></div>
 
               <div className="relative">
                 <button
                   type="button"
                   aria-label="Open account menu"
                   onClick={() => setProfileDropdownOpen(!profileDropdownOpen)}
-                  className="flex items-center gap-2 rounded-lg border-2 border-transparent px-2 py-1.5 transition-colors hover:border-black sm:gap-3"
+                  className="flex items-center gap-2 rounded-2xl px-2 py-1.5 transition-colors hover:bg-slate-100 sm:gap-3"
                 >
-                  <div className="vb-dashboard-avatar flex h-9 w-9 items-center justify-center text-xs font-black text-[#6C63FF] sm:h-10 sm:w-10 sm:text-sm">
+                  <div className="vb-neu-avatar flex h-9 w-9 items-center justify-center text-xs font-bold sm:h-10 sm:w-10 sm:text-sm">
                     {getInitials()}
                   </div>
                   <div className="hidden sm:block text-left">
@@ -152,7 +152,7 @@ export default function OfficerLayout() {
 
                 {/* Profile Dropdown */}
                 {profileDropdownOpen && (
-                  <div className="absolute right-0 z-50 mt-2 w-56 rounded-2xl border border-slate-200 bg-white py-2 shadow-xl">
+                  <div className="vb-neu-dropdown absolute right-0 z-50 mt-2 w-56 py-2">
                     <button
                       onClick={() => {
                         navigate("/officer/settings");
