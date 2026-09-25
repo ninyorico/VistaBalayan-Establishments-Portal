@@ -351,8 +351,8 @@ export default function Analytics() {
               <YAxis />
               <Tooltip />
               <Legend />
-              <Area type="monotone" dataKey="visitors" stroke="#3b82f6" fill="#3b82f6" fillOpacity={0.45} name="Visitors" />
-              <Area type="monotone" dataKey="guestNights" stroke="#10b981" fill="#10b981" fillOpacity={0.25} name="Occupied room nights" />
+              <Area type="monotone" dataKey="visitors" stroke="#6474A5" fill="#6474A5" fillOpacity={0.28} name="Visitors" />
+              <Area type="monotone" dataKey="guestNights" stroke="#5E8A75" fill="#5E8A75" fillOpacity={0.2} name="Occupied room nights" />
             </AreaChart>
           </ResponsiveContainer>
         ) : (
@@ -370,7 +370,7 @@ export default function Analytics() {
               <YAxis dataKey="name" type="category" width={170} />
               <Tooltip formatter={(value, name) => [name === "score" ? `${value}/100` : value, name === "score" ? "Performance Score" : name]} />
               <Legend />
-              <Bar dataKey="score" fill="#10b981" name="Performance Score" />
+              <Bar dataKey="score" fill="#6C63FF" name="Performance Score" />
             </BarChart>
           </ResponsiveContainer>
         ) : (
@@ -447,9 +447,9 @@ export default function Analytics() {
                       {establishment.occupancyRate > 0 ? (
                         <div className="flex items-center gap-2">
                           <div className="flex-1 bg-gray-200 rounded-full h-2 w-24">
-                            <div className="h-2 rounded-full bg-red-500" style={{ width: `${Math.min(establishment.occupancyRate, 100)}%` }}></div>
+                            <div className="h-2 rounded-full bg-[#B86B78]" style={{ width: `${Math.min(establishment.occupancyRate, 100)}%` }}></div>
                           </div>
-                          <span className="text-sm font-medium text-red-600">{establishment.occupancyRate.toFixed(1)}%</span>
+                          <span className="text-sm font-medium text-[#B86B78]">{establishment.occupancyRate.toFixed(1)}%</span>
                         </div>
                       ) : (
                         <span className="text-sm text-gray-500">No accommodation data</span>

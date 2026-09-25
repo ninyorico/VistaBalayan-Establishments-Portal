@@ -559,7 +559,7 @@ export default function Reports() {
               <YAxis />
               <Tooltip />
               <Legend />
-              <Line type="monotone" dataKey="visitors" stroke="#3b82f6" strokeWidth={2} name="Visitors" />
+              <Line type="monotone" dataKey="visitors" stroke="#6474A5" strokeWidth={2} name="Visitors" />
             </LineChart>
           </ResponsiveContainer>
         ) : (

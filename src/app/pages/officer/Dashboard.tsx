@@ -47,16 +47,16 @@ interface Demographic {
   color: string;
 }
 
-const DEMOGRAPHIC_COLORS = ["#0E7490", "#7C3AED", "#F97316", "#16A34A", "#DC2626", "#2563EB"];
+const DEMOGRAPHIC_COLORS = ["#5E8A75", "#6C63FF", "#B28B52", "#6474A5", "#B86B78", "#7D89A5"];
 
 const MAX_VISIBLE_DEMOGRAPHICS = 4;
 
 const getDemographicColor = (name: string, index: number) => {
   const normalized = name.toLowerCase();
 
-  if (normalized.includes("within") || normalized.includes("batangas resident")) return "#0E7490";
-  if (normalized.includes("outside")) return "#7C3AED";
-  if (normalized.includes("other")) return "#F97316";
+  if (normalized.includes("within") || normalized.includes("batangas resident")) return "#5E8A75";
+  if (normalized.includes("outside")) return "#6C63FF";
+  if (normalized.includes("other")) return "#B28B52";
   if (normalized.includes("unknown")) return "#64748B";
 
   return DEMOGRAPHIC_COLORS[index % DEMOGRAPHIC_COLORS.length];

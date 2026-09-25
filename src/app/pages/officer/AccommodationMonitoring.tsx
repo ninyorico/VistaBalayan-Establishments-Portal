@@ -612,9 +612,9 @@ export default function AccommodationMonitoring({ embedded = false }: { embedded
                             <div className="flex-1 bg-gray-200 rounded-full h-2 w-24">
                               <div
                                 className={`h-2 rounded-full ${
-                                  group.avgOccupancy >= 90 ? "bg-green-500" :
-                                  group.avgOccupancy >= 70 ? "bg-blue-500" :
-                                  group.avgOccupancy >= 50 ? "bg-yellow-500" : "bg-red-500"
+                                  group.avgOccupancy >= 90 ? "bg-[#5E8A75]" :
+                                  group.avgOccupancy >= 70 ? "bg-[#5E8A75]" :
+                                  group.avgOccupancy >= 50 ? "bg-[#B28B52]" : "bg-[#B86B78]"
                                 }`}
                                 style={{ width: `${Math.min(group.avgOccupancy, 100)}%` }}
                               />
