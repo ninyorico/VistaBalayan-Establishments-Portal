@@ -221,6 +221,50 @@
   .dashboard-neumorphic .vb-neu-nav-active { background: var(--neu-surface) !important; color: var(--neu-violet) !important; box-shadow: inset 6px 6px 10px rgba(163,177,198,.6), inset -6px -6px 10px rgba(255,255,255,.55) !important; }
   .dashboard-neumorphic .vb-neu-dropdown { background: var(--neu-surface) !important; border: 0 !important; border-radius: 20px !important; box-shadow: 9px 9px 16px rgba(163,177,198,.6), -9px -9px 16px rgba(255,255,255,.55) !important; }
   .dashboard-neumorphic .vb-neu-inset { border: 0 !important; border-radius: 20px !important; background: var(--neu-surface) !important; box-shadow: inset 6px 6px 10px rgba(163,177,198,.6), inset -6px -6px 10px rgba(255,255,255,.55) !important; }
+  /* Keep dashboard surfaces continuous instead of stacking white sheets. */
+  .dashboard-neumorphic .bg-white,
+  .dashboard-neumorphic .bg-white\/80,
+  .dashboard-neumorphic .bg-white\/90,
+  .dashboard-neumorphic .bg-white\/95,
+  .dashboard-neumorphic .bg-slate-50,
+  .dashboard-neumorphic .bg-slate-50\/70,
+  .dashboard-neumorphic .bg-slate-50\/80,
+  .dashboard-neumorphic .bg-gray-50 {
+    background-color: var(--neu-surface) !important;
+    background-image: none !important;
+  }
+
+  .dashboard-neumorphic [class*="border-gray-"],
+  .dashboard-neumorphic [class*="border-slate-"] {
+    border-color: rgba(163,177,198,.3) !important;
+  }
+
+  .dashboard-neumorphic [class*="shadow-sm"],
+  .dashboard-neumorphic [class*="shadow-xl"],
+  .dashboard-neumorphic [class*="shadow-2xl"] {
+    box-shadow: 8px 8px 15px rgba(163,177,198,.48), -8px -8px 15px rgba(255,255,255,.48) !important;
+  }
+
+  .dashboard-neumorphic input,
+  .dashboard-neumorphic textarea,
+  .dashboard-neumorphic select {
+    background: var(--neu-surface) !important;
+    border-color: transparent !important;
+    box-shadow: inset 4px 4px 8px rgba(163,177,198,.45), inset -4px -4px 8px rgba(255,255,255,.5) !important;
+  }
+
+  .dashboard-neumorphic [data-ai-card-layout] {
+    background: var(--neu-surface) !important;
+    border-color: transparent !important;
+    box-shadow: 8px 8px 15px rgba(163,177,198,.48), -8px -8px 15px rgba(255,255,255,.48) !important;
+  }
+
+  .dashboard-neumorphic [data-ai-action-note] {
+    background: var(--neu-surface) !important;
+    border-color: transparent !important;
+    box-shadow: inset 4px 4px 8px rgba(163,177,198,.4), inset -4px -4px 8px rgba(255,255,255,.5) !important;
+  }
+
   @media (max-width: 640px) { .dashboard-neumorphic .tourism-card, .dashboard-neumorphic .tourism-panel-dark, .dashboard-neumorphic .vb-neu-sidebar { box-shadow: 5px 5px 10px rgba(163,177,198,.58), -5px -5px 10px rgba(255,255,255,.52) !important; } }
 }
 
