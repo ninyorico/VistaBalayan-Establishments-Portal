@@ -363,8 +363,8 @@ export default function VisitorMonitoring({ embedded = false }: { embedded?: boo
 
       {selectedGroup && (
         <div ref={visitorDialogRef} className="fixed inset-0 z-[100] flex items-end justify-center bg-slate-950/60 p-0 backdrop-blur-sm sm:items-center sm:p-4" role="dialog" aria-modal="true" aria-labelledby="visitor-records-dialog-title" tabIndex={-1} onClick={() => setSelectedEstablishment(null)}>
-          <div className="max-h-[90dvh] w-full overflow-hidden rounded-t-2xl bg-white shadow-2xl sm:max-w-5xl sm:rounded-2xl" onClick={(event) => event.stopPropagation()}>
-            <div className="flex items-start justify-between gap-4 border-b border-gray-200 bg-gray-50 px-4 py-4 sm:px-6">
+          <div className="max-h-[90dvh] w-full overflow-hidden rounded-t-2xl border border-[#D2D8E0] bg-[#E0E5EC] shadow-[12px_12px_28px_rgba(15,23,42,0.2),-8px_-8px_20px_rgba(255,255,255,0.2)] sm:max-w-5xl sm:rounded-2xl" onClick={(event) => event.stopPropagation()}>
+            <div className="flex items-start justify-between gap-4 border-b border-[#D2D8E0] bg-[#E0E5EC] px-4 py-4 sm:px-6">
               <div className="min-w-0">
                 <p className="text-xs font-semibold uppercase tracking-wider text-blue-600">Visitor records</p>
                 <h3 id="visitor-records-dialog-title" className="mt-1 truncate text-lg font-semibold text-gray-900 sm:text-xl">{selectedGroup.establishment}</h3>
@@ -380,18 +380,18 @@ export default function VisitorMonitoring({ embedded = false }: { embedded?: boo
               </button>
             </div>
 
-            <div className="grid grid-cols-3 gap-2 border-b border-gray-100 px-4 py-3 text-center sm:px-6">
-              <div className="rounded-lg bg-blue-50 px-3 py-2">
-                <p className="text-[10px] font-medium uppercase tracking-wide text-blue-700 sm:text-xs">Male</p>
-                <p className="text-lg font-bold text-blue-700 sm:text-2xl">{selectedGroup.male}</p>
+            <div className="grid grid-cols-3 gap-2 border-b border-[#D2D8E0] px-4 py-3 text-center sm:px-6">
+              <div className="overflow-hidden rounded-xl border border-[#C7D0DA] bg-[#E8EDF2] px-3 py-2 shadow-[inset_3px_3px_7px_rgba(163,177,198,0.3),inset_-3px_-3px_7px_rgba(255,255,255,0.65)]">
+                <p className="text-[10px] font-medium uppercase tracking-wide text-[#536477] sm:text-xs">Male</p>
+                <p className="text-lg font-bold text-[#687B91] sm:text-2xl">{selectedGroup.male}</p>
               </div>
-              <div className="rounded-lg bg-purple-50 px-3 py-2">
-                <p className="text-[10px] font-medium uppercase tracking-wide text-purple-700 sm:text-xs">Female</p>
-                <p className="text-lg font-bold text-purple-700 sm:text-2xl">{selectedGroup.female}</p>
+              <div className="overflow-hidden rounded-xl border border-[#C7C4E8] bg-[#E8E7F5] px-3 py-2 shadow-[inset_3px_3px_7px_rgba(163,177,198,0.3),inset_-3px_-3px_7px_rgba(255,255,255,0.65)]">
+                <p className="text-[10px] font-medium uppercase tracking-wide text-[#5D58A2] sm:text-xs">Female</p>
+                <p className="text-lg font-bold text-[#6C63FF] sm:text-2xl">{selectedGroup.female}</p>
               </div>
-              <div className="rounded-lg bg-slate-50 px-3 py-2">
-                <p className="text-[10px] font-medium uppercase tracking-wide text-slate-700 sm:text-xs">Total</p>
-                <p className="text-lg font-bold text-slate-900 sm:text-2xl">{selectedGroup.total}</p>
+              <div className="overflow-hidden rounded-xl border border-[#C7D0DA] bg-[#E8EDF2] px-3 py-2 shadow-[inset_3px_3px_7px_rgba(163,177,198,0.3),inset_-3px_-3px_7px_rgba(255,255,255,0.65)]">
+                <p className="text-[10px] font-medium uppercase tracking-wide text-[#536477] sm:text-xs">Total</p>
+                <p className="text-lg font-bold text-[#536477] sm:text-2xl">{selectedGroup.total}</p>
               </div>
             </div>
 
@@ -405,7 +405,7 @@ export default function VisitorMonitoring({ embedded = false }: { embedded?: boo
                 onTouchMove={handleTableTouchMove}
               >
                 <div className="min-w-[620px] sm:min-w-[760px]">
-                  <div className="grid grid-cols-[20%_18%_10%_10%_10%_17%_15%] border-b border-gray-200 bg-white shadow-[0_1px_0_rgba(148,163,184,0.35)]" data-visitor-records-fixed-header="true">
+                  <div className="grid grid-cols-[20%_18%_10%_10%_10%_17%_15%] border-b border-[#D2D8E0] bg-[#E0E5EC] shadow-[0_1px_0_rgba(148,163,184,0.35)]" data-visitor-records-fixed-header="true">
                     <div className="px-2 py-2 text-left text-[10px] font-semibold uppercase tracking-wider text-gray-600 sm:px-4 sm:text-xs">Date</div>
                     <div className="px-2 py-2 text-left text-[10px] font-semibold uppercase tracking-wider text-gray-600 sm:px-4 sm:text-xs">Guest/Group</div>
                     <div className="px-2 py-2 text-left text-[10px] font-semibold uppercase tracking-wider text-gray-600 sm:px-4 sm:text-xs">Male</div>

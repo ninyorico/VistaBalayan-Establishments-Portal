@@ -74,7 +74,7 @@ export default function Reports() {
   const [selectedMonth, setSelectedMonth] = useState("");
   const [selectedWeek, setSelectedWeek] = useState("1");
   const [searchTerm, setSearchTerm] = useState("");
-  const [filterStatus, setFilterStatus] = useState("all");
+
   const [establishmentDirectory, setEstablishmentDirectory] = useState<any[]>([]);
   const [submissions, setSubmissions] = useState<Submission[]>([]);
   const [visitorReports, setVisitorReports] = useState<any[]>([]);
@@ -423,11 +423,10 @@ export default function Reports() {
   // Filter submissions for table
   const filteredReports = submissions.filter((report) => {
     const matchesSearch = report.establishment.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesStatus = filterStatus === "all" || normalizeStatus(report.status) === normalizeStatus(filterStatus);
     const { startDate, endDate } = getReportRange();
     const matchesDate = report.reportDate >= startDate && report.reportDate <= endDate;
     
-    return matchesSearch && matchesStatus && matchesDate;
+    return matchesSearch && matchesDate;
   });
 
   const totalSubmissions = filteredReports.length;
@@ -526,18 +525,6 @@ export default function Reports() {
               ))}
             </select>
           )}
-
-          <span className="text-gray-300">|</span>
-
-          {/* Status Filter */}
-          <select
-            value={filterStatus}
-            onChange={(e) => setFilterStatus(e.target.value)}
-            className="px-3 py-1.5 border border-gray-300 rounded-lg text-sm"
-          >
-            <option value="all">All Status</option>
-            <option value="submitted">Submitted</option>
-          </select>
 
           {/* Search */}
           <input
