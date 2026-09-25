@@ -363,6 +363,13 @@
     box-shadow: 8px 8px 15px rgba(163,177,198,.48), -8px -8px 15px rgba(255,255,255,.48) !important;
   }
 
+  .dashboard-neumorphic .dashboard-neu-icon {
+    background-color: var(--neu-surface) !important;
+    border-color: transparent !important;
+    color: #6c63ff !important;
+    box-shadow: inset 4px 4px 8px rgba(163,177,198,.38), inset -4px -4px 8px rgba(255,255,255,.5) !important;
+  }
+
   @media (max-width: 640px) { .dashboard-neumorphic .tourism-card, .dashboard-neumorphic .tourism-panel-dark, .dashboard-neumorphic .vb-neu-sidebar { box-shadow: 5px 5px 10px rgba(163,177,198,.58), -5px -5px 10px rgba(255,255,255,.52) !important; } }
 }
 
