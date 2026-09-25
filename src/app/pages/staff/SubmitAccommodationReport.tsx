@@ -578,7 +578,7 @@ export default function SubmitAccommodationReport() {
           type="button"
           aria-label="Configure Rooms"
           onClick={() => setShowRoomSetup(true)}
-          className="flex items-center justify-center gap-2 px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition font-medium"
+          className="flex items-center justify-center gap-2 rounded-lg bg-[#0F4C75] px-4 py-2 font-medium text-white transition hover:bg-[#0F4C75]"
         >
           <Settings className="w-4 h-4 sm:w-5 sm:h-5" />
           <span className="hidden sm:inline">Configure Rooms</span>
@@ -744,15 +744,15 @@ export default function SubmitAccommodationReport() {
             <p className="text-xl font-bold text-[#193364] sm:text-3xl">{avgGuestNight}</p>
             <p className="mt-1 text-[9px] text-[#5D6F73] sm:text-xs">nights per guest</p>
           </div>
-          <div className="bg-gray-50 rounded-lg p-2 sm:p-4 border border-gray-200" data-hotel-report-daily-occupancy="selected-report-date">
-            <p className="text-[10px] sm:text-sm text-gray-700 font-medium mb-1">Daily Room Occupancy Rate</p>
-            <p className="text-xl sm:text-3xl font-bold text-gray-900">{avgOccupancyRate}%</p>
-            <p className="text-[9px] sm:text-xs text-gray-500 mt-1">selected report date only</p>
+          <div className="rounded-lg border border-[#6C9772]/35 bg-[#E5E8E1] p-2 sm:p-4" data-hotel-report-daily-occupancy="selected-report-date">
+            <p className="mb-1 text-[10px] font-medium text-[#0F3B2D] sm:text-sm">Daily Room Occupancy Rate</p>
+            <p className="text-xl font-bold text-[#0F3B2D] sm:text-3xl">{avgOccupancyRate}%</p>
+            <p className="mt-1 text-[9px] text-[#5D6F73] sm:text-xs">selected report date only</p>
           </div>
-          <div className="bg-gray-50 rounded-lg p-2 sm:p-4 border border-gray-200">
-            <p className="text-[10px] sm:text-sm text-gray-700 font-medium mb-1">Average Guest Per Room</p>
-            <p className="text-xl sm:text-3xl font-bold text-gray-900">{avgGuestPerRoom}</p>
-            <p className="text-[9px] sm:text-xs text-gray-500 mt-1">guests per room</p>
+          <div className="rounded-lg border border-[#AFB3B5]/45 bg-[#F5F8FF] p-2 sm:p-4">
+            <p className="mb-1 text-[10px] font-medium text-[#193364] sm:text-sm">Average Guest Per Room</p>
+            <p className="text-xl font-bold text-[#193364] sm:text-3xl">{avgGuestPerRoom}</p>
+            <p className="mt-1 text-[9px] text-[#5D6F73] sm:text-xs">guests per room</p>
           </div>
         </div>
       </div>
