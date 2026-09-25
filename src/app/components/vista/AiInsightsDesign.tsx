@@ -198,12 +198,12 @@ export function AiRecommendationCard(insight: AiRecommendationCardProps) {
   const isHighImpact = insight.impact === "high";
 
   return (
-    <article className="group relative overflow-hidden rounded-2xl border border-slate-200 bg-white p-4 shadow-[0_14px_40px_rgba(15,23,42,0.05)] transition-all duration-500 hover:-translate-y-0.5 hover:shadow-[0_18px_55px_rgba(15,23,42,0.08)] sm:p-5" data-ai-card-layout="shadcn-recommendation-editorial">
-      <div className="pointer-events-none absolute -right-12 -top-12 h-28 w-28 rounded-full bg-cyan-100/70 blur-2xl transition-transform duration-700 group-hover:scale-125" />
-      <div className="relative">
+    <article className="group relative overflow-hidden rounded-2xl border border-slate-200 bg-white p-0 shadow-[0_14px_40px_rgba(15,23,42,0.05)] transition-all duration-500 hover:-translate-y-0.5 hover:shadow-[0_18px_55px_rgba(15,23,42,0.08)] sm:p-0" data-ai-card-layout="shadcn-recommendation-editorial">
+      <div className="absolute inset-y-0 left-0 w-1.5 bg-[#6C63FF]" />
+      <div className="relative p-4 pl-5 sm:p-5 sm:pl-6">
         <div className="mb-3 flex items-start justify-between gap-3">
           <div className="flex min-w-0 items-start gap-3">
-            <div className="mt-0.5 flex size-9 shrink-0 items-center justify-center rounded-xl bg-cyan-50 text-[#0F4C75]">
+            <div className="mt-0.5 flex size-9 shrink-0 items-center justify-center rounded-xl bg-slate-50 text-[#6C63FF]">
               <TrendingUp className="size-4" />
             </div>
             <h3 className="min-w-0 text-base font-black leading-snug tracking-[-0.025em] text-slate-950 sm:text-lg">

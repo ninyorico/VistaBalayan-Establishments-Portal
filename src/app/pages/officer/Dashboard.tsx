@@ -3,7 +3,6 @@ import {
   Users,
   TrendingUp,
   Bed,
-  AlertTriangle,
   Building2,
 } from "lucide-react";
 import {
@@ -26,6 +25,7 @@ import { calculateAccommodationOccupancy } from "../../../lib/reportMetrics";
 
 import { Button } from "../../components/ui/button";
 import { EmptyState, LoadingState, MetricCard, PageHero, PanelCard } from "../../components/vista/PolishedShell";
+import { AiAnomalyCard } from "../../components/vista/AiInsightsDesign";
 
 interface RecentSubmission {
   id: string;
@@ -473,22 +473,11 @@ setOccupancyRate(occupancyRate);
           <div className="space-y-3">
             {anomalies.length > 0 ? (
               anomalies.map((anomaly) => (
-                <div key={anomaly.id} className={`flex items-start gap-3 rounded-2xl border p-4 ${
-                  anomaly.severity === "high" ? "border-rose-200 bg-rose-50" : "border-amber-200 bg-amber-50"
-                }`}>
-                  <AlertTriangle className={`mt-0.5 h-5 w-5 ${
-                    anomaly.severity === "high" ? "text-rose-700" : "text-amber-700"
-                  }`} />
-                  <div className="flex-1">
-                    <div className="flex justify-between gap-3">
-                      <p className="font-semibold text-[#0B2530]">{anomaly.anomaly_type}</p>
-                      <span className={`rounded-full px-2 py-0.5 text-xs font-semibold capitalize ${
-                        anomaly.severity === "high" ? "bg-rose-100 text-rose-700" : "bg-amber-100 text-amber-700"
-                      }`}>{anomaly.severity}</span>
-                    </div>
-                    <p className="mt-1 text-sm leading-6 text-slate-700">{anomaly.description}</p>
-                  </div>
-                </div>
+                <AiAnomalyCard
+                  key={anomaly.id}
+                  {...anomaly}
+                  establishments={anomaly.establishments || { name: "Municipality-wide" }}
+                />
               ))
             ) : (
               <EmptyState>No service gaps or operational challenges detected</EmptyState>
