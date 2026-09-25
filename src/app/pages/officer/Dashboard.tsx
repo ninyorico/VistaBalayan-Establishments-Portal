@@ -25,7 +25,7 @@ import { supabase } from "../../../lib/supabase";
 import { calculateAccommodationOccupancy } from "../../../lib/reportMetrics";
 
 import { Button } from "../../components/ui/button";
-import { EmptyState, LoadingState, MetricCard, PageHero, PanelCard } from "../../components/vista/PolishedShell";
+import { EmptyState, LoadingState } from "../../components/vista/PolishedShell";
 
 interface RecentSubmission {
   id: string;
@@ -318,183 +318,103 @@ setOccupancyRate(occupancyRate);
   );
 
   return (
-    <div className="space-y-7">
-      <PageHero
-        eyebrow="Officer workspace"
-        title="Tourism activity, submissions, and AI alerts in one workspace."
-        description="Monitor records, inspect establishment performance, and act on anomalies before report generation."
-        metricLabel="Current occupancy"
-        metricValue={`${occupancyRate.toFixed(1)}%`}
-      />
+    <div className="space-y-8">
+      <section className="vb-dashboard-header relative overflow-hidden p-6 sm:p-8">
+        <div className="absolute -right-10 -top-16 h-48 w-48 rounded-full border-[18px] border-black/10" aria-hidden="true" />
+        <div className="relative flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between">
+          <div className="max-w-3xl">
+            <p className="text-xs font-black uppercase tracking-[0.22em]">Municipal Tourism Officer</p>
+            <h1 className="mt-3 max-w-2xl text-4xl font-black uppercase leading-[0.9] tracking-[-0.06em] sm:text-6xl">
+              Tourism<br /><span className="bg-[#FFD93D] px-2">command center</span>
+            </h1>
+            <p className="mt-5 max-w-2xl text-sm font-medium leading-6 sm:text-base">Monitor real submitted visitor records, accommodation performance, establishment activity, and active alerts from one structured workspace.</p>
+          </div>
+          <div className="w-full border-3 border-black bg-white p-4 shadow-[5px_5px_0_#000] sm:max-w-xs">
+            <p className="text-xs font-black uppercase tracking-widest">Average occupancy</p>
+            <p className="mt-2 text-4xl font-black tabular-nums">{occupancyRate.toFixed(1)}%</p>
+            <p className="mt-1 text-xs font-bold uppercase">From submitted accommodation reports</p>
+          </div>
+        </div>
+      </section>
 
-      <section className="grid grid-cols-6 gap-2 sm:gap-3 lg:grid-cols-4 lg:gap-4" data-officer-dashboard-uniform-kpis="true">
+      <section className="grid grid-cols-2 gap-4 xl:grid-cols-4" data-officer-dashboard-uniform-kpis="true">
         {[
-          { label: "Total visitors", value: totalVisitors.toLocaleString(), helper: "Submitted visitor records", icon: Users, tone: "bg-cyan-50 text-[#0E5A72] ring-cyan-100" },
-          { label: "Monthly arrivals", value: monthlyArrivals.toLocaleString(), helper: "Latest reporting month", icon: TrendingUp, tone: "bg-slate-50 text-[#0B2530] ring-slate-200" },
-          { label: "Occupancy rate", value: `${occupancyRate.toFixed(1)}%`, helper: "Average hotel occupancy", icon: Bed, tone: "bg-[#EAF2F1] text-[#0E5A72] ring-[#b8d2cf]" },
-          { label: "Establishments", value: totalEstablishments.toString(), helper: "Tourism records", icon: Building2, tone: "bg-emerald-50 text-[#2F5F55] ring-emerald-100" },
-
-        ].map((metric, index) => (
-          <MetricCard
-            key={metric.label}
-            {...metric}
-            compact
-            className={`${index >= 6 ? "col-span-3 lg:col-span-1" : "col-span-2 lg:col-span-1"} h-full min-h-[118px] sm:min-h-[132px]`}
-          />
+          { label: "Total visitors", value: totalVisitors.toLocaleString(), helper: "Submitted visitor records", icon: Users, tone: "bg-[#FF6B6B] text-black" },
+          { label: "Monthly arrivals", value: monthlyArrivals.toLocaleString(), helper: "Latest reporting month", icon: TrendingUp, tone: "bg-[#FFD93D] text-black" },
+          { label: "Occupancy rate", value: `${occupancyRate.toFixed(1)}%`, helper: "Average hotel occupancy", icon: Bed, tone: "bg-[#C4B5FD] text-black" },
+          { label: "Establishments", value: totalEstablishments.toString(), helper: "Tourism records", icon: Building2, tone: "bg-white text-black" },
+        ].map((metric) => (
+          <div key={metric.label} className="vb-dashboard-kpi bg-white p-4 sm:p-5">
+            <div className="flex items-start justify-between gap-3">
+              <div className="min-w-0">
+                <p className="text-[11px] font-black uppercase leading-4 tracking-widest">{metric.label}</p>
+                <p className="mt-3 text-3xl font-black tabular-nums sm:text-4xl">{metric.value}</p>
+                <p className="mt-2 text-xs font-bold leading-4 text-slate-700">{metric.helper}</p>
+              </div>
+              <div className={`flex h-10 w-10 shrink-0 items-center justify-center border-2 border-black ${metric.tone}`}><metric.icon className="h-5 w-5" /></div>
+            </div>
+          </div>
         ))}
       </section>
 
-      <section className="grid grid-cols-1 gap-6 xl:grid-cols-2">
-        <PanelCard title="Monthly visitor trends" description="Aggregated visitor counts by report month.">
-          {visitorTrends.length > 0 ? (
-            <div className="flex min-w-0 pb-2">
-              <div className="relative h-[300px] w-16 shrink-0 border-r border-[#cbd5e1] bg-white pr-1 text-right text-[11px] text-[#64748b]">
-                <div className="absolute inset-x-0 top-1 bottom-[75px] flex flex-col justify-between">
-                  {visitorTrendTicks.map((tick, index) => (
-                    <span key={`${tick}-${index}`} className="relative pr-2">
-                      {tick.toLocaleString()}
-                      <span className="absolute right-[-4px] top-1/2 h-px w-1 bg-[#94a3b8]" aria-hidden="true" />
-                    </span>
-                  ))}
-                </div>
-              </div>
-              <div className="min-w-0 flex-1 overflow-x-auto">
-                <div className="min-w-[720px]">
-                <ResponsiveContainer width="100%" height={300}>
-                  <AreaChart data={visitorTrends} margin={{ top: 5, right: 8, bottom: 0, left: 16 }}>
-                    <defs>
-                      <linearGradient id="visitorFill" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="5%" stopColor="#0E5A72" stopOpacity={0.32} />
-                        <stop offset="95%" stopColor="#0E5A72" stopOpacity={0.02} />
-                      </linearGradient>
-                    </defs>
-                    <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
-                    <XAxis dataKey="month" stroke="#64748b" interval={0} angle={-35} textAnchor="end" height={75} tickMargin={8} />
-                    <YAxis hide domain={[0, visitorTrendMax]} ticks={visitorTrendTicks} />
-                    <Tooltip />
-                    <Legend />
-                    <Area type="monotone" dataKey="visitors" stroke="#0E5A72" fill="url(#visitorFill)" strokeWidth={3} name="Visitors" />
-                  </AreaChart>
-                </ResponsiveContainer>
-                </div>
-              </div>
-            </div>
-          ) : (
-            <EmptyState>No visitor data available</EmptyState>
-          )}
-        </PanelCard>
-
-        <PanelCard title="Visitor demographics" description="Share of visitors by residence category.">
-          {demographics.length > 0 && demographics.some((d) => d.value > 0) ? (
-            <div className="space-y-4">
-              <div className="h-56 w-full sm:h-64">
-                <ResponsiveContainer width="100%" height="100%">
-                  <PieChart margin={{ top: 8, right: 8, bottom: 8, left: 8 }}>
-                    <Pie
-                      data={demographics}
-                      cx="50%"
-                      cy="50%"
-                      innerRadius="52%"
-                      outerRadius="82%"
-                      paddingAngle={2}
-                      dataKey="value"
-                      nameKey="name"
-                      label={false}
-                      labelLine={false}
-                    >
-                      {demographics.map((entry, idx) => <Cell key={idx} fill={entry.color} />)}
-                    </Pie>
-                    <Tooltip formatter={(value: number, name: string) => [`${value}%`, name]} />
-                  </PieChart>
-                </ResponsiveContainer>
-              </div>
-              <div className="grid gap-2 text-sm text-[#0B2530] sm:grid-cols-2">
-                {demographics.map((entry) => (
-                  <div key={entry.name} className="flex items-center justify-between gap-3 rounded-xl border border-[#d7e5e2]/70 bg-white/80 px-3 py-2">
-                    <span className="flex min-w-0 items-center gap-2">
-                      <span className="h-2.5 w-2.5 shrink-0 rounded-full" style={{ backgroundColor: entry.color }} />
-                      <span className="truncate">{entry.name}</span>
-                    </span>
-                    <span className="shrink-0 font-semibold text-[#0E5A72]">{entry.value}%</span>
+      <section className="grid grid-cols-1 gap-7 xl:grid-cols-[1.45fr_0.8fr]">
+        <div className="vb-dashboard-panel overflow-hidden">
+          <div className="border-b-3 border-black bg-[#FFD93D] px-5 py-4 sm:px-6">
+            <p className="text-xs font-black uppercase tracking-widest">Visitor movement</p>
+            <h2 className="mt-1 text-xl font-black uppercase sm:text-2xl">Monthly visitor trends</h2>
+            <p className="mt-1 text-sm font-medium">Aggregated visitor counts by report month.</p>
+          </div>
+          <div className="p-4 sm:p-6">
+            {visitorTrends.length > 0 ? (
+              <div className="flex min-w-0 pb-2">
+                <div className="relative h-[300px] w-16 shrink-0 border-r-2 border-black bg-white pr-1 text-right text-[11px] font-bold text-black">
+                  <div className="absolute inset-x-0 top-1 bottom-[75px] flex flex-col justify-between">
+                    {visitorTrendTicks.map((tick, index) => <span key={`${tick}-${index}`} className="relative pr-2">{tick.toLocaleString()}<span className="absolute right-[-4px] top-1/2 h-0.5 w-1 bg-black" aria-hidden="true" /></span>)}
                   </div>
-                ))}
+                </div>
+                <div className="min-w-0 flex-1 overflow-x-auto"><div className="min-w-[620px]">
+                  <ResponsiveContainer width="100%" height={300}>
+                    <AreaChart data={visitorTrends} margin={{ top: 5, right: 8, bottom: 0, left: 16 }}>
+                      <defs><linearGradient id="visitorFill" x1="0" y1="0" x2="0" y2="1"><stop offset="5%" stopColor="#FF6B6B" stopOpacity={0.45} /><stop offset="95%" stopColor="#FF6B6B" stopOpacity={0.04} /></linearGradient></defs>
+                      <CartesianGrid strokeDasharray="3 3" stroke="#d4d4d4" />
+                      <XAxis dataKey="month" stroke="#000" interval={0} angle={-35} textAnchor="end" height={75} tickMargin={8} />
+                      <YAxis hide domain={[0, visitorTrendMax]} ticks={visitorTrendTicks} />
+                      <Tooltip contentStyle={{ border: "3px solid #000", borderRadius: 0, boxShadow: "4px 4px 0 #000" }} />
+                      <Legend />
+                      <Area type="monotone" dataKey="visitors" stroke="#000" fill="url(#visitorFill)" strokeWidth={3} name="Visitors" />
+                    </AreaChart>
+                  </ResponsiveContainer>
+                </div></div>
               </div>
-            </div>
-          ) : (
-            <EmptyState>No demographic data available</EmptyState>
-          )}
-        </PanelCard>
+            ) : <EmptyState>No visitor data available</EmptyState>}
+          </div>
+        </div>
+
+        <div className="vb-dashboard-panel overflow-hidden">
+          <div className="border-b-3 border-black bg-[#C4B5FD] px-5 py-4 sm:px-6">
+            <p className="text-xs font-black uppercase tracking-widest">Visitor profile</p>
+            <h2 className="mt-1 text-xl font-black uppercase sm:text-2xl">Demographics</h2>
+            <p className="mt-1 text-sm font-medium">Share by residence category.</p>
+          </div>
+          <div className="p-4 sm:p-6">
+            {demographics.length > 0 && demographics.some((d) => d.value > 0) ? (
+              <div className="space-y-4">
+                <div className="h-56 w-full sm:h-64"><ResponsiveContainer width="100%" height="100%"><PieChart margin={{ top: 8, right: 8, bottom: 8, left: 8 }}><Pie data={demographics} cx="50%" cy="50%" innerRadius="52%" outerRadius="82%" paddingAngle={2} dataKey="value" nameKey="name" label={false} labelLine={false}>{demographics.map((entry, idx) => <Cell key={idx} fill={entry.color} />)}</Pie><Tooltip formatter={(value: number, name: string) => [`${value}%`, name]} contentStyle={{ border: "3px solid #000", borderRadius: 0 }} /></PieChart></ResponsiveContainer></div>
+                <div className="grid gap-2 text-sm font-bold sm:grid-cols-2">{demographics.map((entry) => <div key={entry.name} className="flex items-center justify-between gap-3 border-2 border-black bg-[#FFFDF5] px-3 py-2"><span className="flex min-w-0 items-center gap-2"><span className="h-3 w-3 shrink-0 border border-black" style={{ backgroundColor: entry.color }} /><span className="truncate">{entry.name}</span></span><span className="shrink-0">{entry.value}%</span></div>)}</div>
+              </div>
+            ) : <EmptyState>No demographic data available</EmptyState>}
+          </div>
+        </div>
       </section>
 
-      <PanelCard title="Top performing establishments" description="Ranked by submitted visitor volume.">
-        {topEstablishments.length > 0 ? (
-          <ResponsiveContainer width="100%" height={320}>
-            <BarChart data={topEstablishments}>
-              <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
-              <XAxis dataKey="name" angle={-35} textAnchor="end" height={105} interval={0} tickMargin={8} stroke="#64748b" />
-              <YAxis stroke="#64748b" />
-              <Tooltip />
-              <Legend />
-              <Bar dataKey="visitors" fill="#0E5A72" radius={[10, 10, 0, 0]} name="Visitors" />
-            </BarChart>
-          </ResponsiveContainer>
-        ) : (
-          <EmptyState>No establishment data available</EmptyState>
-        )}
-      </PanelCard>
+      <div className="vb-dashboard-panel overflow-hidden">
+        <div className="border-b-3 border-black bg-[#FF6B6B] px-5 py-4 sm:px-6"><p className="text-xs font-black uppercase tracking-widest">Performance board</p><h2 className="mt-1 text-xl font-black uppercase sm:text-2xl">Top performing establishments</h2><p className="mt-1 text-sm font-medium">Ranked by submitted visitor volume.</p></div>
+        <div className="p-4 sm:p-6">{topEstablishments.length > 0 ? <ResponsiveContainer width="100%" height={320}><BarChart data={topEstablishments}><CartesianGrid strokeDasharray="3 3" stroke="#d4d4d4" /><XAxis dataKey="name" angle={-35} textAnchor="end" height={105} interval={0} tickMargin={8} stroke="#000" /><YAxis stroke="#000" /><Tooltip contentStyle={{ border: "3px solid #000", borderRadius: 0 }} /><Legend /><Bar dataKey="visitors" fill="#C4B5FD" stroke="#000" strokeWidth={2} radius={[0, 0, 0, 0]} name="Visitors" /></BarChart></ResponsiveContainer> : <EmptyState>No establishment data available</EmptyState>}</div>
+      </div>
 
-      <section className="grid grid-cols-1 gap-6 xl:grid-cols-2">
-        <PanelCard title="Recent submissions">
-          <div className="space-y-3">
-            {recentSubmissions.length > 0 ? (
-              recentSubmissions.map((sub) => (
-                <div key={sub.id} className="flex items-center justify-between gap-4 rounded-2xl border border-[#d7e5e2]/70 bg-[#f8fbf8] p-4">
-                  <div>
-                    <p className="font-semibold text-[#0B2530]">{sub.establishment_name}</p>
-                    <p className="mt-1 text-sm text-[#5D6F73]">{sub.type}</p>
-                  </div>
-                  <div className="text-right">
-                    <span className={`inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-xs font-semibold capitalize ring-1 ${
-                      sub.status === "submitted" ? "bg-emerald-50 text-emerald-700 ring-emerald-200" : "bg-slate-50 text-slate-700 ring-slate-200"
-                    }`}>
-                      {sub.status}
-                    </span>
-                    <p className="mt-1 text-xs text-[#5D6F73]">{sub.date}</p>
-                  </div>
-                </div>
-              ))
-            ) : (
-              <EmptyState>No submissions yet</EmptyState>
-            )}
-          </div>
-        </PanelCard>
-
-        <PanelCard title="Service gaps or operational challenges">
-          <div className="space-y-3">
-            {anomalies.length > 0 ? (
-              anomalies.map((anomaly) => (
-                <div key={anomaly.id} className={`flex items-start gap-3 rounded-2xl border p-4 ${
-                  anomaly.severity === "high" ? "border-rose-200 bg-rose-50" : "border-amber-200 bg-amber-50"
-                }`}>
-                  <AlertTriangle className={`mt-0.5 h-5 w-5 ${
-                    anomaly.severity === "high" ? "text-rose-700" : "text-amber-700"
-                  }`} />
-                  <div className="flex-1">
-                    <div className="flex justify-between gap-3">
-                      <p className="font-semibold text-[#0B2530]">{anomaly.anomaly_type}</p>
-                      <span className={`rounded-full px-2 py-0.5 text-xs font-semibold capitalize ${
-                        anomaly.severity === "high" ? "bg-rose-100 text-rose-700" : "bg-amber-100 text-amber-700"
-                      }`}>{anomaly.severity}</span>
-                    </div>
-                    <p className="mt-1 text-sm leading-6 text-slate-700">{anomaly.description}</p>
-                  </div>
-                </div>
-              ))
-            ) : (
-              <EmptyState>No service gaps or operational challenges detected</EmptyState>
-            )}
-          </div>
-        </PanelCard>
+      <section className="grid grid-cols-1 gap-7 xl:grid-cols-2">
+        <div className="vb-dashboard-panel overflow-hidden"><div className="border-b-3 border-black bg-white px-5 py-4 sm:px-6"><p className="text-xs font-black uppercase tracking-widest">Latest records</p><h2 className="mt-1 text-xl font-black uppercase">Recent submissions</h2></div><div className="space-y-3 p-4 sm:p-6">{recentSubmissions.length > 0 ? recentSubmissions.map((sub) => <div key={sub.id} className="vb-dashboard-table-row flex items-center justify-between gap-4 p-4"><div><p className="font-black">{sub.establishment_name}</p><p className="mt-1 text-sm font-medium text-slate-700">{sub.type}</p></div><div className="text-right"><span className={`inline-flex border-2 border-black px-2 py-1 text-xs font-black uppercase ${sub.status === "submitted" ? "bg-[#22C55E]" : "bg-[#FFD93D]"}`}>{sub.status}</span><p className="mt-2 text-xs font-bold">{sub.date}</p></div></div>) : <EmptyState>No submissions yet</EmptyState>}</div></div>
+        <div className="vb-dashboard-panel overflow-hidden"><div className="border-b-3 border-black bg-[#FFD93D] px-5 py-4 sm:px-6"><p className="text-xs font-black uppercase tracking-widest">Decision support</p><h2 className="mt-1 text-xl font-black uppercase">Operational challenges</h2></div><div className="space-y-3 p-4 sm:p-6">{anomalies.length > 0 ? anomalies.map((anomaly) => <div key={anomaly.id} className={`flex items-start gap-3 border-2 border-black p-4 ${anomaly.severity === "high" ? "bg-[#FF6B6B]" : "bg-[#FFD93D]"}`}><AlertTriangle className="mt-0.5 h-5 w-5 shrink-0" /><div className="flex-1"><div className="flex justify-between gap-3"><p className="font-black uppercase">{anomaly.anomaly_type}</p><span className="border-2 border-black bg-white px-2 py-0.5 text-xs font-black uppercase">{anomaly.severity}</span></div><p className="mt-2 text-sm font-medium leading-6">{anomaly.description}</p></div></div>) : <EmptyState>No service gaps or operational challenges detected</EmptyState>}</div></div>
       </section>
     </div>
   );

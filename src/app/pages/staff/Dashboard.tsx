@@ -179,6 +179,10 @@ export default function StaffDashboard() {
     { title: "Demographics", value: dominantDemographic, subtitle: `${visitorMetrics.totalMale.toLocaleString()} male · ${visitorMetrics.totalFemale.toLocaleString()} female`, icon: UsersRound, tone: "bg-violet-50 text-violet-700 ring-violet-100" },
   ];
 
+  const todayKey = new Date().toISOString().slice(0, 10);
+  const todaySubmissions = recentSubmissions.filter((submission) => submission.reportDate === todayKey);
+  const hasSubmittedToday = todaySubmissions.length > 0;
+
   if (loading) {
     return <LoadingState label="Loading establishment dashboard" />;
   }
@@ -193,13 +197,30 @@ export default function StaffDashboard() {
 
   return (
     <div className="space-y-7">
-      <PageHero
-        eyebrow="Establishment portal"
-        title={`Submit your assigned ${reportFormLabel.toLowerCase()} for Balayan tourism monitoring.`}
-        description="Keep reports, listing updates, and performance signals in one calm workspace."
-        actionLabel="View history"
-        onAction={() => navigate("/staff/submission-history")}
-      />
+      <section className="vb-dashboard-header relative overflow-hidden bg-[#FFD93D] p-6 sm:p-8">
+        <div className="relative flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between">
+          <div className="max-w-3xl">
+            <p className="text-xs font-black uppercase tracking-[0.22em]">Establishment staff workspace</p>
+            <h1 className="mt-3 text-4xl font-black uppercase leading-[0.9] tracking-[-0.06em] sm:text-6xl">Daily<br /><span className="bg-[#FF6B6B] px-2">reporting</span></h1>
+            <p className="mt-5 max-w-2xl text-sm font-medium leading-6 sm:text-base">Submit the assigned {reportFormLabel.toLowerCase()} report, review your actual submissions, and keep Balayan tourism monitoring current.</p>
+          </div>
+          <button type="button" onClick={() => navigate("/staff/submission-history")} className="vb-dashboard-button flex min-h-12 items-center justify-center gap-2 bg-white px-5 py-3 text-sm font-black uppercase">View report history <History className="h-4 w-4" /></button>
+        </div>
+      </section>
+
+      <section className={`vb-dashboard-panel overflow-hidden ${hasSubmittedToday ? "bg-[#22C55E]" : "bg-[#FF6B6B]"}`}>
+        <div className="flex flex-col gap-6 p-5 sm:p-7 lg:flex-row lg:items-center lg:justify-between">
+          <div>
+            <p className="text-xs font-black uppercase tracking-widest">Today&apos;s reporting status</p>
+            <h2 className="mt-2 text-3xl font-black uppercase leading-none sm:text-5xl">{hasSubmittedToday ? "Submitted today" : "Report still due"}</h2>
+            <p className="mt-3 max-w-xl text-sm font-bold leading-6">{establishment?.name || "Your establishment"} · {reportFormLabel} · {new Date().toLocaleDateString()}</p>
+          </div>
+          <div className="flex w-full flex-col gap-3 sm:w-auto sm:flex-row">
+            {showVisitorForm && <button type="button" onClick={() => navigate("/staff/submit-visitor-report")} className="vb-dashboard-button flex min-h-12 items-center justify-center gap-2 bg-[#FFD93D] px-5 py-3 text-sm font-black uppercase"><FileUp className="h-5 w-5" /> {hasSubmittedToday ? "Submit another report" : "Submit visitor report"}</button>}
+            {showAccommodationForm && <button type="button" onClick={() => navigate("/staff/submit-accommodation-report")} className="vb-dashboard-button flex min-h-12 items-center justify-center gap-2 bg-white px-5 py-3 text-sm font-black uppercase"><Bed className="h-5 w-5" /> {hasSubmittedToday ? "Open hotel report" : "Submit hotel report"}</button>}
+          </div>
+        </div>
+      </section>
 
       <section className={`grid grid-cols-1 gap-4 ${showVisitorForm && showAccommodationForm ? "md:grid-cols-2" : ""}`}>
         {showVisitorForm && (
@@ -254,7 +275,7 @@ export default function StaffDashboard() {
       </section>
 
       {showVisitorForm && (
-        <PanelCard title="Resort visitor analytics" description="Visitor totals computed from your submitted resort reports." className="p-0">
+        <PanelCard title="Resort visitor analytics" description="Visitor totals computed from your submitted resort reports." className="vb-dashboard-panel p-0">
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-3" data-resort-dashboard-visitors="visitor-count-monthly-arrivals-demographics">
             {visitorPerformanceStats.map((stat) => (
               <MetricCard key={stat.title} label={stat.title} value={stat.value} helper={stat.subtitle} icon={stat.icon} tone={stat.tone} className="bg-[#f8fbf8] shadow-none" />
@@ -264,7 +285,7 @@ export default function StaffDashboard() {
       )}
 
       {showAccommodationForm && (
-        <PanelCard title="Hotel analytics" description="Computed from your submitted hotel accommodation reports." className="p-0">
+        <PanelCard title="Hotel analytics" description="Computed from your submitted hotel accommodation reports." className="vb-dashboard-panel p-0">
           <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
             {hotelPerformanceStats.map((stat) => (
               <MetricCard key={stat.title} label={stat.title} value={stat.value} helper={stat.subtitle} icon={stat.icon} tone={stat.tone} className="bg-[#f8fbf8] shadow-none" />

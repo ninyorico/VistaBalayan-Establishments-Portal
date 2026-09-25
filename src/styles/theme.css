@@ -118,6 +118,137 @@
 }
 
 @layer components {
+  .vb-dashboard-canvas {
+    --vb-surface: #e0e5ec;
+    --vb-text: #3d4852;
+    --vb-muted: #6b7280;
+    --vb-violet: #6c63ff;
+    --vb-teal: #38b2ac;
+    --vb-gold: #e7a93b;
+    --vb-error: #e35d6a;
+    min-height: 100dvh;
+    background: var(--vb-surface);
+    color: var(--vb-text);
+  }
+
+  .vb-dashboard-panel {
+    border: 0 !important;
+    border-radius: 28px !important;
+    background: var(--vb-surface) !important;
+    box-shadow: 9px 9px 16px rgba(163, 177, 198, 0.6), -9px -9px 16px rgba(255, 255, 255, 0.55) !important;
+  }
+
+  .vb-dashboard-header {
+    border: 0 !important;
+    border-radius: 32px !important;
+    background: var(--vb-surface) !important;
+    box-shadow: 12px 12px 20px rgba(163, 177, 198, 0.68), -12px -12px 20px rgba(255, 255, 255, 0.62) !important;
+  }
+
+  .vb-dashboard-button {
+    border: 0 !important;
+    border-radius: 16px !important;
+    color: var(--vb-text);
+    box-shadow: 5px 5px 10px rgba(163, 177, 198, 0.6), -5px -5px 10px rgba(255, 255, 255, 0.52);
+    transition: transform 220ms ease-out, box-shadow 220ms ease-out;
+  }
+
+  .vb-dashboard-button:hover {
+    transform: translateY(-2px);
+    box-shadow: 8px 8px 14px rgba(163, 177, 198, 0.62), -8px -8px 14px rgba(255, 255, 255, 0.58);
+  }
+
+  .vb-dashboard-button:active {
+    transform: translateY(1px);
+    box-shadow: inset 5px 5px 10px rgba(163, 177, 198, 0.6), inset -5px -5px 10px rgba(255, 255, 255, 0.52);
+  }
+
+  .vb-dashboard-nav-active {
+    border: 0 !important;
+    border-radius: 16px;
+    background: var(--vb-surface) !important;
+    color: var(--vb-violet) !important;
+    box-shadow: inset 6px 6px 10px rgba(163, 177, 198, 0.6), inset -6px -6px 10px rgba(255, 255, 255, 0.55) !important;
+  }
+
+  .vb-dashboard-nav-item {
+    border: 0 !important;
+    border-radius: 16px;
+    color: var(--vb-text);
+    transition: color 220ms ease-out, box-shadow 220ms ease-out;
+  }
+
+  .vb-dashboard-nav-item:hover {
+    border-color: transparent;
+    background: var(--vb-surface);
+    color: var(--vb-violet);
+    box-shadow: 5px 5px 10px rgba(163, 177, 198, 0.6), -5px -5px 10px rgba(255, 255, 255, 0.52);
+  }
+
+  .vb-dashboard-kpi {
+    border: 0 !important;
+    border-radius: 24px !important;
+    background: var(--vb-surface) !important;
+    box-shadow: 9px 9px 16px rgba(163, 177, 198, 0.6), -9px -9px 16px rgba(255, 255, 255, 0.55) !important;
+  }
+
+  .vb-dashboard-table-row {
+    border: 0 !important;
+    border-radius: 16px;
+    background: var(--vb-surface) !important;
+    box-shadow: inset 4px 4px 8px rgba(163, 177, 198, 0.45), inset -4px -4px 8px rgba(255, 255, 255, 0.5);
+  }
+
+  .vb-dashboard-inset {
+    border-radius: 20px;
+    background: var(--vb-surface);
+    box-shadow: inset 6px 6px 10px rgba(163, 177, 198, 0.6), inset -6px -6px 10px rgba(255, 255, 255, 0.55);
+  }
+
+  .vb-dashboard-sidebar {
+    background: var(--vb-surface) !important;
+    border: 0 !important;
+    box-shadow: 9px 9px 16px rgba(163, 177, 198, 0.6), -9px -9px 16px rgba(255, 255, 255, 0.55) !important;
+  }
+
+  .vb-dashboard-sidebar-brand,
+  .vb-dashboard-topbar {
+    border: 0 !important;
+    background: var(--vb-surface) !important;
+  }
+
+  .vb-dashboard-sidebar-brand {
+    box-shadow: 0 6px 12px rgba(163, 177, 198, 0.2);
+  }
+
+  .vb-dashboard-avatar,
+  .vb-dashboard-icon-well {
+    border: 0 !important;
+    border-radius: 16px;
+    background: var(--vb-surface);
+    box-shadow: inset 5px 5px 10px rgba(163, 177, 198, 0.6), inset -5px -5px 10px rgba(255, 255, 255, 0.55);
+  }
+
+  .vb-dashboard-canvas .tourism-card {
+    border: 0 !important;
+    border-radius: 24px !important;
+    background: var(--vb-surface) !important;
+    box-shadow: 9px 9px 16px rgba(163, 177, 198, 0.6), -9px -9px 16px rgba(255, 255, 255, 0.55) !important;
+    backdrop-filter: none;
+  }
+
+  .vb-dashboard-canvas .text-black {
+    color: var(--vb-text) !important;
+  }
+
+  @media (max-width: 640px) {
+    .vb-dashboard-panel,
+    .vb-dashboard-header,
+    .vb-dashboard-kpi {
+      box-shadow: 5px 5px 10px rgba(163, 177, 198, 0.58), -5px -5px 10px rgba(255, 255, 255, 0.52) !important;
+    }
+  }
+
   .tourism-shell {
     background:
       radial-gradient(circle at 12% 0%, rgba(14, 90, 114, 0.08), transparent 28rem),
@@ -154,6 +285,7 @@
   .tourism-button:active {
     transform: translateY(1px) scale(0.99);
   }
+
 
   .manage-listing-map .leaflet-pane,
   .manage-listing-map .leaflet-top,
