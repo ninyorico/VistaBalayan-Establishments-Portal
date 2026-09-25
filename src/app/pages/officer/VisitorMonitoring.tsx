@@ -177,6 +177,17 @@ export default function VisitorMonitoring({ embedded = false }: { embedded?: boo
 
   useDialogFocus(Boolean(selectedGroup), visitorDialogRef, () => setSelectedEstablishment(null));
 
+  useEffect(() => {
+    if (!selectedGroup) return;
+
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+
+    return () => {
+      document.body.style.overflow = previousOverflow;
+    };
+  }, [selectedGroup]);
+
   const monthLabel = specificMonth
     ? new Date(`${specificMonth}-01T00:00:00`).toLocaleString("default", { month: "long", year: "numeric" })
     : "all available months";
@@ -362,8 +373,8 @@ export default function VisitorMonitoring({ embedded = false }: { embedded?: boo
       </div>
 
       {selectedGroup && (
-        <div ref={visitorDialogRef} className="fixed inset-0 z-[100] flex items-end justify-center bg-slate-950/60 p-0 backdrop-blur-sm sm:items-center sm:p-4" role="dialog" aria-modal="true" aria-labelledby="visitor-records-dialog-title" tabIndex={-1} onClick={() => setSelectedEstablishment(null)}>
-          <div className="max-h-[90dvh] w-full overflow-hidden rounded-t-2xl border border-[#D2D8E0] bg-[#E0E5EC] shadow-[12px_12px_28px_rgba(15,23,42,0.2),-8px_-8px_20px_rgba(255,255,255,0.2)] sm:max-w-5xl sm:rounded-2xl" onClick={(event) => event.stopPropagation()}>
+        <div ref={visitorDialogRef} className="fixed inset-0 z-[100] flex items-end justify-center overscroll-contain bg-slate-950/60 p-0 backdrop-blur-sm touch-none sm:items-center sm:p-4" role="dialog" aria-modal="true" aria-labelledby="visitor-records-dialog-title" tabIndex={-1} onClick={() => setSelectedEstablishment(null)}>
+          <div className="max-h-[90dvh] w-full touch-auto overflow-hidden overscroll-contain rounded-t-2xl border border-[#D2D8E0] bg-[#E0E5EC] shadow-[12px_12px_28px_rgba(15,23,42,0.2),-8px_-8px_20px_rgba(255,255,255,0.2)] sm:max-w-5xl sm:rounded-2xl" onClick={(event) => event.stopPropagation()}>
             <div className="flex items-start justify-between gap-4 border-b border-[#D2D8E0] bg-[#E0E5EC] px-4 py-4 sm:px-6">
               <div className="min-w-0">
                 <p className="text-xs font-semibold uppercase tracking-wider text-blue-600">Visitor records</p>

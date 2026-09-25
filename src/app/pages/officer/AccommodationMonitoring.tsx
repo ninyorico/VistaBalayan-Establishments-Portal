@@ -355,6 +355,17 @@ export default function AccommodationMonitoring({ embedded = false }: { embedded
 
   useDialogFocus(Boolean(selectedAccommodationGroup), accommodationDialogRef, () => setSelectedAccommodationGroupKey(null));
 
+  useEffect(() => {
+    if (!selectedAccommodationGroup) return;
+
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+
+    return () => {
+      document.body.style.overflow = previousOverflow;
+    };
+  }, [selectedAccommodationGroup]);
+
   const monthLabel = specificMonth
     ? new Date(`${specificMonth}-01T00:00:00`).toLocaleString("default", { month: "long", year: "numeric" })
     : "all available months";
@@ -686,8 +697,8 @@ export default function AccommodationMonitoring({ embedded = false }: { embedded
       </div>
 
       {selectedAccommodationGroup && (
-        <div ref={accommodationDialogRef} className="fixed inset-0 z-[100] flex items-end justify-center bg-slate-950/60 p-0 backdrop-blur-sm sm:items-center sm:p-4" role="dialog" aria-modal="true" aria-labelledby="accommodation-records-dialog-title" tabIndex={-1} onClick={() => setSelectedAccommodationGroupKey(null)}>
-          <div className="max-h-[90dvh] w-full overflow-hidden rounded-t-2xl bg-white shadow-2xl sm:max-w-6xl sm:rounded-2xl" onClick={(event) => event.stopPropagation()}>
+        <div ref={accommodationDialogRef} className="fixed inset-0 z-[100] flex items-end justify-center overscroll-contain bg-slate-950/60 p-0 backdrop-blur-sm touch-none sm:items-center sm:p-4" role="dialog" aria-modal="true" aria-labelledby="accommodation-records-dialog-title" tabIndex={-1} onClick={() => setSelectedAccommodationGroupKey(null)}>
+          <div className="max-h-[90dvh] w-full touch-auto overflow-hidden overscroll-contain rounded-t-2xl bg-white shadow-2xl sm:max-w-5xl sm:rounded-2xl" onClick={(event) => event.stopPropagation()}>
             <div className="flex items-start justify-between gap-4 border-b border-gray-200 bg-gray-50 px-4 py-4 sm:px-6">
               <div className="min-w-0">
                 <p className="text-xs font-semibold uppercase tracking-wider text-blue-600">Hotel accommodation records</p>
