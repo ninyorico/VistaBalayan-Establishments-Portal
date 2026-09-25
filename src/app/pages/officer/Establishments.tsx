@@ -78,7 +78,6 @@ export default function Establishments() {
   const [pendingOnboarding, setPendingOnboarding] = useState<{ userId: string | null; email: string; fullName: string } | null>(null);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [editingEstablishment, setEditingEstablishment] = useState<Establishment | null>(null);
-  const [viewingPermitEstablishment, setViewingPermitEstablishment] = useState<Establishment | null>(null);
   const [permitUploading, setPermitUploading] = useState(false);
   const [editingUser, setEditingUser] = useState<Profile | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<{ type: "establishment" | "user"; id: string } | null>(null);
@@ -701,8 +700,8 @@ export default function Establishments() {
     setDeleteTarget(null);
   };
 
-  const handleBusinessPermitUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
-    const establishment = viewingPermitEstablishment;
+  const handleBusinessPermitUpload = async (event: React.ChangeEvent<HTMLInputElement>, targetEstablishment?: Establishment | null) => {
+    const establishment = targetEstablishment || editingEstablishment;
     const files = Array.from(event.target.files || []);
     event.target.value = "";
     if (!establishment || files.length === 0) return;
@@ -742,7 +741,7 @@ export default function Establishments() {
       if (error) throw error;
 
       const updated = { ...establishment, amenities };
-      setViewingPermitEstablishment(updated);
+      setEditingEstablishment(updated);
       setEstablishments((current) => current.map((item) => item.id === updated.id ? updated : item));
       toast.success(`${assets.length - getBusinessPermitAssets(establishment).length} permit file(s) uploaded.`);
     } catch (error) {
@@ -983,21 +982,7 @@ export default function Establishments() {
                           </div>
                         </td>
                         <td className="px-6 py-4 text-gray-900">{establishment.total_rooms || "N/A"}</td>
-                        <td className="px-6 py-4">
-                          {establishment.business_permit_number?.trim() ? (
-                            <div className="flex flex-col items-start gap-1">
-                              <span className="inline-flex items-center gap-1 rounded-full bg-emerald-50 px-2.5 py-1 text-xs font-medium text-emerald-700">
-                                Has permit
-                              </span>
-                              <span className="text-xs text-gray-600">{establishment.business_permit_number}</span>
-                            </div>
-                          ) : (
-                            <span className="inline-flex items-center gap-1 rounded-full bg-gray-100 px-2.5 py-1 text-xs font-medium text-gray-500">
-                              <FileImage className="w-3.5 h-3.5" />
-                              No permit
-                            </span>
-                          )}
-                        </td>
+                        <td className="px-6 py-4 text-sm text-gray-400">—</td>
                         <td className="px-6 py-4 text-gray-900">{staffCountByEstablishment[establishment.id] || 0}</td>
                         <td className="px-6 py-4">
                           <span className={`inline-flex px-2.5 py-1 rounded-full text-xs font-medium ${
@@ -1182,62 +1167,6 @@ export default function Establishments() {
       )}
 
 
-      {/* Business Permit Viewer */}
-      {viewingPermitEstablishment && (() => {
-        const permitAssets = getBusinessPermitAssets(viewingPermitEstablishment);
-        return (
-          <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-            <div className="bg-white rounded-2xl shadow-2xl max-w-4xl w-full max-h-[90vh] overflow-y-auto" role="dialog" aria-modal="true" aria-labelledby="business-permit-title">
-              <div className="p-6 border-b border-gray-100 flex items-center justify-between sticky top-0 bg-white rounded-t-2xl">
-                <div>
-                  <h2 id="business-permit-title" className="text-2xl font-bold text-gray-900">Business Permit Files</h2>
-                  <p className="text-sm text-gray-500 mt-1">{viewingPermitEstablishment.name}</p>
-                </div>
-                <button type="button" onClick={() => setViewingPermitEstablishment(null)} className="p-2 hover:bg-gray-100 rounded-lg transition-colors" aria-label="Close business permit files">
-                  <X className="w-5 h-5 text-gray-500" />
-                </button>
-              </div>
-              <div className="p-6">
-                <div className="mb-5 flex flex-col gap-3 rounded-xl border border-blue-100 bg-blue-50 p-4 sm:flex-row sm:items-center sm:justify-between">
-                  <p className="text-sm text-blue-900">Upload clear permit photos or the original PDF/DOC/DOCX file. Files are kept for municipal review.</p>
-                  <label className="inline-flex cursor-pointer items-center justify-center gap-2 rounded-lg bg-[#0F4C75] px-4 py-2 text-sm font-semibold text-white hover:bg-[#0E5A72]">
-                    <FileImage className="h-4 w-4" />
-                    {permitUploading ? "Uploading..." : "Upload permit files"}
-                    <input type="file" accept="image/*,.pdf,.doc,.docx" multiple onChange={handleBusinessPermitUpload} disabled={permitUploading} className="hidden" />
-                  </label>
-                </div>
-                {permitAssets.length > 0 ? (
-                  <div className="grid grid-cols-1 gap-5 md:grid-cols-2">
-                    {permitAssets.map((asset, index) => (
-                      <div key={`${asset.name}-${index}`} className="rounded-xl border border-gray-200 bg-gray-50 p-3">
-                        {asset.kind === "image" ? (
-                          <a href={asset.url} target="_blank" rel="noreferrer" className="block overflow-hidden rounded-lg bg-white">
-                            <img src={asset.url} alt={`${viewingPermitEstablishment.name} business permit ${index + 1}`} className="max-h-[60vh] w-full object-contain" />
-                          </a>
-                        ) : (
-                          <div className="flex min-h-40 items-center justify-center rounded-lg bg-white p-6 text-center">
-                            <FileImage className="mr-2 h-6 w-6 text-[#0F4C75]" />
-                            <span className="break-all text-sm text-gray-700">{asset.name}</span>
-                          </div>
-                        )}
-                        <a href={asset.url} target="_blank" rel="noreferrer" className="mt-3 inline-flex items-center gap-2 text-sm font-medium text-blue-600 hover:text-blue-700">
-                          <ExternalLink className="w-4 h-4" />
-                          Open {asset.name}
-                        </a>
-                      </div>
-                    ))}
-                  </div>
-                ) : (
-                  <div className="rounded-xl border border-dashed border-gray-300 bg-gray-50 p-10 text-center text-gray-500">
-                    No business permit files have been uploaded for this establishment.
-                  </div>
-                )}
-              </div>
-            </div>
-          </div>
-        );
-      })()}
-
       {/* Combined Staff + Establishment Modal */}
       {showOnboardingModal && (
         <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-50 p-4">
@@ -1347,14 +1276,32 @@ export default function Establishments() {
                 <input type="text" value={establishmentForm.business_permit_number} onChange={(e) => setEstablishmentForm({ ...establishmentForm, business_permit_number: e.target.value })} className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#1CA7C9]/50 focus:border-[#1CA7C9] outline-none transition-all" placeholder="Enter only after officer verification" />
                 <p className="mt-1 text-xs text-gray-500">Only a municipal tourism officer can record or change this number.</p>
                 {editingEstablishment && (
-                  <button
-                    type="button"
-                    onClick={() => setViewingPermitEstablishment(editingEstablishment)}
-                    className="mt-3 inline-flex items-center gap-2 rounded-lg border border-[#0F4C75] px-4 py-2 text-sm font-semibold text-[#0F4C75] transition-colors hover:bg-blue-50"
-                  >
-                    <FileImage className="h-4 w-4" />
-                    Manage permit files
-                  </button>
+                  <div className="mt-3">
+                    <label className="block text-sm font-medium text-gray-700 mb-2">Permit files</label>
+                    <div className="flex items-stretch gap-2">
+                      <input
+                        type="text"
+                        value=""
+                        readOnly
+                        placeholder="No permit file selected"
+                        className="min-w-0 flex-1 px-4 py-2.5 border border-gray-300 rounded-lg bg-gray-50 text-sm text-gray-500 outline-none"
+                        aria-label="Selected business permit file"
+                      />
+                      <label className="inline-flex shrink-0 cursor-pointer items-center justify-center gap-2 rounded-lg bg-[#0F4C75] px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-[#0E5A72]">
+                        <FileImage className="h-4 w-4" />
+                        Files / photos
+                        <input
+                          type="file"
+                          accept="image/*,.pdf,.doc,.docx"
+                          multiple
+                          onChange={(event) => handleBusinessPermitUpload(event, editingEstablishment)}
+                          disabled={permitUploading}
+                          className="hidden"
+                        />
+                      </label>
+                    </div>
+                    <p className="mt-1 text-xs text-gray-500">Upload clear permit photos or a PDF/DOC/DOCX file for municipal review.</p>
+                  </div>
                 )}
                 {!editingEstablishment && (
                   <div data-establishment-room-fields="add-only">
