@@ -617,12 +617,12 @@ export default function Reports() {
       </div>
 
       {/* KPI Cards */}
-      <div className="grid grid-cols-2 gap-2 sm:gap-4 md:grid-cols-3 lg:gap-6">
-        <div className="col-span-2 min-w-0 rounded-lg border border-gray-200 bg-white p-3 shadow-sm sm:p-6 md:col-span-1">
+      <div className="grid grid-cols-2 gap-2 sm:gap-4 lg:grid-cols-4 lg:gap-6">
+        <div className="min-w-0 rounded-lg border border-gray-200 bg-white p-3 shadow-sm sm:p-6">
           <p className="mb-1 text-[11px] text-gray-600 sm:text-sm">Submitted Reports</p>
           <p className="text-2xl font-bold text-gray-900 sm:text-3xl">{totalSubmissions}</p>
         </div>
-        <div className="col-span-2 min-w-0 rounded-lg border border-gray-200 bg-white p-3 shadow-sm sm:p-6 md:col-span-1">
+        <div className="min-w-0 rounded-lg border border-gray-200 bg-white p-3 shadow-sm sm:p-6">
           <div className="mb-2 flex min-w-0 items-center gap-1.5 sm:gap-3">
             {visitorStats.isIncrease ? <TrendingUp className="h-4 w-4 shrink-0 text-green-600 sm:h-5 sm:w-5" /> : <TrendingDown className="h-4 w-4 shrink-0 text-red-600 sm:h-5 sm:w-5" />}
             <p className="truncate text-[11px] text-gray-600 sm:text-sm">Change</p>
@@ -637,14 +637,14 @@ export default function Reports() {
             </span>
           </div>
         </div>
-        <div className="col-span-3 min-w-0 rounded-lg border border-gray-200 bg-white p-3 shadow-sm sm:p-6 md:col-span-1">
+        <div className="min-w-0 rounded-lg border border-gray-200 bg-white p-3 shadow-sm sm:p-6">
           <div className="mb-2 flex min-w-0 items-center gap-1.5 sm:gap-3">
             <Users className="h-4 w-4 shrink-0 text-blue-600 sm:h-5 sm:w-5" />
             <p className="truncate text-[11px] text-gray-600 sm:text-sm">Current Period</p>
           </div>
           <p className="text-2xl font-bold text-gray-900 sm:text-3xl">{visitorStats.currentTotal.toLocaleString()}</p>
         </div>
-        <div className="col-span-3 min-w-0 rounded-lg border border-gray-200 bg-white p-3 shadow-sm sm:p-6 md:col-span-1">
+        <div className="min-w-0 rounded-lg border border-gray-200 bg-white p-3 shadow-sm sm:p-6">
           <div className="mb-2 flex min-w-0 items-center gap-1.5 sm:gap-3">
             <Users className="h-4 w-4 shrink-0 text-purple-600 sm:h-5 sm:w-5" />
             <p className="truncate text-[11px] text-gray-600 sm:text-sm">Previous Period</p>
