@@ -508,60 +508,59 @@ export default function AccommodationMonitoring({ embedded = false }: { embedded
           <h2 className="font-semibold text-gray-900">Accommodation records by establishment</h2>
           <p className="mt-1 text-sm text-gray-600">Tap an establishment on phone to open the full {monthLabel} record in a table modal. Desktop rows still expand inline.</p>
         </div>
-        <div className="space-y-3 p-4 sm:hidden">
-          {groupedRecords.length > 0 ? (
-            groupedRecords.map((group) => {
-              return (
-                <div key={group.key} className="rounded-2xl border border-gray-200 bg-white shadow-sm">
-                  <button
-                    type="button"
-                    className="w-full p-4 text-left"
-                    onClick={() => setSelectedAccommodationGroupKey(group.key)}
+        <div className="overflow-x-auto overscroll-x-contain sm:hidden">
+          <table className="w-full min-w-[760px]">
+            <thead className="border-b border-gray-200 bg-gray-50">
+              <tr>
+                <th className="px-3 py-2 text-left text-[10px] font-semibold uppercase tracking-wider text-gray-700">Establishment</th>
+                <th className="px-3 py-2 text-left text-[10px] font-semibold uppercase tracking-wider text-gray-700">Records</th>
+                <th className="px-3 py-2 text-left text-[10px] font-semibold uppercase tracking-wider text-gray-700">Rooms</th>
+                <th className="px-3 py-2 text-left text-[10px] font-semibold uppercase tracking-wider text-gray-700">Occupancy</th>
+                <th className="px-3 py-2 text-left text-[10px] font-semibold uppercase tracking-wider text-gray-700">Check-ins</th>
+                <th className="px-3 py-2 text-left text-[10px] font-semibold uppercase tracking-wider text-gray-700">Guest Nights</th>
+                <th className="px-3 py-2 text-left text-[10px] font-semibold uppercase tracking-wider text-gray-700">Avg Guest/Room</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-gray-200">
+              {groupedRecords.length > 0 ? (
+                groupedRecords.map((group) => (
+                  <tr
+                    key={group.key}
+                    className="cursor-pointer hover:bg-gray-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-blue-600"
+                    role="button"
+                    tabIndex={0}
                     aria-label={`Open ${group.establishment} accommodation records`}
+                    onClick={() => setSelectedAccommodationGroupKey(group.key)}
+                    onKeyDown={(event) => {
+                      if (event.key === "Enter" || event.key === " ") {
+                        event.preventDefault();
+                        setSelectedAccommodationGroupKey(group.key);
+                      }
+                    }}
                   >
-                    <div className="flex items-start justify-between gap-3">
-                      <div className="min-w-0">
-                        <div className="flex items-center gap-2">
-                          <ChevronRight className="h-4 w-4 shrink-0 text-gray-500" />
-                          <p className="truncate font-semibold text-gray-900">{group.establishment}</p>
-                        </div>
-                        <p className="mt-1 text-xs text-gray-500">{group.records.length} record(s) • {Array.from(group.monthNames).join(", ")}</p>
+                    <td className="px-3 py-3 text-xs font-medium text-gray-900">
+                      <div className="flex items-center gap-1.5">
+                        <ChevronRight className="h-3.5 w-3.5 shrink-0 text-gray-500" />
+                        {group.establishment}
                       </div>
-                      <span className={`shrink-0 rounded-full px-2.5 py-1 text-xs font-medium ${
-                        group.avgOccupancy >= 90 ? "bg-green-100 text-green-700" :
-                        group.avgOccupancy >= 70 ? "bg-blue-100 text-blue-700" : "bg-yellow-100 text-yellow-700"
-                      }`}>
-                        {group.avgOccupancy.toFixed(1)}%
-                      </span>
-                    </div>
-                    <div className="mt-4 grid grid-cols-2 gap-3 text-sm">
-                      <div className="rounded-xl bg-slate-50 p-3">
-                        <p className="text-xs text-gray-500">Rooms</p>
-                        <p className="font-semibold text-gray-900">{group.totalRooms}</p>
-                      </div>
-                      <div className="rounded-xl bg-slate-50 p-3">
-                        <p className="text-xs text-gray-500">Guests</p>
-                        <p className="font-semibold text-blue-600">{group.totalGuests}</p>
-                      </div>
-                      <div className="rounded-xl bg-slate-50 p-3">
-                        <p className="text-xs text-gray-500">Guest Nights</p>
-                        <p className="font-semibold text-gray-900">{group.guestNights}</p>
-                      </div>
-                      <div className="rounded-xl bg-slate-50 p-3">
-                        <p className="text-xs text-gray-500">Avg Guest/Room</p>
-                        <p className="font-semibold text-teal-600">{group.avgGuestsPerRoom.toFixed(2)}</p>
-                      </div>
-                    </div>
-                  </button>
-
-                </div>
-              );
-            })
-          ) : (
-            <div className="rounded-2xl border border-dashed border-gray-300 p-6 text-center text-sm text-gray-500">
-              No accommodation records found.
-            </div>
-          )}
+                    </td>
+                    <td className="px-3 py-3 text-xs text-gray-600">{group.records.length}</td>
+                    <td className="px-3 py-3 text-xs text-gray-900">{group.totalRooms}</td>
+                    <td className="px-3 py-3 text-xs font-medium text-green-700">{group.avgOccupancy.toFixed(1)}%</td>
+                    <td className="px-3 py-3 text-xs font-medium text-blue-600">{group.totalGuests}</td>
+                    <td className="px-3 py-3 text-xs text-gray-900">{group.guestNights}</td>
+                    <td className="px-3 py-3 text-xs font-medium text-teal-600">{group.avgGuestsPerRoom.toFixed(2)}</td>
+                  </tr>
+                ))
+              ) : (
+                <tr>
+                  <td colSpan={7} className="px-4 py-6 text-center text-xs text-gray-500">
+                    No accommodation records found.
+                  </td>
+                </tr>
+              )}
+            </tbody>
+          </table>
         </div>
 
         <div className="hidden overflow-x-auto sm:block">

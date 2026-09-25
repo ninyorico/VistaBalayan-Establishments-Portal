@@ -45,6 +45,29 @@ type AccommodationReport = {
   establishments?: { name: string } | null;
 };
 
+type ResidenceCategory = "THIS_PROVINCE" | "OTHER_PROVINCE" | "FOREIGN";
+
+const RESIDENCE_CATEGORIES: ResidenceCategory[] = ["THIS_PROVINCE", "OTHER_PROVINCE", "FOREIGN"];
+
+const normalizeResidenceCategory = (record: VisitorReport): ResidenceCategory | null => {
+  const residenceType = String(record.residence_type || "").trim().toUpperCase();
+  if (RESIDENCE_CATEGORIES.includes(residenceType as ResidenceCategory)) {
+    return residenceType as ResidenceCategory;
+  }
+
+  const searchText = `${record.residence_type || ""} ${record.place_of_residence || ""}`.toLowerCase();
+  if (searchText.includes("foreign") || searchText.includes("international")) return "FOREIGN";
+  if (searchText.includes("batangas") || searchText.includes("within") || searchText.includes("this province")) return "THIS_PROVINCE";
+  if (searchText.includes("other") || searchText.includes("domestic") || searchText.includes("province") || searchText.includes("municipality")) return "OTHER_PROVINCE";
+  return null;
+};
+
+const getSpecificOriginLabel = (record: VisitorReport, category: ResidenceCategory): string | null => {
+  if (category === "THIS_PROVINCE") return "Batangas";
+  const specificOrigin = record.place_of_residence?.trim();
+  return specificOrigin || null;
+};
+
 const monthLabel = (date: string) =>
   new Date(date).toLocaleString("default", { month: "short", year: "numeric" });
 
@@ -186,25 +209,28 @@ export default function Analytics() {
       .sort((a, b) => b.score - a.score)
       .slice(0, 7);
 
-    const residenceByMonth: Record<string, Record<string, number>> = {};
-    const residenceCounts: Record<string, number> = {};
+    const originByMonth: Record<string, Record<string, number>> = {};
+    const originCounts: Record<string, number> = {};
     visitors.forEach((item) => {
-      const residence = item.residence_type || item.place_of_residence || "Unknown";
+      const category = normalizeResidenceCategory(item);
+      if (!category) return;
+      const origin = getSpecificOriginLabel(item, category);
+      if (!origin) return;
       const key = monthKey(item.report_date);
-      residenceCounts[residence] = (residenceCounts[residence] || 0) + (item.total_guests || 0);
-      if (!residenceByMonth[residence]) residenceByMonth[residence] = {};
-      residenceByMonth[residence][key] = (residenceByMonth[residence][key] || 0) + (item.total_guests || 0);
+      originCounts[origin] = (originCounts[origin] || 0) + (item.total_guests || 0);
+      if (!originByMonth[origin]) originByMonth[origin] = {};
+      originByMonth[origin][key] = (originByMonth[origin][key] || 0) + (item.total_guests || 0);
     });
 
     const latestMonth = sortedMonthKeys[sortedMonthKeys.length - 1];
     const previousMonth = sortedMonthKeys[sortedMonthKeys.length - 2];
-    const visitorOrigins = Object.entries(residenceCounts)
+    const visitorOrigins = Object.entries(originCounts)
       .map(([location, total]) => ({
         location,
         visitors: total,
         growth: percentChange(
-          residenceByMonth[location]?.[latestMonth] || 0,
-          residenceByMonth[location]?.[previousMonth] || 0
+          originByMonth[location]?.[latestMonth] || 0,
+          originByMonth[location]?.[previousMonth] || 0
         ),
       }))
       .sort((a, b) => b.visitors - a.visitors)
@@ -238,8 +264,8 @@ export default function Analytics() {
     const peakIndex = sortedMonthKeys.indexOf(peakKey);
     const beforePeakKey = peakIndex > 0 ? sortedMonthKeys[peakIndex - 1] : "";
 
-    const totalVisitors = Object.values(residenceCounts).reduce((sum, count) => sum + count, 0);
-    const [topLocation, topVisitors] = Object.entries(residenceCounts).sort((a, b) => b[1] - a[1])[0] || ["", 0];
+    const totalVisitors = Object.values(originCounts).reduce((sum, count) => sum + count, 0);
+    const [topLocation, topVisitors] = Object.entries(originCounts).sort((a, b) => b[1] - a[1])[0] || ["", 0];
 
     setData({
       seasonalData,

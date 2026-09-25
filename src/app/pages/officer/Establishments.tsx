@@ -990,9 +990,6 @@ export default function Establishments() {
                                 Has permit
                               </span>
                               <span className="text-xs text-gray-600">{establishment.business_permit_number}</span>
-                              <button type="button" onClick={() => setViewingPermitEstablishment(establishment)} className="text-xs font-medium text-blue-600 hover:underline">
-                                Manage permit files
-                              </button>
                             </div>
                           ) : (
                             <span className="inline-flex items-center gap-1 rounded-full bg-gray-100 px-2.5 py-1 text-xs font-medium text-gray-500">
@@ -1349,9 +1346,18 @@ export default function Establishments() {
                 <label className="block text-sm font-medium text-gray-700 mb-2">Business Permit Number</label>
                 <input type="text" value={establishmentForm.business_permit_number} onChange={(e) => setEstablishmentForm({ ...establishmentForm, business_permit_number: e.target.value })} className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#1CA7C9]/50 focus:border-[#1CA7C9] outline-none transition-all" placeholder="Enter only after officer verification" />
                 <p className="mt-1 text-xs text-gray-500">Only a municipal tourism officer can record or change this number.</p>
-              </div>
-              {!editingEstablishment && (
-                <div data-establishment-room-fields="add-only">
+                {editingEstablishment && (
+                  <button
+                    type="button"
+                    onClick={() => setViewingPermitEstablishment(editingEstablishment)}
+                    className="mt-3 inline-flex items-center gap-2 rounded-lg border border-[#0F4C75] px-4 py-2 text-sm font-semibold text-[#0F4C75] transition-colors hover:bg-blue-50"
+                  >
+                    <FileImage className="h-4 w-4" />
+                    Manage permit files
+                  </button>
+                )}
+                {!editingEstablishment && (
+                  <div data-establishment-room-fields="add-only">
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">Number of Rooms *</label>
                     <input type="number" value={establishmentForm.total_rooms} onChange={(e) => setEstablishmentForm({ ...establishmentForm, total_rooms: parseInt(e.target.value) || 0 })} className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#1CA7C9]/50 focus:border-[#1CA7C9] outline-none transition-all" min="0" />
@@ -1382,8 +1388,9 @@ export default function Establishments() {
                   </div>
                 </div>
               )}
+              </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Status</label>
+              <label className="block text-sm font-medium text-gray-700 mb-2">Status</label>
                 <select value={establishmentForm.status} onChange={(e) => setEstablishmentForm({ ...establishmentForm, status: e.target.value })} className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#1CA7C9]/50 focus:border-[#1CA7C9] outline-none transition-all">
                   <option value="active">Active</option>
                   <option value="inactive">Inactive</option>
