@@ -75,7 +75,7 @@ export function AiInsightsShell({
   return (
     <main className="w-full max-w-full overflow-x-hidden" data-ai-insights-redesign="shadcn-taste-editorial">
       <div className="space-y-5 sm:space-y-7">
-        <section className="relative overflow-hidden rounded-[1.75rem] border border-[#D2D8E0] bg-[#E0E5EC] p-4 shadow-[10px_10px_24px_rgba(163,177,198,0.55),-10px_-10px_24px_rgba(255,255,255,0.72)] sm:p-6 lg:p-7">
+        <section className="relative isolate overflow-hidden rounded-[1.75rem] border-0 bg-[#E0E5EC] p-4 shadow-[10px_10px_24px_rgba(163,177,198,0.55),-10px_-10px_24px_rgba(255,255,255,0.72)] sm:p-6 lg:p-7">
           <div className="pointer-events-none absolute -right-12 -top-16 h-40 w-40 rounded-full bg-[#C8CED8]/35 blur-3xl" />
           <div className="pointer-events-none absolute -bottom-20 left-1/3 h-44 w-44 rounded-full bg-white/35 blur-3xl" />
           <div className="relative flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
@@ -126,8 +126,8 @@ export function AiSectionCard({
   children: ReactNode;
 }) {
   return (
-    <Card className="overflow-hidden rounded-[1.5rem] border-slate-200 bg-white shadow-sm">
-      <CardHeader className="border-b border-slate-100 bg-slate-50/70 px-4 py-4 sm:px-6">
+    <Card className="!overflow-hidden !rounded-[1.5rem] !border-0 !bg-transparent !shadow-none">
+      <CardHeader className="overflow-hidden rounded-[1.5rem] border-0 bg-slate-50/70 px-4 py-4 shadow-sm sm:px-6">
         <div className="flex min-w-0 items-start justify-between gap-3">
           <CardTitle className="flex min-w-0 items-center gap-2 text-lg font-black tracking-[-0.025em] text-slate-950 sm:text-xl">
             {icon}
@@ -195,16 +195,16 @@ export function AiAnomalyCard(anomaly: AiAnomalyCardProps) {
 export function AiRecommendationCard(insight: AiRecommendationCardProps) {
   const { summary, action } = splitAiRecommendation(insight.description, insight.recommended_action || undefined);
   const confidence = formatConfidence(insight.confidence_score || undefined);
-  const isHighImpact = insight.impact === "high";
+  const tone = severityTone(insight.impact);
 
   return (
-    <article className="group relative overflow-hidden rounded-2xl border border-slate-200 bg-white p-0 shadow-[0_14px_40px_rgba(15,23,42,0.05)] transition-all duration-500 hover:-translate-y-0.5 hover:shadow-[0_18px_55px_rgba(15,23,42,0.08)] sm:p-0" data-ai-card-layout="shadcn-recommendation-editorial">
-      <div className="absolute inset-y-0 left-0 w-1.5 bg-[#6C63FF]" />
+    <article className="group relative isolate overflow-hidden rounded-2xl border border-slate-200 bg-white p-0 shadow-[0_14px_40px_rgba(15,23,42,0.05)] transition-all duration-500 hover:-translate-y-0.5 hover:shadow-[0_18px_55px_rgba(15,23,42,0.08)] sm:p-0" data-ai-card-layout="shadcn-recommendation-editorial">
+      <div className={cn("absolute inset-y-0 left-0 w-1.5 bg-gradient-to-b", tone.rail)} />
       <div className="relative p-4 pl-5 sm:p-5 sm:pl-6">
         <div className="mb-3 flex items-start justify-between gap-3">
           <div className="flex min-w-0 items-start gap-3">
-            <div className="mt-0.5 flex size-9 shrink-0 items-center justify-center rounded-xl bg-slate-50 text-[#6C63FF]">
-              <TrendingUp className="size-4" />
+            <div className={cn("mt-0.5 flex size-9 shrink-0 items-center justify-center rounded-xl", tone.soft)}>
+              <TrendingUp className={cn("size-4", tone.icon)} />
             </div>
             <h3 className="min-w-0 text-base font-black leading-snug tracking-[-0.025em] text-slate-950 sm:text-lg">
               {cleanAiText(insight.title)}
@@ -214,7 +214,7 @@ export function AiRecommendationCard(insight: AiRecommendationCardProps) {
             variant="outline"
             className={cn(
               "rounded-full px-2.5 py-1 capitalize",
-              isHighImpact ? "border-purple-200 bg-purple-50 text-purple-700" : "border-cyan-200 bg-cyan-50 text-cyan-700"
+              tone.badge
             )}
           >
             {insight.impact || "measured"} impact
