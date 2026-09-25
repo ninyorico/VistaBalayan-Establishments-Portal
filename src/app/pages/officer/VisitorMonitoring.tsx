@@ -396,9 +396,9 @@ export default function VisitorMonitoring({ embedded = false }: { embedded?: boo
                 <p className="text-[10px] font-medium uppercase tracking-wide text-[#536477] sm:text-xs">Male</p>
                 <p className="text-lg font-bold text-[#687B91] sm:text-2xl">{selectedGroup.male}</p>
               </div>
-              <div className="overflow-hidden rounded-xl border border-[#C7C4E8] bg-[#E8E7F5] px-3 py-2 shadow-[inset_3px_3px_7px_rgba(163,177,198,0.3),inset_-3px_-3px_7px_rgba(255,255,255,0.65)]">
-                <p className="text-[10px] font-medium uppercase tracking-wide text-[#5D58A2] sm:text-xs">Female</p>
-                <p className="text-lg font-bold text-[#6C63FF] sm:text-2xl">{selectedGroup.female}</p>
+              <div className="overflow-hidden rounded-xl border border-[#C7D0DA] bg-[#E8EDF2] px-3 py-2 shadow-[inset_3px_3px_7px_rgba(163,177,198,0.3),inset_-3px_-3px_7px_rgba(255,255,255,0.65)]">
+                <p className="text-[10px] font-medium uppercase tracking-wide text-[#536477] sm:text-xs">Female</p>
+                <p className="text-lg font-bold text-[#536477] sm:text-2xl">{selectedGroup.female}</p>
               </div>
               <div className="overflow-hidden rounded-xl border border-[#C7D0DA] bg-[#E8EDF2] px-3 py-2 shadow-[inset_3px_3px_7px_rgba(163,177,198,0.3),inset_-3px_-3px_7px_rgba(255,255,255,0.65)]">
                 <p className="text-[10px] font-medium uppercase tracking-wide text-[#536477] sm:text-xs">Total</p>
