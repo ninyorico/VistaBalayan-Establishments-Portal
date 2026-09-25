@@ -1,5 +1,5 @@
 import type { ReactNode } from "react";
-import { AlertTriangle, Brain, CheckCircle2, Loader2, RefreshCw, Sparkles, TrendingUp } from "lucide-react";
+import { AlertTriangle, CheckCircle2, Loader2, RefreshCw, Sparkles, TrendingUp } from "lucide-react";
 
 import { cleanAiText, formatConfidence, splitAiRecommendation } from "../../../lib/aiText";
 import { AiFormattedText } from "../AiFormattedText";
@@ -106,25 +106,6 @@ export function AiInsightsShell({
               {refreshing ? "Refreshing" : "Refresh Analysis"}
             </Button>
           </div>
-        </section>
-
-        <section className="grid grid-cols-1 gap-3" data-ai-summary-card-only="true">
-          <Card className="group relative overflow-hidden rounded-[1.5rem] border-slate-200 bg-slate-950 text-white shadow-sm transition-transform duration-500 hover:-translate-y-0.5">
-            <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_20%_10%,rgba(28,167,201,0.42),transparent_32%),radial-gradient(circle_at_90%_10%,rgba(148,163,184,0.24),transparent_28%)]" />
-            <CardContent className="relative grid gap-4 p-5 sm:grid-cols-[auto_1fr] sm:p-6">
-              <div className="flex size-14 items-center justify-center rounded-2xl bg-white/10 ring-1 ring-white/15 transition-transform duration-500 group-hover:scale-105">
-                <Brain className="size-7 text-cyan-100" />
-              </div>
-              <div>
-                <p className="text-xs font-medium uppercase tracking-[0.22em] text-cyan-100/80">Analysis active</p>
-                <h2 className="mt-2 text-2xl font-black tracking-[-0.035em] sm:text-3xl">Signal, not noise.</h2>
-                <p className="mt-2 max-w-xl text-sm leading-6 text-slate-300 sm:text-base">
-                  Insights are organized into operational risk, recommended action, and confidence so the team can scan fast without reading a wall of generated text.
-                </p>
-              </div>
-            </CardContent>
-          </Card>
-
         </section>
 
         {children}

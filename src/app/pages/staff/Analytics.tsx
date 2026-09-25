@@ -252,7 +252,7 @@ export default function Analytics() {
 
           <div className="rounded-lg border border-gray-200 bg-white p-6 shadow-sm">
             <div className="mb-4 flex items-center gap-2">
-              <BarChart3 className="h-5 w-5 text-[#0E5A72]" />
+              <BarChart3 className="h-5 w-5 text-[#6474A5]" />
               <h3 className="text-lg font-semibold text-gray-900">Visitor Count Trends</h3>
             </div>
             <ResponsiveContainer width="100%" height={350}>
@@ -262,9 +262,9 @@ export default function Analytics() {
                 <YAxis allowDecimals={false} />
                 <Tooltip />
                 <Legend />
-                <Line type="monotone" dataKey="visitors" stroke="#0E5A72" strokeWidth={2} name="Visitors" />
-                <Line type="monotone" dataKey="male" stroke="#38bdf8" strokeWidth={2} name="Male" />
-                <Line type="monotone" dataKey="female" stroke="#a78bfa" strokeWidth={2} name="Female" />
+                <Line type="monotone" dataKey="visitors" stroke="#6474A5" strokeWidth={2} name="Visitors" />
+                <Line type="monotone" dataKey="male" stroke="#6C63FF" strokeWidth={2} name="Male" />
+                <Line type="monotone" dataKey="female" stroke="#B86B78" strokeWidth={2} name="Female" />
               </LineChart>
             </ResponsiveContainer>
           </div>
@@ -278,9 +278,9 @@ export default function Analytics() {
                 <YAxis allowDecimals={false} />
                 <Tooltip />
                 <Legend />
-                <Bar dataKey="visitors" fill="#0E5A72" name="Total Visitors" />
-                <Bar dataKey="male" fill="#38bdf8" name="Male" />
-                <Bar dataKey="female" fill="#a78bfa" name="Female" />
+                <Bar dataKey="visitors" fill="#6474A5" name="Total Visitors" />
+                <Bar dataKey="male" fill="#6C63FF" name="Male" />
+                <Bar dataKey="female" fill="#B86B78" name="Female" />
               </BarChart>
             </ResponsiveContainer>
           </div>
@@ -294,15 +294,15 @@ export default function Analytics() {
                 <YAxis allowDecimals={false} />
                 <Tooltip />
                 <Legend />
-                <Bar dataKey="visitors" fill="#0E5A72" name="Visitors" />
+                <Bar dataKey="visitors" fill="#6474A5" name="Visitors" />
               </BarChart>
             </ResponsiveContainer>
           </div>
 
-          <div className="rounded-lg border border-[#0E5A72]/20 bg-gradient-to-br from-cyan-50 to-emerald-50 p-6" data-resort-best-performing-month="visitor-demographics">
+          <div className="rounded-3xl border border-[#C3CBD7] bg-[#E0E5EC] p-6 shadow-[8px_8px_15px_rgba(163,177,198,.48),-8px_-8px_15px_rgba(255,255,255,.48)]" data-resort-best-performing-month="visitor-demographics">
             <h4 className="mb-2 font-semibold text-[#0B2530]">Best Performing Month</h4>
             <p className="mb-1 text-3xl font-bold text-[#0B2530]">{bestVisitorMonth.month}</p>
-            <p className="text-sm text-[#0E5A72]">
+            <p className="text-sm text-[#6474A5]">
               {bestVisitorMonth.visitors.toLocaleString()} visitors · {bestVisitorMonth.male.toLocaleString()} male · {bestVisitorMonth.female.toLocaleString()} female
             </p>
           </div>
@@ -326,17 +326,17 @@ export default function Analytics() {
                 <YAxis allowDecimals={false} />
                 <Tooltip />
                 <Legend />
-                <Bar dataKey="occupancyRate" fill="#7c3aed" name="Avg Occupancy %" />
-                <Bar dataKey="checkIns" fill="#0E5A72" name="Check-ins" />
-                <Bar dataKey="guestNights" fill="#8b5cf6" name="Guest Nights" />
+                <Bar dataKey="occupancyRate" fill="#6C63FF" name="Avg Occupancy %" />
+                <Bar dataKey="checkIns" fill="#6474A5" name="Check-ins" />
+                <Bar dataKey="guestNights" fill="#6474A5" name="Guest Nights" />
               </BarChart>
             </ResponsiveContainer>
           </div>
 
-          <div className="rounded-lg border border-blue-200 bg-gradient-to-br from-blue-50 to-blue-100 p-6">
-            <h4 className="mb-2 font-semibold text-blue-900">Best Performing Month</h4>
-            <p className="mb-1 text-3xl font-bold text-blue-900">{bestAccommodationMonth.month}</p>
-            <p className="text-sm text-blue-700">
+          <div className="rounded-3xl border border-[#C3CBD7] bg-[#E0E5EC] p-6 shadow-[8px_8px_15px_rgba(163,177,198,.48),-8px_-8px_15px_rgba(255,255,255,.48)]">
+            <h4 className="mb-2 font-semibold text-[#3D4852]">Best Performing Month</h4>
+            <p className="mb-1 text-3xl font-bold text-[#3D4852]">{bestAccommodationMonth.month}</p>
+            <p className="text-sm text-[#6474A5]">
               {bestAccommodationMonth.checkIns.toLocaleString()} check-ins · {bestAccommodationMonth.guestNights.toLocaleString()} guest nights
             </p>
           </div>
