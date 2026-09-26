@@ -396,11 +396,6 @@ export default function SubmitAccommodationReport() {
             return room;
           }
 
-          if (reportFormMode === "old-new" && (field === "checkIns" || field === "continuingGuests") && Number(numericValue) > 0) {
-            if (field === "checkIns") updatedRoom.continuingGuests = 0;
-            if (field === "continuingGuests") updatedRoom.checkIns = 0;
-          }
-
           if (field === "checkIns" || field === "continuingGuests") {
             updatedRoom.guestNights = Number(updatedRoom.continuingGuests || 0) + Number(updatedRoom.checkIns || 0);
           }
@@ -626,7 +621,7 @@ export default function SubmitAccommodationReport() {
       {/* Room Setup Modal */}
       {showRoomSetup && (
         <div ref={roomDialogRef} className="fixed inset-0 z-50 flex items-end justify-center overflow-hidden bg-black bg-opacity-50 p-2 sm:items-center sm:p-4" role="dialog" aria-modal="true" aria-labelledby="room-configuration-title" tabIndex={-1} data-room-config-mobile-scroll="body-owned">
-          <div className="flex h-[calc(100dvh-1rem)] min-h-0 max-h-[calc(100dvh-1rem)] w-full max-w-2xl flex-col overflow-hidden rounded-t-2xl bg-white shadow-xl sm:h-auto sm:max-h-[92vh] sm:rounded-lg">
+          <div className="flex max-h-[calc(100dvh-1rem)] w-full max-w-2xl flex-col overflow-hidden rounded-t-2xl bg-white shadow-xl sm:max-h-[92vh] sm:rounded-lg">
             <div className="shrink-0 border-b border-gray-200 p-4 sm:p-6">
               <h2 id="room-configuration-title" className="text-xl sm:text-2xl font-bold text-gray-900">Room Configuration</h2>
               <p className="text-gray-600 mt-1">
@@ -751,43 +746,13 @@ export default function SubmitAccommodationReport() {
         </div>
 
         {reportFormMode === "old-new" && (
-          <div className="space-y-3 p-3 sm:p-4">
-            {roomData.map((room, index) => {
-              const previousTotal = Number(room.previousGuestNights || 0);
-              const previousNew = Math.min(Number(room.previousNewGuests || 0), previousTotal);
-              const previousOld = Math.max(0, previousTotal - previousNew);
-
-              return (
-                <section key={room.roomCode} className="rounded-2xl border border-gray-200 bg-white p-3 shadow-[inset_2px_2px_5px_rgba(163,177,198,0.18),inset_-2px_-2px_5px_rgba(255,255,255,0.7)] sm:p-4">
-                  <div className="mb-3 flex items-center justify-between gap-3 border-b border-gray-200 pb-3">
-                    <div>
-                      <h4 className="text-sm font-semibold text-gray-900">Room {getGeneratedRoomNumber(room.roomCode)}</h4>
-                      <span className="mt-1 inline-block rounded bg-gray-100 px-2 py-0.5 font-mono text-[10px] text-gray-600">{getBaseRoomCode(room.roomCode)}</span>
-                    </div>
-                    <span className="text-[10px] font-semibold uppercase tracking-wide text-[#193364]">Old / New</span>
-                  </div>
-
-                  <div className="grid grid-cols-1 gap-3">
-                    <div className="rounded-xl bg-[#F5F8FF] px-3 py-2">
-                      <p className="text-[10px] font-semibold uppercase tracking-wide text-gray-500">Previous-day old guests</p>
-                      <p className="mt-1 text-base tabular-nums text-gray-700">{previousOld}</p>
-                    </div>
-                    <div className="rounded-xl bg-[#FBE7BA]/55 px-3 py-2">
-                      <p className="text-[10px] font-semibold uppercase tracking-wide text-gray-500">Previous-day new guests</p>
-                      <span className={previousNew > 0 ? "mt-1 inline-flex h-9 min-w-9 items-center justify-center rounded-full border-2 border-red-500 px-2 text-base tabular-nums text-red-600" : "mt-1 inline-flex text-base tabular-nums text-gray-700"} aria-label={`${room.roomType} previous-day new guest value`}>{previousNew}</span>
-                    </div>
-                    <label className="text-[10px] font-semibold uppercase tracking-wide text-gray-500">
-                      Current old guests
-                      <input type="text" inputMode="numeric" pattern="[0-9]*" value={numericInputValue(room.continuingGuests)} onChange={(e) => updateRoomData(index, "continuingGuests", parseNonNegativeInteger(e.target.value))} className="mt-1 block w-full rounded-xl border-0 bg-[#E0E5EC] px-3 py-2.5 text-center text-base font-normal tabular-nums text-[#193364] shadow-[inset_3px_3px_6px_rgba(163,177,198,0.35),inset_-3px_-3px_6px_rgba(255,255,255,0.65)]" aria-label={`${room.roomType} current old guest value`} />
-                    </label>
-                    <label className="text-[10px] font-semibold uppercase tracking-wide text-gray-500">
-                      Current new guests
-                      <input type="text" inputMode="numeric" pattern="[0-9]*" value={numericInputValue(room.checkIns)} onChange={(e) => updateRoomData(index, "checkIns", parseNonNegativeInteger(e.target.value))} className={Number(room.checkIns) > 0 ? "mx-auto mt-1 block h-12 w-16 rounded-full border-2 border-red-500 bg-[#FBE7BA] px-2 py-2.5 text-center text-base font-normal tabular-nums text-red-600" : "mt-1 block w-full rounded-xl border-0 bg-[#FBE7BA] px-3 py-2.5 text-center text-base font-normal tabular-nums text-[#193364]"} aria-label={`${room.roomType} current new guest value`} />
-                    </label>
-                  </div>
-                </section>
-              );
-            })}
+          <div className="overflow-hidden">
+            <table className="w-full min-w-0 table-fixed border-collapse">
+              <thead className="border-b border-gray-200 bg-gray-50"><tr><th className="w-[28%] px-2 py-3 text-center text-xs font-semibold uppercase text-gray-700">Room / Code</th><th className="w-[24%] px-2 py-3 text-center text-xs font-semibold uppercase text-gray-700">Previous old</th><th className="w-[24%] px-2 py-3 text-center text-xs font-semibold uppercase text-gray-700">Previous new</th><th className="w-[24%] px-2 py-3 text-center text-xs font-semibold uppercase text-[#0F4C75]">Current old / new</th></tr></thead>
+              <tbody className="divide-y divide-gray-200">{roomData.map((room, index) => { const previousTotal = Number(room.previousGuestNights || 0); const previousNew = Math.min(Number(room.previousNewGuests || 0), previousTotal); const previousOld = Math.max(0, previousTotal - previousNew); return (
+                <tr key={room.roomCode} className="bg-white"><th className="px-2 py-3 text-center"><div className="text-xs font-semibold text-gray-900 sm:text-sm">Room {getGeneratedRoomNumber(room.roomCode)}</div><div className="mt-1 inline-block rounded bg-gray-100 px-2 py-0.5 font-mono text-[10px] text-gray-600">{getBaseRoomCode(room.roomCode)}</div></th><td className="px-2 py-3 text-center text-sm tabular-nums text-gray-700">{previousOld}</td><td className="px-2 py-3 text-center"><span className={previousNew > 0 ? "inline-flex h-8 min-w-8 items-center justify-center rounded-full border-2 border-red-500 px-2 text-sm font-normal tabular-nums text-red-600" : "text-sm tabular-nums text-gray-700"}>{previousNew}</span></td><td className="px-2 py-2"><div className="grid gap-2 sm:grid-cols-2"><label className="text-center text-[10px] font-medium uppercase text-gray-500">Old<input type="text" inputMode="numeric" pattern="[0-9]*" value={numericInputValue(room.continuingGuests)} onChange={(e) => updateRoomData(index, "continuingGuests", parseNonNegativeInteger(e.target.value))} className="mt-1 w-full rounded-xl border-0 bg-[#E0E5EC] px-2 py-2 text-center text-sm tabular-nums text-[#193364]" aria-label={`${room.roomType} current old guest value`} /></label><label className="text-center text-[10px] font-medium uppercase text-gray-500">New<input type="text" inputMode="numeric" pattern="[0-9]*" value={numericInputValue(room.checkIns)} onChange={(e) => updateRoomData(index, "checkIns", parseNonNegativeInteger(e.target.value))} className="mt-1 w-full rounded-xl border-0 bg-[#FBE7BA] px-2 py-2 text-center text-sm tabular-nums text-[#193364]" aria-label={`${room.roomType} current new guest value`} /></label></div></td></tr>
+              ); })}</tbody>
+            </table>
           </div>
         )}
 
