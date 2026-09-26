@@ -746,7 +746,7 @@ export default function SubmitAccommodationReport() {
         </div>
 
         {reportFormMode === "old-new" && (
-          <div className="overflow-x-auto overscroll-x-contain">
+          <div className="overflow-hidden">
             <table className="w-full min-w-0 table-fixed border-collapse">
               <thead className="border-b border-gray-200 bg-gray-50"><tr><th className="w-[28%] px-2 py-3 text-center text-xs font-semibold uppercase text-gray-700">Room / Code</th><th className="w-[24%] px-2 py-3 text-center text-xs font-semibold uppercase text-gray-700">Previous old</th><th className="w-[24%] px-2 py-3 text-center text-xs font-semibold uppercase text-gray-700">Previous new</th><th className="w-[24%] px-2 py-3 text-center text-xs font-semibold uppercase text-[#0F4C75]">Current old / new</th></tr></thead>
               <tbody className="divide-y divide-gray-200">{roomData.map((room, index) => { const previousTotal = Number(room.previousGuestNights || 0); const previousNew = Math.min(Number(room.previousNewGuests || 0), previousTotal); const previousOld = Math.max(0, previousTotal - previousNew); return (
