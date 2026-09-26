@@ -168,8 +168,8 @@ export default function Login() {
               <div className="mb-5 flex h-12 w-12 items-center justify-center rounded-2xl bg-[#E5E8E1] text-[#193364] shadow-[6px_6px_12px_rgba(163,177,198,0.58),-6px_-6px_12px_rgba(255,255,255,0.7)]">
                 <ShieldCheck className="h-5 w-5" strokeWidth={1.8} />
               </div>
-              <p className="text-3xl font-semibold tracking-[-0.035em] text-[#0B2530]">VistaBalayan</p>
-              <p className="mt-2 text-sm leading-6 text-[#5D6F73]">Tourism analytics and establishment management.</p>
+              <p className="text-3xl font-semibold tracking-[-0.035em] text-[#193364]">VistaBalayan</p>
+              <p className="mt-2 text-sm leading-6 text-[#323232]">Tourism analytics and establishment management.</p>
             </div>
 
             <div className="rounded-[2rem] border-0 bg-[#E0E5EC] p-6 shadow-[12px_12px_24px_rgba(163,177,198,0.58),-12px_-12px_24px_rgba(255,255,255,0.72)] sm:p-8">
@@ -177,8 +177,8 @@ export default function Login() {
                 <div className="mb-5 flex h-12 w-12 items-center justify-center rounded-2xl bg-[#E0E5EC] text-[#193364] shadow-[inset_4px_4px_8px_rgba(163,177,198,0.45),inset_-4px_-4px_8px_rgba(255,255,255,0.7)]">
                   <LockKeyhole className="h-5 w-5" strokeWidth={1.8} />
                 </div>
-                <h2 className="text-3xl font-semibold tracking-[-0.035em] text-[#0B2530]">Welcome back</h2>
-                <p className="mt-2 text-sm leading-6 text-[#5D6F73]">
+                <h2 className="text-3xl font-semibold tracking-[-0.035em] text-[#193364]">Welcome back</h2>
+                <p className="mt-2 text-sm leading-6 text-[#323232]">
                   Use your authorized officer or establishment staff account.
                 </p>
               </div>
@@ -237,7 +237,7 @@ export default function Login() {
                 </div>
 
                 <div className="flex items-center justify-between gap-4 pt-1">
-                  <label className="flex cursor-pointer items-center gap-2.5 text-sm text-[#5D6F73]">
+                  <label className="flex cursor-pointer items-center gap-2.5 text-sm text-[#323232]">
                     <input
                       type="checkbox"
                       className="h-4 w-4 rounded border-[#AFB3B5] text-[#193364] focus:ring-[#6C9772]"
@@ -252,7 +252,7 @@ export default function Login() {
                       setForgotMessage('');
                       setShowForgotPassword(true);
                     }}
-                    className="text-sm font-medium text-[#193364] transition duration-200 hover:text-[#6C9772]"
+                    className="text-sm font-medium text-[#193364] transition duration-200 hover:text-[#193364]"
                   >
                     Forgot password?
                   </button>
@@ -261,7 +261,7 @@ export default function Login() {
                 <button
                   type="submit"
                   disabled={loading}
-                  className="mt-3 w-full rounded-2xl bg-[#193364] px-5 py-4 text-base font-semibold text-white shadow-[8px_8px_16px_rgba(163,177,198,0.55),-6px_-6px_14px_rgba(255,255,255,0.48)] transition duration-200 hover:-translate-y-0.5 hover:bg-[#0F3B2D] focus:outline-none focus:ring-4 focus:ring-[#6C9772]/25 active:translate-y-[1px] disabled:cursor-not-allowed disabled:opacity-60 disabled:hover:translate-y-0"
+                  className="mt-3 w-full rounded-2xl bg-[#193364] px-5 py-4 text-base font-semibold text-white shadow-[8px_8px_16px_rgba(163,177,198,0.55),-6px_-6px_14px_rgba(255,255,255,0.48)] transition duration-200 hover:-translate-y-0.5 hover:bg-[#193364] focus:outline-none focus:ring-4 focus:ring-[#6C9772]/25 active:translate-y-[1px] disabled:cursor-not-allowed disabled:opacity-60 disabled:hover:translate-y-0"
                 >
                   {loading ? "Signing in..." : "Sign in"}
                 </button>
@@ -277,11 +277,11 @@ export default function Login() {
 
       {showForgotPassword && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/50 p-4">
-          <div className="w-full max-w-md rounded-[2rem] bg-white p-6 shadow-2xl sm:p-8">
+          <div className="w-full max-w-md rounded-[2rem] bg-[#E0E5EC] p-6 shadow-[12px_12px_24px_rgba(163,177,198,0.58),-12px_-12px_24px_rgba(255,255,255,0.72)] sm:p-8">
             <div className="mb-5 flex items-start justify-between gap-4">
               <div>
-                <h3 className="text-2xl font-semibold tracking-[-0.03em] text-[#0B2530]">Reset password</h3>
-                <p className="mt-2 text-sm leading-6 text-[#5D6F73]">
+                <h3 className="text-2xl font-semibold tracking-[-0.03em] text-[#193364]">Reset password</h3>
+                <p className="mt-2 text-sm leading-6 text-[#323232]">
                   Receive a 6-digit OTP by email, then set your new password.
                 </p>
               </div>
@@ -295,7 +295,7 @@ export default function Login() {
             </div>
 
             {forgotMessage && (
-              <div className="mb-4 rounded-2xl border border-cyan-100 bg-cyan-50 px-4 py-3 text-sm leading-6 text-[#0E5A72]">
+              <div className="mb-4 rounded-2xl border border-[#AFB3B5] bg-[#FBE7BA] px-4 py-3 text-sm leading-6 text-[#193364]">
                 {forgotMessage}
               </div>
             )}
@@ -308,7 +308,7 @@ export default function Login() {
                     type="email"
                     value={forgotEmail}
                     onChange={(e) => setForgotEmail(e.target.value)}
-                    className="mt-2 w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-base outline-none focus:border-[#34A0A4] focus:ring-4 focus:ring-[#e5f1f2]"
+                    className="mt-2 w-full rounded-2xl border-0 bg-[#E0E5EC] px-4 py-3 text-base shadow-[inset_4px_4px_8px_rgba(163,177,198,0.42),inset_-4px_-4px_8px_rgba(255,255,255,0.7)] outline-none focus:ring-4 focus:ring-[#6C9772]/25"
                     placeholder="your@email.com"
                     required
                   />
@@ -316,7 +316,7 @@ export default function Login() {
                 <button
                   type="submit"
                   disabled={forgotLoading}
-                  className="w-full rounded-2xl bg-[#0E5A72] px-5 py-3.5 text-base font-semibold text-white disabled:cursor-not-allowed disabled:opacity-60"
+                  className="w-full rounded-2xl bg-[#193364] px-5 py-3.5 text-base font-semibold text-white disabled:cursor-not-allowed disabled:opacity-60"
                 >
                   {forgotLoading ? 'Sending...' : 'Reset password'}
                 </button>
@@ -332,7 +332,7 @@ export default function Login() {
                     maxLength={6}
                     value={forgotOtp}
                     onChange={(e) => setForgotOtp(e.target.value.replace(/\D/g, '').slice(0, 6))}
-                    className="mt-2 w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-center text-2xl font-bold tracking-[0.4em] outline-none focus:border-[#34A0A4] focus:ring-4 focus:ring-[#e5f1f2]"
+                    className="mt-2 w-full rounded-2xl border-0 bg-[#E0E5EC] px-4 py-3 text-center text-2xl font-bold tracking-[0.4em] shadow-[inset_4px_4px_8px_rgba(163,177,198,0.42),inset_-4px_-4px_8px_rgba(255,255,255,0.7)] outline-none focus:ring-4 focus:ring-[#6C9772]/25"
                     placeholder="000000"
                     required
                   />
@@ -343,7 +343,7 @@ export default function Login() {
                     type="password"
                     value={forgotPassword}
                     onChange={(e) => setForgotPassword(e.target.value)}
-                    className="mt-2 w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-base outline-none focus:border-[#34A0A4] focus:ring-4 focus:ring-[#e5f1f2]"
+                    className="mt-2 w-full rounded-2xl border-0 bg-[#E0E5EC] px-4 py-3 text-base shadow-[inset_4px_4px_8px_rgba(163,177,198,0.42),inset_-4px_-4px_8px_rgba(255,255,255,0.7)] outline-none focus:ring-4 focus:ring-[#6C9772]/25"
                     minLength={8}
                     required
                   />
@@ -354,7 +354,7 @@ export default function Login() {
                     type="password"
                     value={forgotConfirmPassword}
                     onChange={(e) => setForgotConfirmPassword(e.target.value)}
-                    className="mt-2 w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-base outline-none focus:border-[#34A0A4] focus:ring-4 focus:ring-[#e5f1f2]"
+                    className="mt-2 w-full rounded-2xl border-0 bg-[#E0E5EC] px-4 py-3 text-base shadow-[inset_4px_4px_8px_rgba(163,177,198,0.42),inset_-4px_-4px_8px_rgba(255,255,255,0.7)] outline-none focus:ring-4 focus:ring-[#6C9772]/25"
                     minLength={8}
                     required
                   />
@@ -370,7 +370,7 @@ export default function Login() {
                   <button
                     type="submit"
                     disabled={forgotLoading}
-                    className="flex-1 rounded-2xl bg-[#0E5A72] px-5 py-3 text-base font-semibold text-white disabled:cursor-not-allowed disabled:opacity-60"
+                    className="flex-1 rounded-2xl bg-[#193364] px-5 py-3 text-base font-semibold text-white disabled:cursor-not-allowed disabled:opacity-60"
                   >
                     {forgotLoading ? 'Resetting...' : 'Reset password'}
                   </button>

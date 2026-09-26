@@ -396,6 +396,11 @@ export default function SubmitAccommodationReport() {
             return room;
           }
 
+          if (reportFormMode === "old-new" && (field === "checkIns" || field === "continuingGuests") && Number(numericValue) > 0) {
+            if (field === "checkIns") updatedRoom.continuingGuests = 0;
+            if (field === "continuingGuests") updatedRoom.checkIns = 0;
+          }
+
           if (field === "checkIns" || field === "continuingGuests") {
             updatedRoom.guestNights = Number(updatedRoom.continuingGuests || 0) + Number(updatedRoom.checkIns || 0);
           }
