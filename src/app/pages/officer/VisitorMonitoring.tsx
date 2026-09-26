@@ -316,7 +316,11 @@ export default function VisitorMonitoring({ embedded = false }: { embedded?: boo
           <h2 className="text-base font-semibold text-gray-900 sm:text-lg">Visitor records by establishment</h2>
           <p className="mt-1 text-xs leading-5 text-gray-600 sm:text-sm">Click an establishment to open the full {monthLabel} record in a modal.</p>
         </div>
-        <div className="max-h-[26rem] overflow-auto overscroll-contain touch-auto [-webkit-overflow-scrolling:touch]">
+        <div
+          className="max-h-[26rem] overflow-auto overscroll-contain touch-auto [-webkit-overflow-scrolling:touch]"
+          onTouchStart={handleTableTouchStart}
+          onTouchMove={handleTableTouchMove}
+        >
           <table className="w-full min-w-[620px] sm:min-w-[860px]">
             <thead className="sticky top-0 z-10 bg-gray-50 border-b border-gray-200">
               <tr>
@@ -326,7 +330,6 @@ export default function VisitorMonitoring({ embedded = false }: { embedded?: boo
                 <th className="px-3 py-2 text-left text-[10px] font-semibold uppercase tracking-wider text-gray-700 sm:px-6 sm:py-3 sm:text-xs">Female</th>
                 <th className="px-3 py-2 text-left text-[10px] font-semibold uppercase tracking-wider text-gray-700 sm:px-6 sm:py-3 sm:text-xs">Total Visitors</th>
                 <th className="px-3 py-2 text-left text-[10px] font-semibold uppercase tracking-wider text-gray-700 sm:px-6 sm:py-3 sm:text-xs">Places of Residence</th>
-                <th className="px-3 py-2 text-left text-[10px] font-semibold uppercase tracking-wider text-gray-700 sm:px-6 sm:py-3 sm:text-xs">Locations</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-200">
@@ -356,12 +359,11 @@ export default function VisitorMonitoring({ embedded = false }: { embedded?: boo
                         <td className="px-3 py-3 text-xs font-medium text-purple-600 sm:px-6 sm:py-4 sm:text-sm">{group.female}</td>
                         <td className="px-3 py-3 text-xs font-semibold text-gray-900 sm:px-6 sm:py-4 sm:text-sm">{group.total}</td>
                         <td className="max-w-[9rem] px-3 py-3 text-xs text-gray-600 sm:max-w-none sm:px-6 sm:py-4 sm:text-sm">{Array.from(group.residenceTypes).join(", ")}</td>
-                        <td className="max-w-[11rem] px-3 py-3 text-xs text-gray-600 sm:max-w-none sm:px-6 sm:py-4 sm:text-sm">{Array.from(group.locations).join(", ")}</td>
                       </tr>
                 ))
               ) : (
                 <tr>
-                  <td colSpan={7} className="px-4 py-6 text-center text-xs text-gray-500 sm:px-6 sm:py-8 sm:text-sm">
+                  <td colSpan={6} className="px-4 py-6 text-center text-xs text-gray-500 sm:px-6 sm:py-8 sm:text-sm">
                     No visitor records found.
                   </td>
                 </tr>
