@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Download, Search } from "lucide-react";
 import { formatDate } from "../../lib/reportMetrics";
 
@@ -94,6 +94,65 @@ export default function EstablishmentSubmissionRecords({
   const [activeType, setActiveType] = useState<"visitor" | "accommodation">(
     canSubmitVisitor ? "visitor" : "accommodation"
   );
+
+  const tableScrollRef = useRef<HTMLDivElement>(null);
+  const tableVerticalRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const scrollContainer = tableScrollRef.current;
+    const verticalContainer = tableVerticalRef.current;
+    if (!scrollContainer || !verticalContainer) return;
+
+    let startX = 0;
+    let startY = 0;
+    let lastX = 0;
+    let lastY = 0;
+    let axis: "x" | "y" | null = null;
+
+    const handleTouchStart = (event: globalThis.TouchEvent) => {
+      const touch = event.touches[0];
+      startX = lastX = touch.clientX;
+      startY = lastY = touch.clientY;
+      axis = null;
+    };
+
+    const handleTouchMove = (event: globalThis.TouchEvent) => {
+      const touch = event.touches[0];
+      const deltaX = touch.clientX - startX;
+      const deltaY = touch.clientY - startY;
+
+      if (!axis && Math.max(Math.abs(deltaX), Math.abs(deltaY)) > 6) {
+        axis = Math.abs(deltaX) > Math.abs(deltaY) ? "x" : "y";
+      }
+
+      if (axis === "x") {
+        event.preventDefault();
+        scrollContainer.scrollLeft += lastX - touch.clientX;
+      } else if (axis === "y") {
+        event.preventDefault();
+        verticalContainer.scrollTop += lastY - touch.clientY;
+      }
+
+      lastX = touch.clientX;
+      lastY = touch.clientY;
+    };
+
+    const resetAxis = () => {
+      axis = null;
+    };
+
+    scrollContainer.addEventListener("touchstart", handleTouchStart, { passive: true });
+    scrollContainer.addEventListener("touchmove", handleTouchMove, { passive: false });
+    scrollContainer.addEventListener("touchend", resetAxis, { passive: true });
+    scrollContainer.addEventListener("touchcancel", resetAxis, { passive: true });
+
+    return () => {
+      scrollContainer.removeEventListener("touchstart", handleTouchStart);
+      scrollContainer.removeEventListener("touchmove", handleTouchMove);
+      scrollContainer.removeEventListener("touchend", resetAxis);
+      scrollContainer.removeEventListener("touchcancel", resetAxis);
+    };
+  }, []);
 
   const filteredVisitors = visitorReports.filter((record) =>
     matchesCommonFilters(
@@ -203,8 +262,8 @@ export default function EstablishmentSubmissionRecords({
           <h2 className="text-base font-semibold text-slate-900">{isVisitor ? "Visitor records by establishment" : "Accommodation records by establishment"}</h2>
           <p className="mt-1 text-sm text-slate-600">{activeCount} record{activeCount === 1 ? "" : "s"} for {selectedMonth === -1 ? "ALL months" : monthNames[selectedMonth]} {selectedYear}.</p>
         </div>
-        <div className="overflow-x-auto overscroll-x-contain touch-auto [-webkit-overflow-scrolling:touch]">
-          <div className={isVisitor ? "min-w-[820px] max-h-[27rem] overflow-y-auto overflow-x-hidden overscroll-y-contain [-webkit-overflow-scrolling:touch]" : "min-w-[760px] max-h-[27rem] overflow-y-auto overflow-x-hidden overscroll-y-contain [-webkit-overflow-scrolling:touch]"}>
+        <div ref={tableScrollRef} className="touch-none overflow-x-auto overscroll-x-contain [-webkit-overflow-scrolling:touch]">
+          <div ref={tableVerticalRef} className={isVisitor ? "min-w-[820px] max-h-[27rem] overflow-y-auto overflow-x-hidden overscroll-y-contain [-webkit-overflow-scrolling:touch]" : "min-w-[760px] max-h-[27rem] overflow-y-auto overflow-x-hidden overscroll-y-contain [-webkit-overflow-scrolling:touch]"}>
           {isVisitor ? (
             <table className="w-full min-w-[820px] text-left text-sm">
               <thead className="sticky top-0 z-10 border-b border-slate-200 bg-slate-50 text-xs uppercase tracking-wider text-slate-600"><tr><th className="px-5 py-3">Report date</th><th className="px-5 py-3">Status</th><th className="px-5 py-3">Guest / group</th><th className="px-5 py-3">Residence</th><th className="px-5 py-3">Male</th><th className="px-5 py-3">Female</th><th className="px-5 py-3">Total visitors</th></tr></thead>
