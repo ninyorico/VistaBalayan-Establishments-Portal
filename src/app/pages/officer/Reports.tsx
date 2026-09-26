@@ -552,8 +552,10 @@ export default function Reports() {
           Tourism Trends ({getFilterLabel()})
         </h3>
         {chartData.length > 0 ? (
-          <ResponsiveContainer width="100%" height={350}>
-            <AreaChart data={chartData}>
+          <div className={chartData.length > 8 ? "overflow-x-auto" : "overflow-x-hidden"}>
+            <div className={chartData.length > 8 ? "min-w-[720px]" : "w-full"}>
+              <ResponsiveContainer width="100%" height={350}>
+                <AreaChart data={chartData}>
               <defs>
                 <linearGradient id="reportsVisitorFill" x1="0" y1="0" x2="0" y2="1">
                   <stop offset="5%" stopColor="#6C63FF" stopOpacity={0.34} />
@@ -567,7 +569,9 @@ export default function Reports() {
               <Legend />
               <Area type="monotone" dataKey="visitors" stroke="#6C63FF" fill="url(#reportsVisitorFill)" strokeWidth={3} name="Visitors" />
             </AreaChart>
-          </ResponsiveContainer>
+              </ResponsiveContainer>
+            </div>
+          </div>
         ) : (
           <div className="text-center py-12 text-gray-500">No data available for the selected period</div>
         )}

@@ -308,6 +308,7 @@ setOccupancyRate(occupancyRate);
   }
 
   const visitorTrendMax = Math.max(1, ...visitorTrends.map((item) => Number(item.visitors) || 0));
+  const visitorTrendNeedsScroll = visitorTrends.length > 6;
   const visitorTrendTicks = Array.from({ length: 5 }, (_, index) =>
     Math.round((visitorTrendMax * (4 - index)) / 4)
   );
@@ -353,8 +354,8 @@ setOccupancyRate(occupancyRate);
                   ))}
                 </div>
               </div>
-              <div className="min-w-0 flex-1 overflow-x-auto">
-                <div className="min-w-[720px]">
+              <div className={`min-w-0 flex-1 ${visitorTrendNeedsScroll ? "overflow-x-auto" : "overflow-x-hidden"}`}>
+                <div className={visitorTrendNeedsScroll ? "min-w-[720px]" : "w-full"}>
                 <ResponsiveContainer width="100%" height={300}>
                   <AreaChart data={visitorTrends} margin={{ top: 5, right: 8, bottom: 0, left: 16 }}>
                     <defs>

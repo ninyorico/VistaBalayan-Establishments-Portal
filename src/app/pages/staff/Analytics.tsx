@@ -255,18 +255,22 @@ export default function Analytics() {
               <BarChart3 className="h-5 w-5 text-[#6474A5]" />
               <h3 className="text-lg font-semibold text-gray-900">Visitor Count Trends</h3>
             </div>
-            <ResponsiveContainer width="100%" height={350}>
-              <LineChart data={visitorTrendData}>
-                <CartesianGrid strokeDasharray="3 3" />
-                <XAxis dataKey="month" interval={0} angle={-35} textAnchor="end" height={75} tickMargin={8} />
-                <YAxis allowDecimals={false} />
-                <Tooltip />
-                <Legend />
-                <Line type="monotone" dataKey="visitors" stroke="#6474A5" strokeWidth={2} name="Visitors" />
-                <Line type="monotone" dataKey="male" stroke="#6C63FF" strokeWidth={2} name="Male" />
-                <Line type="monotone" dataKey="female" stroke="#B86B78" strokeWidth={2} name="Female" />
-              </LineChart>
-            </ResponsiveContainer>
+            <div className={visitorTrendData.length > 6 ? "overflow-x-auto" : "overflow-x-hidden"}>
+              <div className={visitorTrendData.length > 6 ? "min-w-[720px]" : "w-full"}>
+                <ResponsiveContainer width="100%" height={350}>
+                  <LineChart data={visitorTrendData}>
+                    <CartesianGrid strokeDasharray="3 3" />
+                    <XAxis dataKey="month" interval={0} angle={-35} textAnchor="end" height={75} tickMargin={8} />
+                    <YAxis allowDecimals={false} />
+                    <Tooltip />
+                    <Legend />
+                    <Line type="monotone" dataKey="visitors" stroke="#6474A5" strokeWidth={2} name="Visitors" />
+                    <Line type="monotone" dataKey="male" stroke="#6C63FF" strokeWidth={2} name="Male" />
+                    <Line type="monotone" dataKey="female" stroke="#B86B78" strokeWidth={2} name="Female" />
+                  </LineChart>
+                </ResponsiveContainer>
+              </div>
+            </div>
           </div>
 
           <div className="rounded-lg border border-gray-200 bg-white p-6 shadow-sm">
