@@ -40,6 +40,7 @@ interface Props {
   availableYears: number[];
   onExportVisitor: () => void;
   onExportAccommodation: () => void;
+  totalSubmissions: number;
 }
 
 const monthNames = Array.from({ length: 12 }, (_, index) =>
@@ -71,7 +72,7 @@ const matchesCommonFilters = (
   const searchText = [record.report_date, record.created_at, record.status, extraText].join(" ").toLowerCase();
   return (
     parts?.year === selectedYear &&
-    parts.month === selectedMonth &&
+    (selectedMonth === -1 || parts.month === selectedMonth) &&
     searchText.includes(searchTerm.toLowerCase())
   );
 };
@@ -90,6 +91,7 @@ export default function EstablishmentSubmissionRecords({
   availableYears,
   onExportVisitor,
   onExportAccommodation,
+  totalSubmissions,
 }: Props) {
   const [activeType, setActiveType] = useState<"visitor" | "accommodation">(
     canSubmitVisitor ? "visitor" : "accommodation"
@@ -153,7 +155,7 @@ export default function EstablishmentSubmissionRecords({
         </div>
       )}
 
-      <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
+      <div className={`grid grid-cols-2 gap-4 ${isVisitor ? "md:grid-cols-4" : "md:grid-cols-5"}`}>
         {(isVisitor
           ? [
               ["Total visitors", activeTotal, "text-sky-700"],
@@ -162,11 +164,12 @@ export default function EstablishmentSubmissionRecords({
               ["Approved reports", activeApproved, "text-emerald-700"],
             ]
           : [
-              ["Guest nights", activeTotal, "text-sky-700"],
-              ["Accommodation reports", activeCount, "text-blue-600"],
-              ["Check-ins", filteredAccommodation.reduce((sum, record) => sum + Number(record.total_check_ins || 0), 0), "text-purple-600"],
-              ["Approved reports", activeApproved, "text-emerald-700"],
-            ]
+   ["Total submissions", totalSubmissions, "text-sky-700"],
+   ["Guest nights", activeTotal, "text-sky-700"],
+   ["Accommodation reports", activeCount, "text-blue-600"],
+   ["Check-ins", filteredAccommodation.reduce((sum, record) => sum + Number(record.total_check_ins || 0), 0), "text-purple-600"],
+   ["Approved reports", activeApproved, "text-emerald-700"],
+ ]
         ).map(([label, value, tone]) => (
           <div key={String(label)} className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm">
             <p className="text-sm font-medium text-slate-500">{label}</p>
@@ -203,6 +206,7 @@ export default function EstablishmentSubmissionRecords({
             {(availableYears.length > 0 ? availableYears : [selectedYear]).map((year) => <option key={year} value={year}>{year}</option>)}
           </select>
           <select value={selectedMonth} onChange={(event) => setSelectedMonth(Number(event.target.value))} className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm" aria-label="Filter by month">
+            <option value={-1}>ALL months</option>
             {monthNames.map((month, index) => <option key={month} value={index}>{month}</option>)}
           </select>
         </div>
@@ -211,9 +215,9 @@ export default function EstablishmentSubmissionRecords({
       <div className="overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-sm">
         <div className="border-b border-slate-200 bg-slate-50 px-5 py-4 sm:px-6">
           <h2 className="text-base font-semibold text-slate-900">{isVisitor ? "Visitor records by establishment" : "Accommodation records by establishment"}</h2>
-          <p className="mt-1 text-sm text-slate-600">{activeCount} record{activeCount === 1 ? "" : "s"} for {monthNames[selectedMonth]} {selectedYear}.</p>
+          <p className="mt-1 text-sm text-slate-600">{activeCount} record{activeCount === 1 ? "" : "s"} for {selectedMonth === -1 ? "ALL months" : monthNames[selectedMonth]} {selectedYear}.</p>
         </div>
-        <div className="overflow-x-auto">
+        <div className={isVisitor ? "overflow-x-auto" : "max-h-[27rem] overflow-auto"}>
           {isVisitor ? (
             <table className="w-full min-w-[820px] text-left text-sm">
               <thead className="border-b border-slate-200 bg-slate-50 text-xs uppercase tracking-wider text-slate-600"><tr><th className="px-5 py-3">Report date</th><th className="px-5 py-3">Status</th><th className="px-5 py-3">Guest / group</th><th className="px-5 py-3">Residence</th><th className="px-5 py-3">Male</th><th className="px-5 py-3">Female</th><th className="px-5 py-3">Total visitors</th></tr></thead>

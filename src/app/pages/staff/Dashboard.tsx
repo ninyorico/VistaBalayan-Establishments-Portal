@@ -3,7 +3,6 @@ import { useNavigate } from "react-router";
 import {
   FileUp,
   Bed,
-  CheckCircle,
   AlertCircle,
   Calendar,
   ArrowRight,
@@ -28,9 +27,6 @@ export default function StaffDashboard() {
   const [establishment, setEstablishment] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState<{ kind: "error" | "session-expired"; message: string } | null>(null);
-  const [stats, setStats] = useState({
-    total: 0,
-  });
   const [hotelMetrics, setHotelMetrics] = useState({
     averageGuestNight: "0.00",
     monthlyOccupancyRate: "0.00",
@@ -140,10 +136,6 @@ export default function StaffDashboard() {
         totalFemale,
       });
 
-      setStats({
-        total: submissions.length,
-      });
-
       setRecentSubmissions(submissions.slice(0, 5));
     }
 
@@ -154,10 +146,6 @@ export default function StaffDashboard() {
   const showVisitorForm = canSubmitVisitorReport(establishment);
   const showAccommodationForm = canSubmitAccommodationReport(establishment);
   const reportFormLabel = getPrimaryReportFormLabel(establishment);
-
-  const submissionStats = [
-    { title: "Total submissions", value: stats.total.toString(), icon: CheckCircle, tone: "bg-sky-50 text-sky-700 ring-sky-100" },
-  ];
 
   const hotelPerformanceStats = [
     { title: "Average Guest Night", value: hotelMetrics.averageGuestNight, subtitle: "nights per guest", icon: Moon, tone: "bg-[#FBE7BA] text-[#193364] ring-[#B88A52]/30" },
@@ -245,12 +233,6 @@ export default function StaffDashboard() {
         {!showVisitorForm && !showAccommodationForm && (
           <EmptyState>No report form is assigned to this establishment yet. Please ask the municipal tourism officer to update the establishment type or room count.</EmptyState>
         )}
-      </section>
-
-      <section className="grid grid-cols-2 gap-3 sm:gap-4 xl:grid-cols-4">
-        {submissionStats.map((stat) => (
-          <MetricCard key={stat.title} label={stat.title} value={stat.value} icon={stat.icon} tone={stat.tone} compact />
-        ))}
       </section>
 
       {(showVisitorForm || showAccommodationForm) && (

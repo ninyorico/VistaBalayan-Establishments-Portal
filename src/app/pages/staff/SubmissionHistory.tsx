@@ -66,7 +66,7 @@ const getWeekDateRange = (year: number, month: number, weekNumber: number) => {
   return `${monthNames[month]} ${startDay}-${endDay}`;
 };
 
-const formatSelectedMonth = (year: number, month: number) => `${monthNames[month]} ${year}`;
+const formatSelectedMonth = (year: number, month: number) => `${month === -1 ? "ALL months" : monthNames[month]} ${year}`;
 
 const escapeCsvValue = (value: string | number) => {
   const stringValue = String(value ?? "");
@@ -208,7 +208,7 @@ export default function SubmissionHistory() {
       .join(" ")
       .toLowerCase();
     const matchesSearch = searchText.includes(searchTerm.toLowerCase());
-    const matchesDate = dateParts?.year === selectedYear && dateParts.month === selectedMonth;
+    const matchesDate = dateParts?.year === selectedYear && (selectedMonth === -1 || dateParts.month === selectedMonth);
     return matchesSearch && matchesDate;
   });
 
@@ -231,7 +231,7 @@ export default function SubmissionHistory() {
       .toLowerCase();
 
     const matchesSearch = searchText.includes(searchTerm.toLowerCase());
-    const matchesDate = dateParts?.year === selectedYear && dateParts.month === selectedMonth;
+    const matchesDate = dateParts?.year === selectedYear && (selectedMonth === -1 || dateParts.month === selectedMonth);
     return matchesSearch && matchesDate;
   };
 
@@ -427,6 +427,7 @@ export default function SubmissionHistory() {
       availableYears={availableYears}
       onExportVisitor={handleExportResortData}
       onExportAccommodation={handleExportHotelData}
+      totalSubmissions={totalSubmissions}
     />
   );
 
