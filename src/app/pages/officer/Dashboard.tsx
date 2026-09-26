@@ -91,7 +91,7 @@ const buildDemographicChartData = (distribution: Record<string, number>, total: 
 
 export default function OfficerDashboard() {
   const [totalVisitors, setTotalVisitors] = useState(0);
-  const [monthlyArrivals, setMonthlyArrivals] = useState(0);
+  const [yearlyArrivals, setYearlyArrivals] = useState(0);
   const [occupancyRate, setOccupancyRate] = useState(0);
   const [totalEstablishments, setTotalEstablishments] = useState(0);
   const [visitorTrends, setVisitorTrends] = useState<any[]>([]);
@@ -123,7 +123,6 @@ export default function OfficerDashboard() {
           const { data, error } = await supabase
             .from('visitor_reports')
             .select('report_date, total_guests, residence_type, place_of_residence, establishment_id, establishments(name)')
-            .eq('status', 'submitted')
             .order('report_date', { ascending: true })
             .range(page * pageSize, page * pageSize + pageSize - 1);
           if (error) throw error;
@@ -138,7 +137,6 @@ export default function OfficerDashboard() {
           const { data, error } = await supabase
             .from('accommodation_reports')
             .select('total_rooms, total_occupied_rooms, report_date')
-            .eq('status', 'submitted')
             .order('report_date', { ascending: true })
             .range(page * pageSize, page * pageSize + pageSize - 1);
           if (error) throw error;
@@ -159,33 +157,29 @@ export default function OfficerDashboard() {
       setTotalVisitors(total);
       console.log('Total visitors set to:', total);
 
-      // Calculate monthly trends
-      const monthly: Record<string, number> = {};
+      // Calculate yearly visitor trends from the complete report history
+      const yearly: Record<string, number> = {};
       visitorData?.forEach((v) => {
         const date = new Date(v.report_date);
-        const month = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
-        monthly[month] = (monthly[month] || 0) + Number(v.total_guests || 0);
+        const year = String(date.getFullYear());
+        yearly[year] = (yearly[year] || 0) + Number(v.total_guests || 0);
       });
-      const trends = Object.entries(monthly).map(([month, visitors]) => ({
-        month: new Date(`${month}-01T00:00:00`).toLocaleString('default', { month: 'short', year: 'numeric' }),
-        visitors,
-      }));
+      const trends = Object.entries(yearly)
+        .sort(([firstYear], [secondYear]) => firstYear.localeCompare(secondYear))
+        .map(([year, visitors]) => ({
+          year,
+          visitors,
+        }));
       setVisitorTrends(trends);
-      console.log('Monthly trends:', trends);
+      console.log('Yearly trends:', trends);
 
-// Calculate monthly arrivals (current month from data)
-if (visitorData && visitorData.length > 0) {
-  // Get the most recent month with data
-  const sortedDates = visitorData
-    .map(v => new Date(v.report_date))
-    .sort((a: Date, b: Date) => b.getTime() - a.getTime());  // ← Fixed: use getTime()
-  
-  const latestDate = sortedDates[0];
-  const currentMonthStr = `${latestDate.getFullYear()}-${String(latestDate.getMonth() + 1).padStart(2, '0')}`;
-  const currentMonthVisitors = monthly[currentMonthStr] || 0;
-  setMonthlyArrivals(currentMonthVisitors);
-  console.log('Monthly arrivals (current month) set to:', currentMonthVisitors);
-}
+      // Calculate yearly arrivals using the latest reporting year in the complete dataset
+      if (visitorData && visitorData.length > 0) {
+        const latestYear = trends[trends.length - 1]?.year;
+        const latestYearVisitors = latestYear ? yearly[latestYear] || 0 : 0;
+        setYearlyArrivals(latestYearVisitors);
+        console.log('Yearly arrivals (latest reporting year) set to:', latestYearVisitors);
+      }
 
       let weightedOccupancySum = 0;
       let occupancyReportCount = 0;
@@ -330,8 +324,8 @@ setOccupancyRate(occupancyRate);
 
       <section className="grid grid-cols-2 gap-2 sm:grid-cols-4 sm:gap-3 lg:gap-4" data-officer-dashboard-uniform-kpis="true">
         {[
-          { label: "Total visitors", value: totalVisitors.toLocaleString(), helper: "Submitted visitor records", icon: Users, tone: "bg-cyan-50 text-[#0E5A72] ring-cyan-100" },
-          { label: "Monthly arrivals", value: monthlyArrivals.toLocaleString(), helper: "Latest reporting month", icon: TrendingUp, tone: "bg-slate-50 text-[#0B2530] ring-slate-200" },
+          { label: "Total visitors", value: totalVisitors.toLocaleString(), helper: "All visitor reports", icon: Users, tone: "bg-cyan-50 text-[#0E5A72] ring-cyan-100" },
+          { label: "Yearly arrivals", value: yearlyArrivals.toLocaleString(), helper: "Latest reporting year", icon: TrendingUp, tone: "bg-slate-50 text-[#0B2530] ring-slate-200" },
           { label: "Occupancy rate", value: `${occupancyRate.toFixed(1)}%`, helper: "Average hotel occupancy", icon: Bed, tone: "bg-[#EAF2F1] text-[#0E5A72] ring-[#b8d2cf]" },
           { label: "Establishments", value: totalEstablishments.toString(), helper: "Tourism records", icon: Building2, tone: "bg-emerald-50 text-[#2F5F55] ring-emerald-100" },
 
@@ -346,7 +340,7 @@ setOccupancyRate(occupancyRate);
       </section>
 
       <section className="grid grid-cols-1 gap-6 xl:grid-cols-2">
-        <PanelCard title="Monthly visitor trends" description="Aggregated visitor counts by report month.">
+        <PanelCard title="Yearly visitor trends" description="Aggregated visitor counts by report year.">
           {visitorTrends.length > 0 ? (
             <div className="flex min-w-0 pb-2">
               <div className="relative h-[300px] w-16 shrink-0 border-r border-[#cbd5e1] bg-white pr-1 text-right text-[11px] text-[#64748b]">
@@ -370,7 +364,7 @@ setOccupancyRate(occupancyRate);
                       </linearGradient>
                     </defs>
                     <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
-                    <XAxis dataKey="month" stroke="#64748b" interval={0} angle={-35} textAnchor="end" height={75} tickMargin={8} />
+                    <XAxis dataKey="year" stroke="#64748b" interval={0} angle={-35} textAnchor="end" height={75} tickMargin={8} />
                     <YAxis hide domain={[0, visitorTrendMax]} ticks={visitorTrendTicks} />
                     <Tooltip />
                     <Legend />
@@ -427,7 +421,7 @@ setOccupancyRate(occupancyRate);
         </PanelCard>
       </section>
 
-      <PanelCard title="Top performing establishments" description="Ranked by submitted visitor volume.">
+      <PanelCard title="Top performing establishments" description="Ranked by overall visitor volume.">
         {topEstablishments.length > 0 ? (
           <ResponsiveContainer width="100%" height={320}>
             <BarChart data={topEstablishments}>
