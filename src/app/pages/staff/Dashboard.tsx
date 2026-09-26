@@ -253,24 +253,28 @@ export default function StaffDashboard() {
         ))}
       </section>
 
-      {showVisitorForm && (
-        <PanelCard title="Resort visitor analytics" description="Visitor totals computed from your submitted resort reports." className="p-0">
-          <div className="grid grid-cols-1 gap-4 sm:grid-cols-3" data-resort-dashboard-visitors="visitor-count-monthly-arrivals-demographics">
-            {visitorPerformanceStats.map((stat) => (
-              <MetricCard key={stat.title} label={stat.title} value={stat.value} helper={stat.subtitle} icon={stat.icon} tone={stat.tone} className="bg-[#f8fbf8] shadow-none" />
-            ))}
-          </div>
-        </PanelCard>
-      )}
+      {(showVisitorForm || showAccommodationForm) && (
+        <section className="grid grid-cols-1 gap-6 lg:grid-cols-2">
+          {showVisitorForm && (
+            <PanelCard title="Resort visitor analytics" description="Visitor totals computed from your submitted resort reports." className="p-0">
+              <div className="grid grid-cols-3 gap-3 sm:gap-4" data-resort-dashboard-visitors="visitor-count-monthly-arrivals-demographics">
+                {visitorPerformanceStats.map((stat) => (
+                  <MetricCard key={stat.title} label={stat.title} value={stat.value} helper={stat.subtitle} icon={stat.icon} tone={stat.tone} className="bg-[#f8fbf8] shadow-none" />
+                ))}
+              </div>
+            </PanelCard>
+          )}
 
-      {showAccommodationForm && (
-        <PanelCard title="Hotel analytics" description="Computed from your submitted hotel accommodation reports." className="p-0">
-          <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
-            {hotelPerformanceStats.map((stat) => (
-              <MetricCard key={stat.title} label={stat.title} value={stat.value} helper={stat.subtitle} icon={stat.icon} tone={stat.tone} className="bg-[#f8fbf8] shadow-none" />
-            ))}
-          </div>
-        </PanelCard>
+          {showAccommodationForm && (
+            <PanelCard title="Hotel analytics" description="Computed from your submitted hotel accommodation reports." className="p-0">
+              <div className="grid grid-cols-3 gap-3 sm:gap-4">
+                {hotelPerformanceStats.map((stat) => (
+                  <MetricCard key={stat.title} label={stat.title} value={stat.value} helper={stat.subtitle} icon={stat.icon} tone={stat.tone} className="bg-[#f8fbf8] shadow-none" />
+                ))}
+              </div>
+            </PanelCard>
+          )}
+        </section>
       )}
 
       <section className="grid grid-cols-1 gap-6 xl:grid-cols-[1.2fr_0.8fr]">
