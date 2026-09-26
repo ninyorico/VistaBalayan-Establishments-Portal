@@ -21,6 +21,8 @@ interface RoomOccupancy {
   isNewGuest?: boolean;
 }
 
+type AccommodationFormMode = "single" | "old-new";
+
 const parseNonNegativeInteger = (value: string) => {
   if (value.trim() === "") return 0;
 
@@ -40,6 +42,8 @@ export default function SubmitAccommodationReport() {
   const [error, setError] = useState<string | null>(null);
   const [establishmentName, setEstablishmentName] = useState("Loading...");
   const [showRoomSetup, setShowRoomSetup] = useState(false);
+  const [reportFormMode, setReportFormMode] = useState<AccommodationFormMode>("single");
+  const [tempReportFormMode, setTempReportFormMode] = useState<AccommodationFormMode>("single");
   const roomSetupTriggerRef = useRef<HTMLButtonElement>(null);
   const roomDialogRef = useRef<HTMLDivElement>(null);
   const [tempRoomConfig, setTempRoomConfig] = useState<EstablishmentRoomConfig[]>(DEFAULT_ROOM_CONFIG);
@@ -50,6 +54,9 @@ export default function SubmitAccommodationReport() {
 
   const draftStorageKey = (userId?: string, establishmentId?: string) =>
     userId && establishmentId ? `accommodationReportDraft:${userId}:${establishmentId}` : null;
+
+  const formModeStorageKey = (userId: string, establishmentId: string) =>
+    `accommodationReportFormMode:${userId}:${establishmentId}`;
 
   const loadDraft = (userId: string, establishmentId: string, rooms: EstablishmentRoomConfig[], currentReportDate: string) => {
     const key = draftStorageKey(userId, establishmentId);
@@ -168,6 +175,10 @@ export default function SubmitAccommodationReport() {
     }
 
     setEstablishmentAmenities(typeof est.amenities === "string" ? est.amenities : "");
+    const savedFormMode = localStorage.getItem(formModeStorageKey(profileData.id, profileData.establishment_id));
+    const effectiveFormMode: AccommodationFormMode = savedFormMode === "old-new" ? "old-new" : "single";
+    setReportFormMode(effectiveFormMode);
+    setTempReportFormMode(effectiveFormMode);
     const officerRoomConfig = getRoomConfigFromAmenities(est.amenities);
     const effectiveRoomConfig = expandRoomConfig(normalizeRoomConfig(officerRoomConfig));
     setRoomTypes(effectiveRoomConfig);
@@ -356,6 +367,10 @@ export default function SubmitAccommodationReport() {
       setEstablishmentAmenities(nextAmenities);
     }
 
+    if (profile?.id && profile.establishment_id) {
+      localStorage.setItem(formModeStorageKey(profile.id, profile.establishment_id), tempReportFormMode);
+    }
+    setReportFormMode(tempReportFormMode);
     setRoomTypes(config);
     setTempRoomConfig(config);
     setRoomData(
@@ -594,7 +609,7 @@ export default function SubmitAccommodationReport() {
           ref={roomSetupTriggerRef}
           type="button"
           aria-label="Configure Rooms"
-          onClick={() => setShowRoomSetup(true)}
+          onClick={() => { setTempReportFormMode(reportFormMode); setShowRoomSetup(true); }}
           className="flex items-center justify-center gap-2 rounded-lg bg-[#0F4C75] px-4 py-2 font-medium text-white transition hover:bg-[#0F4C75]"
         >
           <Settings className="w-4 h-4 sm:w-5 sm:h-5" />
@@ -615,7 +630,23 @@ export default function SubmitAccommodationReport() {
             </div>
 
             <div className="min-h-0 flex-1 overflow-y-auto overscroll-y-contain p-4 sm:p-6 [-webkit-overflow-scrolling:touch]">
-              <div className="mb-4 flex items-center justify-between gap-3">
+              <fieldset className="mb-5 rounded-2xl bg-[#E0E5EC] p-4 shadow-[inset_4px_4px_8px_rgba(163,177,198,0.4),inset_-4px_-4px_8px_rgba(255,255,255,0.65)]">
+                <legend className="text-sm font-semibold text-[#193364]">Choose hotel report form</legend>
+                <div className="mt-3 grid gap-3 sm:grid-cols-2">
+                  <label className={`cursor-pointer rounded-2xl p-3 transition ${tempReportFormMode === "single" ? "bg-[#F5F8FF] text-[#193364] shadow-[inset_3px_3px_7px_rgba(163,177,198,0.4),inset_-3px_-3px_7px_rgba(255,255,255,0.65)]" : "text-[#6B7280]"}`}>
+                    <input type="radio" name="accommodation-form-mode" value="single" checked={tempReportFormMode === "single"} onChange={() => setTempReportFormMode("single")} className="sr-only" />
+                    <span className="block text-sm font-semibold">One guest value per room</span>
+                    <span className="mt-1 block text-xs leading-5">Current form with double-click to switch continuing/new guest.</span>
+                  </label>
+                  <label className={`cursor-pointer rounded-2xl p-3 transition ${tempReportFormMode === "old-new" ? "bg-[#F5F8FF] text-[#193364] shadow-[inset_3px_3px_7px_rgba(163,177,198,0.4),inset_-3px_-3px_7px_rgba(255,255,255,0.65)]" : "text-[#6B7280]"}`}>
+                    <input type="radio" name="accommodation-form-mode" value="old-new" checked={tempReportFormMode === "old-new"} onChange={() => setTempReportFormMode("old-new")} className="sr-only" />
+                    <span className="block text-sm font-semibold">Old and new guest fields</span>
+                    <span className="mt-1 block text-xs leading-5">Separate continuing and new guest values; previous new guests are encircled.</span>
+                  </label>
+                </div>
+              </fieldset>
+
+            <div className="mb-4 flex items-center justify-between gap-3">
                 <p className="text-sm font-medium text-gray-700">Editable hotel room setup</p>
                 <button
                   type="button"
@@ -714,6 +745,18 @@ export default function SubmitAccommodationReport() {
           )}
         </div>
 
+        {reportFormMode === "old-new" && (
+          <div className="overflow-x-auto overscroll-x-contain">
+            <table className="w-full min-w-[720px] table-fixed border-collapse">
+              <thead className="border-b border-gray-200 bg-gray-50"><tr><th className="w-[28%] px-2 py-3 text-center text-xs font-semibold uppercase text-gray-700">Room / Code</th><th className="w-[24%] px-2 py-3 text-center text-xs font-semibold uppercase text-gray-700">Previous old</th><th className="w-[24%] px-2 py-3 text-center text-xs font-semibold uppercase text-gray-700">Previous new</th><th className="w-[24%] px-2 py-3 text-center text-xs font-semibold uppercase text-[#0F4C75]">Current old / new</th></tr></thead>
+              <tbody className="divide-y divide-gray-200">{roomData.map((room, index) => { const previousTotal = Number(room.previousGuestNights || 0); const previousNew = Math.min(Number(room.previousNewGuests || 0), previousTotal); const previousOld = Math.max(0, previousTotal - previousNew); return (
+                <tr key={room.roomCode} className="bg-white"><th className="px-2 py-3 text-center"><div className="text-xs font-semibold text-gray-900 sm:text-sm">Room {getGeneratedRoomNumber(room.roomCode)}</div><div className="mt-1 inline-block rounded bg-gray-100 px-2 py-0.5 font-mono text-[10px] text-gray-600">{getBaseRoomCode(room.roomCode)}</div></th><td className="px-2 py-3 text-center text-sm tabular-nums text-gray-700">{previousOld}</td><td className="px-2 py-3 text-center"><span className={previousNew > 0 ? "inline-flex h-8 min-w-8 items-center justify-center rounded-full border-2 border-red-500 px-2 text-sm font-normal tabular-nums text-red-600" : "text-sm tabular-nums text-gray-700"}>{previousNew}</span></td><td className="px-2 py-2"><div className="grid gap-2 sm:grid-cols-2"><label className="text-center text-[10px] font-medium uppercase text-gray-500">Old<input type="text" inputMode="numeric" pattern="[0-9]*" value={numericInputValue(room.continuingGuests)} onChange={(e) => updateRoomData(index, "continuingGuests", parseNonNegativeInteger(e.target.value))} className="mt-1 w-full rounded-xl border-0 bg-[#E0E5EC] px-2 py-2 text-center text-sm tabular-nums text-[#193364]" aria-label={`${room.roomType} current old guest value`} /></label><label className="text-center text-[10px] font-medium uppercase text-gray-500">New<input type="text" inputMode="numeric" pattern="[0-9]*" value={numericInputValue(room.checkIns)} onChange={(e) => updateRoomData(index, "checkIns", parseNonNegativeInteger(e.target.value))} className="mt-1 w-full rounded-xl border-0 bg-[#FBE7BA] px-2 py-2 text-center text-sm tabular-nums text-[#193364]" aria-label={`${room.roomType} current new guest value`} /></label></div></td></tr>
+              ); })}</tbody>
+            </table>
+          </div>
+        )}
+
+        {reportFormMode === "single" && (
         <div className="overflow-x-auto overscroll-x-contain">
           <table className="w-full min-w-0 table-fixed border-collapse">
             <thead className="bg-gray-50 border-b border-gray-200">
@@ -756,6 +799,7 @@ export default function SubmitAccommodationReport() {
             </tbody>
           </table>
         </div>
+        )}
       </div>
 
       {/* Computed Analytics */}
