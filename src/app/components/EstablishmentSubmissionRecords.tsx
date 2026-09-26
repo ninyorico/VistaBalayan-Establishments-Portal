@@ -203,8 +203,8 @@ export default function EstablishmentSubmissionRecords({
           <h2 className="text-base font-semibold text-slate-900">{isVisitor ? "Visitor records by establishment" : "Accommodation records by establishment"}</h2>
           <p className="mt-1 text-sm text-slate-600">{activeCount} record{activeCount === 1 ? "" : "s"} for {selectedMonth === -1 ? "ALL months" : monthNames[selectedMonth]} {selectedYear}.</p>
         </div>
-        <div className="overflow-x-auto overscroll-x-contain touch-pan-x [-webkit-overflow-scrolling:touch]">
-          <div className={isVisitor ? "min-w-[820px] max-h-[27rem] overflow-y-auto overflow-x-hidden overscroll-y-contain touch-pan-y [-webkit-overflow-scrolling:touch]" : "min-w-[760px] max-h-[27rem] overflow-y-auto overflow-x-hidden overscroll-y-contain touch-pan-y [-webkit-overflow-scrolling:touch]"}>
+        <div className="overflow-x-auto overscroll-x-contain touch-auto [-webkit-overflow-scrolling:touch]">
+          <div className={isVisitor ? "min-w-[820px] max-h-[27rem] overflow-y-auto overflow-x-hidden overscroll-y-contain [-webkit-overflow-scrolling:touch]" : "min-w-[760px] max-h-[27rem] overflow-y-auto overflow-x-hidden overscroll-y-contain [-webkit-overflow-scrolling:touch]"}>
           {isVisitor ? (
             <table className="w-full min-w-[820px] text-left text-sm">
               <thead className="sticky top-0 z-10 border-b border-slate-200 bg-slate-50 text-xs uppercase tracking-wider text-slate-600"><tr><th className="px-5 py-3">Report date</th><th className="px-5 py-3">Status</th><th className="px-5 py-3">Guest / group</th><th className="px-5 py-3">Residence</th><th className="px-5 py-3">Male</th><th className="px-5 py-3">Female</th><th className="px-5 py-3">Total visitors</th></tr></thead>
