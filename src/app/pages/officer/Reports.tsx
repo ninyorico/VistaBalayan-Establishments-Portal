@@ -71,12 +71,13 @@ interface Submission {
 
 const renderResponsivePeriodTick = ({ x = 0, y = 0, payload }: any) => {
   const fullLabel = String(payload?.value || "");
-  const compactLabel = fullLabel.startsWith("Week ") ? `W${fullLabel.slice(5)}` : fullLabel.slice(0, 3);
+  const compactLabel = fullLabel.startsWith("Week ") ? `Wk${fullLabel.slice(5)}` : fullLabel.slice(0, 3);
+  const desktopLabel = fullLabel.startsWith("Week ") ? `Wk ${fullLabel.slice(5)}` : fullLabel;
 
   return (
     <g transform={`translate(${x},${y})`}>
       <text textAnchor="middle" fill="#64748b" fontSize={12} dy={16}>
-        <tspan className="hidden sm:inline">{fullLabel}</tspan>
+        <tspan className="hidden sm:inline">{desktopLabel}</tspan>
         <tspan className="sm:hidden">{compactLabel}</tspan>
       </text>
     </g>
