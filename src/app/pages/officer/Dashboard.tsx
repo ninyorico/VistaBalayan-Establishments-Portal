@@ -357,7 +357,7 @@ setOccupancyRate(occupancyRate);
               <div className={`min-w-0 flex-1 ${visitorTrendNeedsScroll ? "overflow-x-auto" : "overflow-x-hidden"}`}>
                 <div className={visitorTrendNeedsScroll ? "min-w-[720px]" : "w-full"}>
                 <ResponsiveContainer width="100%" height={300}>
-                  <AreaChart data={visitorTrends} margin={{ top: 5, right: 8, bottom: 0, left: 16 }}>
+                  <AreaChart data={visitorTrends} margin={{ top: 5, right: 24, bottom: 8, left: 24 }}>
                     <defs>
                       <linearGradient id="visitorFill" x1="0" y1="0" x2="0" y2="1">
                         <stop offset="5%" stopColor="#6C63FF" stopOpacity={0.34} />
@@ -365,7 +365,7 @@ setOccupancyRate(occupancyRate);
                       </linearGradient>
                     </defs>
                     <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
-                    <XAxis dataKey="year" stroke="#64748b" interval={0} angle={-35} textAnchor="end" height={75} tickMargin={8} />
+                    <XAxis dataKey="year" stroke="#64748b" interval={0} angle={0} textAnchor="middle" height={40} tickMargin={8} />
                     <YAxis hide domain={[0, visitorTrendMax]} ticks={visitorTrendTicks} />
                     <Tooltip />
                     <Legend />
