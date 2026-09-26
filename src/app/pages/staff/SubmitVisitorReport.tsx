@@ -4,6 +4,7 @@ import { Save, Send, Plus, Trash2, AlertTriangle} from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "../../../lib/supabase";
 import { canSubmitVisitorReport } from "../../../lib/establishmentReportForms";
+import { LoadingState } from "../../components/vista/PolishedShell";
 
 interface VisitorEntry {
   id: number;
@@ -354,12 +355,7 @@ const loadProfile = async () => {
   };
 
   if (loadingProfile) {
-    return (
-      <div className="flex items-center justify-center h-96">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#1CA7C9] mx-auto"></div>
-        <p className="mt-4 text-gray-600">Loading your establishment information...</p>
-      </div>
-    );
+    return <LoadingState label="Loading your establishment information" />;
   }
 
   if (error) {

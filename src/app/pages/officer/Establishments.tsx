@@ -5,6 +5,7 @@ import { supabase } from "../../../lib/supabase";
 import { datestampedFilename, downloadCsv } from "../../../lib/exportCsv";
 import { compressBusinessPermitImage, getBusinessPermitAssets, setBusinessPermitAssetsInAmenities } from "../../../lib/businessPermitImages";
 import { DEFAULT_ROOM_CONFIG, EstablishmentRoomConfig, getRoomConfigFromAmenities, setRoomConfigInAmenities } from "../../../lib/establishmentRoomConfig";
+import { LoadingState } from "../../components/vista/PolishedShell";
 
 type ReportingMode = "accommodation" | "visitor" | "both";
 
@@ -790,11 +791,7 @@ export default function Establishments() {
   };
 
   if (loading) {
-    return (
-      <div className="flex items-center justify-center h-96">
-        <Loader2 className="w-8 h-8 animate-spin text-[#1CA7C9]" />
-      </div>
-    );
+    return <LoadingState label="Loading establishments" />;
   }
 
   return (

@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { AlertTriangle, Loader2, TrendingUp } from 'lucide-react'
+import { AlertTriangle, TrendingUp } from 'lucide-react'
 import { supabase } from '../../../lib/supabase'
 import { geminiService } from '../../../services/geminiService'
 import {
@@ -10,6 +10,7 @@ import {
   AiSectionCard,
   AiShowMoreButton,
 } from '../../components/vista/AiInsightsDesign'
+import { LoadingState } from '../../components/vista/PolishedShell'
 
 const DEFAULT_AI_ITEMS_VISIBLE = 5
 
@@ -123,14 +124,7 @@ export default function AIInsights() {
   }
 
   if (loading) {
-    return (
-      <div className="flex items-center justify-center h-96">
-        <div className="text-center">
-          <Loader2 className="w-12 h-12 animate-spin text-[#1CA7C9] mx-auto mb-4" />
-          <p className="text-gray-600">Loading AI insights...</p>
-        </div>
-      </div>
-    )
+    return <LoadingState label="Loading AI insights" />
   }
 
   return (

@@ -126,11 +126,14 @@ export function EmptyState({ children, className }: { children: ReactNode; class
 
 export function LoadingState({ label }: { label: string }) {
   return (
-    <div className="grid min-h-[60vh] place-items-center">
-      <Card className="tourism-card rounded-3xl p-0">
-        <CardContent className="flex min-w-72 flex-col items-center p-8 text-center">
-          <Loader2 className="h-10 w-10 animate-spin text-[#0E5A72]" strokeWidth={1.8} />
-          <p className="mt-4 text-sm font-medium text-[#5D6F73]">{label}</p>
+    <div className="flex min-h-[70dvh] items-center justify-center rounded-[2rem] bg-[#E0E5EC] p-5 sm:p-8" role="status" aria-live="polite">
+      <Card className="tourism-card w-full max-w-md rounded-[2rem] bg-[#E0E5EC] p-0">
+        <CardContent className="flex flex-col items-center px-6 py-12 text-center sm:px-10">
+          <div className="flex size-20 items-center justify-center rounded-full bg-[#E0E5EC] shadow-[inset_6px_6px_12px_rgba(163,177,198,0.55),inset_-6px_-6px_12px_rgba(255,255,255,0.7)]" aria-hidden="true">
+            <div className="size-10 animate-spin rounded-full border-[5px] border-[#AFB3B5]/35 border-t-[#193364]" />
+          </div>
+          <p className="mt-6 text-lg font-semibold text-[#193364]">{label}</p>
+          <p className="mt-2 text-sm text-[#6B7280]">Retrieving your data...</p>
         </CardContent>
       </Card>
     </div>

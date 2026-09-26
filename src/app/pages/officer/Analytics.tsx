@@ -14,6 +14,7 @@ import {
 import { TrendingUp, TrendingDown, Users, MapPin } from "lucide-react";
 import { supabase } from "../../../lib/supabase";
 import { calculateAccommodationOccupancy } from "../../../lib/reportMetrics";
+import DataState from "../../components/DataState";
 
 interface AnalyticsData {
   seasonalData: { month: string; visitors: number; guestNights: number }[];
@@ -291,14 +292,7 @@ export default function Analytics() {
   };
 
   if (loading) {
-    return (
-      <div className="flex items-center justify-center h-96">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#1CA7C9] mx-auto"></div>
-          <p className="mt-4 text-gray-600">Loading analytics data...</p>
-        </div>
-      </div>
-    );
+    return <DataState state="loading" message="Retrieving analytics data..." />;
   }
 
   return (

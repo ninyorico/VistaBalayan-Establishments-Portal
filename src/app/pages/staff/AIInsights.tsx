@@ -1,9 +1,10 @@
 import { useEffect, useState } from 'react'
-import { AlertTriangle, Loader2 } from 'lucide-react'
+import { AlertTriangle } from 'lucide-react'
 import { supabase } from '../../../lib/supabase'
 import { geminiService } from '../../../services/geminiService'
 import { calculateAverageAccommodationOccupancy } from '../../../lib/reportMetrics'
 import { OFFICIAL_REPORT_STATUS } from '../../../lib/reporting'
+import { LoadingState } from '../../components/vista/PolishedShell'
 import {
   AiAnomalyCard,
   AiEmptyState,
@@ -221,14 +222,7 @@ const loadCachedData = async (estId: string) => {
   }
 
   if (loading) {
-    return (
-      <div className="flex items-center justify-center h-96">
-        <div className="text-center">
-          <Loader2 className="w-12 h-12 animate-spin text-[#1CA7C9] mx-auto mb-4" />
-          <p className="text-gray-600">Loading AI insights for your establishment...</p>
-        </div>
-      </div>
-    )
+    return <LoadingState label="Loading AI insights for your establishment" />
   }
 
   if (error) {
