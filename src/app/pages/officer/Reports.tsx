@@ -29,6 +29,8 @@ import {
 
 const getCurrentYear = () => new Date().getFullYear().toString();
 
+const getCurrentMonth = () => new Date().toLocaleString("default", { month: "short" });
+
 const getWeekRange = (year: string, week: string) => {
   const yearNumber = parseInt(year, 10) || new Date().getFullYear();
   const weekNumber = parseInt(week, 10) || 1;
@@ -67,11 +69,25 @@ interface Submission {
   details: any;
 }
 
+const renderResponsivePeriodTick = ({ x = 0, y = 0, payload }: any) => {
+  const fullLabel = String(payload?.value || "");
+  const compactLabel = fullLabel.startsWith("Week ") ? `W${fullLabel.slice(5)}` : fullLabel.slice(0, 3);
+
+  return (
+    <g transform={`translate(${x},${y})`}>
+      <text textAnchor="middle" fill="#64748b" fontSize={12} dy={16}>
+        <tspan className="hidden sm:inline">{fullLabel}</tspan>
+        <tspan className="sm:hidden">{compactLabel}</tspan>
+      </text>
+    </g>
+  );
+};
+
 export default function Reports() {
   const [filterType, setFilterType] = useState<"year" | "quarter" | "month" | "week">("month");
   const [selectedYear, setSelectedYear] = useState(getCurrentYear());
   const [selectedQuarter, setSelectedQuarter] = useState("1");
-  const [selectedMonth, setSelectedMonth] = useState("");
+  const [selectedMonth, setSelectedMonth] = useState(getCurrentMonth());
   const [selectedWeek, setSelectedWeek] = useState("1");
   const [searchTerm, setSearchTerm] = useState("");
 
@@ -465,6 +481,7 @@ export default function Reports() {
                   setFilterType(type as any);
                   if (type === "year") { setSelectedMonth(""); setSelectedQuarter("1"); }
                   if (type === "quarter") setSelectedMonth("");
+                  if (type === "month" && !selectedMonth) setSelectedMonth(getCurrentMonth());
                   if (type === "week") { setSelectedYear(getCurrentYear()); setSelectedMonth(""); setSelectedWeek("1"); }
                 }}
                 className={`px-3 py-1.5 text-sm rounded-lg transition ${
@@ -512,7 +529,6 @@ export default function Reports() {
               onChange={(e) => setSelectedMonth(e.target.value)}
               className="px-3 py-1.5 border border-gray-300 rounded-lg text-sm"
             >
-              <option value="">All Months</option>
               {months.map((month) => (
                 <option key={month} value={month}>{month}</option>
               ))}
@@ -581,7 +597,7 @@ export default function Reports() {
                       </linearGradient>
                     </defs>
                     <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
-                    <XAxis dataKey="period" interval={0} tickFormatter={(value) => String(value).slice(0, 3)} />
+                    <XAxis dataKey="period" interval={0} tick={renderResponsivePeriodTick} />
                     <YAxis hide domain={[0, reportTrendMax]} ticks={reportTrendTicks} />
                     <Tooltip />
                     <Legend />
