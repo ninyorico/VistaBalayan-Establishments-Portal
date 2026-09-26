@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo, useRef, type TouchEvent } from "react";
-import { ChevronRight, Download, Search, X } from "lucide-react";
+import { Download, Search, X } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "../../../lib/supabase";
 import { datestampedFilename, downloadCsv } from "../../../lib/exportCsv";
@@ -316,9 +316,8 @@ export default function VisitorMonitoring({ embedded = false }: { embedded?: boo
           <h2 className="text-base font-semibold text-gray-900 sm:text-lg">Visitor records by establishment</h2>
           <p className="mt-1 text-xs leading-5 text-gray-600 sm:text-sm">Click an establishment to open the full {monthLabel} record in a modal.</p>
         </div>
-        <div className="max-h-[26rem] overflow-y-auto overscroll-y-contain">
-          <div className="overflow-x-auto overscroll-x-contain">
-          <table className="w-full min-w-[700px] sm:min-w-[860px]">
+        <div className="max-h-[26rem] overflow-auto overscroll-contain touch-auto [-webkit-overflow-scrolling:touch]">
+          <table className="w-full min-w-[620px] sm:min-w-[860px]">
             <thead className="sticky top-0 z-10 bg-gray-50 border-b border-gray-200">
               <tr>
                 <th className="px-3 py-2 text-left text-[10px] font-semibold uppercase tracking-wider text-gray-700 sm:px-6 sm:py-3 sm:text-xs">Establishment</th>
@@ -349,7 +348,6 @@ export default function VisitorMonitoring({ embedded = false }: { embedded?: boo
                       >
                         <td className="px-3 py-3 text-xs font-medium text-gray-900 sm:px-6 sm:py-4 sm:text-sm">
                           <div className="flex items-center gap-1.5 sm:gap-2">
-                            <ChevronRight className="h-3.5 w-3.5 shrink-0 text-gray-500 sm:h-4 sm:w-4" />
                             {group.establishment}
                           </div>
                         </td>
@@ -370,7 +368,6 @@ export default function VisitorMonitoring({ embedded = false }: { embedded?: boo
               )}
             </tbody>
           </table>
-          </div>
         </div>
       </div>
 

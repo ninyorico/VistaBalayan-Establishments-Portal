@@ -519,9 +519,8 @@ export default function AccommodationMonitoring({ embedded = false }: { embedded
           <h2 className="font-semibold text-gray-900">Accommodation records by establishment</h2>
           <p className="mt-1 text-sm text-gray-600">Click an establishment to open the full {monthLabel} record in a modal table.</p>
         </div>
-        <div className="max-h-[26rem] overflow-y-auto overscroll-y-contain">
-          <div className="overflow-x-auto overscroll-x-contain">
-          <table className="w-full min-w-[760px]">
+        <div className="max-h-[26rem] overflow-auto overscroll-contain touch-auto [-webkit-overflow-scrolling:touch]">
+          <table className="w-full min-w-[640px]">
             <thead className="sticky top-0 z-10 border-b border-gray-200 bg-gray-50">
               <tr>
                 <th className="px-3 py-2 text-left text-[10px] font-semibold uppercase tracking-wider text-gray-700">Establishment</th>
@@ -552,7 +551,6 @@ export default function AccommodationMonitoring({ embedded = false }: { embedded
                   >
                     <td className="px-3 py-3 text-xs font-medium text-gray-900">
                       <div className="flex items-center gap-1.5">
-                        <ChevronRight className="h-3.5 w-3.5 shrink-0 text-gray-500" />
                         {group.establishment}
                       </div>
                     </td>
@@ -573,7 +571,6 @@ export default function AccommodationMonitoring({ embedded = false }: { embedded
               )}
             </tbody>
           </table>
-          </div>
         </div>
 
         <div className="hidden">
