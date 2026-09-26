@@ -128,7 +128,7 @@ export default function SubmissionHistory() {
     if (profileData?.establishment_id) {
       const { data: establishment } = await supabase
         .from("establishments")
-        .select("type,total_rooms")
+        .select("type,total_rooms,reporting_mode")
         .eq("id", profileData.establishment_id)
         .maybeSingle();
 
