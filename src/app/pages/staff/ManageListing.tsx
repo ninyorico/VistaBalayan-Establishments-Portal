@@ -12,6 +12,7 @@ import { Input } from '../../components/ui/input'
 import { Label } from '../../components/ui/label'
 import { Separator } from '../../components/ui/separator'
 import { Textarea } from '../../components/ui/textarea'
+import { LoadingState } from '../../components/vista/PolishedShell'
 
 const BALAYAN_CENTER = { latitude: 13.9385, longitude: 120.7332 }
 const LEAFLET_ATTRIBUTION = '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
@@ -503,12 +504,7 @@ export default function ManageListing() {
   }
 
   if (loading) {
-    return (
-      <div className="flex items-center justify-center h-96">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#1CA7C9] mx-auto"></div>
-        <p className="mt-4 text-gray-600">Loading...</p>
-      </div>
-    )
+    return <LoadingState label="Loading public listing" />
   }
 
   if (!establishment) {

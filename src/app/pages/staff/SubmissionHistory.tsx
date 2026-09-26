@@ -5,6 +5,7 @@ import { calculateAccommodationOccupancy, formatDate, formatMonthYear, groupStaf
 import { canSubmitAccommodationReport, canSubmitVisitorReport } from "../../../lib/establishmentReportForms";
 import DataState from "../../components/DataState";
 import EstablishmentSubmissionRecords from "../../components/EstablishmentSubmissionRecords";
+import { LoadingState } from "../../components/vista/PolishedShell";
 
 interface VisitorReportExportRecord {
   id: string;
@@ -398,14 +399,7 @@ export default function SubmissionHistory() {
   };
 
   if (loading) {
-    return (
-      <div className="grid min-h-[60vh] place-items-center">
-        <div className="rounded-3xl border border-slate-200 bg-white p-8 text-center shadow-sm">
-          <div className="mx-auto h-12 w-12 animate-spin rounded-full border-2 border-slate-200 border-b-[#0F4C75]"></div>
-          <p className="mt-4 text-sm font-medium text-slate-600">Loading your submissions</p>
-        </div>
-      </div>
-    );
+    return <LoadingState label="Loading your submissions" />;
   }
 
   const summaryCards = [
