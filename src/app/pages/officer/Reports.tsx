@@ -289,11 +289,13 @@ export default function Reports() {
       })),
     ].sort((a, b) => a.report_date.localeCompare(b.report_date));
 
-    if (trendRows.length) {
-      const grouped: Record<string, number> = {};
+    if (trendRows.length || filterType === "year") {
+      const grouped: Record<string, number> = filterType === "year"
+        ? Object.fromEntries(months.map((month) => [month, 0]))
+        : {};
       trendRows.forEach((item) => {
         const date = new Date(item.report_date);
-        const key = getChartPeriod(date, item.report_date);
+        const key = filterType === "year" ? months[date.getMonth()] : getChartPeriod(date, item.report_date);
         grouped[key] = (grouped[key] || 0) + item.visitors;
       });
 
@@ -553,7 +555,7 @@ export default function Reports() {
         </h3>
         {chartData.length > 0 ? (
           <div className={chartData.length > 8 ? "overflow-x-auto" : "overflow-x-hidden"}>
-            <div className={chartData.length > 8 ? "min-w-[720px]" : "w-full"}>
+            <div className={chartData.length > 8 ? "min-w-[960px]" : "w-full"}>
               <ResponsiveContainer width="100%" height={350}>
                 <AreaChart data={chartData}>
               <defs>
@@ -563,7 +565,7 @@ export default function Reports() {
                 </linearGradient>
               </defs>
               <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
-              <XAxis dataKey="period" />
+              <XAxis dataKey="period" interval={0} tickFormatter={(value) => String(value).slice(0, 3)} />
               <YAxis />
               <Tooltip />
               <Legend />
