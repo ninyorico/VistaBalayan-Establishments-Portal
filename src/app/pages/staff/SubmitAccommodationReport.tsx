@@ -50,7 +50,7 @@ export default function SubmitAccommodationReport() {
   const draftStorageKey = (userId?: string, establishmentId?: string) =>
     userId && establishmentId ? `accommodationReportDraft:${userId}:${establishmentId}` : null;
 
-  const loadDraft = (userId: string, establishmentId: string, rooms: EstablishmentRoomConfig[]) => {
+  const loadDraft = (userId: string, establishmentId: string, rooms: EstablishmentRoomConfig[], currentReportDate: string) => {
     const key = draftStorageKey(userId, establishmentId);
     if (!key) return;
 
@@ -60,6 +60,7 @@ export default function SubmitAccommodationReport() {
     try {
       const draft = JSON.parse(saved) as { reportDate?: string; roomData?: RoomOccupancy[] };
       if (!Array.isArray(draft.roomData) || draft.roomData.length === 0) return;
+      if (draft.reportDate && draft.reportDate !== currentReportDate) return;
 
       const validRooms = draft.roomData.filter((room) =>
         room && typeof room.roomType === "string" && typeof room.roomCode === "string" &&
@@ -176,7 +177,7 @@ export default function SubmitAccommodationReport() {
       effectiveRoomConfig
     );
     setRoomData(previousNightRoomData);
-    loadDraft(profileData.id, profileData.establishment_id, effectiveRoomConfig);
+    loadDraft(profileData.id, profileData.establishment_id, effectiveRoomConfig, reportDate);
 
     setLoadingProfile(false);
   };
