@@ -469,7 +469,7 @@ setOccupancyRate(occupancyRate);
           </div>
         </PanelCard>
 
-        <PanelCard title="Service gaps or operational challenges">
+        <PanelCard title="Service Gaps">
           <div className="space-y-3">
             {anomalies.length > 0 ? (
               anomalies.map((anomaly) => (

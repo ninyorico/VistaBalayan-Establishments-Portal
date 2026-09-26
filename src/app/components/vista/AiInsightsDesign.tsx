@@ -40,7 +40,6 @@ interface AiRecommendationCardProps {
 const severityTone = (severity?: string) => {
   if (severity === "high") {
     return {
-      rail: "from-red-500 via-rose-400 to-red-300",
       badge: "border-red-200 bg-red-50 text-red-700",
       icon: "text-red-600",
       soft: "bg-red-50/70",
@@ -49,7 +48,6 @@ const severityTone = (severity?: string) => {
 
   if (severity === "medium") {
     return {
-      rail: "from-amber-500 via-yellow-400 to-amber-200",
       badge: "border-amber-200 bg-amber-50 text-amber-700",
       icon: "text-amber-600",
       soft: "bg-amber-50/70",
@@ -57,7 +55,6 @@ const severityTone = (severity?: string) => {
   }
 
   return {
-    rail: "from-sky-500 via-cyan-400 to-sky-200",
     badge: "border-sky-200 bg-sky-50 text-sky-700",
     icon: "text-sky-600",
     soft: "bg-sky-50/70",
@@ -150,8 +147,7 @@ export function AiAnomalyCard(anomaly: AiAnomalyCardProps) {
 
   return (
     <article className="group relative overflow-hidden rounded-2xl border border-slate-200 bg-white p-0 shadow-[0_14px_40px_rgba(15,23,42,0.05)] transition-all duration-500 hover:-translate-y-0.5 hover:shadow-[0_18px_55px_rgba(15,23,42,0.08)]" data-ai-card-layout="shadcn-anomaly-editorial">
-      <div className={cn("absolute inset-y-0 left-0 w-1.5 bg-gradient-to-b", tone.rail)} />
-      <div className="p-4 pl-5 sm:p-5 sm:pl-6">
+      <div className="p-4 sm:p-5">
         <div className="flex min-w-0 items-start justify-between gap-3">
           <div className="flex min-w-0 items-start gap-3">
             <div className={cn("mt-0.5 flex size-9 shrink-0 items-center justify-center rounded-xl", tone.soft)}>
@@ -199,8 +195,7 @@ export function AiRecommendationCard(insight: AiRecommendationCardProps) {
 
   return (
     <article className="group relative isolate overflow-hidden rounded-2xl border border-slate-200 bg-white p-0 shadow-[0_14px_40px_rgba(15,23,42,0.05)] transition-all duration-500 hover:-translate-y-0.5 hover:shadow-[0_18px_55px_rgba(15,23,42,0.08)] sm:p-0" data-ai-card-layout="shadcn-recommendation-editorial">
-      <div className={cn("absolute inset-y-0 left-0 w-1.5 bg-gradient-to-b", tone.rail)} />
-      <div className="relative p-4 pl-5 sm:p-5 sm:pl-6">
+      <div className="relative p-4 sm:p-5">
         <div className="mb-3 flex items-start justify-between gap-3">
           <div className="flex min-w-0 items-start gap-3">
             <div className={cn("mt-0.5 flex size-9 shrink-0 items-center justify-center rounded-xl", tone.soft)}>
