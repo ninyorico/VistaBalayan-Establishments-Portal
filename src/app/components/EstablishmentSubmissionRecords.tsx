@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useRef, useState, type TouchEvent } from "react";
 import { Download, Search } from "lucide-react";
 import { formatDate } from "../../lib/reportMetrics";
 
@@ -94,6 +94,50 @@ export default function EstablishmentSubmissionRecords({
   const [activeType, setActiveType] = useState<"visitor" | "accommodation">(
     canSubmitVisitor ? "visitor" : "accommodation"
   );
+
+  const tableTouchRef = useRef<{ x: number; y: number; lastX: number; lastY: number; axis: "x" | "y" | null }>({
+    x: 0,
+    y: 0,
+    lastX: 0,
+    lastY: 0,
+    axis: null,
+  });
+
+  const handleTableTouchStart = (event: TouchEvent<HTMLDivElement>) => {
+    const touch = event.touches[0];
+    tableTouchRef.current = {
+      x: touch.clientX,
+      y: touch.clientY,
+      lastX: touch.clientX,
+      lastY: touch.clientY,
+      axis: null,
+    };
+  };
+
+  const handleTableTouchMove = (event: TouchEvent<HTMLDivElement>) => {
+    const touch = event.touches[0];
+    const state = tableTouchRef.current;
+    const deltaX = touch.clientX - state.x;
+    const deltaY = touch.clientY - state.y;
+
+    if (!state.axis && Math.max(Math.abs(deltaX), Math.abs(deltaY)) > 6) {
+      state.axis = Math.abs(deltaX) > Math.abs(deltaY) ? "x" : "y";
+    }
+
+    if (state.axis === "x") {
+      event.preventDefault();
+      event.currentTarget.scrollLeft += state.lastX - touch.clientX;
+      state.lastX = touch.clientX;
+    } else if (state.axis === "y" && event.currentTarget.scrollHeight > event.currentTarget.clientHeight) {
+      event.preventDefault();
+      event.currentTarget.scrollTop += state.lastY - touch.clientY;
+      state.lastY = touch.clientY;
+    }
+  };
+
+  const handleTableTouchEnd = () => {
+    tableTouchRef.current.axis = null;
+  };
 
   const filteredVisitors = visitorReports.filter((record) =>
     matchesCommonFilters(
@@ -203,7 +247,13 @@ export default function EstablishmentSubmissionRecords({
           <h2 className="text-base font-semibold text-slate-900">{isVisitor ? "Visitor records by establishment" : "Accommodation records by establishment"}</h2>
           <p className="mt-1 text-sm text-slate-600">{activeCount} record{activeCount === 1 ? "" : "s"} for {selectedMonth === -1 ? "ALL months" : monthNames[selectedMonth]} {selectedYear}.</p>
         </div>
-        <div className={isVisitor ? "overflow-x-auto" : "max-h-[27rem] overflow-auto"}>
+        <div
+          className="max-h-[27rem] overflow-auto overscroll-contain touch-auto [-webkit-overflow-scrolling:touch]"
+          onTouchStart={handleTableTouchStart}
+          onTouchMove={handleTableTouchMove}
+          onTouchEnd={handleTableTouchEnd}
+          onTouchCancel={handleTableTouchEnd}
+        >
           {isVisitor ? (
             <table className="w-full min-w-[820px] text-left text-sm">
               <thead className="border-b border-slate-200 bg-slate-50 text-xs uppercase tracking-wider text-slate-600"><tr><th className="px-5 py-3">Report date</th><th className="px-5 py-3">Status</th><th className="px-5 py-3">Guest / group</th><th className="px-5 py-3">Residence</th><th className="px-5 py-3">Male</th><th className="px-5 py-3">Female</th><th className="px-5 py-3">Total visitors</th></tr></thead>
