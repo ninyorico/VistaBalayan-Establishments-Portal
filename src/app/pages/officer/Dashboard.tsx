@@ -344,7 +344,7 @@ setOccupancyRate(occupancyRate);
         <PanelCard title="Yearly visitor trends" description="Aggregated visitor counts by report year.">
           {visitorTrends.length > 0 ? (
             <div className="flex min-w-0 pb-2">
-              <div className="relative h-[300px] w-16 shrink-0 border-r border-[#cbd5e1] bg-white pr-1 text-right text-[11px] text-[#64748b]">
+              <div className="relative h-[300px] w-12 shrink-0 border-r border-[#cbd5e1] bg-white pr-1 text-right text-[11px] text-[#64748b]">
                 <div className="absolute inset-x-0 top-1 bottom-[75px] flex flex-col justify-between">
                   {visitorTrendTicks.map((tick, index) => (
                     <span key={`${tick}-${index}`} className="relative pr-2">
@@ -357,7 +357,7 @@ setOccupancyRate(occupancyRate);
               <div className={`min-w-0 flex-1 ${visitorTrendNeedsScroll ? "overflow-x-auto" : "overflow-x-hidden"}`}>
                 <div className={visitorTrendNeedsScroll ? "min-w-[720px]" : "w-full"}>
                 <ResponsiveContainer width="100%" height={300}>
-                  <AreaChart data={visitorTrends} margin={{ top: 5, right: 24, bottom: 8, left: 24 }}>
+                  <AreaChart data={visitorTrends} margin={{ top: 5, right: 16, bottom: 8, left: 8 }}>
                     <defs>
                       <linearGradient id="visitorFill" x1="0" y1="0" x2="0" y2="1">
                         <stop offset="5%" stopColor="#6C63FF" stopOpacity={0.34} />
