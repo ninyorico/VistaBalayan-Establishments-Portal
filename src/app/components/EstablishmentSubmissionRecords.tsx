@@ -40,7 +40,6 @@ interface Props {
   availableYears: number[];
   onExportVisitor: () => void;
   onExportAccommodation: () => void;
-  totalSubmissions: number;
 }
 
 const monthNames = Array.from({ length: 12 }, (_, index) =>
@@ -91,7 +90,6 @@ export default function EstablishmentSubmissionRecords({
   availableYears,
   onExportVisitor,
   onExportAccommodation,
-  totalSubmissions,
 }: Props) {
   const [activeType, setActiveType] = useState<"visitor" | "accommodation">(
     canSubmitVisitor ? "visitor" : "accommodation"
@@ -118,12 +116,14 @@ export default function EstablishmentSubmissionRecords({
 
   const isVisitor = activeType === "visitor";
   const activeCount = isVisitor ? filteredVisitors.length : filteredAccommodation.length;
-  const activeTotal = isVisitor
-    ? filteredVisitors.reduce((sum, record) => sum + Number(record.total_guests || 0), 0)
-    : filteredAccommodation.reduce((sum, record) => sum + Number(record.total_guest_nights || 0), 0);
-  const activeMale = filteredVisitors.reduce((sum, record) => sum + Number(record.total_male || 0), 0);
-  const activeFemale = filteredVisitors.reduce((sum, record) => sum + Number(record.total_female || 0), 0);
-  const activeApproved = (isVisitor ? filteredVisitors : filteredAccommodation).filter((record) => record.status === "approved").length;
+  const hasBothReportTypes = canSubmitVisitor && canSubmitAccommodation;
+  const submissionKpis = hasBothReportTypes
+    ? [
+        ["Total report submissions", filteredVisitors.length + filteredAccommodation.length, "text-sky-700"],
+        ["Daytour report submissions", filteredVisitors.length, "text-blue-600"],
+        ["Overnight report submissions", filteredAccommodation.length, "text-purple-600"],
+      ]
+    : [["Total submissions", isVisitor ? filteredVisitors.length : filteredAccommodation.length, "text-sky-700"]];
 
   return (
     <div className="space-y-6">
@@ -155,22 +155,8 @@ export default function EstablishmentSubmissionRecords({
         </div>
       )}
 
-      <div className={`grid grid-cols-2 gap-4 ${isVisitor ? "md:grid-cols-4" : "md:grid-cols-5"}`}>
-        {(isVisitor
-          ? [
-              ["Total visitors", activeTotal, "text-sky-700"],
-              ["Male", activeMale, "text-blue-600"],
-              ["Female", activeFemale, "text-purple-600"],
-              ["Approved reports", activeApproved, "text-emerald-700"],
-            ]
-          : [
-   ["Total submissions", totalSubmissions, "text-sky-700"],
-   ["Guest nights", activeTotal, "text-sky-700"],
-   ["Accommodation reports", activeCount, "text-blue-600"],
-   ["Check-ins", filteredAccommodation.reduce((sum, record) => sum + Number(record.total_check_ins || 0), 0), "text-purple-600"],
-   ["Approved reports", activeApproved, "text-emerald-700"],
- ]
-        ).map(([label, value, tone]) => (
+      <div className={`grid grid-cols-1 gap-4 ${hasBothReportTypes ? "md:grid-cols-3" : "md:grid-cols-1 md:max-w-xs"}`}>
+        {submissionKpis.map(([label, value, tone]) => (
           <div key={String(label)} className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm">
             <p className="text-sm font-medium text-slate-500">{label}</p>
             <p className={`mt-2 text-3xl font-bold tracking-[-0.03em] ${tone}`}>{value}</p>

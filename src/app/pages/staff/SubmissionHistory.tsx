@@ -427,7 +427,6 @@ export default function SubmissionHistory() {
       availableYears={availableYears}
       onExportVisitor={handleExportResortData}
       onExportAccommodation={handleExportHotelData}
-      totalSubmissions={totalSubmissions}
     />
   );
 
