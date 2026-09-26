@@ -316,9 +316,10 @@ export default function VisitorMonitoring({ embedded = false }: { embedded?: boo
           <h2 className="text-base font-semibold text-gray-900 sm:text-lg">Visitor records by establishment</h2>
           <p className="mt-1 text-xs leading-5 text-gray-600 sm:text-sm">Click an establishment to open the full {monthLabel} record in a modal.</p>
         </div>
-        <div className="overflow-x-auto overscroll-x-contain">
+        <div className="max-h-[26rem] overflow-y-auto overscroll-y-contain">
+          <div className="overflow-x-auto overscroll-x-contain">
           <table className="w-full min-w-[700px] sm:min-w-[860px]">
-            <thead className="bg-gray-50 border-b border-gray-200">
+            <thead className="sticky top-0 z-10 bg-gray-50 border-b border-gray-200">
               <tr>
                 <th className="px-3 py-2 text-left text-[10px] font-semibold uppercase tracking-wider text-gray-700 sm:px-6 sm:py-3 sm:text-xs">Establishment</th>
                 <th className="px-3 py-2 text-left text-[10px] font-semibold uppercase tracking-wider text-gray-700 sm:px-6 sm:py-3 sm:text-xs">Records</th>
@@ -369,6 +370,7 @@ export default function VisitorMonitoring({ embedded = false }: { embedded?: boo
               )}
             </tbody>
           </table>
+          </div>
         </div>
       </div>
 
