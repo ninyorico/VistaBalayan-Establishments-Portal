@@ -27,16 +27,17 @@ export default function VisitorMonitoring({ embedded = false }: { embedded?: boo
   const [specificMonth, setSpecificMonth] = useState("");
   const [selectedEstablishment, setSelectedEstablishment] = useState<string | null>(null);
   const visitorDialogRef = useRef<HTMLDivElement>(null);
-  const tableTouchRef = useRef<{ x: number; y: number; lastX: number; axis: "x" | "y" | null }>({
+  const tableTouchRef = useRef<{ x: number; y: number; lastX: number; lastY: number; axis: "x" | "y" | null }>({
     x: 0,
     y: 0,
     lastX: 0,
+    lastY: 0,
     axis: null,
   });
 
   const handleTableTouchStart = (event: TouchEvent<HTMLDivElement>) => {
     const touch = event.touches[0];
-    tableTouchRef.current = { x: touch.clientX, y: touch.clientY, lastX: touch.clientX, axis: null };
+    tableTouchRef.current = { x: touch.clientX, y: touch.clientY, lastX: touch.clientX, lastY: touch.clientY, axis: null };
   };
 
   const handleTableTouchMove = (event: TouchEvent<HTMLDivElement>) => {
@@ -53,6 +54,10 @@ export default function VisitorMonitoring({ embedded = false }: { embedded?: boo
       event.preventDefault();
       event.currentTarget.scrollLeft += state.lastX - touch.clientX;
       state.lastX = touch.clientX;
+    } else if (state.axis === "y" && event.currentTarget.scrollHeight > event.currentTarget.clientHeight) {
+      event.preventDefault();
+      event.currentTarget.scrollTop += state.lastY - touch.clientY;
+      state.lastY = touch.clientY;
     }
   };
 
