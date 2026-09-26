@@ -526,19 +526,18 @@ export default function ManageListing() {
     <main className="w-full max-w-full overflow-x-hidden" data-manage-listing-redesign="shadcn-taste-editorial">
       <div className="space-y-5 sm:space-y-7" data-manage-listing-hero-removed="true">
         <section className="grid grid-cols-1 gap-3" data-manage-listing-profile-card-only="true">
-          <Card className="group overflow-hidden rounded-[1.5rem] border-slate-200 bg-slate-950 text-white shadow-sm">
+          <Card className="tourism-card group overflow-hidden rounded-[1.75rem] border-0 bg-[#E0E5EC] text-[#193364] shadow-sm">
             <CardContent className="relative p-5 sm:p-6">
-              <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_20%_10%,rgba(28,167,201,0.42),transparent_32%),radial-gradient(circle_at_90%_10%,rgba(148,163,184,0.24),transparent_28%)]" />
               <div className="relative flex items-start gap-4">
-                <div className="flex size-12 shrink-0 items-center justify-center rounded-2xl bg-white/10 ring-1 ring-white/15 transition-transform duration-500 group-hover:scale-105">
-                  <Sparkles className="size-6 text-cyan-100" />
+                <div className="flex size-12 shrink-0 items-center justify-center rounded-2xl bg-[#E0E5EC] text-[#193364] shadow-[inset_5px_5px_10px_rgba(163,177,198,0.55),inset_-5px_-5px_10px_rgba(255,255,255,0.7)] transition-transform duration-500 group-hover:scale-105">
+                  <Sparkles className="size-6 text-[#6C63FF]" />
                 </div>
                 <div>
-                  <p className="text-xs font-medium uppercase tracking-[0.22em] text-cyan-100/80">Public profile</p>
+                  <p className="text-xs font-medium uppercase tracking-[0.22em] text-[#6C9772]">Public profile</p>
                   <h2 className="mt-2 max-w-3xl text-[clamp(2rem,5vw,3.75rem)] font-black leading-[0.95] tracking-[-0.055em] sm:text-5xl">
                     Shape how visitors see your stay.
                   </h2>
-                  <p className="mt-3 max-w-2xl text-sm leading-6 text-slate-300 sm:text-base">
+                  <p className="mt-3 max-w-2xl text-sm leading-6 text-[#6B7280] sm:text-base">
                     Keep the public tourism card precise: clean details, gallery-ready photos, and an exact visitor pin without exposing backend clutter.
                   </p>
                 </div>
@@ -550,8 +549,8 @@ export default function ManageListing() {
 
         <div className="grid grid-cols-1 gap-5 lg:grid-cols-[minmax(0,1.45fr)_minmax(320px,0.75fr)]">
           <div className="space-y-5">
-            <Card className="overflow-hidden rounded-[1.5rem] border-slate-200 bg-white shadow-sm">
-              <CardHeader className="border-b border-slate-100 bg-slate-50/70 px-4 py-4 sm:px-6">
+            <Card className="tourism-card overflow-hidden rounded-[1.5rem] border-0 bg-[#E0E5EC] shadow-sm">
+              <CardHeader className="border-0 bg-[#E0E5EC] px-4 py-4 sm:px-6">
                 <CardTitle className="text-xl font-black tracking-[-0.025em] text-slate-950">Public listing details</CardTitle>
               </CardHeader>
               <CardContent className="space-y-4 px-4 py-5 sm:px-6">
@@ -563,7 +562,7 @@ export default function ManageListing() {
                       type="text"
                       value={formData.name}
                       onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                      className="h-11 rounded-xl border-slate-200 bg-white"
+                      className="h-11 rounded-xl border-0 bg-[#E0E5EC] shadow-[inset_4px_4px_8px_rgba(163,177,198,0.45),inset_-4px_-4px_8px_rgba(255,255,255,0.65)]"
                     />
                   </div>
                   <div className="min-w-0 space-y-2">
@@ -572,7 +571,7 @@ export default function ManageListing() {
                       id="listing-category"
                       value={formData.type}
                       onChange={(e) => setFormData({ ...formData, type: e.target.value })}
-                      className="flex h-11 w-full min-w-0 rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm outline-none transition focus:border-[#1CA7C9] focus:ring-2 focus:ring-[#1CA7C9]/20"
+                      className="flex h-11 w-full min-w-0 rounded-xl border-0 bg-[#E0E5EC] px-3 py-2 text-sm shadow-[inset_4px_4px_8px_rgba(163,177,198,0.45),inset_-4px_-4px_8px_rgba(255,255,255,0.65)] outline-none transition focus:ring-2 focus:ring-[#6C63FF]/30"
                     >
                       <option value="Resort">Resort</option>
                       <option value="Hotel">Hotel</option>
@@ -590,7 +589,7 @@ export default function ManageListing() {
                     type="text"
                     value={formData.address}
                     onChange={(e) => setFormData({ ...formData, address: e.target.value })}
-                    className="h-11 rounded-xl border-slate-200 bg-white"
+                    className="h-11 rounded-xl border-0 bg-[#E0E5EC] shadow-[inset_4px_4px_8px_rgba(163,177,198,0.45),inset_-4px_-4px_8px_rgba(255,255,255,0.65)]"
                     placeholder="Brgy. Sampaga, Balayan, Batangas"
                   />
                 </div>
@@ -616,14 +615,14 @@ export default function ManageListing() {
                         value={mapSearch}
                         onChange={(e) => setMapSearch(e.target.value)}
                         onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); handleMapSearch() } }}
-                        className="h-11 rounded-xl border-slate-200 bg-white"
+                        className="h-11 rounded-xl border-0 bg-[#E0E5EC] shadow-[inset_4px_4px_8px_rgba(163,177,198,0.45),inset_-4px_-4px_8px_rgba(255,255,255,0.65)]"
                         placeholder="Search establishment or nearby landmark"
                       />
                       <Button
                         type="button"
                         onClick={handleMapSearch}
                         disabled={mapStatus === 'searching'}
-                        className="h-11 rounded-xl bg-[#0E5A72] text-white hover:bg-[#073B4C]"
+                        className="h-11 rounded-xl bg-[#193364] text-white hover:bg-[#0F3B2D]"
                       >
                         <Search className="size-4" /> {mapStatus === 'searching' ? 'Searching' : 'Search'}
                       </Button>
@@ -632,7 +631,7 @@ export default function ManageListing() {
                       type="button"
                       onClick={useCurrentLocationAsPin}
                       variant="outline"
-                      className="h-11 rounded-xl border-cyan-200 bg-white text-[#0E5A72] hover:bg-cyan-50"
+                      className="h-11 rounded-xl border-0 bg-[#E0E5EC] text-[#193364] shadow-[5px_5px_10px_rgba(163,177,198,0.45),-5px_-5px_10px_rgba(255,255,255,0.55)] hover:bg-[#FBE7BA]"
                     >
                       <Crosshair className="size-4" /> Use my location
                     </Button>
@@ -662,7 +661,7 @@ export default function ManageListing() {
                       type="text"
                       value={formData.contact_number}
                       onChange={(e) => setFormData({ ...formData, contact_number: e.target.value })}
-                      className="h-11 rounded-xl border-slate-200 bg-white"
+                      className="h-11 rounded-xl border-0 bg-[#E0E5EC] shadow-[inset_4px_4px_8px_rgba(163,177,198,0.45),inset_-4px_-4px_8px_rgba(255,255,255,0.65)]"
                       placeholder="+63 912 345 6789"
                     />
                   </div>
@@ -673,7 +672,7 @@ export default function ManageListing() {
                       type="email"
                       value={formData.email}
                       onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                      className="h-11 rounded-xl border-slate-200 bg-white"
+                      className="h-11 rounded-xl border-0 bg-[#E0E5EC] shadow-[inset_4px_4px_8px_rgba(163,177,198,0.45),inset_-4px_-4px_8px_rgba(255,255,255,0.65)]"
                       placeholder="contact@yourbusiness.com"
                     />
                   </div>
@@ -687,7 +686,7 @@ export default function ManageListing() {
                       type="url"
                       value={formData.website_url}
                       onChange={(e) => setFormData({ ...formData, website_url: e.target.value })}
-                      className="h-11 rounded-xl border-slate-200 bg-white"
+                      className="h-11 rounded-xl border-0 bg-[#E0E5EC] shadow-[inset_4px_4px_8px_rgba(163,177,198,0.45),inset_-4px_-4px_8px_rgba(255,255,255,0.65)]"
                       placeholder="https://yourwebsite.com"
                     />
                   </div>
@@ -698,7 +697,7 @@ export default function ManageListing() {
                       type="text"
                       value={formData.opening_hours}
                       onChange={(e) => setFormData({ ...formData, opening_hours: e.target.value })}
-                      className="h-11 rounded-xl border-slate-200 bg-white"
+                      className="h-11 rounded-xl border-0 bg-[#E0E5EC] shadow-[inset_4px_4px_8px_rgba(163,177,198,0.45),inset_-4px_-4px_8px_rgba(255,255,255,0.65)]"
                       placeholder="Mon-Sun: 8:00 AM - 8:00 PM"
                     />
                   </div>
@@ -711,7 +710,7 @@ export default function ManageListing() {
                     value={formData.description}
                     onChange={(e) => setFormData({ ...formData, description: e.target.value })}
                     rows={5}
-                    className="min-h-32 rounded-xl border-slate-200 bg-white leading-6"
+                    className="min-h-32 rounded-xl border-0 bg-[#E0E5EC] shadow-[inset_4px_4px_8px_rgba(163,177,198,0.45),inset_-4px_-4px_8px_rgba(255,255,255,0.65)] leading-6"
                     placeholder="Describe your establishment, amenities, nearby attractions, and unique features."
                   />
                 </div>
@@ -720,17 +719,17 @@ export default function ManageListing() {
           </div>
 
           <aside className="space-y-5">
-            <Card className="overflow-hidden rounded-[1.5rem] border-[#AFB3B5]/45 bg-[#F5F8FF] shadow-sm">
-                          <CardHeader className="border-b border-[#AFB3B5]/35 bg-[#E5E8E1]/70 px-4 py-4 sm:px-5">
+            <Card className="tourism-card overflow-hidden rounded-[1.5rem] border-0 bg-[#E0E5EC] shadow-sm">
+              <CardHeader className="border-0 bg-[#E0E5EC] px-4 py-4 sm:px-5">
                 <div className="flex items-center justify-between gap-3">
                   <CardTitle className="text-xl font-black tracking-[-0.025em] text-slate-950">Photo gallery</CardTitle>
-                  <Badge variant="outline" className="rounded-full border-slate-200 bg-white text-slate-700">{images.length} photos</Badge>
+                  <Badge variant="outline" className="rounded-full border-[#AFB3B5]/50 bg-[#E0E5EC] text-[#193364] shadow-[inset_2px_2px_4px_rgba(163,177,198,0.4),inset_-2px_-2px_4px_rgba(255,255,255,0.65)]">{images.length} photos</Badge>
                 </div>
               </CardHeader>
               <CardContent className="px-4 py-4 sm:px-5">
                 <div className="grid grid-cols-2 gap-3">
                   {images.map((img, index) => (
-                    <div key={index} className="group relative overflow-hidden rounded-2xl border border-slate-200 bg-slate-100">
+                    <div key={index} className="group relative overflow-hidden rounded-2xl border-0 bg-[#E0E5EC] shadow-[5px_5px_10px_rgba(163,177,198,0.45),-5px_-5px_10px_rgba(255,255,255,0.55)]">
                       <img src={img} alt={`Public listing photo ${index + 1}`} className="h-28 w-full object-cover transition-transform duration-700 ease-out group-hover:scale-105" />
                       <button
                         type="button"
@@ -742,9 +741,9 @@ export default function ManageListing() {
                       </button>
                     </div>
                   ))}
-                  <label className="flex h-28 cursor-pointer flex-col items-center justify-center rounded-2xl border border-dashed border-cyan-200 bg-cyan-50/50 text-center transition hover:border-[#1CA7C9] hover:bg-cyan-50">
+                  <label className="flex h-28 cursor-pointer flex-col items-center justify-center rounded-2xl border border-dashed border-[#6C9772]/55 bg-[#E5E8E1] text-center transition hover:border-[#6C9772] hover:bg-[#FBE7BA]">
                     <input type="file" accept="image/*" multiple onChange={handleImageUpload} className="hidden" disabled={uploading} />
-                    <ImagePlus className="size-6 text-[#0E5A72]" />
+                    <ImagePlus className="size-6 text-[#6C9772]" />
                     <span className="mt-2 text-xs font-semibold text-slate-600">{uploading ? 'Uploading' : 'Add photos'}</span>
                   </label>
                 </div>
@@ -752,12 +751,12 @@ export default function ManageListing() {
               </CardContent>
             </Card>
 
-            <Card className="rounded-[1.5rem] border-slate-200 bg-white/90 shadow-sm" data-manage-listing-checklist-removed="true">
+            <Card className="tourism-card rounded-[1.5rem] border-0 bg-[#E0E5EC] shadow-sm" data-manage-listing-checklist-removed="true">
               <CardContent className="p-4 sm:p-5">
                 <Button
                   onClick={handleSubmit}
                   disabled={saving}
-                  className="h-12 w-full rounded-2xl bg-[#0F4C75] text-white shadow-lg shadow-cyan-900/10 hover:bg-[#123f5e]"
+                  className="h-12 w-full rounded-2xl bg-[#0F4C75] text-white shadow-[5px_5px_10px_rgba(163,177,198,0.55),-5px_-5px_10px_rgba(255,255,255,0.55)] hover:bg-[#0F3B2D]"
                 >
                   <Save className="size-4" />
                   {saving ? 'Publishing' : 'Publish to public website'}
