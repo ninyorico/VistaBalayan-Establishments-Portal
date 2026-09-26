@@ -1,4 +1,4 @@
-import { useRef, useState, type TouchEvent } from "react";
+import { useState } from "react";
 import { Download, Search } from "lucide-react";
 import { formatDate } from "../../lib/reportMetrics";
 
@@ -94,50 +94,6 @@ export default function EstablishmentSubmissionRecords({
   const [activeType, setActiveType] = useState<"visitor" | "accommodation">(
     canSubmitVisitor ? "visitor" : "accommodation"
   );
-
-  const tableTouchRef = useRef<{ x: number; y: number; lastX: number; lastY: number; axis: "x" | "y" | null }>({
-    x: 0,
-    y: 0,
-    lastX: 0,
-    lastY: 0,
-    axis: null,
-  });
-
-  const handleTableTouchStart = (event: TouchEvent<HTMLDivElement>) => {
-    const touch = event.touches[0];
-    tableTouchRef.current = {
-      x: touch.clientX,
-      y: touch.clientY,
-      lastX: touch.clientX,
-      lastY: touch.clientY,
-      axis: null,
-    };
-  };
-
-  const handleTableTouchMove = (event: TouchEvent<HTMLDivElement>) => {
-    const touch = event.touches[0];
-    const state = tableTouchRef.current;
-    const deltaX = touch.clientX - state.x;
-    const deltaY = touch.clientY - state.y;
-
-    if (!state.axis && Math.max(Math.abs(deltaX), Math.abs(deltaY)) > 6) {
-      state.axis = Math.abs(deltaX) > Math.abs(deltaY) ? "x" : "y";
-    }
-
-    if (state.axis === "x") {
-      event.preventDefault();
-      event.currentTarget.scrollLeft += state.lastX - touch.clientX;
-      state.lastX = touch.clientX;
-    } else if (state.axis === "y" && event.currentTarget.scrollHeight > event.currentTarget.clientHeight) {
-      event.preventDefault();
-      event.currentTarget.scrollTop += state.lastY - touch.clientY;
-      state.lastY = touch.clientY;
-    }
-  };
-
-  const handleTableTouchEnd = () => {
-    tableTouchRef.current.axis = null;
-  };
 
   const filteredVisitors = visitorReports.filter((record) =>
     matchesCommonFilters(
@@ -247,25 +203,21 @@ export default function EstablishmentSubmissionRecords({
           <h2 className="text-base font-semibold text-slate-900">{isVisitor ? "Visitor records by establishment" : "Accommodation records by establishment"}</h2>
           <p className="mt-1 text-sm text-slate-600">{activeCount} record{activeCount === 1 ? "" : "s"} for {selectedMonth === -1 ? "ALL months" : monthNames[selectedMonth]} {selectedYear}.</p>
         </div>
-        <div
-          className="max-h-[27rem] overflow-auto overscroll-contain touch-auto [-webkit-overflow-scrolling:touch]"
-          onTouchStart={handleTableTouchStart}
-          onTouchMove={handleTableTouchMove}
-          onTouchEnd={handleTableTouchEnd}
-          onTouchCancel={handleTableTouchEnd}
-        >
+        <div className="overflow-x-auto overscroll-x-contain touch-pan-x [-webkit-overflow-scrolling:touch]">
+          <div className={isVisitor ? "min-w-[820px] max-h-[27rem] overflow-y-auto overflow-x-hidden overscroll-y-contain touch-pan-y [-webkit-overflow-scrolling:touch]" : "min-w-[760px] max-h-[27rem] overflow-y-auto overflow-x-hidden overscroll-y-contain touch-pan-y [-webkit-overflow-scrolling:touch]"}>
           {isVisitor ? (
             <table className="w-full min-w-[820px] text-left text-sm">
-              <thead className="border-b border-slate-200 bg-slate-50 text-xs uppercase tracking-wider text-slate-600"><tr><th className="px-5 py-3">Report date</th><th className="px-5 py-3">Status</th><th className="px-5 py-3">Guest / group</th><th className="px-5 py-3">Residence</th><th className="px-5 py-3">Male</th><th className="px-5 py-3">Female</th><th className="px-5 py-3">Total visitors</th></tr></thead>
+              <thead className="sticky top-0 z-10 border-b border-slate-200 bg-slate-50 text-xs uppercase tracking-wider text-slate-600"><tr><th className="px-5 py-3">Report date</th><th className="px-5 py-3">Status</th><th className="px-5 py-3">Guest / group</th><th className="px-5 py-3">Residence</th><th className="px-5 py-3">Male</th><th className="px-5 py-3">Female</th><th className="px-5 py-3">Total visitors</th></tr></thead>
               <tbody className="divide-y divide-slate-100">{filteredVisitors.map((record) => <tr key={record.id} className="hover:bg-slate-50"><td className="px-5 py-4 font-medium text-slate-900">{formatDate(record.report_date)}</td><td className="px-5 py-4"><span className={`rounded-full px-2.5 py-1 text-xs font-semibold capitalize ${statusStyles[record.status || "pending"] || statusStyles.pending}`}>{record.status || "pending"}</span></td><td className="px-5 py-4 text-slate-700">{record.guest_name || "—"}</td><td className="px-5 py-4 text-slate-700">{record.place_of_residence || record.residence_type || "—"}</td><td className="px-5 py-4 text-blue-600">{Number(record.total_male || 0)}</td><td className="px-5 py-4 text-purple-600">{Number(record.total_female || 0)}</td><td className="px-5 py-4 font-semibold text-slate-900">{Number(record.total_guests || 0)}</td></tr>)}</tbody>
             </table>
           ) : (
             <table className="w-full min-w-[760px] text-left text-sm">
-              <thead className="border-b border-slate-200 bg-slate-50 text-xs uppercase tracking-wider text-slate-600"><tr><th className="px-5 py-3">Report date</th><th className="px-5 py-3">Status</th><th className="px-5 py-3">Total rooms</th><th className="px-5 py-3">Occupied rooms</th><th className="px-5 py-3">Check-ins</th><th className="px-5 py-3">Guest nights</th></tr></thead>
+              <thead className="sticky top-0 z-10 border-b border-slate-200 bg-slate-50 text-xs uppercase tracking-wider text-slate-600"><tr><th className="px-5 py-3">Report date</th><th className="px-5 py-3">Status</th><th className="px-5 py-3">Total rooms</th><th className="px-5 py-3">Occupied rooms</th><th className="px-5 py-3">Check-ins</th><th className="px-5 py-3">Guest nights</th></tr></thead>
               <tbody className="divide-y divide-slate-100">{filteredAccommodation.map((record) => <tr key={record.id} className="hover:bg-slate-50"><td className="px-5 py-4 font-medium text-slate-900">{formatDate(record.report_date)}</td><td className="px-5 py-4"><span className={`rounded-full px-2.5 py-1 text-xs font-semibold capitalize ${statusStyles[record.status || "pending"] || statusStyles.pending}`}>{record.status || "pending"}</span></td><td className="px-5 py-4 text-slate-900">{Number(record.total_rooms || 0)}</td><td className="px-5 py-4 text-slate-900">{Number(record.total_occupied_rooms || 0)}</td><td className="px-5 py-4 text-blue-600">{Number(record.total_check_ins || 0)}</td><td className="px-5 py-4 font-semibold text-slate-900">{Number(record.total_guest_nights || 0)}</td></tr>)}</tbody>
             </table>
           )}
           {activeCount === 0 && <p className="px-6 py-12 text-center text-sm font-medium text-slate-500">No records found for the selected filters.</p>}
+          </div>
         </div>
       </div>
     </div>
