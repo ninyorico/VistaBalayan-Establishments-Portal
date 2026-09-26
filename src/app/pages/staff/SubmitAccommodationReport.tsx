@@ -36,6 +36,7 @@ export default function SubmitAccommodationReport() {
   const navigate = useNavigate();
   const [profile, setProfile] = useState<any>(null);
   const [loadingProfile, setLoadingProfile] = useState(true);
+  const [retrievingPreviousData, setRetrievingPreviousData] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [establishmentName, setEstablishmentName] = useState("Loading...");
   const [showRoomSetup, setShowRoomSetup] = useState(false);
@@ -171,12 +172,17 @@ export default function SubmitAccommodationReport() {
     const effectiveRoomConfig = expandRoomConfig(normalizeRoomConfig(officerRoomConfig));
     setRoomTypes(effectiveRoomConfig);
     setTempRoomConfig(effectiveRoomConfig);
-    const previousNightRoomData = await loadPreviousNightGuests(
-      profileData.establishment_id,
-      getPreviousDate(reportDate),
-      effectiveRoomConfig
-    );
-    setRoomData(previousNightRoomData);
+    setRetrievingPreviousData(true);
+    try {
+      const previousNightRoomData = await loadPreviousNightGuests(
+        profileData.establishment_id,
+        getPreviousDate(reportDate),
+        effectiveRoomConfig
+      );
+      setRoomData(previousNightRoomData);
+    } finally {
+      setRetrievingPreviousData(false);
+    }
     loadDraft(profileData.id, profileData.establishment_id, effectiveRoomConfig, reportDate);
 
     setLoadingProfile(false);
@@ -272,12 +278,17 @@ export default function SubmitAccommodationReport() {
     setReportDate(date);
     if (!profile?.establishment_id || !date || roomTypes.length === 0) return;
 
-    const nextRoomData = await loadPreviousNightGuests(
-      profile.establishment_id,
-      getPreviousDate(date),
-      roomTypes,
-    );
-    setRoomData(nextRoomData);
+    setRetrievingPreviousData(true);
+    try {
+      const nextRoomData = await loadPreviousNightGuests(
+        profile.establishment_id,
+        getPreviousDate(date),
+        roomTypes,
+      );
+      setRoomData(nextRoomData);
+    } finally {
+      setRetrievingPreviousData(false);
+    }
   };
 
   const [roomData, setRoomData] = useState<RoomOccupancy[]>(() => buildRoomData(DEFAULT_ROOM_CONFIG));
@@ -536,9 +547,14 @@ export default function SubmitAccommodationReport() {
 
   if (loadingProfile) {
     return (
-      <div className="flex items-center justify-center h-96">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#1CA7C9] mx-auto"></div>
-        <p className="mt-4 text-gray-600">Loading...</p>
+      <div className="flex min-h-[70dvh] items-center justify-center rounded-[2rem] bg-[#E0E5EC] p-5 sm:p-8">
+        <div className="flex w-full max-w-md flex-col items-center rounded-[2rem] bg-[#E0E5EC] px-6 py-12 text-center shadow-[12px_12px_24px_rgba(163,177,198,0.6),-12px_-12px_24px_rgba(255,255,255,0.65)] sm:px-10">
+          <div className="mb-6 flex size-20 items-center justify-center rounded-full bg-[#E0E5EC] shadow-[inset_6px_6px_12px_rgba(163,177,198,0.55),inset_-6px_-6px_12px_rgba(255,255,255,0.7)]" aria-hidden="true">
+            <div className="size-10 animate-spin rounded-full border-[5px] border-[#AFB3B5]/35 border-t-[#193364]" />
+          </div>
+          <p className="text-lg font-semibold text-[#193364]">Loading hotel report</p>
+          <p className="mt-2 text-sm text-[#6B7280]">Retrieving your previous-day room data...</p>
+        </div>
       </div>
     );
   }
@@ -690,6 +706,12 @@ export default function SubmitAccommodationReport() {
           <h3 className="text-lg font-semibold text-gray-900">Daily Room Occupancy</h3>
           <p className="mt-1 text-sm text-gray-500 lg:hidden">Compact full-width table for faster phone entry.</p>
           <p className="mt-2 text-sm text-gray-600">Each room uses one guest value. Double-click the current value to mark it as a new guest; leave it normal for continuing guests.</p>
+          {retrievingPreviousData && (
+            <div className="mt-4 flex items-center gap-3 rounded-2xl bg-[#E0E5EC] px-4 py-3 text-sm text-[#193364] shadow-[inset_3px_3px_7px_rgba(163,177,198,0.45),inset_-3px_-3px_7px_rgba(255,255,255,0.65)]" role="status" aria-live="polite">
+              <div className="size-5 animate-spin rounded-full border-2 border-[#AFB3B5]/45 border-t-[#193364]" aria-hidden="true" />
+              Retrieving previous-day room data...
+            </div>
+          )}
         </div>
 
         <div className="overflow-x-auto overscroll-x-contain">
