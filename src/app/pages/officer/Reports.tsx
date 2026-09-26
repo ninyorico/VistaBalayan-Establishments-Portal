@@ -441,6 +441,11 @@ export default function Reports() {
     }, {})
   ).sort((a, b) => b[1] - a[1])[0];
 
+  const reportTrendMax = Math.max(1, ...chartData.map((item) => Number(item.visitors) || 0));
+  const reportTrendTicks = Array.from({ length: 5 }, (_, index) =>
+    Math.round((reportTrendMax * (4 - index)) / 4)
+  );
+
   return (
     <div className="space-y-6">
       <div>
@@ -554,24 +559,36 @@ export default function Reports() {
           Tourism Trends ({getFilterLabel()})
         </h3>
         {chartData.length > 0 ? (
-          <div className={chartData.length > 8 ? "overflow-x-auto" : "overflow-x-hidden"}>
-            <div className={chartData.length > 8 ? "min-w-[960px]" : "w-full"}>
-              <ResponsiveContainer width="100%" height={350}>
-                <AreaChart data={chartData}>
-              <defs>
-                <linearGradient id="reportsVisitorFill" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="5%" stopColor="#6C63FF" stopOpacity={0.34} />
-                  <stop offset="95%" stopColor="#6C63FF" stopOpacity={0.03} />
-                </linearGradient>
-              </defs>
-              <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
-              <XAxis dataKey="period" interval={0} tickFormatter={(value) => String(value).slice(0, 3)} />
-              <YAxis />
-              <Tooltip />
-              <Legend />
-              <Area type="monotone" dataKey="visitors" stroke="#6C63FF" fill="url(#reportsVisitorFill)" strokeWidth={3} name="Visitors" />
-            </AreaChart>
-              </ResponsiveContainer>
+          <div className="flex min-w-0">
+            <div className="relative h-[350px] w-14 shrink-0 border-r border-gray-200 bg-white pr-1 text-right text-[11px] text-gray-500">
+              <div className="absolute inset-x-0 top-1 bottom-[75px] flex flex-col justify-between">
+                {reportTrendTicks.map((tick, index) => (
+                  <span key={`${tick}-${index}`} className="relative pr-2">
+                    {tick.toLocaleString()}
+                    <span className="absolute right-[-4px] top-1/2 h-px w-1 bg-gray-400" aria-hidden="true" />
+                  </span>
+                ))}
+              </div>
+            </div>
+            <div className={`min-w-0 flex-1 ${chartData.length > 8 ? "overflow-x-auto" : "overflow-x-hidden"}`}>
+              <div className={chartData.length > 8 ? "min-w-[960px]" : "w-full"}>
+                <ResponsiveContainer width="100%" height={350}>
+                  <AreaChart data={chartData} margin={{ top: 5, right: 16, bottom: 8, left: 8 }}>
+                    <defs>
+                      <linearGradient id="reportsVisitorFill" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="5%" stopColor="#6C63FF" stopOpacity={0.34} />
+                        <stop offset="95%" stopColor="#6C63FF" stopOpacity={0.03} />
+                      </linearGradient>
+                    </defs>
+                    <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
+                    <XAxis dataKey="period" interval={0} tickFormatter={(value) => String(value).slice(0, 3)} />
+                    <YAxis hide domain={[0, reportTrendMax]} ticks={reportTrendTicks} />
+                    <Tooltip />
+                    <Legend />
+                    <Area type="monotone" dataKey="visitors" stroke="#6C63FF" fill="url(#reportsVisitorFill)" strokeWidth={3} name="Visitors" />
+                  </AreaChart>
+                </ResponsiveContainer>
+              </div>
             </div>
           </div>
         ) : (
