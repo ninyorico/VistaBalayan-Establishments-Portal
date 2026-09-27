@@ -23,20 +23,21 @@ export function PageHero({
   metricValue,
   actionLabel,
   onAction,
-}: PageHeroProps) {
+  compact = false,
+}: PageHeroProps & { compact?: boolean }) {
   return (
-    <section className="overflow-hidden rounded-[2rem] border border-white/20 tourism-panel-dark shadow-[0_28px_90px_rgba(7,59,76,0.22)]">
-      <div className="relative p-6 sm:p-8 lg:p-10">
+    <section className={cn("overflow-hidden rounded-[2rem] border border-white/20 tourism-panel-dark shadow-[0_28px_90px_rgba(7,59,76,0.22)]", compact && "rounded-3xl")}>
+      <div className={cn("relative", compact ? "p-4 sm:p-6 lg:p-8" : "p-6 sm:p-8 lg:p-10")}>
         <div className="absolute right-0 top-0 h-56 w-56 rounded-full bg-cyan-300/16 blur-3xl" />
         <div className="absolute bottom-0 left-1/4 h-44 w-72 rounded-full bg-white/8 blur-3xl" />
-        <div className="relative flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between">
+        <div className={cn("relative flex flex-col lg:flex-row lg:items-end lg:justify-between", compact ? "gap-4" : "gap-6")}>
           <div className="max-w-3xl">
             <p className="text-sm font-semibold uppercase tracking-[0.16em] text-cyan-100">{eyebrow}</p>
-            <h1 className="mt-3 text-3xl font-semibold tracking-[-0.04em] text-white text-balance sm:text-4xl lg:text-5xl">
+            <h1 className={cn("font-semibold tracking-[-0.04em] text-white text-balance", compact ? "mt-2 text-2xl sm:text-4xl lg:text-5xl" : "mt-3 text-3xl sm:text-4xl lg:text-5xl")}>
               {title}
             </h1>
             {description && (
-              <p className="mt-4 max-w-2xl text-sm leading-6 text-slate-200 sm:text-base">
+              <p className={cn("max-w-2xl text-slate-200", compact ? "mt-2 text-xs leading-5 sm:text-base sm:leading-6" : "mt-4 text-sm leading-6 sm:text-base")}>
                 {description}
               </p>
             )}

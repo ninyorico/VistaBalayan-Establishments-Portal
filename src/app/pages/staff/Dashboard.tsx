@@ -187,6 +187,7 @@ export default function StaffDashboard() {
         description="Keep reports, listing updates, and performance signals in one calm workspace."
         actionLabel="View history"
         onAction={() => navigate("/staff/submission-history")}
+        compact
       />
 
       <section className={`grid grid-cols-1 gap-4 ${showVisitorForm && showAccommodationForm ? "md:grid-cols-2" : ""}`}>
@@ -239,9 +240,9 @@ export default function StaffDashboard() {
         <section className="grid grid-cols-1 gap-6 lg:grid-cols-2">
           {showVisitorForm && (
             <PanelCard title="Resort visitor analytics" description="Visitor totals computed from your submitted resort reports." className="p-0">
-              <div className="grid grid-cols-3 gap-3 sm:gap-4" data-resort-dashboard-visitors="visitor-count-monthly-arrivals-demographics">
+              <div className="grid grid-cols-2 items-start gap-3 sm:grid-cols-3 sm:gap-4" data-resort-dashboard-visitors="visitor-count-monthly-arrivals-demographics">
                 {visitorPerformanceStats.map((stat) => (
-                  <MetricCard key={stat.title} label={stat.title} value={stat.value} helper={stat.subtitle} icon={stat.icon} tone={stat.tone} className="bg-[#f8fbf8] shadow-none" />
+                  <MetricCard key={stat.title} label={stat.title} value={stat.value} helper={stat.subtitle} icon={stat.icon} tone={stat.tone} compact className="bg-[#f8fbf8] shadow-none" />
                 ))}
               </div>
             </PanelCard>
@@ -249,9 +250,9 @@ export default function StaffDashboard() {
 
           {showAccommodationForm && (
             <PanelCard title="Hotel analytics" description="Computed from your submitted hotel accommodation reports." className="p-0">
-              <div className="grid grid-cols-3 gap-3 sm:gap-4">
+              <div className="grid grid-cols-2 items-start gap-3 sm:grid-cols-3 sm:gap-4">
                 {hotelPerformanceStats.map((stat) => (
-                  <MetricCard key={stat.title} label={stat.title} value={stat.value} helper={stat.subtitle} icon={stat.icon} tone={stat.tone} className="bg-[#f8fbf8] shadow-none" />
+                  <MetricCard key={stat.title} label={stat.title} value={stat.value} helper={stat.subtitle} icon={stat.icon} tone={stat.tone} compact className="bg-[#f8fbf8] shadow-none" />
                 ))}
               </div>
             </PanelCard>
