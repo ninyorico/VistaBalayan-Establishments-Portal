@@ -479,42 +479,45 @@ export default function AccommodationMonitoring({ embedded = false }: { embedded
       </div>
 
       {/* Filters */}
-      <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-        <div className="flex flex-wrap items-center gap-4">
-          <div className="flex-1 min-w-64">
+      <div className="rounded-lg border border-gray-200 bg-white p-4 shadow-sm sm:p-6">
+        <div className="flex flex-wrap items-center gap-3 sm:gap-4">
+          <div className="min-w-0 basis-full sm:flex-1 sm:min-w-64">
             <div className="relative">
-              <Search className="w-5 h-5 absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+              <Search className="absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-gray-400" />
               <input
                 type="text"
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
                 placeholder="Search by establishment..."
-                className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none"
+                className="w-full rounded-lg border border-gray-300 py-2 pl-10 pr-4 outline-none focus:border-transparent focus:ring-2 focus:ring-blue-500"
               />
             </div>
           </div>
-          <div className="flex items-center gap-1 bg-gray-100 rounded-lg p-1">
+          <div className="flex w-full min-w-0 items-center gap-2 sm:w-auto">
+            <div className="flex shrink-0 items-center gap-1 rounded-lg bg-gray-100 p-1">
+              <button
+                type="button"
+                className="rounded-lg bg-blue-600 px-3 py-1.5 text-sm text-white transition"
+                aria-pressed="true"
+              >
+                Month
+              </button>
+            </div>
+            <input
+              type="month"
+              value={specificMonth}
+              onChange={(e) => setSpecificMonth(e.target.value)}
+              className="min-w-0 flex-1 rounded-lg border border-gray-300 px-3 py-2 outline-none focus:border-transparent focus:ring-2 focus:ring-blue-500 sm:flex-none sm:px-4"
+              title="Select report month"
+            />
             <button
               type="button"
-              className="px-3 py-1.5 text-sm rounded-lg bg-blue-600 text-white transition"
-              aria-pressed="true"
+              className="flex shrink-0 items-center gap-2 rounded-lg bg-blue-600 px-3 py-2 text-white transition hover:bg-blue-700 sm:px-4"
+              onClick={handleExport}
             >
-              Month
+              <Download className="h-4 w-4" /> <span>Export</span>
             </button>
           </div>
-          <input
-            type="month"
-            value={specificMonth}
-            onChange={(e) => setSpecificMonth(e.target.value)}
-            className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none"
-            title="Select report month"
-          />
-          <button 
-            className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition"
-            onClick={handleExport}
-          >
-            <Download className="w-4 h-4" /> Export
-          </button>
         </div>
       </div>
 

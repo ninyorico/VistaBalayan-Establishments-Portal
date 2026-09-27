@@ -3,7 +3,7 @@ import { Plus, Search, Edit, Trash2, Building2, MapPin, Phone, UserCog, Mail, Sh
 import { toast } from "sonner";
 import { supabase } from "../../../lib/supabase";
 import { datestampedFilename, downloadCsv } from "../../../lib/exportCsv";
-import { compressBusinessPermitImage, getBusinessPermitAssets, setBusinessPermitAssetsInAmenities } from "../../../lib/businessPermitImages";
+import { compressBusinessPermitImage, BusinessPermitAsset, getBusinessPermitAssets, setBusinessPermitAssetsInAmenities } from "../../../lib/businessPermitImages";
 import { DEFAULT_ROOM_CONFIG, EstablishmentRoomConfig, getRoomConfigFromAmenities, setRoomConfigInAmenities } from "../../../lib/establishmentRoomConfig";
 import { LoadingState } from "../../components/vista/PolishedShell";
 
@@ -80,6 +80,7 @@ export default function Establishments() {
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [editingEstablishment, setEditingEstablishment] = useState<Establishment | null>(null);
   const [permitUploading, setPermitUploading] = useState(false);
+  const [onboardingPermitFiles, setOnboardingPermitFiles] = useState<BusinessPermitAsset[]>([]);
   const [editingUser, setEditingUser] = useState<Profile | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<{ type: "establishment" | "user"; id: string } | null>(null);
 
@@ -216,6 +217,7 @@ export default function Establishments() {
     setOnboardingStep("form");
     setOtpCode("");
     setPendingOnboarding(null);
+    setOnboardingPermitFiles([]);
     setShowOnboardingModal(true);
   };
 
@@ -265,6 +267,46 @@ export default function Establishments() {
       ...current,
       room_config: current.room_config.filter((_, roomIndex) => roomIndex !== index),
     }));
+  };
+
+  const handleOnboardingPermitSelection = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const files = Array.from(event.target.files || []);
+    event.target.value = "";
+    if (files.length === 0) return;
+
+    setPermitUploading(true);
+    try {
+      const nextAssets: BusinessPermitAsset[] = [];
+      for (const file of files) {
+        const allowed = file.type.startsWith("image/") || ["application/pdf", "application/msword", "application/vnd.openxmlformats-officedocument.wordprocessingml.document"].includes(file.type);
+        if (!allowed) {
+          toast.error(`${file.name}: upload an image, PDF, DOC, or DOCX file.`);
+          continue;
+        }
+        if (file.size > 2_000_000) {
+          toast.error(`${file.name}: maximum file size is 2 MB.`);
+          continue;
+        }
+        const url = file.type.startsWith("image/")
+          ? await compressBusinessPermitImage(file)
+          : await new Promise<string>((resolve, reject) => {
+              const reader = new FileReader();
+              reader.onerror = () => reject(new Error(`Could not read ${file.name}`));
+              reader.onload = () => resolve(String(reader.result));
+              reader.readAsDataURL(file);
+            });
+        if (file.type.startsWith("image/") && url.length > 900_000) {
+          toast.error(`${file.name}: compressed image is still too large. Use a cropped photo.`);
+          continue;
+        }
+        nextAssets.push({ url, name: file.name, type: file.type, kind: file.type.startsWith("image/") ? "image" : "file" });
+      }
+      setOnboardingPermitFiles((current) => [...current, ...nextAssets]);
+    } catch (error) {
+      toast.error(`Failed to prepare permit files: ${error instanceof Error ? error.message : "Unknown error"}`);
+    } finally {
+      setPermitUploading(false);
+    }
   };
 
   const getNormalizedRoomConfig = () => {
@@ -491,6 +533,20 @@ export default function Establishments() {
 
       try {
         createdEstablishmentId = await createOnboardingEstablishment(normalizedRoomConfig, totalRooms);
+
+        if (onboardingPermitFiles.length > 0) {
+          const { data: createdEstablishment, error: createdEstablishmentError } = await supabase
+            .from("establishments")
+            .select("amenities")
+            .eq("id", createdEstablishmentId)
+            .single();
+          if (createdEstablishmentError) throw createdEstablishmentError;
+          const { error: permitUpdateError } = await supabase
+            .from("establishments")
+            .update({ amenities: setBusinessPermitAssetsInAmenities(createdEstablishment?.amenities, onboardingPermitFiles), updated_at: new Date().toISOString() })
+            .eq("id", createdEstablishmentId);
+          if (permitUpdateError) throw permitUpdateError;
+        }
 
         const { error: profileRpcError } = await supabase.rpc('complete_officer_onboarding_staff_profile', {
           p_user_id: userId,
@@ -1214,7 +1270,30 @@ export default function Establishments() {
                       <div><label className="block text-sm font-medium text-gray-700 mb-2">Report Types *</label><select value={establishmentForm.reporting_mode} onChange={(e) => setEstablishmentForm({ ...establishmentForm, reporting_mode: e.target.value as ReportingMode })} className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#1CA7C9]/50 focus:border-[#1CA7C9] outline-none transition-all"><option value="accommodation">Overnight reports</option><option value="visitor">Day-tour reports</option><option value="both">Day-tour and overnight reports</option></select><p className="mt-1 text-xs text-gray-500">Choose both for day visitors and overnight guests.</p></div>
                       <div><label className="block text-sm font-medium text-gray-700 mb-2">Address *</label><input type="text" value={establishmentForm.address} onChange={(e) => setEstablishmentForm({ ...establishmentForm, address: e.target.value })} className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#1CA7C9]/50 focus:border-[#1CA7C9] outline-none transition-all" placeholder="Enter address" /></div>
                       <div><label className="block text-sm font-medium text-gray-700 mb-2">Contact Number *</label><input type="text" value={establishmentForm.contact_number} onChange={(e) => setEstablishmentForm({ ...establishmentForm, contact_number: e.target.value })} className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#1CA7C9]/50 focus:border-[#1CA7C9] outline-none transition-all" placeholder="+63 917 123 4567" /></div>
-                      <div><label className="block text-sm font-medium text-gray-700 mb-2">Business Permit Number</label><input type="text" value={establishmentForm.business_permit_number} onChange={(e) => setEstablishmentForm({ ...establishmentForm, business_permit_number: e.target.value })} className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#1CA7C9]/50 focus:border-[#1CA7C9] outline-none transition-all" placeholder="Enter only after officer verification" /><p className="mt-1 text-xs text-gray-500">Only a municipal tourism officer can record or change this number.</p></div>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">Permit Files</label>
+                        <div className="flex items-stretch gap-2">
+                          <div className="min-w-0 flex-1 rounded-lg border border-gray-300 bg-gray-50 px-4 py-2.5 text-sm text-gray-600">
+                            {onboardingPermitFiles.length > 0 ? `${onboardingPermitFiles.length} file(s) selected` : "No permit file selected"}
+                          </div>
+                          <label className="inline-flex shrink-0 cursor-pointer items-center justify-center gap-2 rounded-lg bg-[#0F4C75] px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-[#0E5A72]">
+                            <FileImage className="h-4 w-4" />
+                            Files / photos
+                            <input type="file" accept="image/*,.pdf,.doc,.docx" multiple onChange={handleOnboardingPermitSelection} disabled={permitUploading} className="hidden" />
+                          </label>
+                        </div>
+                        {onboardingPermitFiles.length > 0 && (
+                          <div className="mt-2 space-y-1">
+                            {onboardingPermitFiles.map((file, index) => (
+                              <div key={`${file.name}-${index}`} className="flex items-center justify-between gap-2 text-xs text-gray-600">
+                                <span className="min-w-0 truncate">{file.name}</span>
+                                <button type="button" onClick={() => setOnboardingPermitFiles((current) => current.filter((_, fileIndex) => fileIndex !== index))} className="shrink-0 font-medium text-red-600 hover:underline">Remove</button>
+                              </div>
+                            ))}
+                          </div>
+                        )}
+                        <p className="mt-1 text-xs text-gray-500">Upload clear permit photos or a PDF/DOC/DOCX file for municipal review.</p>
+                      </div>
                     </div>
                   </div>
                 </>
@@ -1288,7 +1367,7 @@ export default function Establishments() {
                 <p className="mt-1 text-xs text-gray-500">Only a municipal tourism officer can record or change this number.</p>
                 {editingEstablishment && (
                   <div className="mt-3">
-                    <label className="block text-sm font-medium text-gray-700 mb-2">Permit files</label>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">Permit Files</label>
                     <div className="flex items-stretch gap-2">
                       <input
                         type="text"
