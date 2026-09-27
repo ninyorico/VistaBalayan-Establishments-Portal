@@ -81,7 +81,7 @@ interface MetricCardProps {
 
 export function MetricCard({ label, value, helper, icon: Icon, tone = "bg-cyan-50 text-[#0E5A72] ring-cyan-100", className, compact = false }: MetricCardProps) {
   return (
-    <Card className={cn("tourism-card gap-0 rounded-3xl p-0 transition duration-200 hover:-translate-y-0.5 hover:shadow-tourism-hover", className)}>
+    <Card className={cn("tourism-card h-full gap-0 rounded-3xl p-0 transition duration-200 hover:-translate-y-0.5 hover:shadow-tourism-hover", className)}>
       <CardContent className={cn(compact ? "p-3 sm:p-4 lg:p-5" : "p-5")}>
         <div className={cn("flex items-start justify-between", compact ? "flex-col gap-3 sm:flex-row sm:gap-4" : "gap-4")}>
           <div className="min-w-0">

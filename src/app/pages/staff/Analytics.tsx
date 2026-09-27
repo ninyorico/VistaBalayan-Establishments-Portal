@@ -101,9 +101,9 @@ export default function Analytics() {
   const currentMonthDemographicTotal = currentMonthMale + currentMonthFemale;
   const currentYearDemographicTotal = currentYearMale + currentYearFemale;
   const demographicValue = currentMonthDemographicTotal > 0
-    ? `${Math.round((currentMonthFemale / currentMonthDemographicTotal) * 100)}% F / ${Math.round((currentMonthMale / currentMonthDemographicTotal) * 100)}% M`
+    ? `${currentMonthMale.toLocaleString()} Male / ${currentMonthFemale.toLocaleString()} Female`
     : "No data";
-  const demographicHelper = `${currentMonthMale.toLocaleString()} male · ${currentMonthFemale.toLocaleString()} female`;
+  const demographicHelper = "current month";
 
   if (loading) return <LoadingState label="Loading establishment analytics" />;
   if (loadError) return <DataState state={loadError.kind} message={loadError.message} onRetry={loadAnalytics} />;
