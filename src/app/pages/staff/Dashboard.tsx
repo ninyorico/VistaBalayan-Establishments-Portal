@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, type ReactNode } from "react";
 import { useNavigate } from "react-router";
 import { AlertCircle, ArrowRight, Bed, Calendar, FileUp, History, Moon, Percent, UsersRound } from "lucide-react";
 import { supabase } from "../../../lib/supabase";
@@ -10,7 +10,7 @@ import DataState from "../../components/DataState";
 
 const statusStyles = { submitted: "bg-emerald-50 text-emerald-700 ring-emerald-200" };
 
-type DashboardMetric = { title: string; value: string; subtitle: string; icon: typeof UsersRound; tone: string };
+type DashboardMetric = { title: string; value: ReactNode; subtitle: string; icon: typeof UsersRound; tone: string };
 
 export default function StaffDashboard() {
   const navigate = useNavigate();
@@ -112,8 +112,8 @@ export default function StaffDashboard() {
   const mode = getEstablishmentReportingMode(establishment);
   const reportFormLabel = getPrimaryReportFormLabel(establishment);
   const demographicTotal = dashboardMetrics.totalMale + dashboardMetrics.totalFemale;
-  const demographicValue = demographicTotal > 0
-    ? `${dashboardMetrics.totalMale.toLocaleString()} Male / ${dashboardMetrics.totalFemale.toLocaleString()} Female`
+  const demographicValue: ReactNode = demographicTotal > 0
+    ? <span className="whitespace-nowrap"><span className="sm:hidden">{dashboardMetrics.totalMale.toLocaleString()} M / {dashboardMetrics.totalFemale.toLocaleString()} F</span><span className="hidden sm:inline">{dashboardMetrics.totalMale.toLocaleString()} Male / {dashboardMetrics.totalFemale.toLocaleString()} Female</span></span>
     : "No data";
   const demographicSubtitle = `${dashboardMetrics.totalMale.toLocaleString()} male · ${dashboardMetrics.totalFemale.toLocaleString()} female`;
 

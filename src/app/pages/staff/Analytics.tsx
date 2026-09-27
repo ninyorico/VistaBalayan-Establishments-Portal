@@ -10,7 +10,7 @@ import DataState from "../../components/DataState";
 const panelClass = "rounded-3xl border border-[#C3CBD7] bg-[#E0E5EC] p-5 shadow-[8px_8px_15px_rgba(163,177,198,.48),-8px_-8px_15px_rgba(255,255,255,.48)] sm:p-6";
 const chartClass = "rounded-3xl border border-[#AFB3B5]/45 bg-[#F5F8FF]/88 p-4 shadow-tourism sm:p-6";
 
-type AnalyticsMetric = { label: string; value: string; helper: string; icon: typeof UsersRound; tone: string };
+type AnalyticsMetric = { label: string; value: ReactNode; helper: string; icon: typeof UsersRound; tone: string };
 
 const MetricGrid = ({ metrics }: { metrics: AnalyticsMetric[] }) => (
   <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
@@ -100,8 +100,8 @@ export default function Analytics() {
   const combinedReportCount = currentVisitorReports.length + currentAccommodationReports.length;
   const currentMonthDemographicTotal = currentMonthMale + currentMonthFemale;
   const currentYearDemographicTotal = currentYearMale + currentYearFemale;
-  const demographicValue = currentMonthDemographicTotal > 0
-    ? `${currentMonthMale.toLocaleString()} Male / ${currentMonthFemale.toLocaleString()} Female`
+  const demographicValue: ReactNode = currentMonthDemographicTotal > 0
+    ? <span className="whitespace-nowrap"><span className="sm:hidden">{currentMonthMale.toLocaleString()} M / {currentMonthFemale.toLocaleString()} F</span><span className="hidden sm:inline">{currentMonthMale.toLocaleString()} Male / {currentMonthFemale.toLocaleString()} Female</span></span>
     : "No data";
   const demographicHelper = "current month";
 
