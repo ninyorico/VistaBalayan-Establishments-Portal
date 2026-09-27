@@ -1271,6 +1271,11 @@ export default function Establishments() {
                       <div><label className="block text-sm font-medium text-gray-700 mb-2">Address *</label><input type="text" value={establishmentForm.address} onChange={(e) => setEstablishmentForm({ ...establishmentForm, address: e.target.value })} className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#1CA7C9]/50 focus:border-[#1CA7C9] outline-none transition-all" placeholder="Enter address" /></div>
                       <div><label className="block text-sm font-medium text-gray-700 mb-2">Contact Number *</label><input type="text" value={establishmentForm.contact_number} onChange={(e) => setEstablishmentForm({ ...establishmentForm, contact_number: e.target.value })} className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#1CA7C9]/50 focus:border-[#1CA7C9] outline-none transition-all" placeholder="+63 917 123 4567" /></div>
                       <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">Business Permit Number</label>
+                        <input type="text" value={establishmentForm.business_permit_number} onChange={(e) => setEstablishmentForm({ ...establishmentForm, business_permit_number: e.target.value })} className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#1CA7C9]/50 focus:border-[#1CA7C9] outline-none transition-all" placeholder="Enter only after officer verification" />
+                        <p className="mt-1 text-xs text-gray-500">Only a municipal tourism officer can record or change this number.</p>
+                      </div>
+                      <div>
                         <label className="block text-sm font-medium text-gray-700 mb-2">Permit Files</label>
                         <div className="flex items-stretch gap-2">
                           <div className="min-w-0 flex-1 rounded-lg border border-gray-300 bg-gray-50 px-4 py-2.5 text-sm text-gray-600">
