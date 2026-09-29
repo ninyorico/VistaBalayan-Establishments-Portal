@@ -1,10 +1,11 @@
 import { useEffect, useState, type ReactNode } from "react";
 import { useNavigate } from "react-router";
-import { AlertCircle, ArrowRight, Bed, Calendar, FileUp, History, Moon, Percent, UsersRound } from "lucide-react";
+import { AlertCircle, ArrowRight, BarChart3, Bed, Calendar, FileUp, History, Moon, Percent, UsersRound, TrendingUp } from "lucide-react";
+import { CartesianGrid, Legend, Line, LineChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 import { supabase } from "../../../lib/supabase";
 import { calculateAccommodationOccupancy, groupStaffSubmissions } from "../../../lib/reportMetrics";
 import { canSubmitAccommodationReport, canSubmitVisitorReport, getEstablishmentReportingMode, getPrimaryReportFormLabel } from "../../../lib/establishmentReportForms";
-import { average, isOfficialReport, toNumber, type AccommodationReport, type VisitorReport } from "../../../lib/staffAnalytics";
+import { average, buildAccommodationHistoricalSeries, buildVisitorHistoricalSeries, isOfficialReport, toNumber, type AccommodationReport, type VisitorReport } from "../../../lib/staffAnalytics";
 import { EmptyState, LoadingState, MetricCard, PageHero, PanelCard } from "../../components/vista/PolishedShell";
 import DataState from "../../components/DataState";
 
@@ -32,6 +33,8 @@ export default function StaffDashboard() {
     totalGuestNights: 0,
   });
   const [recentSubmissions, setRecentSubmissions] = useState<any[]>([]);
+  const [historicalVisitors, setHistoricalVisitors] = useState<ReturnType<typeof buildVisitorHistoricalSeries>>([]);
+  const [historicalAccommodation, setHistoricalAccommodation] = useState<ReturnType<typeof buildAccommodationHistoricalSeries>>([]);
 
   useEffect(() => { loadUserAndData(); }, []);
 
@@ -103,6 +106,8 @@ export default function StaffDashboard() {
       totalCheckIns,
       totalGuestNights,
     });
+    setHistoricalVisitors(buildVisitorHistoricalSeries(visitorReports));
+    setHistoricalAccommodation(buildAccommodationHistoricalSeries(accommodationReports));
     setRecentSubmissions(groupStaffSubmissions(visitorReports, accommodationReports).slice(0, 5));
     setLoading(false);
   };
@@ -127,21 +132,20 @@ export default function StaffDashboard() {
     { title: "Average Guest Night", value: dashboardMetrics.averageGuestNight.toFixed(2), subtitle: "nights per check-in", icon: Moon, tone: "bg-amber-50 text-amber-700 ring-amber-100" },
     { title: "Average Occupancy Rate", value: `${dashboardMetrics.averageOccupancyRate.toFixed(2)}%`, subtitle: "all submitted hotel reports", icon: Percent, tone: "bg-violet-50 text-violet-700 ring-violet-100" },
     { title: "Average Guest Per Room", value: dashboardMetrics.averageGuestPerRoom.toFixed(2), subtitle: "guests per occupied room", icon: UsersRound, tone: "bg-emerald-50 text-emerald-700 ring-emerald-100" },
-    { title: "Total Submitted Reports", value: dashboardMetrics.totalAccommodationReports.toLocaleString(), subtitle: "overnight reports", icon: FileUp, tone: "bg-sky-50 text-sky-700 ring-sky-100" },
     { title: "Total Check-ins", value: dashboardMetrics.totalCheckIns.toLocaleString(), subtitle: "all submitted reports", icon: UsersRound, tone: "bg-cyan-50 text-cyan-700 ring-cyan-100" },
     { title: "Total Guest Nights", value: dashboardMetrics.totalGuestNights.toLocaleString(), subtitle: "all submitted reports", icon: Moon, tone: "bg-indigo-50 text-indigo-700 ring-indigo-100" },
   ];
   const combinedMetrics: DashboardMetric[] = [
     { title: "Total Day-tour Visitors", value: dashboardMetrics.visitorCount.toLocaleString(), subtitle: "submitted visitor reports", icon: UsersRound, tone: "bg-emerald-50 text-emerald-700 ring-emerald-100" },
     { title: "Total Guest Check-ins", value: dashboardMetrics.totalCheckIns.toLocaleString(), subtitle: "submitted hotel reports", icon: UsersRound, tone: "bg-cyan-50 text-cyan-700 ring-cyan-100" },
-    { title: "Average Daily Day-tour Arrivals", value: dashboardMetrics.averageTouristArrival.toFixed(2), subtitle: "visitors per report", icon: Calendar, tone: "bg-sky-50 text-sky-700 ring-sky-100" },
-    { title: "Average Daily Guest Check-ins", value: (dashboardMetrics.totalAccommodationReports > 0 ? dashboardMetrics.totalCheckIns / dashboardMetrics.totalAccommodationReports : 0).toFixed(2), subtitle: "check-ins per report", icon: Bed, tone: "bg-indigo-50 text-indigo-700 ring-indigo-100" },
-    { title: "Total Submitted Reports", value: (dashboardMetrics.totalVisitorReports + dashboardMetrics.totalAccommodationReports).toLocaleString(), subtitle: "day-tour and overnight", icon: FileUp, tone: "bg-violet-50 text-violet-700 ring-violet-100" },
-    { title: "Visitor Demographics", value: demographicValue, subtitle: demographicSubtitle, icon: UsersRound, tone: "bg-amber-50 text-amber-700 ring-amber-100" },
     { title: "Average Occupancy Rate", value: `${dashboardMetrics.averageOccupancyRate.toFixed(2)}%`, subtitle: "all submitted hotel reports", icon: Percent, tone: "bg-purple-50 text-purple-700 ring-purple-100" },
-    { title: "Average Guests per Room", value: dashboardMetrics.averageGuestPerRoom.toFixed(2), subtitle: "guests per occupied room", icon: Bed, tone: "bg-rose-50 text-rose-700 ring-rose-100" },
     { title: "Total Guest Nights", value: dashboardMetrics.totalGuestNights.toLocaleString(), subtitle: "all submitted hotel reports", icon: Moon, tone: "bg-teal-50 text-teal-700 ring-teal-100" },
   ];
+
+  const historicalCombined = historicalVisitors.map((month) => ({
+    ...month,
+    checkIns: historicalAccommodation.find((accommodationMonth) => accommodationMonth.monthKey === month.monthKey)?.checkIns || 0,
+  }));
 
   if (loading) return <LoadingState label="Loading establishment dashboard" />;
   if (loadError) return <DataState state={loadError.kind} message={loadError.message} onRetry={loadUserAndData} />;
@@ -163,6 +167,14 @@ export default function StaffDashboard() {
       <PanelCard title={metricsTitle} description="Overall totals calculated from all official reports submitted for this establishment." className="p-0">
         <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-4 sm:gap-4">{metrics.map((stat) => <MetricCard key={stat.title} label={stat.title} value={stat.value} helper={stat.subtitle} icon={stat.icon} tone={stat.tone} compact className="bg-[#f8fbf8] shadow-none" />)}</div>
       </PanelCard>
+
+      <section className="grid grid-cols-1 gap-6 xl:grid-cols-3">
+        <div className="xl:col-span-2 rounded-3xl border border-[#AFB3B5]/45 bg-[#F5F8FF]/88 p-6 shadow-tourism backdrop-blur-xl">
+          <div className="flex items-center justify-between gap-4"><div><h3 className="text-lg font-bold text-[#0B2530]">{mode === "visitor" ? "Overall Day-Tour Visitor Trend" : mode === "accommodation" ? "Overall Overnight Activity" : "Overall Visitor and Guest Activity"}</h3><p className="mt-1 text-sm text-[#5D6F73]">Historical totals from all official reports, not monthly analytics.</p></div><TrendingUp className="h-5 w-5 text-slate-400" /></div>
+          <div className="mt-5 h-[300px] w-full"><ResponsiveContainer width="100%" height="100%"><LineChart data={mode === "visitor" ? historicalVisitors : mode === "accommodation" ? historicalAccommodation : historicalCombined} margin={{ top: 8, right: 12, left: -12, bottom: 8 }}><CartesianGrid strokeDasharray="3 3" stroke="#d9e2e0" /><XAxis dataKey="month" tick={{ fontSize: 11 }} /><YAxis allowDecimals={false} tick={{ fontSize: 11 }} /><Tooltip /><Legend />{mode === "visitor" && <Line type="monotone" dataKey="visitors" stroke="#0E5A72" strokeWidth={2.5} name="Day-tour Visitors" dot={false} />}{mode === "accommodation" && <><Line type="monotone" dataKey="checkIns" stroke="#0E5A72" strokeWidth={2.5} name="Guest Check-ins" dot={false} /><Line type="monotone" dataKey="guestNights" stroke="#6474A5" strokeWidth={2.5} name="Guest Nights" dot={false} /></>}{mode === "both" && <><Line type="monotone" dataKey="visitors" stroke="#0E5A72" strokeWidth={2.5} name="Day-tour Visitors" dot={false} /><Line type="monotone" dataKey="checkIns" stroke="#6474A5" strokeWidth={2.5} name="Guest Check-ins" dot={false} /></>}</LineChart></ResponsiveContainer></div>
+        </div>
+        <div className="rounded-3xl border border-[#AFB3B5]/45 bg-[#F5F8FF]/88 p-6 shadow-tourism backdrop-blur-xl"><div className="flex items-center gap-3"><BarChart3 className="h-5 w-5 text-slate-400" /><h3 className="text-lg font-bold text-[#0B2530]">Supporting totals</h3></div><div className="mt-5 space-y-3 text-sm text-[#5D6F73]">{mode === "visitor" && <><p><span className="font-semibold text-[#0B2530]">Demographics:</span> {demographicValue}</p><p><span className="font-semibold text-[#0B2530]">Reports:</span> {dashboardMetrics.totalVisitorReports.toLocaleString()} day-tour submissions</p></>}{mode === "accommodation" && <><p><span className="font-semibold text-[#0B2530]">Reports:</span> {dashboardMetrics.totalAccommodationReports.toLocaleString()} overnight submissions</p><p><span className="font-semibold text-[#0B2530]">Average Guest Per Room:</span> {dashboardMetrics.averageGuestPerRoom.toFixed(2)}</p></>}{mode === "both" && <><p><span className="font-semibold text-[#0B2530]">Reports:</span> {dashboardMetrics.totalVisitorReports.toLocaleString()} day-tour · {dashboardMetrics.totalAccommodationReports.toLocaleString()} overnight</p><p><span className="font-semibold text-[#0B2530]">Visitor Demographics:</span> {demographicValue}</p><p><span className="font-semibold text-[#0B2530]">Average Guests per Room:</span> {dashboardMetrics.averageGuestPerRoom.toFixed(2)}</p><p><span className="font-semibold text-[#0B2530]">Daily averages:</span> {dashboardMetrics.averageTouristArrival.toFixed(2)} day-tour · {(dashboardMetrics.totalAccommodationReports > 0 ? dashboardMetrics.totalCheckIns / dashboardMetrics.totalAccommodationReports : 0).toFixed(2)} check-ins</p></>}</div></div>
+      </section>
 
       <section className="grid grid-cols-1 gap-6 xl:grid-cols-[1.2fr_0.8fr]">
         <div className="rounded-3xl border border-[#AFB3B5]/45 bg-[#F5F8FF]/88 p-6 shadow-tourism backdrop-blur-xl"><div className="flex items-center justify-between gap-4"><div><h3 className="text-lg font-bold text-[#0B2530]">Recent submissions</h3><p className="mt-1 text-sm text-[#5D6F73]">Grouped by actual submitted report.</p></div><History className="h-5 w-5 text-slate-400" /></div><div className="mt-5 space-y-3">{recentSubmissions.length > 0 ? recentSubmissions.map((submission) => <div key={submission.id} className="flex items-center justify-between gap-4 rounded-2xl border border-[#AFB3B5]/45 bg-[#E5E8E1]/70 p-4"><div><p className="font-semibold text-[#0B2530]">{submission.type}</p><p className="mt-1 text-sm text-[#5D6F73]">{submission.dataSummary}</p></div><div className="text-right"><span className={`inline-flex items-center rounded-full px-2.5 py-1 text-xs font-semibold capitalize ring-1 ${statusStyles[submission.status as keyof typeof statusStyles] || "bg-slate-50 text-slate-700 ring-slate-200"}`}>{submission.status}</span><p className="mt-1 text-xs text-[#5D6F73]">{submission.submittedDate}</p></div></div>) : <div className="rounded-2xl border border-dashed border-[#AFB3B5] bg-[#E5E8E1]/70 p-8 text-center text-sm text-[#5D6F73]">No submissions yet. Start by submitting a resort or hotel report.</div>}</div></div>
