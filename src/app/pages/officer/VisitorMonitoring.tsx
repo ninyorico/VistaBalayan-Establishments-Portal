@@ -18,6 +18,14 @@ interface VisitorRecord {
   location: string;
 }
 
+const normalizeResidenceCategory = (value: string) => {
+  const normalized = value.trim().toLowerCase().replace(/[-_]/g, " ");
+  if (normalized.includes("foreign") || normalized.includes("international")) return "FOREIGN";
+  if (normalized.includes("this province") || normalized.includes("batangas") || normalized.includes("within")) return "THIS_PROVINCE";
+  if (normalized.includes("other province") || normalized.includes("outside") || normalized.includes("domestic") || normalized.includes("municipality")) return "OTHER_PROVINCE";
+  return normalized;
+};
+
 export default function VisitorMonitoring({ embedded = false }: { embedded?: boolean }) {
   const [visitorRecords, setVisitorRecords] = useState<VisitorRecord[]>([]);
   const [loading, setLoading] = useState(true);
@@ -126,7 +134,7 @@ export default function VisitorMonitoring({ embedded = false }: { embedded?: boo
       record.establishment.toLowerCase().includes(searchTerm.toLowerCase()) ||
       record.location.toLowerCase().includes(searchTerm.toLowerCase());
     
-    const matchesResidence = filterResidence === "all" || record.residenceType === filterResidence;
+    const matchesResidence = filterResidence === "all" || normalizeResidenceCategory(record.residenceType) === filterResidence;
       
     let matchesDate = true;
     if (specificMonth) {
@@ -284,27 +292,22 @@ export default function VisitorMonitoring({ embedded = false }: { embedded?: boo
               className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm outline-none focus:border-transparent focus:ring-2 focus:ring-blue-500 sm:px-4 sm:text-base"
             >
               <option value="all">All Places of Residence</option>
-              <option value="Batangas Resident">Batangas Resident</option>
-              <option value="Outside Batangas">Outside Batangas</option>
-              <option value="Foreign">Foreign</option>
+              <option value="THIS_PROVINCE">Batangas Resident</option>
+              <option value="OTHER_PROVINCE">Outside Batangas</option>
+              <option value="FOREIGN">Foreign</option>
             </select>
           </div>
-          <div className="flex items-center gap-1 rounded-lg bg-gray-100 p-1">
-            <button
-              type="button"
-              className="rounded-lg bg-blue-600 px-3 py-1.5 text-xs text-white transition sm:text-sm"
-              aria-pressed="true"
-            >
-              Month
-            </button>
-          </div>
-          <input
-            type="month"
-            value={specificMonth}
-            onChange={(e) => setSpecificMonth(e.target.value)}
-            className="min-w-0 flex-1 rounded-lg border border-gray-300 px-3 py-2 text-sm outline-none focus:border-transparent focus:ring-2 focus:ring-blue-500 sm:flex-none sm:px-4 sm:text-base"
-            title="Select report month"
-          />
+          <label className="min-w-0 flex-1 sm:flex-none" htmlFor="visitor-report-month">
+            <span className="sr-only">Month</span>
+            <input
+              id="visitor-report-month"
+              type="month"
+              value={specificMonth}
+              onChange={(e) => setSpecificMonth(e.target.value)}
+              className="w-full min-w-0 rounded-lg border border-gray-300 px-3 py-2 text-sm outline-none focus:border-transparent focus:ring-2 focus:ring-blue-500 sm:px-4 sm:text-base"
+              title="Select report month"
+            />
+          </label>
           <button 
             className="flex items-center gap-2 rounded-lg bg-blue-600 px-3 py-2 text-sm text-white transition hover:bg-blue-700 sm:px-4 sm:text-base"
             onClick={handleExport}
