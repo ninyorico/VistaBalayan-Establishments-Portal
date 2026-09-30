@@ -770,10 +770,7 @@ export default function SubmitAccommodationReport() {
           <h3 className="text-lg font-semibold text-gray-900">Daily Room Occupancy</h3>
           <p className="mt-1 text-sm text-gray-500 lg:hidden">Compact full-width table for faster phone entry.</p>
           <p className="mt-2 text-sm text-gray-600">Each room uses one guest value. Double-click the current value to mark it as a new guest; leave it normal for continuing guests.</p>
-          <p className="mt-2 inline-flex items-center gap-2 rounded-full bg-red-50 px-3 py-1.5 text-xs font-semibold text-red-700 ring-1 ring-inset ring-red-200">
-            <span className="inline-block h-2.5 w-2.5 rounded-full bg-red-500" aria-hidden="true" />
-            NEW GUEST values are marked in red
-          </p>
+
           {retrievingPreviousData && (
             <div className="mt-4 flex items-center gap-3 rounded-2xl bg-[#E0E5EC] px-4 py-3 text-sm text-[#193364] shadow-[inset_3px_3px_7px_rgba(163,177,198,0.45),inset_-3px_-3px_7px_rgba(255,255,255,0.65)]" role="status" aria-live="polite">
               <div className="size-5 animate-spin rounded-full border-2 border-[#AFB3B5]/45 border-t-[#193364]" aria-hidden="true" />
@@ -816,12 +813,7 @@ export default function SubmitAccommodationReport() {
                       <td className="border-r border-gray-200 px-1.5 py-2 text-center sm:px-3 sm:py-3">
                         <span className={previousNew > 0 ? "inline-flex h-8 min-w-8 items-center justify-center rounded-full border-2 border-red-500 px-2 text-sm font-normal tabular-nums text-red-600" : "text-sm font-normal tabular-nums text-gray-700"} aria-label={`${room.roomType} previous date guest value`}>{previousTotal}</span>
                       </td>
-                      <td className={`bg-blue-50/30 px-1.5 py-1.5 text-center sm:px-3 sm:py-2 ${room.isNewGuest ? "bg-red-50/70" : ""}`}>
-                        {room.isNewGuest && (
-                          <span className="mb-1 inline-flex items-center rounded-full bg-red-600 px-2 py-0.5 text-[9px] font-bold uppercase tracking-wide text-white">
-                            New guest
-                          </span>
-                        )}
+                      <td className="bg-blue-50/30 px-1.5 py-1.5 text-center sm:px-3 sm:py-2">
                         <input
                           type="text"
                           inputMode="numeric"
@@ -829,7 +821,7 @@ export default function SubmitAccommodationReport() {
                           value={numericInputValue(room.isNewGuest ? room.checkIns : room.continuingGuests)}
                           onChange={(e) => updateSingleGuestValue(index, parseNonNegativeInteger(e.target.value))}
                           onDoubleClick={() => toggleGuestType(index)}
-                          className={room.isNewGuest ? "mx-auto w-full max-w-[150px] rounded-full border-2 border-red-600 bg-red-50 px-2 py-2 text-center text-sm font-bold tabular-nums text-red-700 shadow-[0_0_0_3px_rgba(239,68,68,0.16)]" : "mx-auto w-full max-w-[150px] rounded-md border border-gray-300 bg-white px-2 py-2 text-center text-sm font-normal tabular-nums text-gray-700"}
+                          className={room.isNewGuest ? "mx-auto w-full max-w-[150px] rounded-full border-2 border-red-600 bg-white px-2 py-2 text-center text-sm font-bold tabular-nums text-red-700" : "mx-auto w-full max-w-[150px] rounded-md border border-gray-300 bg-white px-2 py-2 text-center text-sm font-normal tabular-nums text-gray-700"}
                           placeholder="0"
                           title="Double-click to switch between continuing and new guest"
                           aria-label={`${room.roomType} current ${room.isNewGuest ? "new" : "continuing"} guest value. Double-click to switch type.`}
