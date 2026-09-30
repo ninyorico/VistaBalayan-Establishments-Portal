@@ -526,7 +526,7 @@ export default function Reports() {
                     setSelectedMonth(months[monthIndex]);
                   }
                 }}
-                className="w-full min-w-0 rounded-xl border border-gray-300 px-3 py-2 text-sm sm:w-auto"
+                className="box-border block w-full min-w-0 max-w-full rounded-xl border border-gray-300 px-3 py-2 text-sm sm:w-auto"
                 title="Select report month and year"
               />
             </>
