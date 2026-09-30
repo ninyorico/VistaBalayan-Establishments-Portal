@@ -572,7 +572,7 @@ export default function Reports() {
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
             placeholder="Search establishment..."
-            className="col-span-2 min-w-0 rounded-xl border border-gray-300 px-3 py-2 text-sm sm:col-span-2 sm:min-w-[180px] sm:flex-1"
+            className={`min-w-0 rounded-xl border border-gray-300 px-3 py-2 text-sm ${filterType === "quarter" || filterType === "week" ? "col-span-1 sm:col-span-1" : "col-span-2 sm:col-span-2"} sm:min-w-[180px] sm:flex-1`}
           />
 
           <button
