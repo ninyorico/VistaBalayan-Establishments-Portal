@@ -908,7 +908,7 @@ export default function Establishments() {
         <>
           <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4 sm:p-6">
             <div className="grid grid-cols-2 gap-3 md:grid-cols-4 md:gap-4">
-              <div className="col-span-2 md:col-span-1">
+              <div className="col-span-1 md:col-span-1">
                 <label className="mb-2 block text-xs font-medium text-gray-700 sm:text-sm">Search</label>
                 <div className="relative">
                   <Search className="w-5 h-5 absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
