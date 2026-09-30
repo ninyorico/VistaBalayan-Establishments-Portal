@@ -470,9 +470,14 @@ export default function Reports() {
   const reportTrendTicks = Array.from({ length: 5 }, (_, index) =>
     Math.round((reportTrendMax * (4 - index)) / 4)
   );
-  const selectedMonthInput = selectedMonth
+  const monthYearValue = selectedMonth
     ? `${selectedYear}-${String(months.indexOf(selectedMonth) + 1).padStart(2, "0")}`
     : `${selectedYear}-01`;
+  const monthNames = [
+    "January", "February", "March", "April", "May", "June",
+    "July", "August", "September", "October", "November", "December"
+  ];
+  const reportYears = ["2024", "2025", "2026"];
 
   return (
     <div className="space-y-6">
@@ -514,10 +519,9 @@ export default function Reports() {
           ) : (
             <>
               <label className="sr-only" htmlFor="report-month-year-filter">Report month and year</label>
-              <input
+              <select
                 id="report-month-year-filter"
-                type="month"
-                value={selectedMonthInput}
+                value={monthYearValue}
                 onChange={(e) => {
                   const [year, month] = e.target.value.split("-");
                   const monthIndex = Number(month) - 1;
@@ -526,9 +530,15 @@ export default function Reports() {
                     setSelectedMonth(months[monthIndex]);
                   }
                 }}
-                className="box-border block w-full min-w-0 max-w-full rounded-xl border border-gray-300 px-3 py-2 text-sm sm:w-auto"
+                className="w-full min-w-0 max-w-full rounded-xl border border-gray-300 px-3 py-2 text-sm sm:w-auto"
                 title="Select report month and year"
-              />
+              >
+                {reportYears.flatMap((year) => months.map((month, index) => (
+                  <option key={`${year}-${index + 1}`} value={`${year}-${String(index + 1).padStart(2, "0")}`}>
+                    {monthNames[index]} {year}
+                  </option>
+                )))}
+              </select>
             </>
           )}
 
