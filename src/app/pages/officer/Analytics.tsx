@@ -11,7 +11,7 @@ import {
   Legend,
   ResponsiveContainer,
 } from "recharts";
-import { TrendingUp, TrendingDown, Users, MapPin } from "lucide-react";
+import { TrendingUp, TrendingDown, Users, MapPin, X } from "lucide-react";
 import { supabase } from "../../../lib/supabase";
 import { calculateAccommodationOccupancy } from "../../../lib/reportMetrics";
 import DataState from "../../components/DataState";
@@ -97,6 +97,7 @@ export default function Analytics() {
     growthRate: 0,
   });
   const [loading, setLoading] = useState(true);
+  const [selectedLowPerformer, setSelectedLowPerformer] = useState<AnalyticsData["lowPerformers"][number] | null>(null);
 
   useEffect(() => {
     fetchAnalytics();
@@ -436,7 +437,16 @@ export default function Analytics() {
               {data.lowPerformers.length > 0 ? (
                 data.lowPerformers.map((establishment, index) => (
                   <tr key={index} className="hover:bg-gray-50">
-                    <td className="px-6 py-4 font-medium text-gray-900">{establishment.establishment}</td>
+                    <td className="px-6 py-4">
+                      <button
+                        type="button"
+                        onClick={() => setSelectedLowPerformer(establishment)}
+                        className="max-w-[14rem] truncate text-left font-medium text-[#0F4C75] underline decoration-[#0F4C75]/35 underline-offset-2 hover:text-[#0B3B5C] focus:outline-none focus-visible:ring-2 focus-visible:ring-[#6C63FF] sm:max-w-[20rem]"
+                        title={`View details for ${establishment.establishment}`}
+                      >
+                        {establishment.establishment}
+                      </button>
+                    </td>
                     <td className="px-6 py-4">
                       {establishment.occupancyRate > 0 ? (
                         <div className="flex items-center gap-2">
@@ -455,7 +465,9 @@ export default function Analytics() {
                         <span className="font-medium text-sm">{establishment.visitorTrend.toFixed(1)}%</span>
                       </div>
                     </td>
-                    <td className="px-6 py-4 text-sm text-gray-600">{establishment.issue}</td>
+                    <td className="max-w-[18rem] px-6 py-4 text-sm text-gray-600">
+                      <span className="block max-w-[18rem] truncate" title={establishment.issue}>{establishment.issue}</span>
+                    </td>
                   </tr>
                 ))
               ) : (
@@ -467,6 +479,41 @@ export default function Analytics() {
           </table>
         </div>
       </div>
+      {selectedLowPerformer && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/50 p-4"
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="underperforming-establishment-title"
+          onClick={() => setSelectedLowPerformer(null)}
+        >
+          <div className="w-full max-w-lg rounded-2xl bg-white p-6 shadow-2xl" onClick={(event) => event.stopPropagation()}>
+            <div className="flex items-start justify-between gap-4">
+              <div>
+                <p className="text-xs font-semibold uppercase tracking-wider text-[#6C63FF]">Underperforming establishment</p>
+                <h2 id="underperforming-establishment-title" className="mt-1 text-xl font-bold text-gray-900">{selectedLowPerformer.establishment}</h2>
+              </div>
+              <button type="button" onClick={() => setSelectedLowPerformer(null)} className="rounded-lg p-2 text-gray-500 hover:bg-gray-100" aria-label="Close establishment details">
+                <X className="h-5 w-5" />
+              </button>
+            </div>
+            <div className="mt-6 grid gap-3 sm:grid-cols-2">
+              <div className="rounded-xl bg-gray-50 p-4">
+                <p className="text-xs font-semibold uppercase tracking-wider text-gray-500">Occupancy Rate</p>
+                <p className="mt-1 text-lg font-bold text-[#B86B78]">{selectedLowPerformer.occupancyRate > 0 ? `${selectedLowPerformer.occupancyRate.toFixed(1)}%` : "No accommodation data"}</p>
+              </div>
+              <div className="rounded-xl bg-gray-50 p-4">
+                <p className="text-xs font-semibold uppercase tracking-wider text-gray-500">Visitor Trend</p>
+                <p className={`mt-1 text-lg font-bold ${selectedLowPerformer.visitorTrend >= 0 ? "text-green-600" : "text-red-600"}`}>{selectedLowPerformer.visitorTrend.toFixed(1)}%</p>
+              </div>
+            </div>
+            <div className="mt-4 rounded-xl border border-gray-200 bg-gray-50 p-4">
+              <p className="text-xs font-semibold uppercase tracking-wider text-gray-500">Decision Support Note</p>
+              <p className="mt-2 whitespace-pre-wrap text-sm leading-6 text-gray-700">{selectedLowPerformer.issue}</p>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
