@@ -125,18 +125,25 @@ export function EmptyState({ children, className }: { children: ReactNode; class
   );
 }
 
-export function LoadingState({ label }: { label: string }) {
+export function PageSkeleton({ label = "Loading page" }: { label?: string }) {
   return (
-    <div className="flex min-h-[70dvh] items-center justify-center rounded-[2rem] bg-[#E0E5EC] p-5 sm:p-8" role="status" aria-live="polite">
-      <Card className="tourism-card w-full max-w-md rounded-[2rem] bg-[#E0E5EC] p-0">
-        <CardContent className="flex flex-col items-center px-6 py-12 text-center sm:px-10">
-          <div className="flex size-20 items-center justify-center rounded-full bg-[#E0E5EC] shadow-[inset_6px_6px_12px_rgba(163,177,198,0.55),inset_-6px_-6px_12px_rgba(255,255,255,0.7)]" aria-hidden="true">
-            <div className="size-10 animate-spin rounded-full border-[5px] border-[#AFB3B5]/35 border-t-[#193364]" />
-          </div>
-          <p className="mt-6 text-lg font-semibold text-[#193364]">{label}</p>
-          <p className="mt-2 text-sm text-[#6B7280]">Retrieving your data...</p>
-        </CardContent>
-      </Card>
+    <div role="status" aria-live="polite" aria-label={label} className="min-h-[70dvh] space-y-6 rounded-[2rem] bg-[#E0E5EC] p-5 sm:p-8 motion-reduce:animate-none">
+      <span className="sr-only">{label}</span>
+      <div className="h-8 w-2/3 animate-pulse rounded-xl bg-white/60 motion-reduce:animate-none sm:h-10 sm:w-1/2" />
+      <div className="h-4 w-full max-w-xl animate-pulse rounded-lg bg-white/45 motion-reduce:animate-none" />
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        {Array.from({ length: 4 }, (_, index) => (
+          <div key={index} className="h-32 animate-pulse rounded-3xl bg-white/55 shadow-[6px_6px_14px_rgba(163,177,198,0.35),-6px_-6px_14px_rgba(255,255,255,0.55)] motion-reduce:animate-none" />
+        ))}
+      </div>
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-[1.35fr_1fr]">
+        <div className="h-72 animate-pulse rounded-3xl bg-white/50 motion-reduce:animate-none" />
+        <div className="h-72 animate-pulse rounded-3xl bg-white/50 motion-reduce:animate-none" />
+      </div>
     </div>
   );
+}
+
+export function LoadingState({ label }: { label: string }) {
+  return <PageSkeleton label={label} />;
 }

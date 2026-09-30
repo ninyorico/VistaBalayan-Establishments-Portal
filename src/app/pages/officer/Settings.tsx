@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { Save, User, Mail, Phone, Shield } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "../../../lib/supabase";
+import { PageSkeleton } from "../../components/vista/PolishedShell";
 
 export default function OfficerProfile() {
   const [profile, setProfile] = useState<any>(null);
@@ -116,12 +117,7 @@ export default function OfficerProfile() {
   };
 
   if (loading) {
-    return (
-      <div className="flex items-center justify-center h-96">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#1CA7C9] mx-auto"></div>
-        <p className="mt-4 text-gray-600">Loading profile...</p>
-      </div>
-    );
+    return <PageSkeleton label="Loading officer settings" />;
   }
 
   return (

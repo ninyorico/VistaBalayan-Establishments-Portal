@@ -7,6 +7,7 @@ import { calculateAccommodationOccupancy } from "../../../lib/reportMetrics";
 import { canSubmitAccommodationReport } from "../../../lib/establishmentReportForms";
 import { DEFAULT_ROOM_CONFIG, getRoomConfigFromAmenities, normalizeRoomConfig, setRoomConfigInAmenities, type EstablishmentRoomConfig } from "../../../lib/establishmentRoomConfig";
 import { useDialogFocus } from "../../../hooks/useDialogFocus";
+import { LoadingState } from "../../components/vista/PolishedShell";
 
 interface RoomOccupancy {
   roomType: string;
@@ -566,17 +567,7 @@ export default function SubmitAccommodationReport() {
   };
 
   if (loadingProfile) {
-    return (
-      <div className="flex min-h-[70dvh] items-center justify-center rounded-[2rem] bg-[#E0E5EC] p-5 sm:p-8">
-        <div className="flex w-full max-w-md flex-col items-center rounded-[2rem] bg-[#E0E5EC] px-6 py-12 text-center shadow-[12px_12px_24px_rgba(163,177,198,0.6),-12px_-12px_24px_rgba(255,255,255,0.65)] sm:px-10">
-          <div className="mb-6 flex size-20 items-center justify-center rounded-full bg-[#E0E5EC] shadow-[inset_6px_6px_12px_rgba(163,177,198,0.55),inset_-6px_-6px_12px_rgba(255,255,255,0.7)]" aria-hidden="true">
-            <div className="size-10 animate-spin rounded-full border-[5px] border-[#AFB3B5]/35 border-t-[#193364]" />
-          </div>
-          <p className="text-lg font-semibold text-[#193364]">Loading hotel report</p>
-          <p className="mt-2 text-sm text-[#6B7280]">Retrieving your previous-day room data...</p>
-        </div>
-      </div>
-    );
+    return <LoadingState label="Loading your establishment information" />;
   }
 
   if (error) {

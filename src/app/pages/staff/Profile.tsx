@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { Save, User, Mail, Building2, MapPin } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "../../../lib/supabase";
+import { PageSkeleton } from "../../components/vista/PolishedShell";
 
 interface ProfileData {
   id: string;
@@ -258,12 +259,7 @@ export default function Profile() {
   };
 
   if (loading) {
-    return (
-      <div className="flex items-center justify-center h-96">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#1CA7C9] mx-auto"></div>
-        <p className="mt-4 text-gray-600">Loading profile...</p>
-      </div>
-    );
+    return <PageSkeleton label="Loading establishment profile" />;
   }
 
   return (

@@ -1,5 +1,6 @@
 import { Navigate, useLocation } from "react-router";
 import { ShieldAlert } from "lucide-react";
+import { PageSkeleton } from "./vista/PolishedShell";
 import { useAuth } from "../../contexts/AuthContext";
 import { roleHomePath } from "../../lib/governance";
 
@@ -8,14 +9,7 @@ export function ProtectedRoute({ children, allowedRoles }: { children: JSX.Eleme
   const location = useLocation();
 
   if (loading) {
-    return (
-      <div className="flex min-h-screen items-center justify-center bg-slate-50">
-        <div className="rounded-3xl border border-slate-200 bg-white p-6 text-center shadow-sm">
-          <div className="mx-auto h-10 w-10 animate-spin rounded-full border-b-2 border-[#1CA7C9]" />
-          <p className="mt-4 text-sm font-medium text-slate-600">Checking your access...</p>
-        </div>
-      </div>
-    );
+    return <PageSkeleton label="Checking your access" />;
   }
 
   if (!profile) return <Navigate to="/admin/login" replace state={{ from: location.pathname }} />;

@@ -694,7 +694,15 @@ export default function Reports() {
         </div>
         <div className="max-h-[28rem] overflow-auto overscroll-contain">
           {loading ? (
-            <div className="p-8 text-center">Loading...</div>
+            <div className="space-y-3 p-4" role="status" aria-label="Loading submissions">
+              {Array.from({ length: 6 }, (_, index) => (
+                <div key={index} className="grid grid-cols-6 gap-4 rounded-xl bg-gray-50 p-4 motion-reduce:animate-none">
+                  {Array.from({ length: 6 }, (_, cellIndex) => (
+                    <div key={cellIndex} className="h-4 animate-pulse rounded bg-gray-200 motion-reduce:animate-none" />
+                  ))}
+                </div>
+              ))}
+            </div>
           ) : (
             <table className="w-full min-w-[720px]">
               <thead className="sticky top-0 z-10 bg-gray-50 shadow-sm">

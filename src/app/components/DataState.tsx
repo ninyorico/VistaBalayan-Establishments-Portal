@@ -1,5 +1,5 @@
 import { AlertCircle, Clock3, Inbox, Loader2, RefreshCw } from "lucide-react";
-
+import { PageSkeleton } from "./vista/PolishedShell";
 type DataStateProps = {
   state: "loading" | "empty" | "error" | "session-expired";
   message?: string;
@@ -16,17 +16,7 @@ export default function DataState({ state, message, onRetry }: DataStateProps) {
   const Icon = content.icon;
 
   if (state === "loading") {
-    return (
-      <div role="status" aria-live="polite" className="flex min-h-[70dvh] items-center justify-center rounded-[2rem] bg-[#E0E5EC] p-5 sm:p-8">
-        <div className="flex w-full max-w-md flex-col items-center rounded-[2rem] bg-[#E0E5EC] px-6 py-12 text-center shadow-[12px_12px_24px_rgba(163,177,198,0.6),-12px_-12px_24px_rgba(255,255,255,0.65)] sm:px-10">
-          <div className="flex size-20 items-center justify-center rounded-full bg-[#E0E5EC] shadow-[inset_6px_6px_12px_rgba(163,177,198,0.55),inset_-6px_-6px_12px_rgba(255,255,255,0.7)]" aria-hidden="true">
-            <div className="size-10 animate-spin rounded-full border-[5px] border-[#AFB3B5]/35 border-t-[#193364]" />
-          </div>
-          <p className="mt-6 text-lg font-semibold text-[#193364]">Loading</p>
-          <p className="mt-2 text-sm text-[#6B7280]">{content.text}</p>
-        </div>
-      </div>
-    );
+    return <PageSkeleton label={content.text} />;
   }
 
   return (
