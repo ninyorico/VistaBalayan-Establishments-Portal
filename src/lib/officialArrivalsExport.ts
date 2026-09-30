@@ -417,15 +417,22 @@ export const downloadOfficialArrivalsWorkbook = async ({
   const exportedOvernightTotalRow = 54 + daytourExtraRows + overnightExtraRows;
   const grandTotalExtraRows = Math.max(0, daytourEstablishments.length - 25);
   const grandTotalTotalRow = 4 + daytourEstablishments.length;
+  const grandTotalUnusedTemplateRows = Math.max(0, 29 - grandTotalTotalRow);
   const totalLabel = grandTotal ? String(grandTotal.getCell("A29").value || "Total of this Month ****") : "Total of this Month ****";
   if (grandTotal && annual && grandTotalExtraRows) {
     grandTotal.insertRows(29, Array.from({ length: grandTotalExtraRows }, () => Array(5).fill(null)), "i");
     shiftMergedRanges(grandTotal, 29, grandTotalExtraRows);
   }
+  if (grandTotal && annual && grandTotalUnusedTemplateRows) {
+    grandTotal.unMergeCells("A29:B29");
+    grandTotal.spliceRows(grandTotalTotalRow, grandTotalUnusedTemplateRows);
+    // ExcelJS keeps styled trailing template rows in its internal row array after spliceRows.
+    // Trim those rows so the exported Grand Total sheet ends at the actual total row.
+    (grandTotal as ExcelJS.Worksheet & { _rows: unknown[] })._rows.length = grandTotalTotalRow;
+  }
   if (grandTotal && annual) {
     if (!grandTotalExtraRows) {
       [...grandTotal.model.merges].forEach((range) => grandTotal.unMergeCells(range));
-      copyRowFormatting(grandTotal, 29, grandTotalTotalRow, 1, 1, 3);
       grandTotal.mergeCells(`A${grandTotalTotalRow}:B${grandTotalTotalRow}`);
     }
     daytourEstablishments.forEach((establishment, index) => {
