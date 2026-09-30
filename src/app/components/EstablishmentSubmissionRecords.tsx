@@ -182,7 +182,15 @@ export default function EstablishmentSubmissionRecords({
         ["Daytour report submissions", filteredVisitors.length, "text-blue-600"],
         ["Overnight report submissions", filteredAccommodation.length, "text-purple-600"],
       ]
-    : [["Total submissions", isVisitor ? filteredVisitors.length : filteredAccommodation.length, "text-sky-700"]];
+    : isVisitor
+      ? [
+          ["Total submissions", filteredVisitors.length, "text-sky-700"],
+          ["Daytour report submissions", filteredVisitors.length, "text-blue-600"],
+        ]
+      : [
+          ["Total submissions", filteredAccommodation.length, "text-sky-700"],
+          ["Overnight report submissions", filteredAccommodation.length, "text-purple-600"],
+        ];
 
   return (
     <div className="space-y-6">
@@ -214,11 +222,13 @@ export default function EstablishmentSubmissionRecords({
         </div>
       )}
 
-      <div className={`grid grid-cols-1 gap-4 ${hasBothReportTypes ? "md:grid-cols-3" : "md:grid-cols-1 md:max-w-xs"}`}>
+      <div className={`grid gap-2 sm:gap-4 ${hasBothReportTypes ? "grid-cols-3" : "grid-cols-2"}`}>
         {submissionKpis.map(([label, value, tone]) => (
-          <div key={String(label)} className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm">
-            <p className="text-sm font-medium text-slate-500">{label}</p>
-            <p className={`mt-2 text-3xl font-bold tracking-[-0.03em] ${tone}`}>{value}</p>
+          <div key={String(label)} className="min-w-0 rounded-3xl border border-slate-200 bg-white p-3 shadow-sm sm:p-5">
+            <p className="break-words text-[11px] font-medium leading-4 text-slate-500 sm:text-sm sm:leading-5">
+              {label}
+            </p>
+            <p className={`mt-1 text-2xl font-bold tracking-[-0.03em] sm:mt-2 sm:text-3xl ${tone}`}>{value}</p>
           </div>
         ))}
       </div>
