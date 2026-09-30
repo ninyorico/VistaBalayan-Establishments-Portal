@@ -1082,10 +1082,10 @@ export default function Establishments() {
       ) : (
         <>
           {/* Users Filters */}
-          <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Search</label>
+          <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4 sm:p-6">
+            <div className="grid grid-cols-2 gap-3 md:grid-cols-4 md:gap-4">
+              <div className="col-span-2 md:col-span-1">
+                <label className="mb-2 block text-xs font-medium text-gray-700 sm:text-sm">Search</label>
                 <div className="relative">
                   <Search className="w-5 h-5 absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
                   <input
@@ -1093,28 +1093,28 @@ export default function Establishments() {
                     value={searchTerm}
                     onChange={(e) => setSearchTerm(e.target.value)}
                     placeholder="Search by name or email..."
-                    className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none"
+                    className="w-full rounded-lg border border-gray-300 py-2 pl-10 pr-3 text-sm outline-none focus:border-transparent focus:ring-2 focus:ring-blue-500 sm:pr-4 sm:text-base"
                   />
                 </div>
               </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Role</label>
+              <div className="col-span-1 md:col-span-1">
+                <label className="mb-2 block truncate text-xs font-medium text-gray-700 sm:text-sm">Role</label>
                 <select
                   value={filterRole}
                   onChange={(e) => setFilterRole(e.target.value)}
-                  className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#1CA7C9]/50 focus:border-[#1CA7C9] outline-none transition-all"
+                  className="w-full rounded-lg border border-gray-300 px-2 py-2.5 text-sm outline-none transition-all focus:border-[#1CA7C9] focus:ring-2 focus:ring-[#1CA7C9]/50 sm:px-4 sm:text-base"
                 >
                   <option value="all">All Roles</option>
                   <option value="municipal_officer">Municipal Tourism Officer</option>
                   <option value="establishment_staff">Establishment Staff</option>
                 </select>
               </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Status</label>
+              <div className="col-span-1 md:col-span-1">
+                <label className="mb-2 block truncate text-xs font-medium text-gray-700 sm:text-sm">Status</label>
                 <select
                   value={filterStatus}
                   onChange={(e) => setFilterStatus(e.target.value)}
-                  className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#1CA7C9]/50 focus:border-[#1CA7C9] outline-none transition-all"
+                  className="w-full rounded-lg border border-gray-300 px-2 py-2.5 text-sm outline-none transition-all focus:border-[#1CA7C9] focus:ring-2 focus:ring-[#1CA7C9]/50 sm:px-4 sm:text-base"
                 >
                   <option value="all">All Status</option>
                   <option value="active">Active</option>
@@ -1125,34 +1125,34 @@ export default function Establishments() {
           </div>
 
           {/* Users Statistics */}
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-            <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-              <div className="flex items-center gap-3 mb-2">
-                <UserCog className="w-5 h-5 text-blue-600" />
-                <p className="text-sm text-gray-600">Total Users</p>
+          <div className="grid grid-cols-2 gap-3 sm:gap-4 md:grid-cols-4 md:gap-6">
+            <div className="rounded-lg border border-gray-200 bg-white p-3 shadow-sm sm:p-6">
+              <div className="mb-2 flex items-center gap-2 sm:gap-3">
+                <UserCog className="h-4 w-4 shrink-0 text-blue-600" />
+                <p className="text-xs text-gray-600 sm:text-sm">Total Users</p>
               </div>
-              <p className="text-3xl font-bold text-gray-900">{users.length}</p>
+              <p className="text-2xl font-bold text-gray-900 sm:text-3xl">{users.length}</p>
             </div>
-            <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-              <div className="flex items-center gap-3 mb-2">
-                <UserCog className="w-5 h-5 text-green-600" />
-                <p className="text-sm text-gray-600">Active Users</p>
+            <div className="rounded-lg border border-gray-200 bg-white p-3 shadow-sm sm:p-6">
+              <div className="mb-2 flex items-center gap-2 sm:gap-3">
+                <UserCog className="h-4 w-4 shrink-0 text-green-600" />
+                <p className="text-xs text-gray-600 sm:text-sm">Active Users</p>
               </div>
-              <p className="text-3xl font-bold text-gray-900">{users.filter((u) => u.status === "active").length}</p>
+              <p className="text-2xl font-bold text-gray-900 sm:text-3xl">{users.filter((u) => u.status === "active").length}</p>
             </div>
-            <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-              <div className="flex items-center gap-3 mb-2">
-                <Shield className="w-5 h-5 text-purple-600" />
-                <p className="text-sm text-gray-600">Officers</p>
+            <div className="rounded-lg border border-gray-200 bg-white p-3 shadow-sm sm:p-6">
+              <div className="mb-2 flex items-center gap-2 sm:gap-3">
+                <Shield className="h-4 w-4 shrink-0 text-purple-600" />
+                <p className="text-xs text-gray-600 sm:text-sm">Officers</p>
               </div>
-              <p className="text-3xl font-bold text-gray-900">{users.filter((u) => u.role === "municipal_officer").length}</p>
+              <p className="text-2xl font-bold text-gray-900 sm:text-3xl">{users.filter((u) => u.role === "municipal_officer").length}</p>
             </div>
-            <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-              <div className="flex items-center gap-3 mb-2">
-                <UserCog className="w-5 h-5 text-orange-600" />
-                <p className="text-sm text-gray-600">Staff</p>
+            <div className="rounded-lg border border-gray-200 bg-white p-3 shadow-sm sm:p-6">
+              <div className="mb-2 flex items-center gap-2 sm:gap-3">
+                <UserCog className="h-4 w-4 shrink-0 text-orange-600" />
+                <p className="text-xs text-gray-600 sm:text-sm">Staff</p>
               </div>
-              <p className="text-3xl font-bold text-gray-900">{users.filter((u) => u.role === "establishment_staff").length}</p>
+              <p className="text-2xl font-bold text-gray-900 sm:text-3xl">{users.filter((u) => u.role === "establishment_staff").length}</p>
             </div>
           </div>
 
