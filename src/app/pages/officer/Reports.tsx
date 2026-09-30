@@ -439,6 +439,14 @@ export default function Reports() {
     return "All Data";
   };
 
+  const handleFilterTypeChange = (type: "year" | "quarter" | "month" | "week") => {
+    setFilterType(type);
+    if (type === "year") { setSelectedMonth(""); setSelectedQuarter("1"); }
+    if (type === "quarter") setSelectedMonth("");
+    if (type === "month" && !selectedMonth) setSelectedMonth(getCurrentMonth());
+    if (type === "week") { setSelectedYear(getCurrentYear()); setSelectedMonth(""); setSelectedWeek("1"); }
+  };
+
   // Filter submissions for table
   const filteredReports = submissions.filter((report) => {
     const matchesSearch = report.establishment.toLowerCase().includes(searchTerm.toLowerCase());
@@ -470,102 +478,80 @@ export default function Reports() {
         <p className="text-gray-600 mt-1">Generate and export tourism data reports</p>
       </div>
 
-      {/* Simplified Filters */}
-      <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4">
-        <div className="flex flex-wrap items-center gap-4">
-          {/* Filter Type Toggle */}
-          <div className="flex items-center gap-1 bg-gray-100 rounded-lg p-1">
-            {["year", "quarter", "month", "week"].map((type) => (
-              <button
-                key={type}
-                onClick={() => {
-                  setFilterType(type as any);
-                  if (type === "year") { setSelectedMonth(""); setSelectedQuarter("1"); }
-                  if (type === "quarter") setSelectedMonth("");
-                  if (type === "month" && !selectedMonth) setSelectedMonth(getCurrentMonth());
-                  if (type === "week") { setSelectedYear(getCurrentYear()); setSelectedMonth(""); setSelectedWeek("1"); }
-                }}
-                className={`px-3 py-1.5 text-sm rounded-lg transition ${
-                  filterType === type
-                    ? "bg-blue-600 text-white"
-                    : "text-gray-600 hover:bg-gray-200"
-                }`}
-              >
-                {type.charAt(0).toUpperCase() + type.slice(1)}
-              </button>
-            ))}
-          </div>
+      {/* Report filters */}
+      <div className="rounded-2xl border border-gray-200 bg-white p-3 shadow-sm sm:p-4">
+        <div className="grid grid-cols-2 gap-3 sm:flex sm:flex-wrap sm:items-center">
+          <label className="sr-only" htmlFor="report-period-filter">Report period</label>
+          <select
+            id="report-period-filter"
+            value={filterType}
+            onChange={(e) => handleFilterTypeChange(e.target.value as "year" | "quarter" | "month" | "week")}
+            className="w-full min-w-0 rounded-xl border border-gray-300 px-3 py-2 text-sm sm:w-auto"
+          >
+            <option value="year">Year</option>
+            <option value="quarter">Quarter</option>
+            <option value="month">Month</option>
+            <option value="week">Week</option>
+          </select>
 
-          {/* Year Dropdown */}
-          {filterType && (
-            <select
-              value={selectedYear}
-              onChange={(e) => setSelectedYear(e.target.value)}
-              className="px-3 py-1.5 border border-gray-300 rounded-lg text-sm"
-            >
-              <option value="2024">2024</option>
-              <option value="2025">2025</option>
-              <option value="2026">2026</option>
-            </select>
-          )}
+          <label className="sr-only" htmlFor="report-year-filter">Report year</label>
+          <select
+            id="report-year-filter"
+            value={selectedYear}
+            onChange={(e) => setSelectedYear(e.target.value)}
+            className="w-full min-w-0 rounded-xl border border-gray-300 px-3 py-2 text-sm sm:w-auto"
+          >
+            <option value="2024">2024</option>
+            <option value="2025">2025</option>
+            <option value="2026">2026</option>
+          </select>
 
-          {/* Quarter Dropdown */}
           {filterType === "quarter" && (
-            <select
-              value={selectedQuarter}
-              onChange={(e) => setSelectedQuarter(e.target.value)}
-              className="px-3 py-1.5 border border-gray-300 rounded-lg text-sm"
-            >
-              <option value="1">Q1</option>
-              <option value="2">Q2</option>
-              <option value="3">Q3</option>
-              <option value="4">Q4</option>
-            </select>
+            <>
+              <label className="sr-only" htmlFor="report-quarter-filter">Report quarter</label>
+              <select id="report-quarter-filter" value={selectedQuarter} onChange={(e) => setSelectedQuarter(e.target.value)} className="col-span-2 w-full min-w-0 rounded-xl border border-gray-300 px-3 py-2 text-sm sm:col-span-1 sm:w-auto">
+                <option value="1">Q1</option>
+                <option value="2">Q2</option>
+                <option value="3">Q3</option>
+                <option value="4">Q4</option>
+              </select>
+            </>
           )}
 
-          {/* Month Dropdown */}
           {filterType === "month" && (
-            <select
-              value={selectedMonth}
-              onChange={(e) => setSelectedMonth(e.target.value)}
-              className="px-3 py-1.5 border border-gray-300 rounded-lg text-sm"
-            >
-              {months.map((month) => (
-                <option key={month} value={month}>{month}</option>
-              ))}
-            </select>
+            <>
+              <label className="sr-only" htmlFor="report-month-filter">Report month</label>
+              <select id="report-month-filter" value={selectedMonth} onChange={(e) => setSelectedMonth(e.target.value)} className="col-span-2 w-full min-w-0 rounded-xl border border-gray-300 px-3 py-2 text-sm sm:col-span-1 sm:w-auto">
+                {months.map((month) => <option key={month} value={month}>{month}</option>)}
+              </select>
+            </>
           )}
 
-          {/* Week Dropdown */}
           {filterType === "week" && (
-            <select
-              value={selectedWeek}
-              onChange={(e) => setSelectedWeek(e.target.value)}
-              className="px-3 py-1.5 border border-gray-300 rounded-lg text-sm"
-              title="Choose report week"
-            >
-              {weekOptions.map((week) => (
-                <option key={week.value} value={week.value}>{week.label}</option>
-              ))}
-            </select>
+            <>
+              <label className="sr-only" htmlFor="report-week-filter">Report week</label>
+              <select id="report-week-filter" value={selectedWeek} onChange={(e) => setSelectedWeek(e.target.value)} className="col-span-2 w-full min-w-0 rounded-xl border border-gray-300 px-3 py-2 text-sm sm:col-span-1 sm:w-auto" title="Choose report week">
+                {weekOptions.map((week) => <option key={week.value} value={week.value}>{week.label}</option>)}
+              </select>
+            </>
           )}
 
-          {/* Search */}
+          <label className="sr-only" htmlFor="report-establishment-search">Search establishment</label>
           <input
+            id="report-establishment-search"
             type="text"
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
             placeholder="Search establishment..."
-            className="flex-1 min-w-[150px] px-3 py-1.5 border border-gray-300 rounded-lg text-sm"
+            className="col-span-2 min-w-0 rounded-xl border border-gray-300 px-3 py-2 text-sm sm:min-w-[180px] sm:flex-1"
           />
 
-
-          {/* Export Button */}
           <button
+            type="button"
             onClick={handleExport}
-            className="flex items-center gap-2 px-4 py-1.5 bg-green-600 text-white rounded-lg hover:bg-green-700 text-sm"
+            className="col-span-2 flex w-full items-center justify-center gap-2 rounded-xl bg-green-600 px-4 py-2 text-sm text-white hover:bg-green-700 sm:col-span-1 sm:w-auto"
           >
-            <FileSpreadsheet className="w-4 h-4" /> Export
+            <FileSpreadsheet className="h-4 w-4" /> Export
           </button>
         </div>
       </div>
