@@ -103,6 +103,15 @@ const searchGeoapify = async (searchQuery: string): Promise<MapSearchResult | nu
   }
 }
 
+const reverseGeocodePin = async (latitude: number, longitude: number) => {
+  const response = await fetch(`https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${encodeURIComponent(latitude)}&lon=${encodeURIComponent(longitude)}&zoom=18&addressdetails=1`, {
+    headers: { Accept: 'application/json' },
+  })
+  if (!response.ok) throw new Error('Reverse geocoding failed.')
+  const result = await response.json()
+  return typeof result?.display_name === 'string' ? result.display_name.trim() : ''
+}
+
 const searchOpenStreetMap = async (searchQuery: string): Promise<MapSearchResult | null> => {
   const response = await fetch(`https://nominatim.openstreetmap.org/search?format=json&limit=1&countrycodes=ph&q=${encodeURIComponent(searchQuery)}`, {
     headers: { Accept: 'application/json' },
@@ -297,6 +306,23 @@ export default function ManageListing() {
     }))
   }
 
+  const updatePinAddress = async (latitude: number, longitude: number) => {
+    setMapStatus('searching')
+    try {
+      const resolvedAddress = await reverseGeocodePin(latitude, longitude)
+      if (resolvedAddress) {
+        setFormData((current) => ({ ...current, address: resolvedAddress }))
+      } else {
+        toast.error('The pin was set, but no address was found for that location. Please enter the address manually.')
+      }
+    } catch (error) {
+      console.error('Reverse geocoding failed:', error)
+      toast.error('The pin was set, but its address could not be resolved. Please enter the address manually.')
+    } finally {
+      setMapStatus('ready')
+    }
+  }
+
   const getCurrentPinPosition = () => {
     const latitude = parseCoordinate(formData.latitude, -90, 90)
     const longitude = parseCoordinate(formData.longitude, -180, 180)
@@ -339,6 +365,7 @@ export default function ManageListing() {
     marker.on('dragend', () => {
       const position = marker.getLatLng()
       setExactPin(position.lat, position.lng)
+      void updatePinAddress(position.lat, position.lng)
     })
 
     map.off('click')
@@ -346,6 +373,7 @@ export default function ManageListing() {
       marker.setLatLng(event.latlng)
       map.panTo(event.latlng)
       setExactPin(event.latlng.lat, event.latlng.lng)
+      void updatePinAddress(event.latlng.lat, event.latlng.lng)
     })
 
     setMapStatus('ready')
@@ -430,12 +458,11 @@ export default function ManageListing() {
     }
 
     const setPinFromPosition = (position: GeolocationPosition) => {
-      setFormData((current) => ({
-        ...current,
-        latitude: position.coords.latitude.toFixed(7),
-        longitude: position.coords.longitude.toFixed(7),
-      }))
-      toast.success('Map pin set from your current location. Review the preview before publishing.')
+      const latitude = position.coords.latitude
+      const longitude = position.coords.longitude
+      setExactPin(latitude, longitude)
+      void updatePinAddress(latitude, longitude)
+      toast.success('Map pin set from your current location. Resolving the address...')
     }
 
     navigator.geolocation.getCurrentPosition(
