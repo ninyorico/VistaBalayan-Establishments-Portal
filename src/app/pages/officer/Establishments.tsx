@@ -994,8 +994,8 @@ export default function Establishments() {
 
           {/* Establishments Table */}
           <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
-            <div className="max-h-[26rem] overflow-y-auto overscroll-y-contain touch-pan-y">
-              <div className="min-w-full overflow-x-auto overscroll-x-contain touch-pan-x">
+            <div className="max-h-[26rem] overflow-y-auto overscroll-y-contain touch-auto">
+              <div className="min-w-full overflow-x-auto overscroll-x-contain touch-auto">
                 <table className="w-full">
                 <thead className="sticky top-0 z-10 bg-gray-50 border-b border-gray-200">
                   <tr>
@@ -1024,9 +1024,9 @@ export default function Establishments() {
                         </td>
                         <td className="px-6 py-4 text-gray-600">{establishment.type}</td>
                         <td className="px-6 py-4">
-                          <div className="flex items-center gap-2 text-gray-600">
-                            <MapPin className="w-4 h-4" />
-                            <span className="text-sm">{establishment.address}</span>
+                          <div className="flex min-w-0 items-center gap-2 text-gray-600">
+                            <MapPin className="w-4 h-4 shrink-0" />
+                            <span className="block max-w-[14rem] truncate text-sm" title={establishment.address}>{establishment.address}</span>
                           </div>
                         </td>
                         <td className="px-6 py-4">
@@ -1159,8 +1159,8 @@ export default function Establishments() {
 
           {/* Users Table */}
           <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
-            <div className="max-h-[26rem] overflow-y-auto overscroll-y-contain touch-pan-y">
-              <div className="min-w-full overflow-x-auto overscroll-x-contain touch-pan-x">
+            <div className="max-h-[26rem] overflow-y-auto overscroll-y-contain touch-auto">
+              <div className="min-w-full overflow-x-auto overscroll-x-contain touch-auto">
                 <table className="w-full">
                 <thead className="sticky top-0 z-10 bg-gray-50 border-b border-gray-200">
                   <tr>
