@@ -117,6 +117,15 @@ export default function SubmitAccommodationReport() {
 
   useDialogFocus(showRoomSetup, roomDialogRef, () => setShowRoomSetup(false));
 
+  useEffect(() => {
+    if (!showRoomSetup) return;
+    const previousBodyOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    return () => {
+      document.body.style.overflow = previousBodyOverflow;
+    };
+  }, [showRoomSetup]);
+
   const [reportDate, setReportDate] = useState(getTodayDate());
 
   useEffect(() => {
@@ -616,8 +625,8 @@ export default function SubmitAccommodationReport() {
 
       {/* Room Setup Modal */}
       {showRoomSetup && (
-        <div ref={roomDialogRef} className="fixed inset-0 z-50 flex items-end justify-center overflow-hidden bg-black bg-opacity-50 p-2 sm:items-center sm:p-4" role="dialog" aria-modal="true" aria-labelledby="room-configuration-title" tabIndex={-1} data-room-config-mobile-scroll="body-owned">
-          <div className="flex max-h-[calc(100dvh-1rem)] w-full max-w-2xl flex-col overflow-hidden rounded-t-2xl bg-white shadow-xl sm:max-h-[92vh] sm:rounded-lg">
+        <div ref={roomDialogRef} className="fixed inset-0 z-[100] flex items-start justify-center overflow-y-auto bg-black bg-opacity-50 p-2 sm:items-center sm:p-4" role="dialog" aria-modal="true" aria-labelledby="room-configuration-title" tabIndex={-1} data-room-config-mobile-scroll="modal-owned">
+          <div className="my-0 flex max-h-[calc(100dvh-1rem)] w-full max-w-2xl flex-col overflow-hidden rounded-2xl bg-white shadow-xl sm:my-4 sm:max-h-[92vh] sm:rounded-lg">
             <div className="shrink-0 border-b border-gray-200 p-4 sm:p-6">
               <h2 id="room-configuration-title" className="text-xl sm:text-2xl font-bold text-gray-900">Room Configuration</h2>
               <p className="text-gray-600 mt-1">
@@ -719,7 +728,7 @@ export default function SubmitAccommodationReport() {
             <input type="date" value={reportDate} onChange={(e) => void handleReportDateChange(e.target.value)} className="block w-full min-w-0 max-w-full appearance-none rounded-lg border border-gray-300 px-2 py-2 text-sm sm:px-4" />
           </div>
           <div className="min-w-0">
-            <label className="mb-2 block text-[10px] font-medium leading-tight text-gray-700 sm:text-sm">Total Number of Rooms</label>
+            <label className="mb-2 block text-[10px] font-medium leading-tight text-gray-700 sm:text-sm">Total No. of Rooms</label>
             <div className="w-full min-w-0 rounded-lg border border-gray-300 bg-gray-50 px-2 py-2 text-sm font-semibold sm:px-4">
               {totalRooms}
             </div>
