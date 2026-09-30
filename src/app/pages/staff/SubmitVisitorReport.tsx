@@ -386,14 +386,14 @@ const loadProfile = async () => {
       </div>
 
       <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4 sm:p-6 overflow-hidden">
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div className="grid grid-cols-2 gap-3 sm:gap-6">
           <div className="min-w-0">
-            <label className="block text-sm font-medium text-gray-700 mb-2">Establishment</label>
-            <input type="text" value={establishmentName} disabled className="block w-full min-w-0 px-4 py-2 border border-gray-300 rounded-lg bg-gray-50" />
+            <label className="mb-2 block text-xs font-medium text-gray-700 sm:text-sm">Establishment</label>
+            <input type="text" value={establishmentName} disabled className="block w-full min-w-0 rounded-lg border border-gray-300 bg-gray-50 px-2 py-2 text-sm sm:px-4" />
           </div>
           <div className="min-w-0">
-            <label className="block text-sm font-medium text-gray-700 mb-2">Report Date</label>
-            <input type="date" value={reportDate} onChange={(e) => setReportDate(e.target.value)} className="block w-full min-w-0 max-w-full appearance-none px-4 py-2 border border-gray-300 rounded-lg" />
+            <label className="mb-2 block text-xs font-medium text-gray-700 sm:text-sm">Report Date</label>
+            <input type="date" value={reportDate} onChange={(e) => setReportDate(e.target.value)} className="block w-full min-w-0 max-w-full appearance-none rounded-lg border border-gray-300 px-2 py-2 text-sm sm:px-4" />
           </div>
         </div>
       </div>
