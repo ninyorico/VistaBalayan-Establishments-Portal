@@ -416,7 +416,14 @@ const loadProfile = async () => {
                   <label className="block text-sm font-medium text-gray-700 mb-1">Group name <span className="font-normal text-gray-500">(optional)</span></label>
                   <input type="text" value={entry.groupName} onChange={(e) => updateEntry(entry.id, "groupName", e.target.value)} placeholder={`Visitor group ${entryIndex + 1}`} className="block w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm" />
                 </div>
-                <button type="button" onClick={() => removeEntry(entry.id)} aria-label={`Remove visitor group ${entryIndex + 1}`} className="mt-6 inline-flex rounded p-2 text-red-600 hover:bg-red-50">
+                <button
+                  type="button"
+                  onClick={() => removeEntry(entry.id)}
+                  aria-label={`Remove visitor group ${entryIndex + 1}`}
+                  disabled={entries.length === 1 && entryTotal(entry) === 0 && !entry.groupName.trim()}
+                  title={entries.length === 1 && entryTotal(entry) === 0 && !entry.groupName.trim() ? "The default blank group cannot be removed" : undefined}
+                  className="mt-6 inline-flex rounded p-2 text-red-600 hover:bg-red-50 disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:bg-transparent"
+                >
                   <Trash2 className="w-4 h-4" />
                 </button>
               </div>
