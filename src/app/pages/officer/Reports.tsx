@@ -470,6 +470,9 @@ export default function Reports() {
   const reportTrendTicks = Array.from({ length: 5 }, (_, index) =>
     Math.round((reportTrendMax * (4 - index)) / 4)
   );
+  const selectedMonthInput = selectedMonth
+    ? `${selectedYear}-${String(months.indexOf(selectedMonth) + 1).padStart(2, "0")}`
+    : `${selectedYear}-01`;
 
   return (
     <div className="space-y-6">
@@ -494,17 +497,40 @@ export default function Reports() {
             <option value="week">Week</option>
           </select>
 
-          <label className="sr-only" htmlFor="report-year-filter">Report year</label>
-          <select
-            id="report-year-filter"
-            value={selectedYear}
-            onChange={(e) => setSelectedYear(e.target.value)}
-            className="w-full min-w-0 rounded-xl border border-gray-300 px-3 py-2 text-sm sm:w-auto"
-          >
-            <option value="2024">2024</option>
-            <option value="2025">2025</option>
-            <option value="2026">2026</option>
-          </select>
+          {filterType !== "month" ? (
+            <>
+              <label className="sr-only" htmlFor="report-year-filter">Report year</label>
+              <select
+                id="report-year-filter"
+                value={selectedYear}
+                onChange={(e) => setSelectedYear(e.target.value)}
+                className="w-full min-w-0 rounded-xl border border-gray-300 px-3 py-2 text-sm sm:w-auto"
+              >
+                <option value="2024">2024</option>
+                <option value="2025">2025</option>
+                <option value="2026">2026</option>
+              </select>
+            </>
+          ) : (
+            <>
+              <label className="sr-only" htmlFor="report-month-year-filter">Report month and year</label>
+              <input
+                id="report-month-year-filter"
+                type="month"
+                value={selectedMonthInput}
+                onChange={(e) => {
+                  const [year, month] = e.target.value.split("-");
+                  const monthIndex = Number(month) - 1;
+                  if (year && monthIndex >= 0 && monthIndex < months.length) {
+                    setSelectedYear(year);
+                    setSelectedMonth(months[monthIndex]);
+                  }
+                }}
+                className="w-full min-w-0 rounded-xl border border-gray-300 px-3 py-2 text-sm sm:w-auto"
+                title="Select report month and year"
+              />
+            </>
+          )}
 
           {filterType === "quarter" && (
             <>
@@ -518,14 +544,7 @@ export default function Reports() {
             </>
           )}
 
-          {filterType === "month" && (
-            <>
-              <label className="sr-only" htmlFor="report-month-filter">Report month</label>
-              <select id="report-month-filter" value={selectedMonth} onChange={(e) => setSelectedMonth(e.target.value)} className="col-span-2 w-full min-w-0 rounded-xl border border-gray-300 px-3 py-2 text-sm sm:col-span-1 sm:w-auto">
-                {months.map((month) => <option key={month} value={month}>{month}</option>)}
-              </select>
-            </>
-          )}
+
 
           {filterType === "week" && (
             <>
