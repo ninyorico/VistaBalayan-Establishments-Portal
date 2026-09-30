@@ -45,6 +45,7 @@ export default function SubmitAccommodationReport() {
   const [showRoomSetup, setShowRoomSetup] = useState(false);
   const [reportFormMode, setReportFormMode] = useState<AccommodationFormMode>("single");
   const [tempReportFormMode, setTempReportFormMode] = useState<AccommodationFormMode>("single");
+  const [roomsToAdd, setRoomsToAdd] = useState("1");
   const roomSetupTriggerRef = useRef<HTMLButtonElement>(null);
   const roomDialogRef = useRef<HTMLDivElement>(null);
   const [tempRoomConfig, setTempRoomConfig] = useState<EstablishmentRoomConfig[]>(DEFAULT_ROOM_CONFIG);
@@ -332,11 +333,20 @@ export default function SubmitAccommodationReport() {
     );
   };
 
-  const addRoomConfigRow = () => {
+  const addRoomConfigRows = () => {
+    const quantity = Math.min(100, Math.max(1, parseNonNegativeInteger(roomsToAdd)));
     setTempRoomConfig((rooms) => {
       const nextRoomNumber = rooms.reduce((max, room) => Math.max(max, Number.parseInt(room.type, 10) || 0), 0) + 1;
-      return [...rooms, { type: String(nextRoomNumber), code: "", count: 1 }];
+      return [
+        ...rooms,
+        ...Array.from({ length: quantity }, (_, index) => ({
+          type: String(nextRoomNumber + index),
+          code: "",
+          count: 1,
+        })),
+      ];
     });
+    setRoomsToAdd("1");
   };
 
   const removeRoomConfigRow = (index: number) => {
@@ -344,15 +354,11 @@ export default function SubmitAccommodationReport() {
   };
 
   const saveRoomConfiguration = async () => {
-    const hasMissingCode = tempRoomConfig.some((room) => !String(room.code || "").trim());
-    const config = normalizeRoomConfig(tempRoomConfig).map((room) => ({ ...room, count: 1 }));
+    const config = normalizeRoomConfig(tempRoomConfig.map((room) => ({
+      ...room,
+      code: String(room.code || room.type || "ROOM").trim().toUpperCase(),
+    }))).map((room) => ({ ...room, count: 1 }));
     const duplicatedName = config.find((room, index) => config.some((other, otherIndex) => otherIndex !== index && other.type === room.type));
-
-    if (hasMissingCode) {
-      const missingRoom = tempRoomConfig.find((room) => !String(room.code || "").trim());
-      toast.error(`Enter a room type code for room ${missingRoom?.type || "this room"}.`);
-      return;
-    }
 
     if (duplicatedName) {
       toast.error(`Room name ${duplicatedName.type} is duplicated. Please use a unique room name.`);
@@ -651,15 +657,29 @@ export default function SubmitAccommodationReport() {
                 </div>
               </fieldset>
 
-            <div className="mb-4 flex items-center justify-between gap-3">
-                <p className="text-sm font-medium text-gray-700">Editable hotel room setup</p>
+            <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+              <p className="text-sm font-medium text-gray-700">Editable hotel room setup</p>
+              <div className="flex items-end gap-2">
+                <label className="min-w-0 flex-1 text-xs font-medium text-gray-600">
+                  Rooms to add
+                  <input
+                    type="number"
+                    min="1"
+                    max="100"
+                    value={roomsToAdd}
+                    onChange={(e) => setRoomsToAdd(e.target.value)}
+                    className="mt-1 block w-full min-w-16 rounded-lg border border-gray-300 px-3 py-2 text-sm"
+                    aria-label="Number of rooms to add"
+                  />
+                </label>
                 <button
                   type="button"
-                  onClick={addRoomConfigRow}
+                  onClick={addRoomConfigRows}
                   className="inline-flex shrink-0 items-center gap-1 rounded-lg bg-blue-50 px-3 py-2 text-sm font-medium text-blue-700 hover:bg-blue-100"
                 >
-                  <Plus className="h-4 w-4" /> Add Room
+                  <Plus className="h-4 w-4" /> Add Rooms
                 </button>
+              </div>
               </div>
               <div className="space-y-4">
                 {tempRoomConfig.map((room, index) => (
@@ -675,7 +695,7 @@ export default function SubmitAccommodationReport() {
                       />
                     </div>
                     <div className="min-w-0">
-                      <label className="mb-1 block text-sm font-medium text-gray-700">Room Type Code</label>
+                      <label className="mb-1 block text-sm font-medium text-gray-700">Room Type Code <span className="font-normal text-gray-500">(optional)</span></label>
                       <input
                         type="text"
                         value={room.code}
