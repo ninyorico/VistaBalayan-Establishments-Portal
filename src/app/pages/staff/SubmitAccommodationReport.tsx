@@ -271,19 +271,27 @@ export default function SubmitAccommodationReport() {
       return empty;
     }
 
-    const byCode = new Map((previousDetails || []).map((detail) => [
-      String(detail.room_code || "").trim().toUpperCase(),
-      {
+    const byCode = new Map<string, { guests: number; newGuests: number; occupied: number }>();
+    (previousDetails || []).forEach((detail) => {
+      const normalizedCode = String(detail.room_code || "").trim().toUpperCase();
+      const values = {
         guests: Math.max(0, Number(detail.guest_nights) || 0),
         newGuests: Math.max(0, Number(detail.check_ins) || 0),
         occupied: Math.max(0, Number(detail.occupied_rooms) || 0),
-      },
-    ]));
+      };
+      if (!normalizedCode) return;
+      byCode.set(normalizedCode, values);
+      const roomNumber = normalizedCode.match(/-(\d+)$/)?.[1];
+      if (roomNumber) byCode.set(`__room-number:${roomNumber}`, values);
+    });
 
     return empty.map((room) => {
       const normalizedRoomCode = room.roomCode.trim().toUpperCase();
       const baseCode = normalizedRoomCode.replace(/-\d+$/, "");
-      const previous = byCode.get(normalizedRoomCode) || (normalizedRoomCode.endsWith("-1") ? byCode.get(baseCode) : undefined);
+      const roomNumber = normalizedRoomCode.match(/-(\d+)$/)?.[1];
+      const previous = byCode.get(normalizedRoomCode)
+        || byCode.get(`__room-number:${roomNumber || ""}`)
+        || (normalizedRoomCode.endsWith("-1") ? byCode.get(baseCode) : undefined);
       return {
         ...room,
         continuingGuests: previous?.guests || 0,
