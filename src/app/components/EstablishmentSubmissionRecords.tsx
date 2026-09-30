@@ -261,15 +261,15 @@ export default function EstablishmentSubmissionRecords({
           </button>
         </div>
 
-        <div className="grid grid-cols-1 gap-3 md:grid-cols-4">
-          <div className="relative md:col-span-2">
-            <Search className="absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-slate-400" />
-            <input value={searchTerm} onChange={(event) => setSearchTerm(event.target.value)} placeholder={isVisitor ? "Search residence or location" : "Search accommodation records"} className="w-full rounded-2xl border border-slate-200 bg-slate-50 py-3 pl-10 pr-4 text-sm outline-none focus:border-[#0F4C75] focus:ring-4 focus:ring-cyan-100" />
+        <div className="grid grid-cols-3 gap-2 sm:gap-3 md:grid-cols-4">
+          <div className="relative min-w-0 md:col-span-2">
+            <Search className="absolute left-2 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400 sm:left-3 sm:h-5 sm:w-5" />
+            <input value={searchTerm} onChange={(event) => setSearchTerm(event.target.value)} placeholder={isVisitor ? "Search residence or location" : "Search accommodation records"} className="w-full min-w-0 rounded-2xl border border-slate-200 bg-slate-50 py-3 pl-8 pr-2 text-xs outline-none focus:border-[#0F4C75] focus:ring-4 focus:ring-cyan-100 sm:pl-10 sm:pr-4 sm:text-sm" />
           </div>
-          <select value={selectedYear} onChange={(event) => setSelectedYear(Number(event.target.value))} className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm" aria-label="Filter by year">
+          <select value={selectedYear} onChange={(event) => setSelectedYear(Number(event.target.value))} className="min-w-0 rounded-2xl border border-slate-200 bg-slate-50 px-2 py-3 text-xs sm:px-4 sm:text-sm" aria-label="Filter by year">
             {(availableYears.length > 0 ? availableYears : [selectedYear]).map((year) => <option key={year} value={year}>{year}</option>)}
           </select>
-          <select value={selectedMonth} onChange={(event) => setSelectedMonth(Number(event.target.value))} className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm" aria-label="Filter by month">
+          <select value={selectedMonth} onChange={(event) => setSelectedMonth(Number(event.target.value))} className="min-w-0 rounded-2xl border border-slate-200 bg-slate-50 px-2 py-3 text-xs sm:px-4 sm:text-sm" aria-label="Filter by month">
             <option value={-1}>ALL months</option>
             {monthNames.map((month, index) => <option key={month} value={index}>{month}</option>)}
           </select>
