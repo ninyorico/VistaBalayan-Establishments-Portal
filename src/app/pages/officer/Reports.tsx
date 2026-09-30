@@ -483,7 +483,7 @@ export default function Reports() {
 
       {/* Report filters */}
       <div className="rounded-2xl border border-gray-200 bg-white p-3 shadow-sm sm:p-4">
-        <div className="grid grid-cols-2 gap-3 sm:flex sm:flex-wrap sm:items-center">
+        <div className="grid grid-cols-1 gap-3 sm:flex sm:flex-wrap sm:items-center">
           <label className="sr-only" htmlFor="report-period-filter">Report period</label>
           <select
             id="report-period-filter"
@@ -535,7 +535,7 @@ export default function Reports() {
           {filterType === "quarter" && (
             <>
               <label className="sr-only" htmlFor="report-quarter-filter">Report quarter</label>
-              <select id="report-quarter-filter" value={selectedQuarter} onChange={(e) => setSelectedQuarter(e.target.value)} className="col-span-2 w-full min-w-0 rounded-xl border border-gray-300 px-3 py-2 text-sm sm:col-span-1 sm:w-auto">
+              <select id="report-quarter-filter" value={selectedQuarter} onChange={(e) => setSelectedQuarter(e.target.value)} className="col-span-1 w-full min-w-0 rounded-xl border border-gray-300 px-3 py-2 text-sm sm:col-span-1 sm:w-auto">
                 <option value="1">Q1</option>
                 <option value="2">Q2</option>
                 <option value="3">Q3</option>
@@ -549,7 +549,7 @@ export default function Reports() {
           {filterType === "week" && (
             <>
               <label className="sr-only" htmlFor="report-week-filter">Report week</label>
-              <select id="report-week-filter" value={selectedWeek} onChange={(e) => setSelectedWeek(e.target.value)} className="col-span-2 w-full min-w-0 rounded-xl border border-gray-300 px-3 py-2 text-sm sm:col-span-1 sm:w-auto" title="Choose report week">
+              <select id="report-week-filter" value={selectedWeek} onChange={(e) => setSelectedWeek(e.target.value)} className="col-span-1 w-full min-w-0 rounded-xl border border-gray-300 px-3 py-2 text-sm sm:col-span-1 sm:w-auto" title="Choose report week">
                 {weekOptions.map((week) => <option key={week.value} value={week.value}>{week.label}</option>)}
               </select>
             </>
@@ -562,13 +562,13 @@ export default function Reports() {
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
             placeholder="Search establishment..."
-            className="col-span-2 min-w-0 rounded-xl border border-gray-300 px-3 py-2 text-sm sm:min-w-[180px] sm:flex-1"
+            className="col-span-1 min-w-0 rounded-xl border border-gray-300 px-3 py-2 text-sm sm:min-w-[180px] sm:flex-1"
           />
 
           <button
             type="button"
             onClick={handleExport}
-            className="col-span-2 flex w-full items-center justify-center gap-2 rounded-xl bg-green-600 px-4 py-2 text-sm text-white hover:bg-green-700 sm:col-span-1 sm:w-auto"
+            className="col-span-1 flex w-full items-center justify-center gap-2 rounded-xl bg-green-600 px-4 py-2 text-sm text-white hover:bg-green-700 sm:col-span-1 sm:w-auto"
           >
             <FileSpreadsheet className="h-4 w-4" /> Export
           </button>
