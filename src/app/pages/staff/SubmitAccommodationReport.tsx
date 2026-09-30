@@ -821,7 +821,7 @@ export default function SubmitAccommodationReport() {
                           value={numericInputValue(room.isNewGuest ? room.checkIns : room.continuingGuests)}
                           onChange={(e) => updateSingleGuestValue(index, parseNonNegativeInteger(e.target.value))}
                           onDoubleClick={() => toggleGuestType(index)}
-                          className={room.isNewGuest ? "mx-auto w-full max-w-[150px] rounded-full border-2 border-red-600 bg-white px-2 py-2 text-center text-sm font-bold tabular-nums text-red-700" : "mx-auto w-full max-w-[150px] rounded-md border border-gray-300 bg-white px-2 py-2 text-center text-sm font-normal tabular-nums text-gray-700"}
+                          className={room.isNewGuest ? "mx-auto w-full max-w-[150px] rounded-full border-[3px] !border-red-600 bg-white px-2 py-2 text-center text-sm font-bold tabular-nums text-red-700" : "mx-auto w-full max-w-[150px] rounded-md border border-gray-300 bg-white px-2 py-2 text-center text-sm font-normal tabular-nums text-gray-700"}
                           placeholder="0"
                           title="Double-click to switch between continuing and new guest"
                           aria-label={`${room.roomType} current ${room.isNewGuest ? "new" : "continuing"} guest value. Double-click to switch type.`}
