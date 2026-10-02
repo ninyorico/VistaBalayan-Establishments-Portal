@@ -477,6 +477,11 @@ export default function SubmitAccommodationReport() {
     (sum, r) => sum + Number(r.guestNights || 0),
     0
   );
+  const hasAccommodationEntries = roomData.some((room) =>
+    Number(room.continuingGuests || 0) > 0
+    || Number(room.checkIns || 0) > 0
+    || Number(room.guestNights || 0) > 0
+  );
 
   const avgGuestNight =
     totalCheckIns > 0 ? (totalGuestNights / totalCheckIns).toFixed(2) : "0.00";
@@ -520,6 +525,11 @@ export default function SubmitAccommodationReport() {
 
     if (totalRooms === 0) {
       toast.error("Please configure rooms first");
+      return;
+    }
+
+    if (!hasAccommodationEntries) {
+      toast.error("Please enter at least one guest value before submitting");
       return;
     }
 
@@ -864,7 +874,7 @@ export default function SubmitAccommodationReport() {
         <button onClick={handleSaveDraft} className="flex w-full sm:w-auto items-center justify-center gap-2 px-6 py-3 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200">
           <Save className="w-5 h-5" /> Save Draft
         </button>
-        <button onClick={handleSubmit} disabled={submitting} className="flex w-full sm:w-auto items-center justify-center gap-2 px-6 py-3 bg-[#0F4C75] text-white rounded-lg hover:bg-[#0F4C75] disabled:cursor-not-allowed disabled:opacity-60">
+        <button onClick={handleSubmit} disabled={submitting || !hasAccommodationEntries} title={!hasAccommodationEntries ? "Enter at least one guest value before submitting" : undefined} className="flex w-full sm:w-auto items-center justify-center gap-2 px-6 py-3 bg-[#0F4C75] text-white rounded-lg hover:bg-[#0F4C75] disabled:cursor-not-allowed disabled:opacity-60">
           <Send className="w-5 h-5" /> {submitting ? "Submitting..." : "Submit Hotel Report"}
         </button>
       </div>
