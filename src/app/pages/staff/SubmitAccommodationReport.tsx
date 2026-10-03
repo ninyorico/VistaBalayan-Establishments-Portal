@@ -485,16 +485,10 @@ export default function SubmitAccommodationReport() {
     || Number(room.guestNights || 0) > 0
   );
 
-  const avgGuestNight =
-    totalCheckIns > 0 ? (totalGuestNights / totalCheckIns).toFixed(2) : "0.00";
   const avgOccupancyRate = calculateAccommodationOccupancy(
     totalOccupiedRooms,
     totalRooms
   ).toFixed(2);
-  const avgGuestPerRoom =
-    totalOccupiedRooms > 0
-      ? (totalGuestNights / totalOccupiedRooms).toFixed(2)
-      : "0.00";
 
   const handleSaveDraft = () => {
     const key = draftStorageKey(profile?.id, profile?.establishment_id);
@@ -854,9 +848,9 @@ export default function SubmitAccommodationReport() {
         <h3 className="text-lg font-semibold text-gray-900 mb-4">Computed Analytics</h3>
         <div className="grid grid-cols-3 gap-2 sm:gap-6">
           <div className="rounded-lg border border-[#B88A52]/35 bg-[#FBE7BA] p-2 sm:p-4">
-            <p className="mb-1 text-[10px] font-medium text-[#193364] sm:text-sm">Average Guest Night</p>
-            <p className="text-xl font-bold text-[#193364] sm:text-3xl">{avgGuestNight}</p>
-            <p className="mt-1 text-[9px] text-[#5D6F73] sm:text-xs">nights per guest</p>
+            <p className="mb-1 text-[10px] font-medium text-[#193364] sm:text-sm">Guest Check-in</p>
+            <p className="text-xl font-bold text-[#193364] sm:text-3xl">{totalCheckIns}</p>
+            <p className="mt-1 text-[9px] text-[#5D6F73] sm:text-xs">new guests</p>
           </div>
           <div className="rounded-lg border border-[#6C9772]/35 bg-[#E5E8E1] p-2 sm:p-4" data-hotel-report-daily-occupancy="selected-report-date">
             <p className="mb-1 text-[10px] font-medium text-[#0F3B2D] sm:text-sm">Daily Room Occupancy Rate</p>
@@ -864,9 +858,9 @@ export default function SubmitAccommodationReport() {
             <p className="mt-1 text-[9px] text-[#5D6F73] sm:text-xs">selected report date only</p>
           </div>
           <div className="rounded-lg border border-[#AFB3B5]/45 bg-[#F5F8FF] p-2 sm:p-4">
-            <p className="mb-1 text-[10px] font-medium text-[#193364] sm:text-sm">Average Guest Per Room</p>
-            <p className="text-xl font-bold text-[#193364] sm:text-3xl">{avgGuestPerRoom}</p>
-            <p className="mt-1 text-[9px] text-[#5D6F73] sm:text-xs">guests per room</p>
+            <p className="mb-1 text-[10px] font-medium text-[#193364] sm:text-sm">Guest Night</p>
+            <p className="text-xl font-bold text-[#193364] sm:text-3xl">{totalGuestNights}</p>
+            <p className="mt-1 text-[9px] text-[#5D6F73] sm:text-xs">new + continuing guests</p>
           </div>
         </div>
       </div>
