@@ -439,8 +439,10 @@ export default function SubmitAccommodationReport() {
   const updateSingleGuestValue = (index: number, value: number) => {
     setRoomData(roomData.map((room, i) => {
       if (i !== index) return room;
-      const autoMarkAsNewGuest = Number(room.previousGuestNights || 0) === 0 && value > 0;
-      const nextIsNewGuest = autoMarkAsNewGuest || room.isNewGuest;
+      const currentValue = room.isNewGuest ? Number(room.checkIns || 0) : Number(room.continuingGuests || 0);
+      const changedCurrentDateValue = reportDate === getTodayDate() && value > 0 && value !== currentValue;
+      const firstGuestAfterEmptyPreviousNight = Number(room.previousGuestNights || 0) === 0 && value > 0;
+      const nextIsNewGuest = changedCurrentDateValue || firstGuestAfterEmptyPreviousNight || Boolean(room.isNewGuest);
       const updatedRoom = nextIsNewGuest
         ? { ...room, checkIns: value, isNewGuest: nextIsNewGuest }
         : { ...room, continuingGuests: value };
