@@ -180,6 +180,14 @@ const formatGrandTotalSheet = (sheet: ExcelJS.Worksheet, establishmentEndRow: nu
   // Keep the main table uniform and fully bordered.
   addFullBorders(sheet, 3, totalRow - 2, 1, 3);
   addFullBorders(sheet, totalRow, 1, 1, 3);
+  for (let column = 1; column <= 3; column += 1) {
+    sheet.getCell(totalRow, column).fill = {
+      type: "pattern",
+      pattern: "solid",
+      fgColor: { argb: "FF6AA84F" },
+      bgColor: { argb: "FF6AA84F" },
+    };
+  }
   centerExportTable(sheet, 3, 3, 1, 3);
   centerExportTable(sheet, 4, totalRow, 1, 3);
   const establishmentNameTemplate = sheet.getCell(4, 2);
