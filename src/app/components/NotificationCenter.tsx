@@ -91,7 +91,9 @@ function startOfMonthIso() {
 
 function deadlineNotification(role: NotificationCenterProps["role"], canSubmitAccommodation = true): AppNotification {
   const now = new Date();
-  const due = new Date(now.getFullYear(), now.getMonth(), 15);
+  // Remind users ten days before the last calendar day of the current month.
+  const lastDay = new Date(now.getFullYear(), now.getMonth() + 1, 0);
+  const due = new Date(lastDay.getFullYear(), lastDay.getMonth(), lastDay.getDate() - 10);
   const daysUntil = Math.ceil((due.getTime() - now.getTime()) / 86_400_000);
   const dueText = due.toLocaleDateString(undefined, { month: "long", day: "numeric" });
   return {
@@ -539,7 +541,7 @@ export default function NotificationCenter({ role }: NotificationCenterProps) {
                 onClick={enablePhoneNotifications}
                 className="mb-2 w-full rounded-2xl border border-[#B8D9DF] bg-[#F2FBFC] px-4 py-2 text-center text-sm font-semibold text-[#0E5A72] transition-colors hover:bg-[#E5F4F6]"
               >
-                Enable phone notifications
+                Enable desktop and phone notifications
               </button>
             )}
             {phonePermission === "denied" && (
