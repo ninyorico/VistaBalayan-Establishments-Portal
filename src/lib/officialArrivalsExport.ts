@@ -250,6 +250,7 @@ export const downloadOfficialArrivalsWorkbook = async ({
   year,
   selectedMonth,
   selectedMonths,
+  exportSection = "both",
   weeklyLabel,
   weeklyStartDate,
   weeklyEndDate,
@@ -261,6 +262,7 @@ export const downloadOfficialArrivalsWorkbook = async ({
   year: number;
   selectedMonth?: number;
   selectedMonths?: number[];
+  exportSection?: "daytour" | "overnight" | "both";
   weeklyLabel?: string;
   weeklyStartDate?: string;
   weeklyEndDate?: string;
@@ -301,10 +303,10 @@ export const downloadOfficialArrivalsWorkbook = async ({
   const exportableAccommodation = accommodation.filter((record) => isExportableReportStatus(record.status));
   const visitorReportEstablishmentIds = new Set(exportableVisitors.map((report) => String(report.establishment_id)));
   const accommodationReportEstablishmentIds = new Set(exportableAccommodation.map((report) => String(report.establishment_id)));
-  const daytourEstablishments = exportableEstablishments.filter((establishment) =>
+  const daytourEstablishments = exportSection === "overnight" ? [] : exportableEstablishments.filter((establishment) =>
     ["visitor", "both"].includes(establishment.reporting_mode || "") || visitorReportEstablishmentIds.has(String(establishment.id))
   );
-  const overnightEstablishments = exportableEstablishments.filter((establishment) =>
+  const overnightEstablishments = exportSection === "daytour" ? [] : exportableEstablishments.filter((establishment) =>
     ["accommodation", "both"].includes(establishment.reporting_mode || "") || accommodationReportEstablishmentIds.has(String(establishment.id))
   );
   const daytourExtraRows = Math.max(0, daytourEstablishments.length - 23);

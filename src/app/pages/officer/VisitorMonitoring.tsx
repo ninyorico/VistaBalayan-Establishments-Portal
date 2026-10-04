@@ -2,7 +2,7 @@ import { useState, useEffect, useMemo, useRef, type TouchEvent } from "react";
 import { Download, Search, X } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "../../../lib/supabase";
-import { datestampedFilename, downloadCsv } from "../../../lib/exportCsv";
+import { downloadReportMonitoringWorkbook } from "../../../lib/reportMonitoringExport";
 import DataState from "../../components/DataState";
 import { useDialogFocus } from "../../../hooks/useDialogFocus";
 
@@ -210,21 +210,12 @@ export default function VisitorMonitoring({ embedded = false }: { embedded?: boo
   const totalFemale = filteredRecords.reduce((sum, r) => sum + r.female, 0);
 
   const handleExport = () => {
-    downloadCsv(
-      datestampedFilename("visitor-records"),
-      ["Date", "Establishment", "Guest/Group", "Male", "Female", "Total", "Place of Residence", "Location"],
-      filteredRecords.map((record) => [
-        record.date,
-        record.establishment,
-        record.guestName,
-        record.male,
-        record.female,
-        record.total,
-        record.residenceType,
-        record.location,
-      ])
-    );
-    toast.success(`Exported ${filteredRecords.length} visitor record(s)`);
+    void downloadReportMonitoringWorkbook({ section: "daytour", specificMonth: specificMonth || undefined })
+      .then(() => toast.success("Exported resort Day-Tour arrivals workbook"))
+      .catch((error) => {
+        console.error("Resort arrivals export error:", error);
+        toast.error(error instanceof Error ? error.message : "Failed to export resort arrivals workbook");
+      });
   };
 
   if (loading) {
@@ -272,7 +263,7 @@ export default function VisitorMonitoring({ embedded = false }: { embedded?: boo
 
       {/* Filters */}
       <div className="rounded-lg border border-gray-200 bg-white p-4 shadow-sm sm:p-6">
-        <div className="flex flex-wrap items-center gap-3 sm:gap-4">
+        <div className="grid grid-cols-2 gap-3 sm:flex sm:flex-wrap sm:items-center sm:gap-4">
           <div className="min-w-0 flex-1 basis-full sm:basis-64">
             <div className="relative">
               <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400 sm:h-5 sm:w-5" />

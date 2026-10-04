@@ -3,7 +3,7 @@ import { ChevronDown, ChevronRight, Download, Search, TrendingUp, X } from "luci
 import { toast } from "sonner";
 import DataState from "../../components/DataState";
 import { supabase } from "../../../lib/supabase";
-import { datestampedFilename, downloadCsv } from "../../../lib/exportCsv";
+import { downloadReportMonitoringWorkbook } from "../../../lib/reportMonitoringExport";
 import { calculateAccommodationOccupancy, calculateAverageAccommodationOccupancy } from "../../../lib/reportMetrics";
 import { useDialogFocus } from "../../../hooks/useDialogFocus";
 
@@ -407,23 +407,12 @@ export default function AccommodationMonitoring({ embedded = false }: { embedded
   };
 
   const handleExport = () => {
-    downloadCsv(
-      datestampedFilename("accommodation-records"),
-      ["Date", "Month", "Establishment", "Total Rooms", "Reported Rooms", "Occupied Rooms", "Average Occupancy %", "Check-ins", "Guest Nights", "Days In Month"],
-      filteredRecords.map((record) => [
-        record.date,
-        record.month,
-        record.establishment,
-        record.totalRooms,
-        record.reportedRooms,
-        record.occupiedRooms,
-        record.avgOccupancy.toFixed(2),
-        record.totalGuests,
-        record.guestNights,
-        record.daysInMonth,
-      ])
-    );
-    toast.success(`Exported ${filteredRecords.length} accommodation record(s)`);
+    void downloadReportMonitoringWorkbook({ section: "overnight", specificMonth: specificMonth || undefined })
+      .then(() => toast.success("Exported hotel Overnight arrivals workbook"))
+      .catch((error) => {
+        console.error("Overnight arrivals export error:", error);
+        toast.error(error instanceof Error ? error.message : "Failed to export overnight arrivals workbook");
+      });
   };
 
   if (loading) {
