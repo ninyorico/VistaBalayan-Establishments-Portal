@@ -270,6 +270,7 @@ export const downloadOfficialArrivalsWorkbook = async ({
   selectedMonth,
   selectedMonths,
   exportSection = "both",
+  includeEstablishmentsWithoutPermit = false,
   weeklyLabel,
   weeklyStartDate,
   weeklyEndDate,
@@ -282,6 +283,7 @@ export const downloadOfficialArrivalsWorkbook = async ({
   selectedMonth?: number;
   selectedMonths?: number[];
   exportSection?: "daytour" | "overnight" | "both";
+  includeEstablishmentsWithoutPermit?: boolean;
   weeklyLabel?: string;
   weeklyStartDate?: string;
   weeklyEndDate?: string;
@@ -313,7 +315,7 @@ export const downloadOfficialArrivalsWorkbook = async ({
   const exportableEstablishments = establishments
     .filter((establishment) =>
       !["inactive", "deleted"].includes(String(establishment.status || "").toLowerCase())
-      && String(establishment.business_permit_number ?? "").trim().length > 0
+      && (includeEstablishmentsWithoutPermit || String(establishment.business_permit_number ?? "").trim().length > 0)
     )
     .map((establishment) => ({
       ...establishment,

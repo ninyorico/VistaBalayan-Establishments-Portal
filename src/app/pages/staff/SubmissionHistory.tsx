@@ -1,14 +1,17 @@
 import { useState, useEffect } from "react";
-import { Search, Eye, Download, CheckCircle, Clock, XCircle, ChevronDown, CalendarDays, CalendarRange } from "lucide-react";
+import { Search, Eye, CheckCircle, Clock, XCircle, ChevronDown, CalendarDays, CalendarRange } from "lucide-react";
 import { supabase } from "../../../lib/supabase";
-import { calculateAccommodationOccupancy, formatDate, formatMonthYear, groupStaffSubmissions, StaffSubmissionSummary } from "../../../lib/reportMetrics";
+import { formatDate, formatMonthYear, groupStaffSubmissions, StaffSubmissionSummary } from "../../../lib/reportMetrics";
 import { canSubmitAccommodationReport, canSubmitVisitorReport } from "../../../lib/establishmentReportForms";
+import { downloadOfficialArrivalsWorkbook } from "../../../lib/officialArrivalsExport";
+import type { EstablishmentReportingRow } from "../../../lib/reporting";
 import DataState from "../../components/DataState";
 import EstablishmentSubmissionRecords from "../../components/EstablishmentSubmissionRecords";
 import { LoadingState } from "../../components/vista/PolishedShell";
 
 interface VisitorReportExportRecord {
   id: string;
+  establishment_id?: string | null;
   report_date?: string | null;
   created_at?: string | null;
   status?: string | null;
@@ -22,6 +25,7 @@ interface VisitorReportExportRecord {
 
 interface AccommodationReportExportRecord {
   id: string;
+  establishment_id?: string | null;
   report_date?: string | null;
   created_at?: string | null;
   status?: string | null;
@@ -68,24 +72,6 @@ const getWeekDateRange = (year: number, month: number, weekNumber: number) => {
 
 const formatSelectedMonth = (year: number, month: number) => `${month === -1 ? "ALL months" : monthNames[month]} ${year}`;
 
-const escapeCsvValue = (value: string | number) => {
-  const stringValue = String(value ?? "");
-  return /[",\n\r]/.test(stringValue) ? `"${stringValue.replace(/"/g, '""')}"` : stringValue;
-};
-
-const downloadCsv = (filename: string, rows: (string | number)[][]) => {
-  const csv = rows.map((row) => row.map(escapeCsvValue).join(",")).join("\n");
-  const blob = new Blob([`\ufeff${csv}`], { type: "text/csv;charset=utf-8;" });
-  const url = URL.createObjectURL(blob);
-  const link = document.createElement("a");
-  link.href = url;
-  link.download = filename;
-  document.body.appendChild(link);
-  link.click();
-  document.body.removeChild(link);
-  URL.revokeObjectURL(url);
-};
-
 export default function SubmissionHistory() {
   const [submissions, setSubmissions] = useState<StaffSubmissionSummary[]>([]);
   const [visitorReports, setVisitorReports] = useState<VisitorReportExportRecord[]>([]);
@@ -94,6 +80,7 @@ export default function SubmissionHistory() {
   const [loadError, setLoadError] = useState<{ kind: "error" | "session-expired"; message: string } | null>(null);
   const [searchTerm, setSearchTerm] = useState("");
   const [allowedForms, setAllowedForms] = useState({ visitor: false, accommodation: false });
+  const [establishment, setEstablishment] = useState<EstablishmentReportingRow | null>(null);
   const now = new Date();
   const [selectedYear, setSelectedYear] = useState(now.getFullYear());
   const [selectedMonth, setSelectedMonth] = useState(now.getMonth());
@@ -128,12 +115,13 @@ export default function SubmissionHistory() {
     if (profileData?.establishment_id) {
       const { data: establishment } = await supabase
         .from("establishments")
-        .select("type,total_rooms,reporting_mode")
+        .select("id,name,type,dot_classification,reporting_mode,ae_id,attraction_code,total_rooms,status,business_permit_number")
         .eq("id", profileData.establishment_id)
         .maybeSingle();
 
       canSeeVisitor = canSubmitVisitorReport(establishment);
       canSeeAccommodation = canSubmitAccommodationReport(establishment);
+      setEstablishment(establishment as EstablishmentReportingRow | null);
     }
 
     setAllowedForms({ visitor: canSeeVisitor, accommodation: canSeeAccommodation });
@@ -267,75 +255,38 @@ export default function SubmissionHistory() {
   const pendingCount = filteredSubmissions.filter((s) => s.status === "pending").length;
   const rejectedCount = filteredSubmissions.filter((s) => s.status === "rejected").length;
 
-  const exportBaseMetadata = () => {
-    const selectedMonthLabel = formatSelectedMonth(selectedYear, selectedMonth);
-    return { selectedMonthLabel };
-  };
-
-  const buildExportFilename = (prefix: string) => {
-    const { selectedMonthLabel } = exportBaseMetadata();
-    const filenameParts = [
-      prefix,
-      selectedMonthLabel.toLowerCase().replace(/\s+/g, "-"),
-    ];
-    return `${filenameParts.join("-").replace(/[^a-z0-9-]+/g, "-")}.csv`;
+  const exportOfficialWorkbook = async (section: "daytour" | "overnight") => {
+    if (!establishment) throw new Error("Establishment information is unavailable. Please retry.");
+    const selectedMonths = selectedMonth === -1 ? undefined : [selectedMonth + 1];
+    const period = selectedMonth === -1 ? String(selectedYear) : `${selectedYear}-${String(selectedMonth + 1).padStart(2, "0")}`;
+    await downloadOfficialArrivalsWorkbook({
+      filename: section === "daytour"
+        ? `Balayan_Resort_Daytour_Arrivals_${period}.xlsx`
+        : `Balayan_Overnight_Arrivals_${period}.xlsx`,
+      year: selectedYear,
+      selectedMonths,
+      exportSection: section,
+      includeEstablishmentsWithoutPermit: true,
+      establishments: [establishment],
+      visitors: section === "daytour" ? visitorReports.map((report) => ({
+        ...report,
+        establishment_id: establishment.id,
+        report_date: report.report_date || "",
+      })) : [],
+      accommodation: section === "overnight" ? accommodationReports.map((report) => ({
+        ...report,
+        establishment_id: establishment.id,
+        report_date: report.report_date || "",
+      })) : [],
+    });
   };
 
   const handleExportResortData = () => {
-    const visitorRows = filteredVisitorReports
-      .slice()
-      .sort((a, b) => (a.report_date || "").localeCompare(b.report_date || ""))
-      .map((report) => [
-        formatDate(report.report_date),
-        formatDate(report.created_at),
-        report.status || "pending",
-        report.guest_name || "",
-        report.residence_type || "",
-        report.place_of_residence || "",
-        Number(report.total_male || 0),
-        Number(report.total_female || 0),
-        Number(report.total_guests || 0),
-        report.id,
-      ]);
-
-    const rows: (string | number)[][] = [
-      ["VistaBalayan Resort Visitor Data Export"],
-      [],
-      ["Visitor report details"],
-      ["Report date", "Submitted", "Status", "Guest Group", "Residence type", "Place of residence", "Male", "Female", "Total visitors", "Report ID"],
-      ...(visitorRows.length > 0 ? visitorRows : [["No visitor records", "", "", "", "", "", "", "", "", ""]]),
-    ];
-
-    downloadCsv(buildExportFilename("resort-visitor-data"), rows);
+    void exportOfficialWorkbook("daytour").catch((error) => console.error("Resort workbook export error:", error));
   };
 
   const handleExportHotelData = () => {
-    const accommodationRows = filteredAccommodationReports
-      .slice()
-      .sort((a, b) => (a.report_date || "").localeCompare(b.report_date || ""))
-      .map((report) => {
-        const occupancy = calculateAccommodationOccupancy(report.total_occupied_rooms, report.total_rooms, report.report_date);
-        return [
-          formatDate(report.report_date),
-          formatDate(report.created_at),
-          report.status || "pending",
-          Number(report.total_rooms || 0),
-          Number(report.total_occupied_rooms || 0),
-          `${occupancy.toFixed(2)}%`,
-          Number(report.total_check_ins || 0),
-          Number(report.total_guest_nights || 0),
-        ];
-      });
-
-    const rows: (string | number)[][] = [
-      ["VistaBalayan Hotel Accommodation Data Export"],
-      [],
-      ["Accommodation report details"],
-      ["Report date", "Submitted", "Status", "Total rooms", "Occupied rooms", "Occupancy", "Check-ins", "Guest nights"],
-      ...(accommodationRows.length > 0 ? accommodationRows : [["No accommodation records", "", "", "", "", "", "", ""]]),
-    ];
-
-    downloadCsv(buildExportFilename("hotel-accommodation-data"), rows);
+    void exportOfficialWorkbook("overnight").catch((error) => console.error("Overnight workbook export error:", error));
   };
 
   const getVisitorRecordsForSubmission = (submission: StaffSubmissionSummary) =>
@@ -350,52 +301,38 @@ export default function SubmissionHistory() {
     setViewingSubmission(submission);
   };
 
-  const handleDownloadSubmission = (submission: StaffSubmissionSummary) => {
+  const handleDownloadSubmission = async (submission: StaffSubmissionSummary) => {
+    if (!establishment) return;
+    const dateParts = getDateParts(submission.reportDate);
+    if (!dateParts) return;
     if (submission.type === "Visitor Report") {
       const records = getVisitorRecordsForSubmission(submission);
-      const rows: (string | number)[][] = [
-        ["VistaBalayan Resort Visitor Submission"],
-        [],
-        ["Report date", "Submitted", "Status", "Guest Group", "Residence type", "Place of residence", "Male", "Female", "Total visitors", "Report ID"],
-        ...(records.length > 0
-          ? records.map((report) => [
-              formatDate(report.report_date),
-              formatDate(report.created_at),
-              report.status || "pending",
-              report.guest_name || "",
-              report.residence_type || "",
-              report.place_of_residence || "",
-              Number(report.total_male || 0),
-              Number(report.total_female || 0),
-              Number(report.total_guests || 0),
-              report.id,
-            ])
-          : [["No visitor records", "", "", "", "", "", "", "", "", ""]]),
-      ];
-      downloadCsv(buildExportFilename("resort-submission"), rows);
+      await downloadOfficialArrivalsWorkbook({
+        filename: `Balayan_Resort_Daytour_Submission_${submission.reportDate || "report"}.xlsx`,
+        year: dateParts.year,
+        selectedMonths: [dateParts.month + 1],
+        exportSection: "daytour",
+        includeEstablishmentsWithoutPermit: true,
+        establishments: [establishment],
+        visitors: records.map((report) => ({ ...report, establishment_id: establishment.id, report_date: report.report_date || "" })),
+        accommodation: [],
+      });
       return;
     }
 
     const report = getAccommodationRecordForSubmission(submission);
-    const occupancy = report ? calculateAccommodationOccupancy(report.total_occupied_rooms, report.total_rooms, report.report_date) : 0;
-    const rows: (string | number)[][] = [
-      ["VistaBalayan Hotel Accommodation Submission"],
-      [],
-      ["Report date", "Submitted", "Status", "Total rooms", "Occupied rooms", "Occupancy", "Check-ins", "Guest nights"],
-      report
-        ? [
-            formatDate(report.report_date),
-            formatDate(report.created_at),
-            report.status || "pending",
-            Number(report.total_rooms || 0),
-            Number(report.total_occupied_rooms || 0),
-            `${occupancy.toFixed(2)}%`,
-            Number(report.total_check_ins || 0),
-            Number(report.total_guest_nights || 0),
-          ]
-        : ["No accommodation record", "", "", "", "", "", "", ""],
-    ];
-    downloadCsv(buildExportFilename("hotel-submission"), rows);
+    await downloadOfficialArrivalsWorkbook({
+      filename: `Balayan_Overnight_Submission_${submission.reportDate || "report"}.xlsx`,
+      year: dateParts.year,
+      selectedMonths: [dateParts.month + 1],
+      exportSection: "overnight",
+      includeEstablishmentsWithoutPermit: true,
+      establishments: [establishment],
+      visitors: [],
+      accommodation: report
+        ? [{ ...report, establishment_id: establishment.id, report_date: report.report_date || "" }]
+        : [],
+    });
   };
 
   if (loading) {
