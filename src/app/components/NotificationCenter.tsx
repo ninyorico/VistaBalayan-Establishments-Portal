@@ -40,6 +40,22 @@ const typeStyles: Record<string, { border: string; bg: string; icon: string }> =
   info: { border: "border-[#1CA7C9]", bg: "bg-[#e5f1f2]", icon: "text-[#0E5A72]" },
 };
 
+const phoneNotificationKey = (userId: string) => `vistabalayan-phone-notified:${userId}`;
+
+function getPhoneNotifiedIds(userId?: string): Set<string> {
+  if (!userId) return new Set<string>();
+  try {
+    const parsed = JSON.parse(localStorage.getItem(phoneNotificationKey(userId)) || "[]");
+    return new Set<string>(Array.isArray(parsed) ? parsed.filter((id): id is string => typeof id === "string") : []);
+  } catch {
+    return new Set<string>();
+  }
+}
+
+function savePhoneNotifiedIds(userId: string, ids: Set<string>) {
+  localStorage.setItem(phoneNotificationKey(userId), JSON.stringify([...ids].slice(-200)));
+}
+
 function getLocalReadIds(userId?: string): Set<string> {
   if (!userId) return new Set<string>();
   try {
@@ -101,6 +117,9 @@ export default function NotificationCenter({ role }: NotificationCenterProps) {
   const [dbNotifications, setDbNotifications] = useState<AppNotification[]>([]);
   const [systemNotifications, setSystemNotifications] = useState<AppNotification[]>([]);
   const [localReadIds, setLocalReadIds] = useState<Set<string>>(() => getLocalReadIds(user?.id));
+  const [phonePermission, setPhonePermission] = useState<NotificationPermission | "unsupported">(() =>
+    typeof window !== "undefined" && "Notification" in window ? Notification.permission : "unsupported"
+  );
   const triggerRef = useRef<HTMLButtonElement>(null);
 
   useEffect(() => {
@@ -371,6 +390,39 @@ export default function NotificationCenter({ role }: NotificationCenterProps) {
   const notifications = useMemo(() => [...dbNotifications, ...systemNotifications].slice(0, 10), [dbNotifications, systemNotifications]);
   const unreadCount = notifications.filter((notification) => !notification.isRead).length;
 
+  const enablePhoneNotifications = async () => {
+    if (!("Notification" in window)) {
+      setPhonePermission("unsupported");
+      return;
+    }
+    const permission = await Notification.requestPermission();
+    setPhonePermission(permission);
+    if (permission === "granted" && user?.id) {
+      const notifiedIds = getPhoneNotifiedIds(user.id);
+      notifications.forEach((notification) => notifiedIds.add(`${notification.source}-${notification.id}`));
+      savePhoneNotifiedIds(user.id, notifiedIds);
+    }
+  };
+
+  useEffect(() => {
+    if (!user?.id || phonePermission !== "granted" || notifications.length === 0) return;
+    const notifiedIds = getPhoneNotifiedIds(user.id);
+    const newNotifications = notifications.filter((notification) => {
+      const key = `${notification.source}-${notification.id}`;
+      if (notifiedIds.has(key)) return false;
+      notifiedIds.add(key);
+      return !notification.isRead;
+    });
+    savePhoneNotifiedIds(user.id, notifiedIds);
+    newNotifications.slice(0, 3).forEach((notification) => {
+      new Notification(notification.title, {
+        body: notification.message,
+        tag: `vistabalayan-${notification.source}-${notification.id}`,
+        icon: "/favicon.ico",
+      });
+    });
+  }, [notifications, phonePermission, user?.id]);
+
   const markRead = async (notification: AppNotification) => {
     if (notification.source === "database") {
       await supabase.from("notifications").update({ is_read: true, read_at: new Date().toISOString() }).eq("id", notification.id);
@@ -481,6 +533,20 @@ export default function NotificationCenter({ role }: NotificationCenterProps) {
           </div>
 
           <div className="border-t border-[#D9E2EC] p-3">
+            {phonePermission !== "granted" && phonePermission !== "unsupported" && (
+              <button
+                type="button"
+                onClick={enablePhoneNotifications}
+                className="mb-2 w-full rounded-2xl border border-[#B8D9DF] bg-[#F2FBFC] px-4 py-2 text-center text-sm font-semibold text-[#0E5A72] transition-colors hover:bg-[#E5F4F6]"
+              >
+                Enable phone notifications
+              </button>
+            )}
+            {phonePermission === "denied" && (
+              <p className="mb-2 text-center text-xs leading-5 text-slate-500">
+                Phone notifications are blocked. Allow notifications for this site in your browser settings.
+              </p>
+            )}
             <button
               type="button"
               onClick={() => {
