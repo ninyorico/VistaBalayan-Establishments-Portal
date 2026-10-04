@@ -237,6 +237,25 @@ const shiftMergedRanges = (sheet: ExcelJS.Worksheet, insertRow: number, rowCount
     sheet.mergeCells(`${shift(start)}:${shift(end)}`);
   });
 };
+const removeRowsAndShiftMerges = (sheet: ExcelJS.Worksheet, startRow: number, rowCount: number) => {
+  if (rowCount <= 0) return;
+  const endRow = startRow + rowCount - 1;
+  const ranges = [...sheet.model.merges];
+  ranges.forEach((range) => sheet.unMergeCells(range));
+  sheet.spliceRows(startRow, rowCount);
+  ranges.forEach((range) => {
+    const [start, end = start] = range.split(":");
+    const rowOf = (address: string) => Number(address.match(/\d+$/)?.[0] || 0);
+    const shift = (address: string) => address.replace(/(\d+)$/, (_, row) => String(Number(row) - rowCount));
+    const startRowNumber = rowOf(start);
+    const endRowNumber = rowOf(end);
+    if (startRowNumber >= startRow && endRowNumber <= endRow) return;
+    if (startRowNumber < startRow && endRowNumber > endRow) return;
+    const shiftedStart = startRowNumber > endRow ? shift(start) : start;
+    const shiftedEnd = endRowNumber > endRow ? shift(end) : end;
+    sheet.mergeCells(`${shiftedStart}:${shiftedEnd}`);
+  });
+};
 const setFormula = (cell: ExcelJS.Cell, formula: string) => {
   cell.value = null;
   cell.value = { formula };
@@ -274,6 +293,7 @@ export const downloadOfficialArrivalsWorkbook = async ({
   if (!template.ok) throw new Error(`Official arrivals template could not be loaded (${template.status})`);
   const workbook = new ExcelJS.Workbook();
   await workbook.xlsx.load(await template.arrayBuffer());
+  if (exportSection !== "both") workbook.removeWorksheet("GRAND TOTAL");
   const allMonthSheets = workbook.worksheets.filter((sheet) => sheet.name !== "GRAND TOTAL");
   allMonthSheets.forEach((sheet, index) => {
     if (months[index]) sheet.name = `${months[index].toUpperCase()} ${year}`;
@@ -421,6 +441,21 @@ export const downloadOfficialArrivalsWorkbook = async ({
     normalizeOvernightThirdMetric(sheet, overnightStartRow, overnightTotalRow - 1);
     normalizeOvernightSpacerBorders(sheet, 43, overnightTotalRow);
     autoFitExportColumns(sheet);
+
+    if (exportSection === "daytour") {
+      removeRowsAndShiftMerges(sheet, daytourTotalRow + 1, sheet.rowCount - daytourTotalRow);
+      (sheet as ExcelJS.Worksheet & { _rows: unknown[] })._rows.length = daytourTotalRow;
+    } else if (exportSection === "overnight") {
+      const rowsBeforeOvernightTable = overnightStartRow - 14;
+      removeRowsAndShiftMerges(sheet, 10, rowsBeforeOvernightTable);
+      const compactOvernightStartRow = 14;
+      const compactOvernightTotalRow = overnightTotalRow - rowsBeforeOvernightTable;
+      for (let column = 5; column <= 7; column += 1) {
+        const letter = String.fromCharCode(64 + column);
+        setFormula(sheet.getCell(compactOvernightTotalRow, column), `SUM(${letter}${compactOvernightStartRow}:${letter}${compactOvernightTotalRow - 1})`);
+      }
+      (sheet as ExcelJS.Worksheet & { _rows: unknown[] })._rows.length = 26 + overnightExtraRows;
+    }
   }
   const grandTotal = workbook.getWorksheet("GRAND TOTAL");
   const exportedDaytourTotalRow = 38 + daytourExtraRows;
