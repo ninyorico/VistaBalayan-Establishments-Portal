@@ -204,6 +204,7 @@ const formatGrandTotalSheet = (sheet: ExcelJS.Worksheet, establishmentEndRow: nu
     nameCell.style = JSON.parse(JSON.stringify(establishmentNameStyle));
     nameCell.alignment = { ...establishmentNameAlignment };
     nameCell.font = { ...establishmentNameFont, bold: true, italic: false };
+    sheet.getCell(row, 3).fill = { type: "pattern", pattern: "none" };
   }
   for (let row = 3; row <= totalRow; row += 1) {
     const totalCell = sheet.getCell(row, 3);
