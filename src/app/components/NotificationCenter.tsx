@@ -4,6 +4,7 @@ import { Bell, CheckCheck, Clock, ExternalLink, FileText, Loader2, RefreshCw, Sp
 import { supabase } from "../../lib/supabase";
 import { useAuth } from "../../contexts/AuthContext";
 import { OFFICIAL_REPORT_STATUS } from "../../lib/reporting";
+import { registerPushDevice, sendPushTest } from "../../lib/pushNotifications";
 
 type NotificationCenterProps = {
   role: "municipal_officer" | "establishment_staff";
@@ -397,33 +398,22 @@ export default function NotificationCenter({ role }: NotificationCenterProps) {
       setPhonePermission("unsupported");
       return;
     }
-    const permission = await Notification.requestPermission();
-    setPhonePermission(permission);
-    if (permission === "granted" && user?.id) {
-      const notifiedIds = getPhoneNotifiedIds(user.id);
-      notifications.forEach((notification) => notifiedIds.add(`${notification.source}-${notification.id}`));
-      savePhoneNotifiedIds(user.id, notifiedIds);
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session?.access_token) throw new Error("Please sign in again before enabling device notifications.");
+      await registerPushDevice(session.access_token);
+      await sendPushTest(session.access_token, role);
+      setPhonePermission("granted");
+      if (user?.id) {
+        const notifiedIds = getPhoneNotifiedIds(user.id);
+        notifications.forEach((notification) => notifiedIds.add(`${notification.source}-${notification.id}`));
+        savePhoneNotifiedIds(user.id, notifiedIds);
+      }
+    } catch (notificationError) {
+      setError(notificationError instanceof Error ? notificationError.message : "Unable to enable device notifications.");
     }
   };
 
-  useEffect(() => {
-    if (!user?.id || phonePermission !== "granted" || notifications.length === 0) return;
-    const notifiedIds = getPhoneNotifiedIds(user.id);
-    const newNotifications = notifications.filter((notification) => {
-      const key = `${notification.source}-${notification.id}`;
-      if (notifiedIds.has(key)) return false;
-      notifiedIds.add(key);
-      return !notification.isRead;
-    });
-    savePhoneNotifiedIds(user.id, notifiedIds);
-    newNotifications.slice(0, 3).forEach((notification) => {
-      new Notification(notification.title, {
-        body: notification.message,
-        tag: `vistabalayan-${notification.source}-${notification.id}`,
-        icon: "/favicon.ico",
-      });
-    });
-  }, [notifications, phonePermission, user?.id]);
 
   const markRead = async (notification: AppNotification) => {
     if (notification.source === "database") {
