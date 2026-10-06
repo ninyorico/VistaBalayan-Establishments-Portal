@@ -774,6 +774,7 @@ export default function SubmitAccommodationReport() {
         </div>
       </div>
 
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(300px,360px)] lg:items-start">
       {/* Room Occupancy Table */}
       <div className="bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden">
         <div className="p-4 sm:p-5 lg:p-6 border-b border-gray-200">
@@ -849,9 +850,10 @@ export default function SubmitAccommodationReport() {
       </div>
 
       {/* Computed Analytics */}
+      <aside className="space-y-4 lg:sticky lg:top-4">
       <div className="rounded-lg border border-[#AFB3B5]/45 bg-[#F5F8FF] p-4 shadow-sm sm:p-6">
         <h3 className="text-lg font-semibold text-gray-900 mb-4">Computed Analytics</h3>
-        <div className="grid grid-cols-3 gap-2 sm:gap-6">
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-3 lg:grid-cols-1">
           <div className="rounded-lg border border-[#B88A52]/35 bg-[#FBE7BA] p-2 sm:p-4">
             <p className="mb-1 text-[10px] font-medium text-[#193364] sm:text-sm">Guest Check-in</p>
             <p className="text-xl font-bold text-[#193364] sm:text-3xl">{totalCheckIns}</p>
@@ -871,13 +873,15 @@ export default function SubmitAccommodationReport() {
       </div>
 
       {/* Action Buttons */}
-      <div className="grid grid-cols-1 gap-3 sm:flex sm:gap-4">
-        <button onClick={handleSaveDraft} className="flex w-full sm:w-auto items-center justify-center gap-2 px-6 py-3 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200">
+      <div className="grid grid-cols-1 gap-3">
+        <button onClick={handleSaveDraft} className="flex w-full items-center justify-center gap-2 rounded-lg bg-gray-100 px-6 py-3 text-gray-700 hover:bg-gray-200">
           <Save className="w-5 h-5" /> Save Draft
         </button>
-        <button onClick={handleSubmit} disabled={submitting || !hasAccommodationEntries} title={!hasAccommodationEntries ? "Enter at least one guest value before submitting" : undefined} className="flex w-full sm:w-auto items-center justify-center gap-2 px-6 py-3 bg-[#0F4C75] text-white rounded-lg hover:bg-[#0F4C75] disabled:cursor-not-allowed disabled:opacity-60">
+        <button onClick={handleSubmit} disabled={submitting || !hasAccommodationEntries} title={!hasAccommodationEntries ? "Enter at least one guest value before submitting" : undefined} className="flex w-full items-center justify-center gap-2 rounded-lg bg-[#0F4C75] px-6 py-3 text-white hover:bg-[#0F4C75] disabled:cursor-not-allowed disabled:opacity-60">
           <Send className="w-5 h-5" /> {submitting ? "Submitting..." : "Submit Hotel Report"}
         </button>
+      </div>
+      </aside>
       </div>
     </div>
   );
