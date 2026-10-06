@@ -124,15 +124,15 @@ export default function Login() {
   };
 
   return (
-    <main className="min-h-[100dvh] bg-[#E5E8E1] text-[#193364]">
+    <main className="min-h-[100dvh] bg-[#E0E5EC] text-[#193364]">
       <div className="grid min-h-[100dvh] grid-cols-1 lg:grid-cols-[1.08fr_0.92fr]">
         <section className="relative hidden overflow-hidden bg-gradient-to-br from-[#193364] via-[#193364] to-[#0F3B2D] lg:block">
           <img
             src="/balayan-church-login.jpg"
             alt="Historic church and statues in Balayan"
-            className="absolute inset-0 h-full w-full object-cover opacity-80"
+            className="absolute inset-0 h-full w-full object-cover opacity-90"
           />
-          <div className="absolute inset-0 bg-[linear-gradient(135deg,rgba(25,51,100,0.92),rgba(15,59,45,0.56)_45%,rgba(108,151,114,0.62))]" />
+          <div className="absolute inset-0 bg-[linear-gradient(135deg,rgba(25,51,100,0.86),rgba(15,59,45,0.56)_45%,rgba(108,151,114,0.66))]" />
           <div className="absolute inset-x-0 bottom-0 h-1/2 bg-gradient-to-t from-slate-950 via-slate-950/45 to-transparent" />
 
           <div className="relative z-10 flex min-h-[100dvh] flex-col justify-between p-10 xl:p-14">
@@ -160,12 +160,12 @@ export default function Login() {
           </div>
         </section>
 
-        <section className="relative flex min-h-[100dvh] items-center justify-center overflow-hidden bg-[#E5E8E1] px-5 py-8 sm:px-8 lg:px-12">
-          <div className="absolute inset-0 bg-[radial-gradient(circle_at_18%_18%,rgba(245,248,255,0.72),transparent_32%),radial-gradient(circle_at_82%_80%,rgba(251,231,186,0.42),transparent_30%)]" />
+        <section className="relative flex min-h-[100dvh] items-center justify-center overflow-hidden bg-[#E0E5EC] px-5 py-8 sm:px-8 lg:px-12">
+          <div className="absolute inset-0 bg-[radial-gradient(circle_at_18%_18%,rgba(255,255,255,0.58),transparent_32%),radial-gradient(circle_at_82%_80%,rgba(193,197,195,0.30),transparent_30%)]" />
 
           <div className="relative z-10 w-full max-w-[440px]">
             <div className="mb-8 lg:hidden">
-              <div className="mb-5 flex h-12 w-12 items-center justify-center rounded-2xl bg-[#E5E8E1] text-[#193364] shadow-[6px_6px_12px_rgba(163,177,198,0.58),-6px_-6px_12px_rgba(255,255,255,0.7)]">
+              <div className="mb-5 flex h-12 w-12 items-center justify-center rounded-2xl bg-[#E0E5EC] text-[#193364] shadow-[6px_6px_12px_rgba(163,177,198,0.58),-6px_-6px_12px_rgba(255,255,255,0.7)]">
                 <ShieldCheck className="h-5 w-5" strokeWidth={1.8} />
               </div>
               <p className="text-3xl font-semibold tracking-[-0.035em] text-[#193364]">VistaBalayan</p>
