@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, type MouseEvent } from "react";
 import { useNavigate } from "react-router";
 import { Save, Send, Settings, AlertTriangle, Plus, Trash2 } from "lucide-react";
 import { toast } from "sonner";
@@ -469,6 +469,12 @@ export default function SubmitAccommodationReport() {
     }));
   };
 
+  const handleGuestFieldDoubleClick = (event: MouseEvent<HTMLInputElement>, index: number) => {
+    event.preventDefault();
+    event.stopPropagation();
+    toggleGuestType(index);
+  };
+
   const getAutomaticallyOccupiedRooms = (room: RoomOccupancy) => room.guestNights > 0 ? 1 : 0;
 
   const totalOccupiedRooms = roomData.reduce(
@@ -831,7 +837,10 @@ export default function SubmitAccommodationReport() {
                           pattern="[0-9]*"
                           value={numericInputValue(room.isNewGuest ? room.checkIns : room.continuingGuests)}
                           onChange={(e) => updateSingleGuestValue(index, parseNonNegativeInteger(e.target.value))}
-                          onDoubleClick={() => toggleGuestType(index)}
+                          onMouseDown={(e) => {
+                            if (e.detail > 1) e.preventDefault();
+                          }}
+                          onDoubleClick={(e) => handleGuestFieldDoubleClick(e, index)}
                           className={room.isNewGuest ? "mx-auto w-full max-w-[150px] rounded-full border-[3px] !border-red-600 bg-white px-2 py-2 text-center text-sm font-bold tabular-nums text-red-700" : "mx-auto w-full max-w-[150px] rounded-md border border-gray-300 bg-white px-2 py-2 text-center text-sm font-normal tabular-nums text-gray-700"}
                           style={room.isNewGuest ? { color: "#b91c1c", borderColor: "#dc2626", borderWidth: "3px", borderStyle: "solid", borderRadius: "9999px" } : undefined}
                           data-new-guest-field={room.isNewGuest ? "true" : undefined}
