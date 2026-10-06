@@ -136,7 +136,7 @@ export default function SubmissionHistory() {
       establishmentId
         ? supabase
             .from("visitor_reports")
-            .select("id, report_date, created_at, status, guest_name, total_male, total_female, total_guests, residence_type, place_of_residence")
+            .select("id, report_date, created_at, status, guest_name, total_male, total_female, total_guests, residence_category, residence_type, place_of_residence, municipality, province, country")
             .eq("establishment_id", establishmentId)
             .order("created_at", { ascending: false })
         : Promise.resolve({ data: [], error: null }),

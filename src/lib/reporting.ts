@@ -81,12 +81,45 @@ export interface VisitorSourceRecord {
   total_guests?: number | null;
   residence_category?: ResidenceCategory | null;
   residence_type?: string | null;
+  place_of_residence?: string | null;
   municipality?: string | null;
   province?: string | null;
   country?: string | null;
   status?: string | null;
   establishments?: EstablishmentReportingRow | EstablishmentReportingRow[] | null;
 }
+
+export type VisitorResidenceFields = {
+  residence_category?: string | null;
+  residence_type?: string | null;
+  place_of_residence?: string | null;
+  municipality?: string | null;
+  province?: string | null;
+  country?: string | null;
+};
+
+export const normalizeResidenceCategory = (record: VisitorResidenceFields): ResidenceCategory | null => {
+  const explicit = String(record.residence_category || "").trim().toUpperCase().replace(/[- ]/g, "_");
+  if (explicit === "THIS_PROVINCE" || explicit === "OTHER_PROVINCE" || explicit === "FOREIGN") return explicit;
+  const legacy = String(record.residence_type || "").trim().toLowerCase();
+  const province = String(record.province || "").trim().toLowerCase();
+  const place = String(record.place_of_residence || "").trim().toLowerCase();
+  if (legacy.includes("foreign") || legacy.includes("international") || Boolean(record.country)) return "FOREIGN";
+  if (legacy.includes("other province") || legacy.includes("outside") || legacy.includes("domestic")) return "OTHER_PROVINCE";
+  if (legacy.includes("this province") || legacy.includes("within") || province.includes("batangas") || place.includes("batangas")) return "THIS_PROVINCE";
+  if (legacy) return "OTHER_PROVINCE";
+  return null;
+};
+
+export const getVisitorResidenceLocation = (record: VisitorResidenceFields) => {
+  const category = normalizeResidenceCategory(record);
+  const explicitCategory = String(record.residence_category || "").trim().toUpperCase().replace(/[- ]/g, "_");
+  const legacyValue = String(record.residence_type || "").trim();
+  const legacyIsCategory = ["THIS_PROVINCE", "OTHER_PROVINCE", "FOREIGN", "THIS PROVINCE", "OTHER PROVINCE"].includes(legacyValue.toUpperCase());
+  if (!explicitCategory && legacyValue && !legacyIsCategory) return legacyValue;
+  if (category === "FOREIGN") return String(record.country || record.place_of_residence || "").trim() || "—";
+  return String(record.municipality || record.place_of_residence || record.province || "").trim() || "—";
+};
 
 export interface AccommodationSummary {
   establishmentId: string;

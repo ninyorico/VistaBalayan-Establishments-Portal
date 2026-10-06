@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { Download, Search } from "lucide-react";
 import { formatDate } from "../../lib/reportMetrics";
+import { getVisitorResidenceLocation, normalizeResidenceCategory } from "../../lib/reporting";
 
 interface VisitorRecord {
   id: string;
@@ -11,8 +12,12 @@ interface VisitorRecord {
   total_male?: number | null;
   total_female?: number | null;
   total_guests?: number | null;
+  residence_category?: string | null;
   residence_type?: string | null;
   place_of_residence?: string | null;
+  municipality?: string | null;
+  province?: string | null;
+  country?: string | null;
 }
 
 interface AccommodationRecord {
@@ -61,13 +66,10 @@ const getDateParts = (value?: string | null) => {
 };
 
 const getResidenceLabel = (record: VisitorRecord) => {
-  const residenceType = String(record.residence_type || "").trim().toUpperCase();
-  const placeOfResidence = String(record.place_of_residence || "").trim();
-  if (residenceType === "THIS_PROVINCE" || placeOfResidence.toUpperCase() === "THIS_PROVINCE") {
-    return "Batangas";
-  }
-  return placeOfResidence || record.residence_type || "—";
+  return normalizeResidenceCategory(record) || "—";
 };
+
+const getLocationLabel = (record: VisitorRecord) => getVisitorResidenceLocation(record);
 
 const matchesCommonFilters = (
   record: { report_date?: string | null; created_at?: string | null; status?: string | null },
@@ -169,7 +171,7 @@ export default function EstablishmentSubmissionRecords({
       searchTerm,
       selectedYear,
       selectedMonth,
-      [record.guest_name, record.residence_type, record.place_of_residence].join(" ")
+      [record.guest_name, record.residence_category, record.residence_type, record.place_of_residence, record.municipality, record.province, record.country].join(" ")
     )
   );
   const filteredAccommodation = accommodationReports.filter((record) =>
@@ -285,8 +287,8 @@ export default function EstablishmentSubmissionRecords({
           <div ref={tableVerticalRef} className={isVisitor ? "min-w-[820px] max-h-[27rem] overflow-y-auto overflow-x-hidden overscroll-y-contain [-webkit-overflow-scrolling:touch]" : "min-w-[760px] max-h-[27rem] overflow-y-auto overflow-x-hidden overscroll-y-contain [-webkit-overflow-scrolling:touch]"}>
           {isVisitor ? (
             <table className="w-full min-w-[820px] text-left text-sm">
-              <thead className="sticky top-0 z-10 border-b border-slate-200 bg-slate-50 text-xs uppercase tracking-wider text-slate-600"><tr><th className="px-5 py-3">Report date</th><th className="px-5 py-3">Status</th><th className="px-5 py-3">Guest / group</th><th className="px-5 py-3">Residence</th><th className="px-5 py-3">Male</th><th className="px-5 py-3">Female</th><th className="px-5 py-3">Total visitors</th></tr></thead>
-              <tbody className="divide-y divide-slate-100">{filteredVisitors.map((record) => <tr key={record.id} className="hover:bg-slate-50"><td className="px-5 py-4 font-medium text-slate-900">{formatDate(record.report_date)}</td><td className="px-5 py-4"><span className={`rounded-full px-2.5 py-1 text-xs font-semibold capitalize ${statusStyles[record.status || "pending"] || statusStyles.pending}`}>{record.status || "pending"}</span></td><td className="px-5 py-4 text-slate-700">{record.guest_name || "—"}</td><td className="px-5 py-4 text-slate-700">{getResidenceLabel(record)}</td><td className="px-5 py-4 text-blue-600">{Number(record.total_male || 0)}</td><td className="px-5 py-4 text-purple-600">{Number(record.total_female || 0)}</td><td className="px-5 py-4 font-semibold text-slate-900">{Number(record.total_guests || 0)}</td></tr>)}</tbody>
+              <thead className="sticky top-0 z-10 border-b border-slate-200 bg-slate-50 text-xs uppercase tracking-wider text-slate-600"><tr><th className="px-5 py-3">Report date</th><th className="px-5 py-3">Status</th><th className="px-5 py-3">Guest / group</th><th className="px-5 py-3">Residence</th><th className="px-5 py-3">Location</th><th className="px-5 py-3">Male</th><th className="px-5 py-3">Female</th><th className="px-5 py-3">Total visitors</th></tr></thead>
+              <tbody className="divide-y divide-slate-100">{filteredVisitors.map((record) => <tr key={record.id} className="hover:bg-slate-50"><td className="px-5 py-4 font-medium text-slate-900">{formatDate(record.report_date)}</td><td className="px-5 py-4"><span className={`rounded-full px-2.5 py-1 text-xs font-semibold capitalize ${statusStyles[record.status || "pending"] || statusStyles.pending}`}>{record.status || "pending"}</span></td><td className="px-5 py-4 text-slate-700">{record.guest_name || "—"}</td><td className="px-5 py-4 text-slate-700">{getResidenceLabel(record)}</td><td className="px-5 py-4 text-slate-700">{getLocationLabel(record)}</td><td className="px-5 py-4 text-blue-600">{Number(record.total_male || 0)}</td><td className="px-5 py-4 text-purple-600">{Number(record.total_female || 0)}</td><td className="px-5 py-4 font-semibold text-slate-900">{Number(record.total_guests || 0)}</td></tr>)}</tbody>
             </table>
           ) : (
             <table className="w-full min-w-[760px] text-left text-sm">

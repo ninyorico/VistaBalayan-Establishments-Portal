@@ -5,6 +5,7 @@ import { supabase } from "../../../lib/supabase";
 import { downloadReportMonitoringWorkbook } from "../../../lib/reportMonitoringExport";
 import DataState from "../../components/DataState";
 import { useDialogFocus } from "../../../hooks/useDialogFocus";
+import { getVisitorResidenceLocation, normalizeResidenceCategory } from "../../../lib/reporting";
 
 interface VisitorRecord {
   id: string;
@@ -17,14 +18,6 @@ interface VisitorRecord {
   residenceType: string;
   location: string;
 }
-
-const normalizeResidenceCategory = (value: string) => {
-  const normalized = value.trim().toLowerCase().replace(/[-_]/g, " ");
-  if (normalized.includes("foreign") || normalized.includes("international")) return "FOREIGN";
-  if (normalized.includes("this province") || normalized.includes("batangas") || normalized.includes("within")) return "THIS_PROVINCE";
-  if (normalized.includes("other province") || normalized.includes("outside") || normalized.includes("domestic") || normalized.includes("municipality")) return "OTHER_PROVINCE";
-  return normalized;
-};
 
 export default function VisitorMonitoring({ embedded = false }: { embedded?: boolean }) {
   const [visitorRecords, setVisitorRecords] = useState<VisitorRecord[]>([]);
@@ -91,8 +84,12 @@ export default function VisitorMonitoring({ embedded = false }: { embedded?: boo
           total_male,
           total_female,
           total_guests,
+          residence_category,
           residence_type,
           place_of_residence,
+          municipality,
+          province,
+          country,
           establishments (name)
         `)
         .in("status", ["pending", "submitted", "validated", "approved"])
@@ -120,8 +117,8 @@ export default function VisitorMonitoring({ embedded = false }: { embedded?: boo
       male: item.total_male || 0,
       female: item.total_female || 0,
       total: item.total_guests || 0,
-      residenceType: item.residence_type || "Unknown",
-      location: item.place_of_residence || "Unknown",
+      residenceType: normalizeResidenceCategory(item) || "—",
+      location: getVisitorResidenceLocation(item),
     }));
 
     setVisitorRecords(formattedRecords);
@@ -134,7 +131,7 @@ export default function VisitorMonitoring({ embedded = false }: { embedded?: boo
       record.establishment.toLowerCase().includes(searchTerm.toLowerCase()) ||
       record.location.toLowerCase().includes(searchTerm.toLowerCase());
     
-    const matchesResidence = filterResidence === "all" || normalizeResidenceCategory(record.residenceType) === filterResidence;
+    const matchesResidence = filterResidence === "all" || record.residenceType === filterResidence;
       
     let matchesDate = true;
     if (specificMonth) {

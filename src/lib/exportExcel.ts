@@ -1,5 +1,6 @@
 import * as ExcelJS from "exceljs";
 import { canSubmitAccommodationReport } from "./establishmentReportForms";
+import { getVisitorResidenceLocation, normalizeResidenceCategory } from "./reporting";
 
 export type TourismReportType = "Visitor Report" | "Accommodation Report";
 
@@ -199,7 +200,8 @@ const addResortSheet = (
     "ESTABLISHMENT",
     "RESERVED DATE",
     "GUEST NAME",
-    "MUNICIPALITY & PROVINCE",
+    "RESIDENCE",
+    "LOCATION",
     "CONTACT NUMBER",
     "ADULT (12 years old and above)",
     "CHILD (Below 12 years old)",
@@ -228,7 +230,8 @@ const addResortSheet = (
           report.establishment,
           report.reportDate,
           report.details?.guest_name || "",
-          report.details?.place_of_residence || report.details?.residence_type || "",
+          normalizeResidenceCategory(report.details || {}) || "—",
+          getVisitorResidenceLocation(report.details || {}),
           "",
           "",
           "",
