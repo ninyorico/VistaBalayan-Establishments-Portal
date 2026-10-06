@@ -255,6 +255,15 @@
     box-shadow: inset 4px 4px 8px rgba(163,177,198,.45), inset -4px -4px 8px rgba(255,255,255,.5) !important;
   }
 
+  /* New hotel guests must remain visibly circled despite the generic input reset above. */
+  .dashboard-neumorphic input[data-new-guest-field="true"] {
+    border-color: #dc2626 !important;
+    border-width: 3px !important;
+    border-style: solid !important;
+    border-radius: 9999px !important;
+    color: #b91c1c !important;
+  }
+
   .dashboard-neumorphic [data-ai-card-layout] {
     background: var(--neu-surface) !important;
     border-color: transparent !important;

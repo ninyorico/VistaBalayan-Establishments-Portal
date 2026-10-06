@@ -442,7 +442,9 @@ export default function SubmitAccommodationReport() {
       if (value === 0) {
         return { ...room, continuingGuests: 0, checkIns: 0, guestNights: 0, isNewGuest: false };
       }
-      const isCurrentDateEdit = reportDate === getTodayDate() && value > 0 && Number(room.previousGuestNights || 0) > 0;
+      const hasPreviousContinuingGuest = Number(room.previousGuestNights || 0) > 0
+        || (!room.isNewGuest && Number(room.continuingGuests || 0) > 0);
+      const isCurrentDateEdit = reportDate === getTodayDate() && value > 0 && hasPreviousContinuingGuest;
       const firstGuestAfterEmptyPreviousNight = Number(room.previousGuestNights || 0) === 0;
       const nextIsNewGuest = isCurrentDateEdit || (firstGuestAfterEmptyPreviousNight && value > 0) || Boolean(room.isNewGuest);
       const updatedRoom = nextIsNewGuest
@@ -831,6 +833,7 @@ export default function SubmitAccommodationReport() {
                           onDoubleClick={() => toggleGuestType(index)}
                           className={room.isNewGuest ? "mx-auto w-full max-w-[150px] rounded-full border-[3px] !border-red-600 bg-white px-2 py-2 text-center text-sm font-bold tabular-nums text-red-700" : "mx-auto w-full max-w-[150px] rounded-md border border-gray-300 bg-white px-2 py-2 text-center text-sm font-normal tabular-nums text-gray-700"}
                           style={room.isNewGuest ? { color: "#b91c1c", borderColor: "#dc2626", borderWidth: "3px", borderStyle: "solid", borderRadius: "9999px" } : undefined}
+                          data-new-guest-field={room.isNewGuest ? "true" : undefined}
                           placeholder="0"
                           title="Double-click to switch between continuing and new guest"
                           aria-label={`${room.roomType} current ${room.isNewGuest ? "new" : "continuing"} guest value. Double-click to switch type.`}
