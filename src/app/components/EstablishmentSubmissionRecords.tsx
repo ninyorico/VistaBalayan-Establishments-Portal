@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { Download, Search } from "lucide-react";
 import { formatDate } from "../../lib/reportMetrics";
-import { getVisitorResidenceLocation, normalizeResidenceCategory } from "../../lib/reporting";
+import { getVisitorResidenceLabel, getVisitorResidenceLocation } from "../../lib/reporting";
 
 interface VisitorRecord {
   id: string;
@@ -66,7 +66,7 @@ const getDateParts = (value?: string | null) => {
 };
 
 const getResidenceLabel = (record: VisitorRecord) => {
-  return normalizeResidenceCategory(record) || "—";
+  return getVisitorResidenceLabel(record);
 };
 
 const getLocationLabel = (record: VisitorRecord) => getVisitorResidenceLocation(record);

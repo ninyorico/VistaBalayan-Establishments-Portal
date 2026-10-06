@@ -111,14 +111,31 @@ export const normalizeResidenceCategory = (record: VisitorResidenceFields): Resi
   return null;
 };
 
+export const getVisitorResidenceLabel = (record: VisitorResidenceFields) => {
+  const category = normalizeResidenceCategory(record);
+  if (category === "THIS_PROVINCE") return "Batangas Province";
+  if (category === "OTHER_PROVINCE") return "Other Province";
+  if (category === "FOREIGN") return "Foreign";
+  return "—";
+};
+
 export const getVisitorResidenceLocation = (record: VisitorResidenceFields) => {
   const category = normalizeResidenceCategory(record);
   const explicitCategory = String(record.residence_category || "").trim().toUpperCase().replace(/[- ]/g, "_");
   const legacyValue = String(record.residence_type || "").trim();
   const legacyIsCategory = ["THIS_PROVINCE", "OTHER_PROVINCE", "FOREIGN", "THIS PROVINCE", "OTHER PROVINCE"].includes(legacyValue.toUpperCase());
-  if (!explicitCategory && legacyValue && !legacyIsCategory) return legacyValue;
-  if (category === "FOREIGN") return String(record.country || record.place_of_residence || "").trim() || "—";
-  return String(record.municipality || record.place_of_residence || record.province || "").trim() || "—";
+  if (!explicitCategory && legacyValue && !legacyIsCategory) {
+    const code = category === "THIS_PROVINCE" ? "B" : category === "FOREIGN" ? "F" : "O";
+    return `(${code}) ${legacyValue}`;
+  }
+  const location = category === "FOREIGN"
+    ? String(record.country || record.place_of_residence || "").trim()
+    : category === "THIS_PROVINCE"
+      ? "Batangas Province"
+      : String(record.municipality || record.place_of_residence || record.province || "").trim();
+  if (!location) return "—";
+  const code = category === "THIS_PROVINCE" ? "B" : category === "FOREIGN" ? "F" : "O";
+  return `(${code}) ${location}`;
 };
 
 export interface AccommodationSummary {

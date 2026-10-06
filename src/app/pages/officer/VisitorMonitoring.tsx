@@ -5,7 +5,7 @@ import { supabase } from "../../../lib/supabase";
 import { downloadReportMonitoringWorkbook } from "../../../lib/reportMonitoringExport";
 import DataState from "../../components/DataState";
 import { useDialogFocus } from "../../../hooks/useDialogFocus";
-import { getVisitorResidenceLocation, normalizeResidenceCategory } from "../../../lib/reporting";
+import { getVisitorResidenceLabel, getVisitorResidenceLocation } from "../../../lib/reporting";
 
 interface VisitorRecord {
   id: string;
@@ -117,7 +117,7 @@ export default function VisitorMonitoring({ embedded = false }: { embedded?: boo
       male: item.total_male || 0,
       female: item.total_female || 0,
       total: item.total_guests || 0,
-      residenceType: normalizeResidenceCategory(item) || "—",
+      residenceType: getVisitorResidenceLabel(item),
       location: getVisitorResidenceLocation(item),
     }));
 
