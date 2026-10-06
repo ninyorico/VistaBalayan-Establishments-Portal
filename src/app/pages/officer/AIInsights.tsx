@@ -143,7 +143,7 @@ export default function AIInsights() {
         <div className="grid grid-cols-1 gap-3 lg:grid-cols-2">
           {activeAnomalies.length > 0 ? (
             visibleAnomalies.map((anomaly, index) => (
-              <div key={anomaly.id} className={!showAllServiceGaps && index === 4 ? 'lg:col-span-2' : undefined}>
+              <div key={anomaly.id} className={`h-full ${!showAllServiceGaps && index === 4 ? 'lg:col-span-2' : ''}`}>
                 <AiAnomalyCard {...anomaly} />
               </div>
             ))

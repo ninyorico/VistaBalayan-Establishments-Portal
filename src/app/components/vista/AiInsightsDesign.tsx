@@ -146,7 +146,7 @@ export function AiAnomalyCard(anomaly: AiAnomalyCardProps) {
   const tone = severityTone(anomaly.severity);
 
   return (
-    <article className="group relative overflow-hidden rounded-2xl border border-slate-200 bg-white p-0 shadow-[0_14px_40px_rgba(15,23,42,0.05)] transition-all duration-500 hover:-translate-y-0.5 hover:shadow-[0_18px_55px_rgba(15,23,42,0.08)]" data-ai-card-layout="shadcn-anomaly-editorial">
+    <article className="group relative h-full overflow-hidden rounded-2xl border border-slate-200 bg-white p-0 shadow-[0_14px_40px_rgba(15,23,42,0.05)] transition-all duration-500 hover:-translate-y-0.5 hover:shadow-[0_18px_55px_rgba(15,23,42,0.08)]" data-ai-card-layout="shadcn-anomaly-editorial">
       <div className="p-4 sm:p-5">
         <div className="flex min-w-0 items-start justify-between gap-3">
           <div className="flex min-w-0 items-start gap-3">
