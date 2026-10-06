@@ -86,7 +86,7 @@ export function MetricCard({ label, value, helper, icon: Icon, tone = "bg-cyan-5
         <div className={cn("flex h-full items-start justify-between", compact ? "flex-col gap-3 sm:flex-row sm:gap-4" : "gap-4")}>
           <div className="flex min-w-0 flex-1 flex-col">
             <p className={cn("min-h-8 font-medium leading-4 text-[#5D6F73]", compact ? "text-[11px] sm:text-sm" : "text-sm")}>{label}</p>
-            <p className={cn("mt-2 flex min-h-12 items-start break-words font-semibold leading-tight tracking-[-0.035em] text-[#0B2530] tabular-nums", compact ? "text-2xl sm:text-3xl" : "text-3xl")}>{value}</p>
+            <p className={cn("mt-2 flex h-16 items-start break-words font-semibold leading-tight tracking-[-0.035em] text-[#0B2530] tabular-nums", compact ? "text-2xl sm:text-3xl" : "text-3xl")}>{value}</p>
             {helper && <p className={cn("mt-1 leading-5 text-[#5D6F73]", compact ? "text-[10px] sm:text-xs" : "text-xs")}>{helper}</p>}
           </div>
           <div className={cn("dashboard-neu-icon flex shrink-0 items-center justify-center rounded-2xl ring-1", compact ? "h-9 w-9 sm:h-11 sm:w-11" : "h-11 w-11", tone)}>
