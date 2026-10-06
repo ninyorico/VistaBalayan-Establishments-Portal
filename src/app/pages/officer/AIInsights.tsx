@@ -46,7 +46,7 @@ export default function AIInsights() {
 
   const activeAnomalies = anomalies.filter(a => !a.is_resolved)
   const visibleAnomalies = showAllServiceGaps ? activeAnomalies : activeAnomalies.slice(0, DEFAULT_AI_ITEMS_VISIBLE)
-  const visibleInsights = showAllRecommendations ? insights : insights.slice(0, DEFAULT_AI_ITEMS_VISIBLE)
+  const visibleInsights = showAllRecommendations ? insights.slice(0, 10) : insights.slice(0, DEFAULT_AI_ITEMS_VISIBLE)
 
   useEffect(() => {
     loadCachedData()
@@ -177,7 +177,7 @@ export default function AIInsights() {
         </div>
         {insights.length > DEFAULT_AI_ITEMS_VISIBLE && (
           <AiShowMoreButton onClick={() => setShowAllRecommendations((current) => !current)}>
-            {showAllRecommendations ? 'Show fewer recommendations' : `See all recommendations (${insights.length})`}
+            {showAllRecommendations ? 'Show fewer recommendations' : `See all recommendations (${Math.min(insights.length, 10)})`}
           </AiShowMoreButton>
         )}
       </AiSectionCard>

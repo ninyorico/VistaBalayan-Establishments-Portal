@@ -195,7 +195,7 @@ export function AiRecommendationCard(insight: AiRecommendationCardProps) {
 
   return (
     <article className="group relative isolate h-full overflow-hidden rounded-2xl border border-slate-200 bg-white p-0 shadow-[0_14px_40px_rgba(15,23,42,0.05)] transition-all duration-500 hover:-translate-y-0.5 hover:shadow-[0_18px_55px_rgba(15,23,42,0.08)] sm:p-0" data-ai-card-layout="shadcn-recommendation-editorial">
-      <div className="relative p-4 sm:p-5">
+      <div className="relative flex h-full flex-col p-4 sm:p-5">
         <div className="mb-3 flex items-start justify-between gap-3">
           <div className="flex min-w-0 items-start gap-3">
             <div className={cn("mt-0.5 flex size-9 shrink-0 items-center justify-center rounded-xl", tone.soft)}>
@@ -225,7 +225,7 @@ export function AiRecommendationCard(insight: AiRecommendationCardProps) {
             <AiFormattedText text={action} tone="action" />
           </div>
         )}
-        <div className="mt-4 flex items-center justify-between gap-3 border-t border-slate-100 pt-3">
+        <div className="mt-auto flex items-center justify-between gap-3 border-t border-slate-100 pt-3">
           <span className="min-w-0 truncate text-xs font-semibold uppercase tracking-[0.16em] text-slate-400">
             {cleanAiText(insight.category)}
           </span>
