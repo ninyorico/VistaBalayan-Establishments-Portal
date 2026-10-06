@@ -3,10 +3,11 @@ import { GoogleGenerativeAI } from '@google/generative-ai';
 import { getBearerToken, getSupabaseAdmin, readBody, sendJson } from './_utils/emailjs.js';
 
 const MODEL_NAMES = Array.from(new Set([
-  process.env.GEMINI_MODEL || 'gemini-2.5-flash',
+  'gemini-2.5-flash',
   'gemini-2.5-flash-lite',
+  process.env.GEMINI_MODEL,
   'gemini-3.6-flash',
-]));
+].filter(Boolean)));
 const OFFICIAL_REPORT_STATUS = 'submitted';
 const requestCounts = new Map();
 const WINDOW_MS = 60 * 1000;
@@ -114,15 +115,14 @@ const getScopedData = async (supabaseAdmin, profile, scope) => {
 };
 
 const generate = async (apiKey, data, scope) => {
-  const insightsPrompt = `You are a tourism data analyst for ${data.establishmentName}. Based only on these aggregate submitted-report values, return exactly ${scope === 'establishment' ? 3 : 4} concise recommendations as JSON: {"insights":[{"title":"max 6 words","description":"one sentence max 18 words with evidence","impact":"high|medium|low","category":"Seasonal|Operations|Marketing|Infrastructure","recommended_action":"one action sentence max 14 words","confidence_score":0.0}]}. Total visitors: ${data.totalVisitors}. Average occupancy: ${data.avgOccupancy}%. Monthly trends: ${JSON.stringify(data.monthlyTrends)}. Do not include personal data or invent facts.`;
-  const anomalyPrompt = `You are a tourism data analyst for ${data.establishmentName}. Analyze only these submitted aggregate visitor rows and return JSON {"anomalies":[{"type":"Unusual Drop","severity":"high|medium|low","description":"brief evidence-based description","recommendation":"brief action","establishment":"${data.establishmentName}","confidence_score":0.0}]}. Data: ${JSON.stringify(data.visitors.slice(0, 50))}. Do not include personal data or invent facts.`;
-  const [insightResult, anomalyResult] = await Promise.all([
-    generateContentWithFallback(apiKey, insightsPrompt),
-    generateContentWithFallback(apiKey, anomalyPrompt),
-  ]);
-  const insights = normalizeInsights(jsonObject(await insightResult.response.text()).insights);
-  const anomalies = normalizeAnomalies(jsonObject(await anomalyResult.response.text()).anomalies);
-  return { insights, anomalies, modelName: Array.from(new Set([insightResult.modelName, anomalyResult.modelName])).join(',') };
+  const prompt = `You are a tourism data analyst for ${data.establishmentName}. Based only on these aggregate submitted-report values, return one JSON object with exactly ${scope === 'establishment' ? 3 : 4} concise insights and evidence-based anomalies. Use this exact shape: {"insights":[{"title":"max 6 words","description":"one sentence max 18 words with evidence","impact":"high|medium|low","category":"Seasonal|Operations|Marketing|Infrastructure","recommended_action":"one action sentence max 14 words","confidence_score":0.0}],"anomalies":[{"type":"Unusual Drop","severity":"high|medium|low","description":"brief evidence-based description","recommendation":"brief action","establishment":"${data.establishmentName}","confidence_score":0.0}]}. Total visitors: ${data.totalVisitors}. Average occupancy: ${data.avgOccupancy}%. Monthly trends: ${JSON.stringify(data.monthlyTrends)}. Submitted visitor rows: ${JSON.stringify(data.visitors.slice(0, 50))}. Do not include personal data or invent facts.`;
+  const result = await generateContentWithFallback(apiKey, prompt);
+  const generated = jsonObject(await result.response.text());
+  return {
+    insights: normalizeInsights(generated.insights),
+    anomalies: normalizeAnomalies(generated.anomalies),
+    modelName: result.modelName,
+  };
 };
 
 const findCachedResults = async (supabaseAdmin, scope, establishmentId, requestId) => {
