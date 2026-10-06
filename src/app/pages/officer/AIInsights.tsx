@@ -139,9 +139,13 @@ export default function AIInsights() {
         countLabel={`${activeAnomalies.length} Active`}
         icon={<AlertTriangle className="size-5 text-amber-600" />}
       >
-        <div className="space-y-3">
+        <div className="grid grid-cols-1 gap-3 lg:grid-cols-2">
           {activeAnomalies.length > 0 ? (
-            visibleAnomalies.map((anomaly) => <AiAnomalyCard key={anomaly.id} {...anomaly} />)
+            visibleAnomalies.map((anomaly, index) => (
+              <div key={anomaly.id} className={!showAllServiceGaps && index === 4 ? 'lg:col-span-2' : undefined}>
+                <AiAnomalyCard {...anomaly} />
+              </div>
+            ))
           ) : (
             <AiEmptyState variant="gaps" />
           )}
@@ -160,7 +164,11 @@ export default function AIInsights() {
       >
         <div className="grid grid-cols-1 gap-3 lg:grid-cols-2">
           {insights.length > 0 ? (
-            visibleInsights.map((insight) => <AiRecommendationCard key={insight.id} {...insight} />)
+            visibleInsights.map((insight, index) => (
+              <div key={insight.id} className={!showAllRecommendations && index === 4 ? 'lg:col-span-2' : undefined}>
+                <AiRecommendationCard {...insight} />
+              </div>
+            ))
           ) : (
             <div className="lg:col-span-2">
               <AiEmptyState variant="recommendations" />
