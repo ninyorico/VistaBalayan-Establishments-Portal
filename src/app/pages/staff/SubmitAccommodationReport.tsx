@@ -782,7 +782,7 @@ export default function SubmitAccommodationReport() {
 
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(300px,360px)] lg:items-stretch">
       {/* Room Occupancy Table */}
-      <div className="flex min-h-0 flex-col overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-sm lg:h-[600px]">
+      <div className="flex min-h-0 flex-col overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-sm lg:h-[650px]">
         <div className="p-4 sm:p-5 lg:p-6 border-b border-gray-200">
           <h3 className="text-lg font-semibold text-gray-900">Daily Room Occupancy</h3>
           <p className="mt-1 text-sm text-gray-500 lg:hidden">Compact full-width table for faster phone entry.</p>
@@ -797,18 +797,18 @@ export default function SubmitAccommodationReport() {
         </div>
 
         {reportFormMode === "old-new" && (
-          <div className="overflow-x-auto overscroll-x-contain lg:h-[430px] lg:flex-none lg:overflow-auto lg:overscroll-contain">
+          <div className="overflow-x-auto overscroll-x-contain lg:h-[500px] lg:flex-none lg:overflow-auto lg:overscroll-contain">
             <table className="w-full min-w-0 table-fixed border-collapse">
               <thead className="sticky top-0 z-20 border-b border-gray-200 bg-gray-50"><tr><th className="w-[28%] bg-gray-50 px-2 py-3 text-center text-xs font-semibold uppercase text-gray-700">Room / Code</th><th className="w-[24%] bg-gray-50 px-2 py-3 text-center text-xs font-semibold uppercase text-gray-700">Previous-day guests</th><th className="w-[48%] bg-gray-50 px-2 py-3 text-center text-xs font-semibold uppercase text-[#0F4C75]">Current old / new</th></tr></thead>
-              <tbody className="divide-y divide-[#AFB3B5]/60">{roomData.map((room, index) => { const previousTotal = Number(room.previousGuestNights || 0); const previousNew = Math.min(Number(room.previousNewGuests || 0), previousTotal); return (
-                <tr key={room.roomCode} className="border-b border-[#AFB3B5]/60 bg-white"><th className="px-2 py-3 text-center"><div className="text-xs font-semibold text-gray-900 sm:text-sm">Room {getGeneratedRoomNumber(room.roomCode)}</div><div className="mt-1 inline-block rounded bg-gray-100 px-2 py-0.5 font-mono text-[10px] text-gray-600">{getBaseRoomCode(room.roomCode)}</div></th><td className="px-2 py-2 text-center"><span className={previousNew > 0 ? "inline-flex h-8 min-w-8 items-center justify-center rounded-full border-[3px] border-red-600 px-2 text-sm font-bold tabular-nums text-red-700" : "inline-flex text-sm font-normal tabular-nums text-gray-700"} style={previousNew > 0 ? { borderColor: "#dc2626", borderWidth: "3px", borderStyle: "solid", borderRadius: "9999px" } : undefined} aria-label={`${room.roomType} previous day guest value${previousNew > 0 ? ", includes new guest" : ", continuing guest"}`}>{previousTotal}</span></td><td className="px-2 py-2"><div className="grid gap-2 sm:grid-cols-2"><label className="text-center text-[10px] font-medium uppercase text-gray-500">Old<input type="text" inputMode="numeric" pattern="[0-9]*" value={numericInputValue(room.continuingGuests)} onChange={(e) => updateRoomData(index, "continuingGuests", parseNonNegativeInteger(e.target.value))} className="mt-1 w-full rounded-xl border-0 bg-[#E0E5EC] px-2 py-2 text-center text-sm tabular-nums text-[#193364]" aria-label={`${room.roomType} current old guest value`} /></label><label className="text-center text-[10px] font-medium uppercase text-gray-500">New<input type="text" inputMode="numeric" pattern="[0-9]*" value={numericInputValue(room.checkIns)} onChange={(e) => updateRoomData(index, "checkIns", parseNonNegativeInteger(e.target.value))} className="mt-1 w-full rounded-xl border-0 bg-[#FBE7BA] px-2 py-2 text-center text-sm tabular-nums text-[#193364]" aria-label={`${room.roomType} current new guest value`} /></label></div></td></tr>
+              <tbody className="divide-y divide-gray-200">{roomData.map((room, index) => { const previousTotal = Number(room.previousGuestNights || 0); const previousNew = Math.min(Number(room.previousNewGuests || 0), previousTotal); return (
+                <tr key={room.roomCode} className="border-b border-gray-200 bg-white"><th className="px-2 py-3 text-center"><div className="text-xs font-semibold text-gray-900 sm:text-sm">Room {getGeneratedRoomNumber(room.roomCode)}</div><div className="mt-1 inline-block rounded bg-gray-100 px-2 py-0.5 font-mono text-[10px] text-gray-600">{getBaseRoomCode(room.roomCode)}</div></th><td className="px-2 py-2 text-center"><span className={previousNew > 0 ? "inline-flex h-8 min-w-8 items-center justify-center rounded-full border-[3px] border-red-600 px-2 text-sm font-bold tabular-nums text-red-700" : "inline-flex text-sm font-normal tabular-nums text-gray-700"} style={previousNew > 0 ? { borderColor: "#dc2626", borderWidth: "3px", borderStyle: "solid", borderRadius: "9999px" } : undefined} aria-label={`${room.roomType} previous day guest value${previousNew > 0 ? ", includes new guest" : ", continuing guest"}`}>{previousTotal}</span></td><td className="px-2 py-2"><div className="grid gap-2 sm:grid-cols-2"><label className="text-center text-[10px] font-medium uppercase text-gray-500">Old<input type="text" inputMode="numeric" pattern="[0-9]*" value={numericInputValue(room.continuingGuests)} onChange={(e) => updateRoomData(index, "continuingGuests", parseNonNegativeInteger(e.target.value))} className="mt-1 w-full rounded-xl border-0 bg-[#E0E5EC] px-2 py-2 text-center text-sm tabular-nums text-[#193364]" aria-label={`${room.roomType} current old guest value`} /></label><label className="text-center text-[10px] font-medium uppercase text-gray-500">New<input type="text" inputMode="numeric" pattern="[0-9]*" value={numericInputValue(room.checkIns)} onChange={(e) => updateRoomData(index, "checkIns", parseNonNegativeInteger(e.target.value))} className="mt-1 w-full rounded-xl border-0 bg-[#FBE7BA] px-2 py-2 text-center text-sm tabular-nums text-[#193364]" aria-label={`${room.roomType} current new guest value`} /></label></div></td></tr>
               ); })}</tbody>
             </table>
           </div>
         )}
 
         {reportFormMode === "single" && (
-        <div className="overflow-x-auto overscroll-x-contain lg:h-[430px] lg:flex-none lg:overflow-auto lg:overscroll-contain">
+        <div className="overflow-x-auto overscroll-x-contain lg:h-[500px] lg:flex-none lg:overflow-auto lg:overscroll-contain">
           <table className="w-full min-w-0 table-fixed border-collapse">
             <thead className="sticky top-0 z-20 bg-gray-50 border-b border-gray-200">
               <tr>
@@ -822,7 +822,7 @@ export default function SubmitAccommodationReport() {
                   const previousTotal = room.previousGuestNights || 0;
                   const previousNew = Math.min(room.previousNewGuests || 0, previousTotal);
                   return (
-                    <tr key={index} className="border-b border-[#AFB3B5]/60 bg-white">
+                    <tr key={index} className="border-b border-gray-200 bg-white">
                       <th className="sticky left-0 z-10 border-r border-gray-200 bg-white px-1.5 py-2 text-center sm:px-3 sm:py-3">
                         <div className="truncate text-xs font-semibold text-gray-900 sm:text-sm">Room {getGeneratedRoomNumber(room.roomCode)}</div>
                         <div className="mt-0.5 inline-block max-w-full truncate rounded bg-gray-100 px-1.5 py-0.5 font-mono text-[9px] font-normal text-gray-600 sm:mt-1 sm:px-2 sm:text-[10px]">{getBaseRoomCode(room.roomCode)}</div>
@@ -859,7 +859,7 @@ export default function SubmitAccommodationReport() {
       </div>
 
       {/* Computed Analytics */}
-      <aside className="space-y-4 lg:sticky lg:top-4 lg:h-[600px]">
+      <aside className="space-y-4 lg:sticky lg:top-4 lg:h-[650px]">
       <div className="rounded-lg border border-[#AFB3B5]/45 bg-[#F5F8FF] p-4 shadow-sm sm:p-6">
         <h3 className="text-lg font-semibold text-gray-900 mb-4">Computed Analytics</h3>
         <div className="grid grid-cols-1 gap-3 sm:grid-cols-3 lg:grid-cols-1">
