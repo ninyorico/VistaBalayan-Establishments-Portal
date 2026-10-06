@@ -3,9 +3,9 @@ import { GoogleGenerativeAI } from '@google/generative-ai';
 import { getBearerToken, getSupabaseAdmin, readBody, sendJson } from './_utils/emailjs.js';
 
 const MODEL_NAMES = Array.from(new Set([
-  process.env.GEMINI_MODEL || 'gemini-3.6-flash',
-  'gemini-2.5-flash',
+  process.env.GEMINI_MODEL || 'gemini-2.5-flash',
   'gemini-2.5-flash-lite',
+  'gemini-3.6-flash',
 ]));
 const OFFICIAL_REPORT_STATUS = 'submitted';
 const requestCounts = new Map();
