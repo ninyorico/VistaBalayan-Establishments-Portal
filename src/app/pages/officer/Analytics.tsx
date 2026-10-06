@@ -72,6 +72,11 @@ const getSpecificOriginLabel = (record: VisitorReport, category: ResidenceCatego
 const monthLabel = (date: string) =>
   new Date(date).toLocaleString("default", { month: "short", year: "numeric" });
 
+const seasonalTickLabel = (value: string, index: number) => {
+  if (index % 2 === 0) return "";
+  return String(value).split(" ")[0];
+};
+
 const monthKey = (date: string) => date.slice(0, 7);
 
 const percentChange = (current: number, previous: number) =>
@@ -342,7 +347,7 @@ export default function Analytics() {
           <ResponsiveContainer width="100%" height={350}>
             <AreaChart data={data.seasonalData}>
               <CartesianGrid strokeDasharray="3 3" />
-              <XAxis dataKey="month" interval={0} angle={-35} textAnchor="end" height={75} tickMargin={8} />
+              <XAxis dataKey="month" interval={0} tickFormatter={seasonalTickLabel} height={32} tickMargin={8} />
               <YAxis />
               <Tooltip />
               <Legend />
