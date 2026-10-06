@@ -4,6 +4,7 @@ import {
   Area,
   BarChart,
   Bar,
+  Cell,
   XAxis,
   YAxis,
   CartesianGrid,
@@ -76,6 +77,8 @@ const seasonalTickLabel = (value: string, index: number) => {
   if (index % 2 === 0) return "";
   return String(value).split(" ")[0];
 };
+
+const performanceColors = ["#6474A5", "#5E8A75", "#B07A55", "#8B7AA8", "#C08A5A", "#5D8794"];
 
 const monthKey = (date: string) => date.slice(0, 7);
 
@@ -385,14 +388,31 @@ export default function Analytics() {
             <BarChart data={data.performanceData} layout="vertical">
               <CartesianGrid strokeDasharray="3 3" />
               <XAxis type="number" domain={[0, 100]} />
-              <YAxis dataKey="name" type="category" width={170} />
+              <YAxis dataKey="name" type="category" width={0} tick={false} axisLine={false} tickLine={false} />
               <Tooltip formatter={(value, name) => [name === "score" ? `${value}/100` : value, name === "score" ? "Performance Score" : name]} />
-              <Legend />
-              <Bar dataKey="score" fill="#6C63FF" name="Performance Score" />
+              <Bar dataKey="score" name="Performance Score">
+                {data.performanceData.map((entry, index) => (
+                  <Cell key={`${entry.name}-${index}`} fill={performanceColors[index % performanceColors.length]} />
+                ))}
+              </Bar>
             </BarChart>
           </ResponsiveContainer>
         ) : (
           <div className="text-center py-12 text-gray-500">No establishment data available</div>
+        )}
+        {data.performanceData.length > 0 && (
+          <div className="mt-4 flex flex-wrap justify-center gap-x-4 gap-y-2 text-sm text-gray-700" aria-label="High-performing establishments legend">
+            {data.performanceData.map((entry, index) => (
+              <span key={`legend-${entry.name}-${index}`} className="inline-flex max-w-full items-center gap-2">
+                <span
+                  className="h-3 w-3 shrink-0 rounded-sm"
+                  style={{ backgroundColor: performanceColors[index % performanceColors.length] }}
+                  aria-hidden="true"
+                />
+                <span className="max-w-[14rem] truncate" title={entry.name}>{entry.name}</span>
+              </span>
+            ))}
+          </div>
         )}
       </div>
 
