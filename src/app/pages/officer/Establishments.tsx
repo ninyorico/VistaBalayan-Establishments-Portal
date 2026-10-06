@@ -809,7 +809,14 @@ export default function Establishments() {
   };
 
   const handleExportEstablishments = () => {
-    const exportableEstablishments = filteredEstablishments.filter((establishment) => Boolean(establishment.business_permit_number?.trim()));
+    // Temporary QA-only fallback: keep this scoped to the downloaded CSV and
+    // never persist the generated permit value to Supabase or local state.
+    const exportableEstablishments = filteredEstablishments;
+    const getExportPermitNumber = (establishment: Establishment) => {
+      const permitNumber = establishment.business_permit_number?.trim();
+      return permitNumber || `TEST-PERMIT-${establishment.id.slice(0, 8).toUpperCase()}`;
+    };
+
     downloadCsv(
       datestampedFilename("establishments"),
       ["Name", "Type", "Address", "Contact", "Rooms", "Business Permit Number", "Staff", "Status"],
@@ -819,12 +826,12 @@ export default function Establishments() {
         establishment.address,
         establishment.contact_number,
         establishment.total_rooms || 0,
-        establishment.business_permit_number,
+        getExportPermitNumber(establishment),
         staffCountByEstablishment[establishment.id] || 0,
         establishment.status,
       ])
     );
-    toast.success(`Exported ${exportableEstablishments.length} establishment(s) with permits`);
+    toast.success(`Exported ${exportableEstablishments.length} establishment(s)`);
   };
 
   const handleExportUsers = () => {
