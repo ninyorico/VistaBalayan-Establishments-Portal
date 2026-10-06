@@ -797,7 +797,7 @@ export default function SubmitAccommodationReport() {
         </div>
 
         {reportFormMode === "old-new" && (
-          <div className="overflow-x-auto overscroll-x-contain lg:h-[390px] lg:flex-none lg:overflow-auto lg:overscroll-contain">
+          <div className="overflow-x-auto overscroll-x-contain lg:h-[430px] lg:flex-none lg:overflow-auto lg:overscroll-contain">
             <table className="w-full min-w-0 table-fixed border-collapse">
               <thead className="sticky top-0 z-20 border-b border-gray-200 bg-gray-50"><tr><th className="w-[28%] bg-gray-50 px-2 py-3 text-center text-xs font-semibold uppercase text-gray-700">Room / Code</th><th className="w-[24%] bg-gray-50 px-2 py-3 text-center text-xs font-semibold uppercase text-gray-700">Previous-day guests</th><th className="w-[48%] bg-gray-50 px-2 py-3 text-center text-xs font-semibold uppercase text-[#0F4C75]">Current old / new</th></tr></thead>
               <tbody className="divide-y divide-[#AFB3B5]/60">{roomData.map((room, index) => { const previousTotal = Number(room.previousGuestNights || 0); const previousNew = Math.min(Number(room.previousNewGuests || 0), previousTotal); return (
@@ -808,7 +808,7 @@ export default function SubmitAccommodationReport() {
         )}
 
         {reportFormMode === "single" && (
-        <div className="overflow-x-auto overscroll-x-contain lg:h-[390px] lg:flex-none lg:overflow-auto lg:overscroll-contain">
+        <div className="overflow-x-auto overscroll-x-contain lg:h-[430px] lg:flex-none lg:overflow-auto lg:overscroll-contain">
           <table className="w-full min-w-0 table-fixed border-collapse">
             <thead className="sticky top-0 z-20 bg-gray-50 border-b border-gray-200">
               <tr>
