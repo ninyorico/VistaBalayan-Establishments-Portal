@@ -101,7 +101,7 @@ export default function Analytics() {
   const currentMonthDemographicTotal = currentMonthMale + currentMonthFemale;
   const currentYearDemographicTotal = currentYearMale + currentYearFemale;
   const demographicValue: ReactNode = currentMonthDemographicTotal > 0
-    ? <span className="block max-w-full break-words"><span className="sm:hidden">{currentMonthMale.toLocaleString()} M / {currentMonthFemale.toLocaleString()} F</span><span className="hidden sm:inline">{currentMonthMale.toLocaleString()} Male / {currentMonthFemale.toLocaleString()} Female</span></span>
+    ? <span aria-label={`${currentMonthMale.toLocaleString()} Male / ${currentMonthFemale.toLocaleString()} Female`} className="block whitespace-nowrap">{currentMonthMale.toLocaleString()} M / {currentMonthFemale.toLocaleString()} F</span>
     : "No data";
   const demographicHelper = "current month";
 
