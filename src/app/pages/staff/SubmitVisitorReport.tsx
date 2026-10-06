@@ -50,7 +50,7 @@ export default function SubmitVisitorReport() {
   const [reportDate, setReportDate] = useState(new Date().toISOString().slice(0, 10));
   const [entries, setEntries] = useState<VisitorEntry[]>([createEmptyEntry(1)]);
   const [nextId, setNextId] = useState(2);
-  const [visibleResidenceTypes, setVisibleResidenceTypes] = useState<Record<number, ResidenceTypeKey[]>>({ 1: ["THIS_PROVINCE"] });
+  const [visibleResidenceTypes, setVisibleResidenceTypes] = useState<Record<number, ResidenceTypeKey[]>>({ 1: residenceTypes.map((type) => type.key) });
   const [establishmentName, setEstablishmentName] = useState("Loading...");
   const [error, setError] = useState<string | null>(null);
 
@@ -96,7 +96,7 @@ export default function SubmitVisitorReport() {
           },
         }), createEmptyBreakdown()),
       })));
-      setVisibleResidenceTypes(Object.fromEntries(validEntries.map((entry) => [entry.id, residenceTypes.filter((type) => type.key === "THIS_PROVINCE" || residenceTotal(entry, type.key) > 0 || Boolean(entry.breakdown[type.key].placeOfResidence)).map((type) => type.key)])));
+      setVisibleResidenceTypes(Object.fromEntries(validEntries.map((entry) => [entry.id, residenceTypes.map((type) => type.key)])));
       setNextId(Math.max(...validEntries.map((entry) => entry.id), 0) + 1);
       if (draft.reportDate) setReportDate(draft.reportDate);
       toast.success("Saved draft restored");
@@ -211,7 +211,7 @@ const loadProfile = async () => {
 
   const addEntry = () => {
     setEntries([...entries, createEmptyEntry(nextId)]);
-    setVisibleResidenceTypes((current) => ({ ...current, [nextId]: ["THIS_PROVINCE"] }));
+    setVisibleResidenceTypes((current) => ({ ...current, [nextId]: residenceTypes.map((type) => type.key) }));
     setNextId(nextId + 1);
   };
 
@@ -330,7 +330,7 @@ const loadProfile = async () => {
       if (draftKey) localStorage.removeItem(draftKey);
       // Reset form
       setEntries([createEmptyEntry(1)]);
-      setVisibleResidenceTypes({ 1: ["THIS_PROVINCE"] });
+      setVisibleResidenceTypes({ 1: residenceTypes.map((type) => type.key) });
       setNextId(2);
       setReportDate(new Date().toISOString().slice(0, 10));
     }
@@ -428,7 +428,7 @@ const loadProfile = async () => {
                 </button>
               </div>
               <div className="mb-3 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-                <span className="text-xs text-gray-500">Add another category after entering the Batangas count.</span>
+                <span className="text-xs text-gray-500">All three residence categories are ready for entry.</span>
                 {residenceTotal(entry, "THIS_PROVINCE") > 0 && residenceTypes.filter((type) => !(visibleResidenceTypes[entry.id] || ["THIS_PROVINCE"]).includes(type.key)).length > 0 && (
                   <select
                     value=""
@@ -454,7 +454,7 @@ const loadProfile = async () => {
                         <h4 className="text-sm font-semibold text-[#0F4C75]">{type.label}</h4>
 
                         <div className="flex items-center gap-2">
-                          {residence.male === 0 && residence.female === 0 && (
+                          {residence.male === 0 && residence.female === 0 && residenceTypes.some((candidate) => candidate.key !== type.key && !(visibleResidenceTypes[entry.id] || residenceTypes.map((item) => item.key)).includes(candidate.key)) && (
                             <select
                               value=""
                               onChange={(e) => {
