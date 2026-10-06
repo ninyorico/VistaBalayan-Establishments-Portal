@@ -134,7 +134,8 @@ export default function StaffLayout() {
         {/* Top Navbar */}
         <header className="vb-neu-topbar sticky top-0 z-[80]">
           <div className="px-4 sm:px-6 py-4 flex items-center justify-between">
-            <button
+            <div className="flex items-center gap-4">
+              <button
               type="button"
               aria-label={sidebarOpen ? "Close navigation menu" : "Open navigation menu"}
               onClick={() => setSidebarOpen(!sidebarOpen)}
@@ -142,6 +143,7 @@ export default function StaffLayout() {
             >
               <Menu className="w-5 h-5 text-[#6C63FF]" />
             </button>
+            </div>
 
             <div className="flex items-center gap-3">
               <NotificationCenter role="establishment_staff" />
