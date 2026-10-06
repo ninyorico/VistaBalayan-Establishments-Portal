@@ -21,7 +21,7 @@ export async function registerPushDevice(accessToken: string) {
   if (permission !== 'granted') throw new Error('Notification permission was not granted.');
 
   const registration = await navigator.serviceWorker.register('/sw.js', { scope: '/' });
-  const configResponse = await fetch('/api/push-config');
+  const configResponse = await fetch('/api/push?action=config');
   if (!configResponse.ok) throw new Error('Push notifications are not configured on the server.');
   const { publicKey } = await configResponse.json() as { publicKey?: string };
   if (!publicKey) throw new Error('Push notifications are not configured on the server.');
@@ -39,7 +39,7 @@ export async function registerPushDevice(accessToken: string) {
       auth: json.keys?.auth || '',
     },
   };
-  const response = await fetch('/api/push-subscribe', {
+  const response = await fetch('/api/push?action=subscribe', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${accessToken}` },
     body: JSON.stringify({ subscription: { ...payload, platform: navigator.platform, userAgent: navigator.userAgent } }),
@@ -52,7 +52,7 @@ export async function registerPushDevice(accessToken: string) {
 }
 
 export async function sendPushTest(accessToken: string, role: 'municipal_officer' | 'establishment_staff') {
-  const response = await fetch('/api/push-test', {
+  const response = await fetch('/api/push?action=test', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${accessToken}` },
     body: JSON.stringify({ role }),
