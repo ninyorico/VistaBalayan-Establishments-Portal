@@ -126,14 +126,14 @@ export default function Login() {
   return (
     <main className="min-h-[100dvh] bg-[#E0E5EC] text-[#193364]">
       <div className="grid min-h-[100dvh] grid-cols-1 lg:grid-cols-[1.08fr_0.92fr]">
-        <section className="relative hidden overflow-hidden bg-gradient-to-br from-[#193364] via-[#193364] to-[#0F3B2D] lg:block">
+        <section className="relative hidden overflow-hidden bg-[#E0E5EC] lg:block">
           <img
             src="/balayan-church-login.jpg"
             alt="Historic church and statues in Balayan"
-            className="absolute inset-0 h-full w-full object-cover opacity-90"
+            className="absolute inset-0 h-full w-full object-cover opacity-42"
           />
-          <div className="absolute inset-0 bg-[linear-gradient(135deg,rgba(25,51,100,0.86),rgba(15,59,45,0.56)_45%,rgba(108,151,114,0.66))]" />
-          <div className="absolute inset-x-0 bottom-0 h-1/2 bg-gradient-to-t from-slate-950 via-slate-950/45 to-transparent" />
+          <div className="absolute inset-0 bg-[#E0E5EC]/30" />
+          <div className="absolute inset-0 bg-gradient-to-r from-[#193364]/85 via-[#193364]/55 to-transparent" />
 
           <div className="relative z-10 flex min-h-[100dvh] flex-col justify-between p-10 xl:p-14">
             <div className="flex items-center gap-3">
