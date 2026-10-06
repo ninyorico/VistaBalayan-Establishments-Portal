@@ -3,11 +3,11 @@ import { GoogleGenerativeAI } from '@google/generative-ai';
 import { getBearerToken, getSupabaseAdmin, readBody, sendJson } from './_utils/emailjs.js';
 
 const MODEL_NAMES = Array.from(new Set([
+  process.env.GEMINI_MODEL || 'gemini-3.6-flash',
   'gemini-2.5-flash',
   'gemini-2.5-flash-lite',
-  process.env.GEMINI_MODEL,
   'gemini-3.6-flash',
-].filter(Boolean)));
+]));
 const OFFICIAL_REPORT_STATUS = 'submitted';
 const requestCounts = new Map();
 const WINDOW_MS = 60 * 1000;
