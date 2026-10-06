@@ -630,7 +630,7 @@ export default function SubmitAccommodationReport() {
   }
 
   return (
-    <div className="space-y-4 sm:space-y-6">
+    <div className="space-y-4 pb-12 sm:space-y-6">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">
@@ -782,7 +782,7 @@ export default function SubmitAccommodationReport() {
 
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(300px,360px)] lg:items-stretch">
       {/* Room Occupancy Table */}
-      <div className="flex min-h-0 flex-col overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-sm lg:h-[520px]">
+      <div className="flex min-h-0 flex-col overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-sm lg:h-[600px]">
         <div className="p-4 sm:p-5 lg:p-6 border-b border-gray-200">
           <h3 className="text-lg font-semibold text-gray-900">Daily Room Occupancy</h3>
           <p className="mt-1 text-sm text-gray-500 lg:hidden">Compact full-width table for faster phone entry.</p>
@@ -797,7 +797,7 @@ export default function SubmitAccommodationReport() {
         </div>
 
         {reportFormMode === "old-new" && (
-          <div className="overflow-x-auto overscroll-x-contain lg:min-h-0 lg:flex-1 lg:overflow-auto lg:overscroll-contain">
+          <div className="overflow-x-auto overscroll-x-contain lg:h-[390px] lg:flex-none lg:overflow-auto lg:overscroll-contain">
             <table className="w-full min-w-0 table-fixed border-collapse">
               <thead className="sticky top-0 z-20 border-b border-gray-200 bg-gray-50"><tr><th className="w-[28%] bg-gray-50 px-2 py-3 text-center text-xs font-semibold uppercase text-gray-700">Room / Code</th><th className="w-[24%] bg-gray-50 px-2 py-3 text-center text-xs font-semibold uppercase text-gray-700">Previous-day guests</th><th className="w-[48%] bg-gray-50 px-2 py-3 text-center text-xs font-semibold uppercase text-[#0F4C75]">Current old / new</th></tr></thead>
               <tbody className="divide-y divide-[#AFB3B5]/60">{roomData.map((room, index) => { const previousTotal = Number(room.previousGuestNights || 0); const previousNew = Math.min(Number(room.previousNewGuests || 0), previousTotal); return (
@@ -808,7 +808,7 @@ export default function SubmitAccommodationReport() {
         )}
 
         {reportFormMode === "single" && (
-        <div className="overflow-x-auto overscroll-x-contain lg:min-h-0 lg:flex-1 lg:overflow-auto lg:overscroll-contain">
+        <div className="overflow-x-auto overscroll-x-contain lg:h-[390px] lg:flex-none lg:overflow-auto lg:overscroll-contain">
           <table className="w-full min-w-0 table-fixed border-collapse">
             <thead className="sticky top-0 z-20 bg-gray-50 border-b border-gray-200">
               <tr>
@@ -859,7 +859,7 @@ export default function SubmitAccommodationReport() {
       </div>
 
       {/* Computed Analytics */}
-      <aside className="space-y-4 lg:sticky lg:top-4 lg:h-[520px]">
+      <aside className="space-y-4 lg:sticky lg:top-4 lg:h-[600px]">
       <div className="rounded-lg border border-[#AFB3B5]/45 bg-[#F5F8FF] p-4 shadow-sm sm:p-6">
         <h3 className="text-lg font-semibold text-gray-900 mb-4">Computed Analytics</h3>
         <div className="grid grid-cols-1 gap-3 sm:grid-cols-3 lg:grid-cols-1">
