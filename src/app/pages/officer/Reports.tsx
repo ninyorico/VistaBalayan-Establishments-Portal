@@ -355,10 +355,38 @@ export default function Reports() {
 
   const handleExport = async () => {
     try {
-      const establishmentsById = new Map<string, any>(establishmentDirectory.map((establishment) => [establishment.id, establishment]));
-      const accommodation = accommodationReports.map((report) => ({ ...report, establishment_id: String(report.establishment_id) }));
-      const visitors = visitorReports.map((report) => ({ ...report, establishment_id: String(report.establishment_id) }));
-      [...visitorReports, ...accommodationReports].forEach((report) => {
+      const { startDate, endDate } = getReportRange();
+      const fetchExportReports = async (table: "visitor_reports" | "accommodation_reports", relationship: string) => {
+        const rows: any[] = [];
+        const pageSize = 1000;
+        for (let offset = 0; ; offset += pageSize) {
+          const { data, error } = await supabase
+            .from(table)
+            .select(`*, establishments!${relationship} (name, type, dot_classification, reporting_mode, total_rooms, ae_id, attraction_code)`)
+            .gte("report_date", startDate)
+            .lte("report_date", endDate)
+            .order("created_at", { ascending: false })
+            .range(offset, offset + pageSize - 1);
+          if (error) throw error;
+          rows.push(...(data || []));
+          if (!data || data.length < pageSize) break;
+        }
+        return rows;
+      };
+      const [{ data: freshEstablishments, error: establishmentError }, freshVisitors, freshAccommodation] = await Promise.all([
+        supabase
+          .from("establishments")
+          .select("id,name,type,dot_classification,reporting_mode,ae_id,attraction_code,total_rooms,status,business_permit_number")
+          .order("name", { ascending: true }),
+        fetchExportReports("visitor_reports", "visitor_reports_establishment_id_fkey"),
+        fetchExportReports("accommodation_reports", "accommodation_reports_establishment_id_fkey"),
+      ]);
+      if (establishmentError) throw establishmentError;
+
+      const establishmentsById = new Map<string, any>((freshEstablishments || []).map((establishment) => [String(establishment.id), establishment]));
+      const accommodation = freshAccommodation.map((report) => ({ ...report, establishment_id: String(report.establishment_id) }));
+      const visitors = freshVisitors.map((report) => ({ ...report, establishment_id: String(report.establishment_id) }));
+      [...freshVisitors, ...freshAccommodation].forEach((report) => {
         const establishmentId = String(report.establishment_id || "");
         if (!establishmentId || establishmentsById.has(establishmentId)) return;
         const joined = Array.isArray(report.establishments) ? report.establishments[0] : report.establishments;
@@ -386,7 +414,6 @@ export default function Reports() {
           establishment.reporting_mode = hasVisitorReports ? "visitor" : "accommodation";
         }
       }
-      const { startDate, endDate } = getReportRange();
       const exportStart = new Date(`${startDate}T00:00:00`);
       const exportEnd = new Date(`${endDate}T00:00:00`);
       const exportMonths = filterType === "year" || (filterType === "month" && !selectedMonth)
