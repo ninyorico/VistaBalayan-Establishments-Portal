@@ -2,7 +2,11 @@ import crypto from 'node:crypto';
 import { GoogleGenerativeAI } from '@google/generative-ai';
 import { getBearerToken, getSupabaseAdmin, readBody, sendJson } from './_utils/emailjs.js';
 
-const MODEL_NAME = 'gemini-3.6-flash';
+const MODEL_NAMES = Array.from(new Set([
+  process.env.GEMINI_MODEL || 'gemini-3.6-flash',
+  'gemini-2.5-flash',
+  'gemini-2.5-flash-lite',
+]));
 const OFFICIAL_REPORT_STATUS = 'submitted';
 const requestCounts = new Map();
 const WINDOW_MS = 60 * 1000;
@@ -48,6 +52,29 @@ const rateLimit = (userId) => {
 const isOfficer = (profile) => profile?.role === 'municipal_officer' && profile?.status === 'active';
 const isStaff = (profile) => profile?.role === 'establishment_staff' && profile?.status === 'active' && Boolean(profile.establishment_id);
 
+const isRetryableModelError = (error) => {
+  const message = error instanceof Error ? error.message : String(error || '');
+  return /\[(?:404|429|500|502|503)\b|status\s*[:=]?\s*(?:404|429|500|502|503)|not found|high demand|temporarily unavailable|unavailable/i.test(message);
+};
+
+const generateContentWithFallback = async (apiKey, prompt) => {
+  let lastError = null;
+  for (const modelName of MODEL_NAMES) {
+    try {
+      const model = new GoogleGenerativeAI(apiKey).getGenerativeModel({ model: modelName });
+      const result = await model.generateContent(prompt);
+      return { ...result, modelName };
+    } catch (error) {
+      lastError = error;
+      if (!isRetryableModelError(error)) throw error;
+    }
+  }
+  const serviceError = new Error('AI generation models are temporarily unavailable');
+  serviceError.statusCode = 503;
+  serviceError.cause = lastError;
+  throw serviceError;
+};
+
 const getScopedData = async (supabaseAdmin, profile, scope) => {
   const establishmentFilter = scope === 'establishment' ? profile.establishment_id : null;
   const visitorQuery = supabaseAdmin
@@ -86,13 +113,16 @@ const getScopedData = async (supabaseAdmin, profile, scope) => {
   };
 };
 
-const generate = async (model, data, scope) => {
+const generate = async (apiKey, data, scope) => {
   const insightsPrompt = `You are a tourism data analyst for ${data.establishmentName}. Based only on these aggregate submitted-report values, return exactly ${scope === 'establishment' ? 3 : 4} concise recommendations as JSON: {"insights":[{"title":"max 6 words","description":"one sentence max 18 words with evidence","impact":"high|medium|low","category":"Seasonal|Operations|Marketing|Infrastructure","recommended_action":"one action sentence max 14 words","confidence_score":0.0}]}. Total visitors: ${data.totalVisitors}. Average occupancy: ${data.avgOccupancy}%. Monthly trends: ${JSON.stringify(data.monthlyTrends)}. Do not include personal data or invent facts.`;
   const anomalyPrompt = `You are a tourism data analyst for ${data.establishmentName}. Analyze only these submitted aggregate visitor rows and return JSON {"anomalies":[{"type":"Unusual Drop","severity":"high|medium|low","description":"brief evidence-based description","recommendation":"brief action","establishment":"${data.establishmentName}","confidence_score":0.0}]}. Data: ${JSON.stringify(data.visitors.slice(0, 50))}. Do not include personal data or invent facts.`;
-  const [insightResult, anomalyResult] = await Promise.all([model.generateContent(insightsPrompt), model.generateContent(anomalyPrompt)]);
+  const [insightResult, anomalyResult] = await Promise.all([
+    generateContentWithFallback(apiKey, insightsPrompt),
+    generateContentWithFallback(apiKey, anomalyPrompt),
+  ]);
   const insights = normalizeInsights(jsonObject(await insightResult.response.text()).insights);
   const anomalies = normalizeAnomalies(jsonObject(await anomalyResult.response.text()).anomalies);
-  return { insights, anomalies };
+  return { insights, anomalies, modelName: Array.from(new Set([insightResult.modelName, anomalyResult.modelName])).join(',') };
 };
 
 const findCachedResults = async (supabaseAdmin, scope, establishmentId, requestId) => {
@@ -112,14 +142,15 @@ const findCachedResults = async (supabaseAdmin, scope, establishmentId, requestI
 };
 
 const insertResults = async (supabaseAdmin, results, scope, establishmentId, requestId) => {
+  const modelName = results.modelName || MODEL_NAMES[0];
   const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString();
   if (results.insights.length) {
-    const rows = results.insights.map((item) => ({ ...item, model_name: MODEL_NAME, establishment_id: scope === 'establishment' ? establishmentId : null, status: 'active', expires_at: expiresAt }));
+    const rows = results.insights.map((item) => ({ ...item, model_name: modelName, establishment_id: scope === 'establishment' ? establishmentId : null, status: 'active', expires_at: expiresAt }));
     const { error } = await supabaseAdmin.from('ai_recommendations').insert(rows);
     if (error) throw new Error('Unable to save generated recommendations');
   }
   if (results.anomalies.length) {
-    const rows = results.anomalies.map((item) => ({ anomaly_type: item.type, severity: item.severity, description: item.description, recommendation: item.recommendation, establishment_id: scope === 'establishment' ? establishmentId : null, model_name: MODEL_NAME, status: 'active', is_resolved: false, detected_at: new Date().toISOString() }));
+    const rows = results.anomalies.map((item) => ({ anomaly_type: item.type, severity: item.severity, description: item.description, recommendation: item.recommendation, establishment_id: scope === 'establishment' ? establishmentId : null, model_name: modelName, status: 'active', is_resolved: false, detected_at: new Date().toISOString() }));
     const { error } = await supabaseAdmin.from('ai_anomalies_cache').insert(rows);
     if (error) throw new Error('Unable to save generated anomalies');
   }
@@ -148,11 +179,12 @@ export default async function handler(req, res) {
     const apiKey = process.env.GEMINI_API_KEY;
     if (!apiKey) return sendJson(res, 503, { error: 'AI service is not configured' });
     const data = await getScopedData(supabaseAdmin, profile, scope);
-    const results = await generate(new GoogleGenerativeAI(apiKey).getGenerativeModel({ model: MODEL_NAME }), data, scope);
+    const results = await generate(apiKey, data, scope);
     await insertResults(supabaseAdmin, results, scope, profile.establishment_id, requestId);
     return sendJson(res, 200, results);
   } catch (error) {
     console.error('AI generation failed:', error instanceof Error ? error.message : 'unknown error');
+    if (error?.statusCode === 503) return sendJson(res, 503, { error: 'The AI service is temporarily busy. Please try again in a moment.' });
     return sendJson(res, error?.statusCode || 500, { error: error?.statusCode === 400 ? error.message : 'AI generation failed. Please try again.' });
   }
 }
