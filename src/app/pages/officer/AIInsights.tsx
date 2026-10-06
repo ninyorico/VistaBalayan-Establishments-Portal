@@ -134,8 +134,9 @@ export default function AIInsights() {
       refreshing={refreshing}
       onRefresh={refreshData}
     >
-      <AiSectionCard
-        title="Service gaps"
+      <div className="grid items-stretch gap-5 lg:grid-cols-2">
+        <AiSectionCard
+          title="Service gaps"
         countLabel={`${activeAnomalies.length} Active`}
         icon={<AlertTriangle className="size-5 text-amber-600" />}
       >
@@ -180,7 +181,8 @@ export default function AIInsights() {
             {showAllRecommendations ? 'Show fewer recommendations' : `See all recommendations (${insights.length})`}
           </AiShowMoreButton>
         )}
-      </AiSectionCard>
+        </AiSectionCard>
+      </div>
     </AiInsightsShell>
   )
 }
