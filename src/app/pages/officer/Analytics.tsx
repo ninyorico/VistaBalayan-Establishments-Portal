@@ -351,8 +351,26 @@ export default function Analytics() {
               <YAxis />
               <Tooltip />
               <Legend />
-              <Area type="monotone" dataKey="visitors" stroke="#6474A5" fill="#6474A5" fillOpacity={0.28} name="Visitors" />
-              <Area type="monotone" dataKey="guestNights" stroke="#5E8A75" fill="#5E8A75" fillOpacity={0.2} name="Occupied room nights" />
+              <Area
+                type="monotone"
+                dataKey="visitors"
+                stroke="#6474A5"
+                fill="#6474A5"
+                fillOpacity={0.28}
+                dot={{ r: 3, strokeWidth: 1, fill: "#6474A5" }}
+                activeDot={{ r: 5 }}
+                name="Visitors"
+              />
+              <Area
+                type="monotone"
+                dataKey="guestNights"
+                stroke="#5E8A75"
+                fill="#5E8A75"
+                fillOpacity={0.2}
+                dot={{ r: 3, strokeWidth: 1, fill: "#5E8A75" }}
+                activeDot={{ r: 5 }}
+                name="Occupied room nights"
+              />
             </AreaChart>
           </ResponsiveContainer>
         ) : (
