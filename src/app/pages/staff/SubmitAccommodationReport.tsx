@@ -444,9 +444,9 @@ export default function SubmitAccommodationReport() {
       }
       const hasPreviousContinuingGuest = Number(room.previousGuestNights || 0) > 0
         || (!room.isNewGuest && Number(room.continuingGuests || 0) > 0);
-      const isCurrentDateEdit = reportDate === getTodayDate() && value > 0 && hasPreviousContinuingGuest;
+      const editedContinuingGuest = value > 0 && hasPreviousContinuingGuest;
       const firstGuestAfterEmptyPreviousNight = Number(room.previousGuestNights || 0) === 0;
-      const nextIsNewGuest = isCurrentDateEdit || (firstGuestAfterEmptyPreviousNight && value > 0) || Boolean(room.isNewGuest);
+      const nextIsNewGuest = editedContinuingGuest || (firstGuestAfterEmptyPreviousNight && value > 0) || Boolean(room.isNewGuest);
       const updatedRoom = nextIsNewGuest
         ? { ...room, checkIns: value, isNewGuest: nextIsNewGuest }
         : { ...room, continuingGuests: value };
