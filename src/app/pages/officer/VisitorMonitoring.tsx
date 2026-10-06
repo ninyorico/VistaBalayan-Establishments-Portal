@@ -413,24 +413,22 @@ export default function VisitorMonitoring({ embedded = false }: { embedded?: boo
                 onTouchMove={handleTableTouchMove}
               >
                 <div className="min-w-[620px] sm:min-w-[760px]">
-                  <div className="grid grid-cols-[20%_18%_10%_10%_10%_17%_15%] border-b border-[#D2D8E0] bg-[#E0E5EC] shadow-[0_1px_0_rgba(148,163,184,0.35)]" data-visitor-records-fixed-header="true">
+                  <div className="grid grid-cols-[22%_20%_11%_11%_11%_25%] border-b border-[#D2D8E0] bg-[#E0E5EC] shadow-[0_1px_0_rgba(148,163,184,0.35)]" data-visitor-records-fixed-header="true">
                     <div className="px-2 py-2 text-left text-[10px] font-semibold uppercase tracking-wider text-gray-600 sm:px-4 sm:text-xs">Date</div>
                     <div className="px-2 py-2 text-left text-[10px] font-semibold uppercase tracking-wider text-gray-600 sm:px-4 sm:text-xs">Guest/Group</div>
                     <div className="px-2 py-2 text-left text-[10px] font-semibold uppercase tracking-wider text-gray-600 sm:px-4 sm:text-xs">Male</div>
                     <div className="px-2 py-2 text-left text-[10px] font-semibold uppercase tracking-wider text-gray-600 sm:px-4 sm:text-xs">Female</div>
                     <div className="px-2 py-2 text-left text-[10px] font-semibold uppercase tracking-wider text-gray-600 sm:px-4 sm:text-xs">Total</div>
-                    <div className="px-2 py-2 text-left text-[10px] font-semibold uppercase tracking-wider text-gray-600 sm:px-4 sm:text-xs">Residence</div>
                     <div className="px-2 py-2 text-left text-[10px] font-semibold uppercase tracking-wider text-gray-600 sm:px-4 sm:text-xs">Location</div>
                   </div>
                   <div className="max-h-[48dvh] divide-y divide-gray-100 overflow-y-auto overflow-x-hidden overscroll-y-contain [-webkit-overflow-scrolling:touch] sm:max-h-[54vh]">
                     {selectedGroup.records.map((record) => (
-                      <div key={record.id} className="grid grid-cols-[20%_18%_10%_10%_10%_17%_15%] align-top">
+                      <div key={record.id} className="grid grid-cols-[22%_20%_11%_11%_11%_25%] align-top">
                         <div className="break-words px-2 py-2 text-[11px] text-gray-600 sm:px-4 sm:py-3 sm:text-sm">{record.date}</div>
                         <div className="break-words px-2 py-2 text-[11px] text-gray-900 sm:px-4 sm:py-3 sm:text-sm">{record.guestName}</div>
                         <div className="px-2 py-2 text-[11px] font-medium text-blue-600 sm:px-4 sm:py-3 sm:text-sm">{record.male}</div>
                         <div className="px-2 py-2 text-[11px] font-medium text-purple-600 sm:px-4 sm:py-3 sm:text-sm">{record.female}</div>
                         <div className="px-2 py-2 text-[11px] font-semibold text-gray-900 sm:px-4 sm:py-3 sm:text-sm">{record.total}</div>
-                        <div className="break-words px-2 py-2 text-[11px] text-gray-600 sm:px-4 sm:py-3 sm:text-sm">{record.residenceType}</div>
                         <div className="break-words px-2 py-2 text-[11px] text-gray-600 sm:px-4 sm:py-3 sm:text-sm">{record.location}</div>
                       </div>
                     ))}
