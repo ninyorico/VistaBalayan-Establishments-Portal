@@ -2,6 +2,8 @@ import { useState } from "react";
 import { Eye, EyeOff, LockKeyhole, Mail, ShieldCheck } from "lucide-react";
 import { supabase } from "../../lib/supabase";
 
+import { getEstablishmentReportingMode } from "../../lib/establishmentReportForms";
+
 const roleHomePath = (role: string) => role === "municipal_officer" ? "/officer" : role === "establishment_staff" ? "/staff" : null;
 
 export default function Login() {
@@ -34,7 +36,7 @@ export default function Login() {
 
       const { data: profile, error: profileError } = await supabase
         .from("profiles")
-        .select("role,status")
+        .select("role,status,establishment_id")
         .eq("id", data.user.id)
         .maybeSingle();
 
@@ -44,7 +46,28 @@ export default function Login() {
         throw new Error("This account is not active. Please contact the municipal tourism office.");
       }
 
-      const destination = roleHomePath(profile.role);
+      let destination = roleHomePath(profile.role);
+      if (profile.role === "establishment_staff") {
+        if (!profile.establishment_id) {
+          await supabase.auth.signOut();
+          throw new Error("This account is not linked to an establishment. Please contact the municipal tourism office.");
+        }
+
+        const { data: establishment, error: establishmentError } = await supabase
+          .from("establishments")
+          .select("type,reporting_mode,total_rooms")
+          .eq("id", profile.establishment_id)
+          .maybeSingle();
+
+        if (establishmentError) throw establishmentError;
+        const reportingMode = getEstablishmentReportingMode(establishment);
+        destination = reportingMode === "visitor"
+          ? "/staff/submit-visitor-report"
+          : reportingMode === "accommodation"
+            ? "/staff/submit-accommodation-report"
+            : "/staff";
+      }
+
       if (!destination) {
         await supabase.auth.signOut();
         throw new Error("This account does not have an authorized portal role.");
@@ -271,6 +294,15 @@ export default function Login() {
             <p className="mt-6 text-center text-xs leading-5 text-slate-500">
               Access is limited to authorized VistaBalayan municipal and establishment accounts.
             </p>
+            <footer className="mt-7 border-t border-[#AFB3B5]/60 pt-5 pb-[max(1rem,env(safe-area-inset-bottom))] text-center text-xs text-slate-500" aria-label="Legal information">
+              <nav className="flex flex-wrap items-center justify-center gap-x-3 gap-y-1.5">
+                <a href="/privacy-policy" className="inline-flex min-h-11 items-center px-1 py-2 underline underline-offset-2 hover:text-[#193364] focus:outline-none focus:ring-4 focus:ring-[#6C9772]/25">Privacy Policy</a>
+                <span aria-hidden="true">·</span>
+                <a href="/terms-and-conditions" className="inline-flex min-h-11 items-center px-1 py-2 underline underline-offset-2 hover:text-[#193364] focus:outline-none focus:ring-4 focus:ring-[#6C9772]/25">Terms and Conditions</a>
+                <span aria-hidden="true">·</span>
+                <a href="/cookie-policy" className="inline-flex min-h-11 items-center px-1 py-2 underline underline-offset-2 hover:text-[#193364] focus:outline-none focus:ring-4 focus:ring-[#6C9772]/25">Cookie Policy</a>
+              </nav>
+            </footer>
           </div>
         </section>
       </div>
@@ -380,13 +412,7 @@ export default function Login() {
           </div>
         </div>
       )}
-      <footer className="absolute inset-x-0 bottom-3 px-5 text-center text-xs text-slate-500 sm:bottom-5">
-        <a href="/privacy-policy" className="underline hover:text-[#193364]">Privacy Policy</a>
-        <span className="px-2">·</span>
-        <a href="/terms-and-conditions" className="underline hover:text-[#193364]">Terms and Conditions</a>
-        <span className="px-2">·</span>
-        <a href="/cookie-policy" className="underline hover:text-[#193364]">Cookie Policy</a>
-      </footer>
+
     </main>
   );
 }
