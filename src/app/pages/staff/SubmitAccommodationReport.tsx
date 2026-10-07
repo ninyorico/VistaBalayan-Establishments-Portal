@@ -862,7 +862,7 @@ export default function SubmitAccommodationReport() {
       <aside className="space-y-4 lg:sticky lg:top-4 lg:h-[650px]">
       <div className="rounded-lg border border-[#AFB3B5]/45 bg-[#F5F8FF] p-4 shadow-sm sm:p-6">
         <h3 className="text-lg font-semibold text-gray-900 mb-4">Computed Analytics</h3>
-        <div className="grid grid-cols-1 gap-3 sm:grid-cols-3 lg:grid-cols-1">
+        <div className="grid grid-cols-3 gap-2 sm:gap-3 lg:grid-cols-1">
           <div className="rounded-lg border border-[#B88A52]/35 bg-[#FBE7BA] p-2 sm:p-4">
             <p className="mb-1 text-[10px] font-medium text-[#193364] sm:text-sm">Guest Check-in</p>
             <p className="text-xl font-bold text-[#193364] sm:text-3xl">{totalCheckIns}</p>
