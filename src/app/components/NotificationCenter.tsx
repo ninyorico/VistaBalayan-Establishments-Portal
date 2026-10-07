@@ -151,6 +151,7 @@ export default function NotificationCenter({ role }: NotificationCenterProps) {
   const [phonePermission, setPhonePermission] = useState<NotificationPermission | "unsupported">(() =>
     typeof window !== "undefined" && "Notification" in window ? Notification.permission : "unsupported"
   );
+  const notificationRootRef = useRef<HTMLDivElement>(null);
   const triggerRef = useRef<HTMLButtonElement>(null);
 
   useEffect(() => {
@@ -162,6 +163,26 @@ export default function NotificationCenter({ role }: NotificationCenterProps) {
     };
     document.addEventListener("keydown", handleEscape);
     return () => document.removeEventListener("keydown", handleEscape);
+  }, [open]);
+
+  useEffect(() => {
+    if (!open) return;
+
+    const previousBodyOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+
+    const closeWhenClickingOutside = (event: PointerEvent) => {
+      const target = event.target as Node | null;
+      if (target && !notificationRootRef.current?.contains(target)) {
+        setOpen(false);
+      }
+    };
+
+    document.addEventListener("pointerdown", closeWhenClickingOutside, true);
+    return () => {
+      document.body.style.overflow = previousBodyOverflow;
+      document.removeEventListener("pointerdown", closeWhenClickingOutside, true);
+    };
   }, [open]);
 
   useEffect(() => {
@@ -476,7 +497,7 @@ export default function NotificationCenter({ role }: NotificationCenterProps) {
   };
 
   return (
-    <div className="relative">
+    <div ref={notificationRootRef} className="relative">
       <button
         ref={triggerRef}
         type="button"
