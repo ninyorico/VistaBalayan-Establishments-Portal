@@ -380,6 +380,13 @@ export default function Login() {
           </div>
         </div>
       )}
+      <footer className="absolute inset-x-0 bottom-3 px-5 text-center text-xs text-slate-500 sm:bottom-5">
+        <a href="/privacy-policy" className="underline hover:text-[#193364]">Privacy Policy</a>
+        <span className="px-2">·</span>
+        <a href="/terms-and-conditions" className="underline hover:text-[#193364]">Terms and Conditions</a>
+        <span className="px-2">·</span>
+        <a href="/cookie-policy" className="underline hover:text-[#193364]">Cookie Policy</a>
+      </footer>
     </main>
   );
 }

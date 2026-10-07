@@ -1,5 +1,6 @@
 import { createBrowserRouter, Navigate } from "react-router";
 import Login from "./pages/Login";
+import LegalPage from "./pages/LegalPages";
 import OfficerLayout from "./layouts/OfficerLayout";
 import StaffLayout from "./layouts/StaffLayout";
 import { ProtectedRoute } from "./components/ProtectedRoute";
@@ -24,6 +25,9 @@ export const router = createBrowserRouter([
   { path: "/", element: <Navigate to="/admin/login" replace /> },
   { path: "/explore", element: <Navigate to="/admin/login" replace /> },
   { path: "/admin/login", Component: Login },
+  { path: "/privacy-policy", element: <LegalPage document="privacy" /> },
+  { path: "/terms-and-conditions", element: <LegalPage document="terms" /> },
+  { path: "/cookie-policy", element: <LegalPage document="cookies" /> },
   {
     path: "/officer",
     element: (
