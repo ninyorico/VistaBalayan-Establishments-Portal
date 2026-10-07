@@ -35,14 +35,15 @@ export async function downloadReportMonitoringWorkbook({
     "establishments",
     "id,name,type,dot_classification,reporting_mode,ae_id,attraction_code,total_rooms,status,business_permit_number"
   );
-  const selectedNames = establishmentNames?.map((name) => name.trim().toLowerCase()).filter(Boolean);
+  const establishmentFilterActive = establishmentNames !== undefined;
+  const selectedNames = establishmentNames?.map((name) => name.trim().toLowerCase()).filter(Boolean) || [];
   const matchesEstablishment = (name: unknown) =>
-    !selectedNames?.length || selectedNames.includes(String(name || "").trim().toLowerCase());
+    !establishmentFilterActive || selectedNames.includes(String(name || "").trim().toLowerCase());
   const relatedEstablishmentName = (row: any) => {
     const related = Array.isArray(row?.establishments) ? row.establishments[0] : row?.establishments;
     return related?.name;
   };
-  const filteredEstablishments = selectedNames?.length
+  const filteredEstablishments = establishmentFilterActive
     ? establishments.filter((establishment) => matchesEstablishment(establishment.name))
     : establishments;
 
@@ -59,7 +60,7 @@ export async function downloadReportMonitoringWorkbook({
       selectedMonths: selectedMonth ? [selectedMonth] : undefined,
       exportSection: "daytour",
       establishments: filteredEstablishments,
-      visitors: selectedNames?.length
+      visitors: establishmentFilterActive
         ? visitors.filter((row) => matchesEstablishment(relatedEstablishmentName(row)))
         : visitors,
       accommodation: [],
@@ -80,7 +81,7 @@ export async function downloadReportMonitoringWorkbook({
     exportSection: "overnight",
     establishments: filteredEstablishments,
     visitors: [],
-    accommodation: selectedNames?.length
+    accommodation: establishmentFilterActive
       ? accommodation.filter((row) => matchesEstablishment(relatedEstablishmentName(row)))
       : accommodation,
   });

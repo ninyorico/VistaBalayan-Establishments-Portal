@@ -208,7 +208,7 @@ export default function VisitorMonitoring({ embedded = false }: { embedded?: boo
 
   const handleExport = () => {
     const establishmentNames = searchTerm.trim()
-      ? [...new Set(filteredRecords
+      ? [...new Set(visitorRecords
           .filter((record) => record.establishment.toLowerCase().includes(searchTerm.trim().toLowerCase()))
           .map((record) => record.establishment))]
       : undefined;

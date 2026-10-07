@@ -408,7 +408,7 @@ export default function AccommodationMonitoring({ embedded = false }: { embedded
 
   const handleExport = () => {
     const establishmentNames = searchTerm.trim()
-      ? [...new Set(filteredRecords
+      ? [...new Set(accommodationRecords
           .filter((record) => record.establishment.toLowerCase().includes(searchTerm.trim().toLowerCase()))
           .map((record) => record.establishment))]
       : undefined;
