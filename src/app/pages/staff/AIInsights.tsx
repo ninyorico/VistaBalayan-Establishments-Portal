@@ -174,15 +174,15 @@ const loadCachedData = async (estId: string, generateIfEmpty = true) => {
     }
 
     if (generateIfEmpty && ((!anomaliesData || anomaliesData.length === 0) && (!insightsData || insightsData.length === 0) || !cacheData || (cacheData.expires_at && new Date(cacheData.expires_at).getTime() <= Date.now()))) {
-      await refreshData()
+      await refreshData(estId)
     }
   } catch (error) {
     console.error('Error loading cached data:', error)
   }
 }
 
-  const refreshData = async () => {
-    if (!establishmentId) {
+  const refreshData = async (requestedEstablishmentId = establishmentId) => {
+    if (!requestedEstablishmentId) {
       setError('No establishment associated with your account')
       return
     }
@@ -195,7 +195,7 @@ const loadCachedData = async (estId: string, generateIfEmpty = true) => {
       const { data: visitorData, error: visitorError } = await supabase
         .from('visitor_reports')
         .select('report_date, total_guests, residence_type')
-        .eq('establishment_id', establishmentId)
+        .eq('establishment_id', requestedEstablishmentId)
         .eq('status', OFFICIAL_REPORT_STATUS)
         .order('report_date', { ascending: false })
         .limit(200)
@@ -208,7 +208,7 @@ const loadCachedData = async (estId: string, generateIfEmpty = true) => {
       const { data: accommodationData, error: accError } = await supabase
         .from('accommodation_reports')
         .select('id, report_date, total_rooms, total_occupied_rooms')
-        .eq('establishment_id', establishmentId)
+        .eq('establishment_id', requestedEstablishmentId)
         .eq('status', OFFICIAL_REPORT_STATUS)
 
       if (accError) {
@@ -235,7 +235,7 @@ const loadCachedData = async (estId: string, generateIfEmpty = true) => {
       const newAnomalies = generated.anomalies
 
       // Reload cached data
-      await loadCachedData(establishmentId, false)
+      await loadCachedData(requestedEstablishmentId, false)
       
       console.log(`✅ Data refreshed for ${establishmentName}: ${newInsights?.length || 0} insights, ${newAnomalies?.length || 0} anomalies`)
       
@@ -292,7 +292,7 @@ const loadCachedData = async (estId: string, generateIfEmpty = true) => {
           <p>{refreshError}</p>
           <button
             type="button"
-            onClick={refreshData}
+            onClick={() => refreshData()}
             disabled={refreshing}
             className="w-full shrink-0 rounded-xl bg-amber-600 px-3 py-2 font-semibold text-white transition hover:bg-amber-700 disabled:cursor-not-allowed disabled:opacity-60 sm:w-auto"
           >

@@ -442,14 +442,11 @@ export default function SubmitAccommodationReport() {
       if (value === 0) {
         return { ...room, continuingGuests: 0, checkIns: 0, guestNights: 0, isNewGuest: false };
       }
-      const hasPreviousContinuingGuest = Number(room.previousGuestNights || 0) > 0
-        || (!room.isNewGuest && Number(room.continuingGuests || 0) > 0);
-      const editedContinuingGuest = value > 0 && hasPreviousContinuingGuest;
-      const firstGuestAfterEmptyPreviousNight = Number(room.previousGuestNights || 0) === 0;
-      const nextIsNewGuest = editedContinuingGuest || (firstGuestAfterEmptyPreviousNight && value > 0) || Boolean(room.isNewGuest);
-      const updatedRoom = nextIsNewGuest
-        ? { ...room, checkIns: value, isNewGuest: nextIsNewGuest }
-        : { ...room, continuingGuests: value };
+      // A single click edits the currently selected guest type. The type is
+      // changed only by the explicit double-click toggle below.
+      const updatedRoom = room.isNewGuest
+        ? { ...room, checkIns: value, continuingGuests: 0 }
+        : { ...room, continuingGuests: value, checkIns: 0 };
       return { ...updatedRoom, guestNights: Number(updatedRoom.continuingGuests || 0) + Number(updatedRoom.checkIns || 0) };
     }));
   };
@@ -837,9 +834,6 @@ export default function SubmitAccommodationReport() {
                           pattern="[0-9]*"
                           value={numericInputValue(room.isNewGuest ? room.checkIns : room.continuingGuests)}
                           onChange={(e) => updateSingleGuestValue(index, parseNonNegativeInteger(e.target.value))}
-                          onMouseDown={(e) => {
-                            if (e.detail > 1) e.preventDefault();
-                          }}
                           onDoubleClick={(e) => handleGuestFieldDoubleClick(e, index)}
                           className={room.isNewGuest ? "mx-auto w-full max-w-[150px] rounded-full border-[3px] !border-red-600 bg-white px-2 py-2 text-center text-sm font-bold tabular-nums text-red-700" : "mx-auto w-full max-w-[150px] rounded-md border border-gray-300 bg-white px-2 py-2 text-center text-sm font-normal tabular-nums text-gray-700"}
                           style={room.isNewGuest ? { color: "#b91c1c", borderColor: "#dc2626", borderWidth: "3px", borderStyle: "solid", borderRadius: "9999px" } : undefined}
