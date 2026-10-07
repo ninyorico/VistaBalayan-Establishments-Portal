@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { AlertTriangle } from 'lucide-react'
 import { supabase } from '../../../lib/supabase'
+import { useAuth } from '../../../contexts/AuthContext'
 import { geminiService } from '../../../services/geminiService'
 import { calculateAverageAccommodationOccupancy } from '../../../lib/reportMetrics'
 import { OFFICIAL_REPORT_STATUS } from '../../../lib/reporting'
@@ -36,6 +37,7 @@ interface Insight {
 }
 
 export default function StaffAIInsights() {
+  const { profile: authenticatedProfile, loading: authLoading } = useAuth()
   const [anomalies, setAnomalies] = useState<Anomaly[]>([])
   const [insights, setInsights] = useState<Insight[]>([])
   const [loading, setLoading] = useState(true)
@@ -49,8 +51,8 @@ export default function StaffAIInsights() {
   const [showAllRecommendations, setShowAllRecommendations] = useState(false)
 
   useEffect(() => {
-    loadUserAndData()
-  }, [])
+    if (!authLoading) loadUserAndData()
+  }, [authLoading, authenticatedProfile?.id])
 
   const loadUserAndData = async () => {
     setLoading(true)
@@ -68,12 +70,20 @@ export default function StaffAIInsights() {
       
       console.log('Current user:', user.id)
       
-      // Get user profile
-      const { data: profileData, error: profileError } = await supabase
-        .from('profiles')
-        .select('*')
-        .eq('id', user.id)
-        .single()
+      // Reuse the profile already loaded by AuthProvider. This avoids a second
+      // profile query returning no establishment through a restrictive client
+      // policy even though the authenticated portal already has the association.
+      let profileData = authenticatedProfile
+      let profileError: { message?: string } | null = null
+      if (!profileData || profileData.id !== user.id) {
+        const profileResult = await supabase
+          .from('profiles')
+          .select('*')
+          .eq('id', user.id)
+          .maybeSingle()
+        profileData = profileResult.data
+        profileError = profileResult.error
+      }
       
       if (profileError) {
         console.error('Profile error:', profileError)

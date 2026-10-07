@@ -51,7 +51,7 @@ interface Demographic {
 const DEMOGRAPHIC_COLORS = ["#5E8A75", "#6C63FF", "#B28B52", "#6474A5", "#B86B78", "#7D89A5"];
 
 const MAX_VISIBLE_DEMOGRAPHICS = 4;
-const VIOLET_BAR_SHADES = ["#6C63FF", "#776FFF", "#827BFF", "#8D87FF", "#9893FF", "#A39FFF"];
+const ESTABLISHMENT_BAR_COLORS = ["#6C63FF", "#2C9C95", "#E0A458", "#D95D75", "#4A78A8", "#7A5AA6"];
 const SERVICE_GAP_SEVERITY_RANK: Record<string, number> = { critical: 0, high: 1, medium: 2, low: 3 };
 
 const getDemographicColor = (name: string, index: number) => {
@@ -445,17 +445,16 @@ setOccupancyRate(occupancyRate);
               <Tooltip labelFormatter={(rank) => topEstablishments.find((entry) => entry.rank === rank)?.name || rank} formatter={(value) => [Number(value).toLocaleString(), "Visitors"]} />
               <Bar dataKey="visitors" radius={[10, 10, 0, 0]} name="Visitors">
                 {topEstablishments.map((entry, index) => (
-                  <Cell key={`${entry.name}-${index}`} fill={VIOLET_BAR_SHADES[index % VIOLET_BAR_SHADES.length]} />
+                  <Cell key={`${entry.name}-${index}`} fill={ESTABLISHMENT_BAR_COLORS[index % ESTABLISHMENT_BAR_COLORS.length]} />
                 ))}
               </Bar>
             </BarChart>
           </ResponsiveContainer>
           <div className="mt-4" data-top-establishment-chart="ranked-color-legend">
-            <p className="mb-2 text-xs font-semibold uppercase tracking-[0.12em] text-[#64748b]">Establishment color legend</p>
             <div className="grid gap-2 sm:grid-cols-2" aria-label="Top establishment chart legend">
             {topEstablishments.map((entry, index) => (
               <div key={`legend-${entry.name}`} className="flex min-w-0 items-center gap-2 text-sm text-[#405266]">
-                <span className="h-3 w-3 shrink-0 rounded-sm" style={{ backgroundColor: VIOLET_BAR_SHADES[index % VIOLET_BAR_SHADES.length] }} aria-hidden="true" />
+                <span className="h-3 w-3 shrink-0 rounded-sm" style={{ backgroundColor: ESTABLISHMENT_BAR_COLORS[index % ESTABLISHMENT_BAR_COLORS.length] }} aria-hidden="true" />
                 <span className="truncate"><span className="font-semibold">{entry.rank}</span> {entry.name}</span>
               </div>
             ))}
