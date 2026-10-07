@@ -20,17 +20,37 @@ export async function registerPushDevice(accessToken: string) {
     : await Notification.requestPermission();
   if (permission !== 'granted') throw new Error('Notification permission was not granted.');
 
-  const registration = await navigator.serviceWorker.register('/sw.js', { scope: '/' });
-  const configResponse = await fetch('/api/push?action=config');
+  const isIos = /iPad|iPhone|iPod/.test(navigator.userAgent)
+    || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+  const isStandalone = window.matchMedia('(display-mode: standalone)').matches
+    || ("standalone" in navigator && Boolean((navigator as Navigator & { standalone?: boolean }).standalone));
+  if (isIos && !isStandalone) {
+    throw new Error('On iPhone or iPad, first add VistaBalayan to the Home Screen and open it there before enabling notifications.');
+  }
+
+  await navigator.serviceWorker.register('/sw.js', { scope: '/' });
+  const registration = await navigator.serviceWorker.ready;
+  const configResponse = await fetch('/api/push?action=config', { cache: 'no-store' });
   if (!configResponse.ok) throw new Error('Push notifications are not configured on the server.');
   const { publicKey } = await configResponse.json() as { publicKey?: string };
   if (!publicKey) throw new Error('Push notifications are not configured on the server.');
 
-  const existing = await registration.pushManager.getSubscription();
-  const subscription = existing || await registration.pushManager.subscribe({
-    userVisibleOnly: true,
-    applicationServerKey: urlBase64ToUint8Array(publicKey),
-  });
+  let existing = await registration.pushManager.getSubscription();
+  let subscription = existing;
+  if (!subscription) {
+    try {
+      subscription = await registration.pushManager.subscribe({
+        userVisibleOnly: true,
+        applicationServerKey: urlBase64ToUint8Array(publicKey),
+      });
+    } catch (error) {
+      const message = error instanceof Error ? error.message.toLowerCase() : '';
+      if (message.includes('push service') || message.includes('application server key')) {
+        throw new Error('The browser push service rejected this device. Refresh the page, confirm site notifications are allowed, and try again. On iPhone or iPad, use the Home Screen app.');
+      }
+      throw error;
+    }
+  }
   const json = subscription.toJSON();
   const payload: PushSubscriptionPayload = {
     endpoint: subscription.endpoint,
