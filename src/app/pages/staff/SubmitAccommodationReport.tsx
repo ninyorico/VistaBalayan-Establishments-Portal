@@ -863,20 +863,20 @@ export default function SubmitAccommodationReport() {
       <div className="rounded-lg border border-[#AFB3B5]/45 bg-[#F5F8FF] p-4 shadow-sm sm:p-6">
         <h3 className="text-lg font-semibold text-gray-900 mb-4">Computed Analytics</h3>
         <div className="grid grid-cols-3 gap-2 sm:gap-3 lg:grid-cols-1">
-          <div className="rounded-lg border border-[#B88A52]/35 bg-[#FBE7BA] p-2 sm:p-4">
-            <p className="mb-1 text-[10px] font-medium text-[#193364] sm:text-sm">Guest Check-in</p>
-            <p className="text-xl font-bold text-[#193364] sm:text-3xl">{totalCheckIns}</p>
-            <p className="mt-1 text-[9px] text-[#5D6F73] sm:text-xs">new guests</p>
+          <div className="flex min-w-0 flex-col rounded-lg border border-[#B88A52]/35 bg-[#FBE7BA] p-2 sm:p-4">
+            <p className="mb-1 min-h-[3rem] text-[10px] font-medium leading-tight text-[#193364] sm:min-h-[3.5rem] sm:text-sm">Guest Check-in</p>
+            <p className="flex min-h-[2.25rem] items-center text-xl font-bold text-[#193364] sm:text-3xl">{totalCheckIns}</p>
+            <p className="mt-1 min-h-[2.5rem] text-[9px] leading-tight text-[#5D6F73] sm:text-xs">new guests</p>
           </div>
-          <div className="rounded-lg border border-[#6C9772]/35 bg-[#E5E8E1] p-2 sm:p-4" data-hotel-report-daily-occupancy="selected-report-date">
-            <p className="mb-1 text-[10px] font-medium text-[#0F3B2D] sm:text-sm">Daily Room Occupancy Rate</p>
-            <p className="text-xl font-bold text-[#0F3B2D] sm:text-3xl">{avgOccupancyRate}%</p>
-            <p className="mt-1 text-[9px] text-[#5D6F73] sm:text-xs">selected report date only</p>
+          <div className="flex min-w-0 flex-col rounded-lg border border-[#6C9772]/35 bg-[#E5E8E1] p-2 sm:p-4" data-hotel-report-daily-occupancy="selected-report-date">
+            <p className="mb-1 min-h-[3rem] text-[10px] font-medium leading-tight text-[#0F3B2D] sm:min-h-[3.5rem] sm:text-sm">Daily Room Occupancy Rate</p>
+            <p className="flex min-h-[2.25rem] items-center text-xl font-bold text-[#0F3B2D] sm:text-3xl">{avgOccupancyRate}%</p>
+            <p className="mt-1 min-h-[2.5rem] text-[9px] leading-tight text-[#5D6F73] sm:text-xs">selected report date only</p>
           </div>
-          <div className="rounded-lg border border-[#AFB3B5]/45 bg-[#F5F8FF] p-2 sm:p-4">
-            <p className="mb-1 text-[10px] font-medium text-[#193364] sm:text-sm">Guest Night</p>
-            <p className="text-xl font-bold text-[#193364] sm:text-3xl">{totalGuestNights}</p>
-            <p className="mt-1 text-[9px] text-[#5D6F73] sm:text-xs">new + continuing guests</p>
+          <div className="flex min-w-0 flex-col rounded-lg border border-[#AFB3B5]/45 bg-[#F5F8FF] p-2 sm:p-4">
+            <p className="mb-1 min-h-[3rem] text-[10px] font-medium leading-tight text-[#193364] sm:min-h-[3.5rem] sm:text-sm">Guest Night</p>
+            <p className="flex min-h-[2.25rem] items-center text-xl font-bold text-[#193364] sm:text-3xl">{totalGuestNights}</p>
+            <p className="mt-1 min-h-[2.5rem] text-[9px] leading-tight text-[#5D6F73] sm:text-xs">new + continuing guests</p>
           </div>
         </div>
       </div>
