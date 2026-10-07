@@ -33,6 +33,17 @@ type AppNotification = {
   isRead: boolean;
 };
 
+type NotificationCategory = "all" | "daytour" | "overnight" | "establishments" | "insights" | "other";
+
+const notificationCategories: Array<{ id: NotificationCategory; label: string }> = [
+  { id: "all", label: "All" },
+  { id: "daytour", label: "Day-tour reports" },
+  { id: "overnight", label: "Overnight reports" },
+  { id: "establishments", label: "Establishments" },
+  { id: "insights", label: "AI & reviews" },
+  { id: "other", label: "Other" },
+];
+
 const typeStyles: Record<string, { border: string; bg: string; icon: string }> = {
   warning: { border: "border-amber-400", bg: "bg-amber-50", icon: "text-amber-600" },
   report: { border: "border-sky-400", bg: "bg-sky-50", icon: "text-sky-600" },
@@ -97,6 +108,15 @@ function normalizeReportTerminology(value: string) {
     .replace(/\bhotel report\b/gi, "overnight report");
 }
 
+function getNotificationCategory(notification: AppNotification): NotificationCategory {
+  const text = `${notification.title} ${notification.message}`.toLowerCase();
+  if (text.includes("day-tour") || text.includes("visitor report")) return "daytour";
+  if (text.includes("overnight") || text.includes("accommodation report") || text.includes("hotel report")) return "overnight";
+  if (text.includes("establishment")) return "establishments";
+  if (notification.type === "ai" || text.includes("review") || text.includes("recommendation")) return "insights";
+  return "other";
+}
+
 function deadlineNotification(role: NotificationCenterProps["role"], canSubmitAccommodation = true): AppNotification {
   const now = new Date();
   // Remind users ten days before the last calendar day of the current month.
@@ -126,6 +146,7 @@ export default function NotificationCenter({ role }: NotificationCenterProps) {
   const [error, setError] = useState<string | null>(null);
   const [dbNotifications, setDbNotifications] = useState<AppNotification[]>([]);
   const [systemNotifications, setSystemNotifications] = useState<AppNotification[]>([]);
+  const [selectedCategory, setSelectedCategory] = useState<NotificationCategory>("all");
   const [localReadIds, setLocalReadIds] = useState<Set<string>>(() => getLocalReadIds(user?.id));
   const [phonePermission, setPhonePermission] = useState<NotificationPermission | "unsupported">(() =>
     typeof window !== "undefined" && "Notification" in window ? Notification.permission : "unsupported"
@@ -398,6 +419,12 @@ export default function NotificationCenter({ role }: NotificationCenterProps) {
   }, [loadNotifications, user?.id]);
 
   const notifications = useMemo(() => [...dbNotifications, ...systemNotifications].slice(0, 10), [dbNotifications, systemNotifications]);
+  const filteredNotifications = useMemo(
+    () => selectedCategory === "all"
+      ? notifications
+      : notifications.filter((notification) => getNotificationCategory(notification) === selectedCategory),
+    [notifications, selectedCategory]
+  );
   const unreadCount = notifications.filter((notification) => !notification.isRead).length;
 
   const enablePhoneNotifications = async () => {
@@ -482,6 +509,36 @@ export default function NotificationCenter({ role }: NotificationCenterProps) {
             </div>
           </div>
 
+          <div className="border-b border-[#D9E2EC] px-3 py-2">
+            <div className="flex gap-2 overflow-x-auto pb-1" role="tablist" aria-label="Notification categories">
+              {notificationCategories.map((category) => {
+                const categoryUnreadCount = category.id === "all"
+                  ? unreadCount
+                  : notifications.filter((notification) => getNotificationCategory(notification) === category.id && !notification.isRead).length;
+                const isSelected = selectedCategory === category.id;
+                return (
+                  <button
+                    key={category.id}
+                    type="button"
+                    role="tab"
+                    aria-selected={isSelected}
+                    onClick={() => setSelectedCategory(category.id)}
+                    className={`shrink-0 rounded-xl px-3 py-2 text-xs font-semibold transition-colors focus:outline-none focus:ring-2 focus:ring-[#0E5A72]/25 ${
+                      isSelected ? "bg-[#0E5A72] text-white" : "bg-[#F2F5F7] text-[#526273] hover:bg-[#E5F1F2] hover:text-[#0E5A72]"
+                    }`}
+                  >
+                    {category.label}
+                    {categoryUnreadCount > 0 && (
+                      <span className={`ml-1.5 rounded-full px-1.5 py-0.5 text-[10px] ${isSelected ? "bg-white/20 text-white" : "bg-amber-100 text-amber-700"}`}>
+                        {categoryUnreadCount > 9 ? "9+" : categoryUnreadCount}
+                      </span>
+                    )}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+
           <div className="max-h-[26rem] overflow-y-auto py-2">
             {loading && (
               <div className="flex items-center gap-2 px-4 py-6 text-sm text-slate-500">
@@ -501,7 +558,14 @@ export default function NotificationCenter({ role }: NotificationCenterProps) {
                 <p className="mt-1 text-xs text-slate-500">New report activity and reminders will appear here.</p>
               </div>
             )}
-            {!loading && notifications.map((notification) => {
+            {!loading && notifications.length > 0 && filteredNotifications.length === 0 && (
+              <div className="px-4 py-8 text-center">
+                <Bell className="mx-auto h-8 w-8 text-slate-300" />
+                <p className="mt-2 text-sm font-semibold text-slate-700">No notifications in this category</p>
+                <p className="mt-1 text-xs text-slate-500">New activity for this category will appear here.</p>
+              </div>
+            )}
+            {!loading && filteredNotifications.map((notification) => {
               const style = typeStyles[notification.type] || typeStyles.info;
               const Icon = notification.type === "ai" ? Sparkles : notification.type === "report" ? FileText : Clock;
               return (
