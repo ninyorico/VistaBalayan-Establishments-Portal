@@ -13,6 +13,8 @@ const requestCounts = new Map();
 const WINDOW_MS = 60 * 1000;
 const MAX_REQUESTS_PER_WINDOW = 5;
 
+const MAX_AI_ITEMS = 10;
+
 const clean = (value, fallback = '') => String(value || fallback).replace(/\s+/g, ' ').trim();
 const confidence = (value) => {
   const parsed = Number(value);
@@ -22,7 +24,7 @@ const jsonObject = (text) => {
   const match = String(text).match(/\{[\s\S]*\}/);
   return match ? JSON.parse(match[0]) : {};
 };
-const normalizeInsights = (items) => (Array.isArray(items) ? items : []).map((item) => ({
+const normalizeInsights = (items) => (Array.isArray(items) ? items : []).slice(0, MAX_AI_ITEMS).map((item) => ({
   title: clean(item.title, 'Tourism insight'),
   description: clean(item.description),
   impact: clean(item.impact, 'medium').toLowerCase(),
@@ -30,7 +32,7 @@ const normalizeInsights = (items) => (Array.isArray(items) ? items : []).map((it
   recommended_action: clean(item.recommended_action || item.action, 'Review this trend and take one focused action.'),
   confidence_score: confidence(item.confidence_score),
 }));
-const normalizeAnomalies = (items) => (Array.isArray(items) ? items : []).map((item) => ({
+const normalizeAnomalies = (items) => (Array.isArray(items) ? items : []).slice(0, MAX_AI_ITEMS).map((item) => ({
   type: clean(item.type || item.anomaly_type, 'Operational anomaly'),
   severity: clean(item.severity, 'medium').toLowerCase(),
   description: clean(item.description),

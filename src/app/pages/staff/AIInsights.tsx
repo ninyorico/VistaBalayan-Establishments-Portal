@@ -5,12 +5,14 @@ import { geminiService } from '../../../services/geminiService'
 import { calculateAverageAccommodationOccupancy } from '../../../lib/reportMetrics'
 import { OFFICIAL_REPORT_STATUS } from '../../../lib/reporting'
 import { LoadingState } from '../../components/vista/PolishedShell'
+import { INITIAL_AI_ITEMS_VISIBLE, MAX_AI_ITEMS, formatPhilippineDateTime } from '../../../lib/aiInsights'
 import {
   AiAnomalyCard,
   AiEmptyState,
   AiInsightsShell,
   AiRecommendationCard,
   AiSectionCard,
+  AiShowMoreButton,
 } from '../../components/vista/AiInsightsDesign'
 
 interface Anomaly {
@@ -20,6 +22,7 @@ interface Anomaly {
   description: string
   recommendation: string
   detected_at: string
+  is_resolved?: boolean
 }
 
 interface Insight {
@@ -41,6 +44,9 @@ export default function StaffAIInsights() {
   const [establishmentId, setEstablishmentId] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [refreshError, setRefreshError] = useState<string | null>(null)
+  const [lastUpdated, setLastUpdated] = useState<string | null>(null)
+  const [showAllServiceGaps, setShowAllServiceGaps] = useState(false)
+  const [showAllRecommendations, setShowAllRecommendations] = useState(false)
 
   useEffect(() => {
     loadUserAndData()
@@ -113,7 +119,7 @@ export default function StaffAIInsights() {
     }
   }
 
-const loadCachedData = async (estId: string) => {
+const loadCachedData = async (estId: string, generateIfEmpty = true) => {
   if (!estId) return
   
   console.log('Loading cached data for establishment:', estId)
@@ -127,6 +133,7 @@ const loadCachedData = async (estId: string) => {
       .eq('status', 'active')
       .eq('is_resolved', false)
       .order('detected_at', { ascending: false })
+      .limit(MAX_AI_ITEMS)
 
     if (anomaliesError) {
       console.error('Anomalies error:', anomaliesError)
@@ -140,9 +147,9 @@ const loadCachedData = async (estId: string) => {
       .from('ai_recommendations')
       .select('*')
       .eq('status', 'active')
-      .eq('establishment_id', estId)  // ← ADD THIS FILTER
+      .eq('establishment_id', estId)
       .order('created_at', { ascending: false })
-      .limit(10)
+      .limit(MAX_AI_ITEMS)
 
     if (insightsError) {
       console.error('Insights error:', insightsError)
@@ -151,6 +158,24 @@ const loadCachedData = async (estId: string) => {
       setInsights(insightsData || [])
     }
 
+    const { data: cacheData, error: cacheError } = await supabase
+      .from('ai_insights_cache')
+      .select('generated_at, expires_at')
+      .eq('insight_type', 'recommendations')
+      .eq('establishment_id', estId)
+      .order('generated_at', { ascending: false })
+      .limit(1)
+      .maybeSingle()
+
+    if (cacheError) {
+      console.error('AI cache timestamp error:', cacheError)
+    } else {
+      setLastUpdated(formatPhilippineDateTime(cacheData?.generated_at))
+    }
+
+    if (generateIfEmpty && ((!anomaliesData || anomaliesData.length === 0) && (!insightsData || insightsData.length === 0) || !cacheData || (cacheData.expires_at && new Date(cacheData.expires_at).getTime() <= Date.now()))) {
+      await refreshData()
+    }
   } catch (error) {
     console.error('Error loading cached data:', error)
   }
@@ -210,7 +235,7 @@ const loadCachedData = async (estId: string) => {
       const newAnomalies = generated.anomalies
 
       // Reload cached data
-      await loadCachedData(establishmentId)
+      await loadCachedData(establishmentId, false)
       
       console.log(`✅ Data refreshed for ${establishmentName}: ${newInsights?.length || 0} insights, ${newAnomalies?.length || 0} anomalies`)
       
@@ -226,6 +251,10 @@ const loadCachedData = async (estId: string) => {
       setRefreshing(false)
     }
   }
+
+  const activeAnomalies = anomalies.filter((anomaly) => !anomaly.is_resolved).slice(0, MAX_AI_ITEMS)
+  const visibleAnomalies = showAllServiceGaps ? activeAnomalies : activeAnomalies.slice(0, INITIAL_AI_ITEMS_VISIBLE)
+  const visibleInsights = showAllRecommendations ? insights : insights.slice(0, INITIAL_AI_ITEMS_VISIBLE)
 
   if (loading) {
     return <LoadingState label="Loading AI insights for your establishment" />
@@ -254,6 +283,7 @@ const loadCachedData = async (estId: string) => {
   return (
     <AiInsightsShell
       subtitle={`Recommendation review and service-gap tracking for ${establishmentName || 'your establishment'}.`}
+      lastUpdated={lastUpdated}
       refreshing={refreshing}
       onRefresh={refreshData}
     >
@@ -272,18 +302,23 @@ const loadCachedData = async (estId: string) => {
       )}
       <AiSectionCard
         title="Service gaps"
-        countLabel={`${anomalies.filter((a) => a.severity === "medium" || a.severity === "high").length} Active`}
+        countLabel={`${activeAnomalies.length} Active`}
         icon={<AlertTriangle className="size-5 text-amber-600" />}
       >
         <div className="space-y-3">
-          {anomalies.length > 0 ? (
-            anomalies.map((anomaly) => (
+          {activeAnomalies.length > 0 ? (
+            visibleAnomalies.map((anomaly) => (
               <AiAnomalyCard key={anomaly.id} {...anomaly} establishments={{ name: establishmentName || 'Your establishment' }} />
             ))
           ) : (
             <AiEmptyState variant="gaps" />
           )}
         </div>
+        {activeAnomalies.length > INITIAL_AI_ITEMS_VISIBLE && (
+          <AiShowMoreButton onClick={() => setShowAllServiceGaps((current) => !current)}>
+            {showAllServiceGaps ? 'Show fewer service gaps' : `See all service gaps (${activeAnomalies.length})`}
+          </AiShowMoreButton>
+        )}
       </AiSectionCard>
 
       <AiSectionCard
@@ -293,13 +328,18 @@ const loadCachedData = async (estId: string) => {
       >
         <div className="grid grid-cols-1 gap-3 lg:grid-cols-2">
           {insights.length > 0 ? (
-            insights.map((insight) => <AiRecommendationCard key={insight.id} {...insight} />)
+            visibleInsights.map((insight) => <AiRecommendationCard key={insight.id} {...insight} />)
           ) : (
             <div className="lg:col-span-2">
               <AiEmptyState variant="recommendations" />
             </div>
           )}
         </div>
+        {insights.length > INITIAL_AI_ITEMS_VISIBLE && (
+          <AiShowMoreButton onClick={() => setShowAllRecommendations((current) => !current)}>
+            {showAllRecommendations ? 'Show fewer recommendations' : `See all recommendations (${insights.length})`}
+          </AiShowMoreButton>
+        )}
       </AiSectionCard>
     </AiInsightsShell>
   )
