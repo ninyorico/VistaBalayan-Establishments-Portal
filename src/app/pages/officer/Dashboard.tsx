@@ -52,6 +52,7 @@ const DEMOGRAPHIC_COLORS = ["#5E8A75", "#6C63FF", "#B28B52", "#6474A5", "#B86B78
 
 const MAX_VISIBLE_DEMOGRAPHICS = 4;
 const VIOLET_BAR_SHADES = ["#6C63FF", "#776FFF", "#827BFF", "#8D87FF", "#9893FF", "#A39FFF"];
+const SERVICE_GAP_SEVERITY_RANK: Record<string, number> = { critical: 0, high: 1, medium: 2, low: 3 };
 
 const getDemographicColor = (name: string, index: number) => {
   const normalized = name.toLowerCase();
@@ -284,7 +285,14 @@ setOccupancyRate(occupancyRate);
         .eq('status', 'active')
         .order('detected_at', { ascending: false })
         .limit(5);
-      setAnomalies((anomalyData || []).slice(0, 3));
+      setAnomalies((anomalyData || [])
+        .sort((first: any, second: any) => {
+          const severityDifference = (SERVICE_GAP_SEVERITY_RANK[first.severity?.toLowerCase()] ?? 4)
+            - (SERVICE_GAP_SEVERITY_RANK[second.severity?.toLowerCase()] ?? 4);
+          if (severityDifference !== 0) return severityDifference;
+          return new Date(second.detected_at || 0).getTime() - new Date(first.detected_at || 0).getTime();
+        })
+        .slice(0, 3));
 
       console.log('=== DASHBOARD DATA LOAD COMPLETE ===');
       
@@ -442,13 +450,16 @@ setOccupancyRate(occupancyRate);
               </Bar>
             </BarChart>
           </ResponsiveContainer>
-          <div className="mt-4 grid gap-2 sm:grid-cols-2" aria-label="Top establishment chart legend">
+          <div className="mt-4" data-top-establishment-chart="ranked-color-legend">
+            <p className="mb-2 text-xs font-semibold uppercase tracking-[0.12em] text-[#64748b]">Establishment color legend</p>
+            <div className="grid gap-2 sm:grid-cols-2" aria-label="Top establishment chart legend">
             {topEstablishments.map((entry, index) => (
               <div key={`legend-${entry.name}`} className="flex min-w-0 items-center gap-2 text-sm text-[#405266]">
                 <span className="h-3 w-3 shrink-0 rounded-sm" style={{ backgroundColor: VIOLET_BAR_SHADES[index % VIOLET_BAR_SHADES.length] }} aria-hidden="true" />
                 <span className="truncate"><span className="font-semibold">{entry.rank}</span> {entry.name}</span>
               </div>
             ))}
+            </div>
           </div>
           </>
         ) : (
