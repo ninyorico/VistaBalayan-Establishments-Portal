@@ -3,10 +3,11 @@ import { GoogleGenerativeAI } from '@google/generative-ai';
 import { getBearerToken, getSupabaseAdmin, readBody, sendJson } from './_utils/emailjs.js';
 
 const MODEL_NAMES = Array.from(new Set([
-  process.env.GEMINI_MODEL || 'gemini-3.6-flash',
-  'gemini-2.5-flash',
-  'gemini-2.5-flash-lite',
+  process.env.GEMINI_MODEL || 'gemini-3.5-flash-lite',
   'gemini-3.6-flash',
+  'gemini-3.5-flash-lite',
+  'gemini-2.5-flash-lite',
+  'gemini-2.5-flash',
 ]));
 const OFFICIAL_REPORT_STATUS = 'submitted';
 const requestCounts = new Map();
@@ -69,7 +70,10 @@ const generateContentWithFallback = async (apiKey, prompt) => {
       return { ...result, modelName };
     } catch (error) {
       lastError = error;
-      if (!isRetryableModelError(error)) throw error;
+      const providerStatus = error?.status || error?.statusCode || error?.response?.status || 'unknown';
+      const retryable = isRetryableModelError(error);
+      console.error('AI model attempt failed', { model: modelName, providerStatus, retryable });
+      if (!retryable) throw error;
     }
   }
   const serviceError = new Error('AI generation models are temporarily unavailable');
