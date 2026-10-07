@@ -191,8 +191,9 @@ const loadCachedData = async (estId: string, generateIfEmpty = true) => {
   }
 }
 
-  const refreshData = async (requestedEstablishmentId = establishmentId) => {
-    if (!requestedEstablishmentId) {
+  const refreshData = async (requestedEstablishmentId = establishmentId ?? authenticatedProfile?.establishment_id) => {
+    const resolvedEstablishmentId = requestedEstablishmentId ?? authenticatedProfile?.establishment_id
+    if (!resolvedEstablishmentId) {
       setError('No establishment associated with your account')
       return
     }
@@ -241,11 +242,26 @@ const loadCachedData = async (estId: string, generateIfEmpty = true) => {
 
       // Generate both result types with one authenticated server-side request.
       const generated = await geminiService.generateForEstablishment()
-      const newInsights = generated.insights
-      const newAnomalies = generated.anomalies
+      const generatedAt = new Date().toISOString()
+      const newInsights = (generated.insights || []).map((insight, index) => ({
+        ...insight,
+        id: `generated-${generatedAt}-${index}`,
+      }))
+      const newAnomalies = (generated.anomalies || []).map((anomaly, index) => ({
+        id: `generated-${generatedAt}-${index}`,
+        anomaly_type: anomaly.type,
+        severity: anomaly.severity,
+        description: anomaly.description,
+        recommendation: anomaly.recommendation,
+        detected_at: generatedAt,
+        is_resolved: false,
+      }))
+      setInsights(newInsights)
+      setAnomalies(newAnomalies)
+      setLastUpdated(formatPhilippineDateTime(generatedAt))
 
-      // Reload cached data
-      await loadCachedData(requestedEstablishmentId, false)
+      // Reload persisted cache so the UI uses authoritative saved records when available.
+      await loadCachedData(resolvedEstablishmentId, false)
       
       console.log(`✅ Data refreshed for ${establishmentName}: ${newInsights?.length || 0} insights, ${newAnomalies?.length || 0} anomalies`)
       
