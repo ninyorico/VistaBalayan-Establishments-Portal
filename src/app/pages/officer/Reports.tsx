@@ -414,6 +414,20 @@ export default function Reports() {
           establishment.reporting_mode = hasVisitorReports ? "visitor" : "accommodation";
         }
       }
+      const exportEstablishmentIds = searchTerm.trim()
+        ? new Set(Array.from(establishmentsById.values())
+            .filter((establishment) => String(establishment.name || "").toLowerCase().includes(searchTerm.trim().toLowerCase()))
+            .map((establishment) => String(establishment.id)))
+        : null;
+      const exportEstablishments = exportEstablishmentIds
+        ? Array.from(establishmentsById.values()).filter((establishment) => exportEstablishmentIds.has(String(establishment.id)))
+        : Array.from(establishmentsById.values());
+      const exportVisitors = exportEstablishmentIds
+        ? visitors.filter((report) => exportEstablishmentIds.has(String(report.establishment_id)))
+        : visitors;
+      const exportAccommodation = exportEstablishmentIds
+        ? accommodation.filter((report) => exportEstablishmentIds.has(String(report.establishment_id)))
+        : accommodation;
       const exportStart = new Date(`${startDate}T00:00:00`);
       const exportEnd = new Date(`${endDate}T00:00:00`);
       const exportMonths = filterType === "year" || (filterType === "month" && !selectedMonth)
@@ -434,9 +448,9 @@ export default function Reports() {
         weeklyLabel: filterType === "week" ? `WEEK ${selectedWeek} ${selectedYear}` : undefined,
         weeklyStartDate: filterType === "week" ? startDate : undefined,
         weeklyEndDate: filterType === "week" ? endDate : undefined,
-        establishments: Array.from(establishmentsById.values()),
-        accommodation,
-        visitors,
+        establishments: exportEstablishments,
+        accommodation: exportAccommodation,
+        visitors: exportVisitors,
       });
       toast.success(`Exported official arrivals template for ${getFilterLabel()}`);
     } catch (error) {

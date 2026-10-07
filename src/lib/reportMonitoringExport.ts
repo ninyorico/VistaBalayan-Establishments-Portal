@@ -25,14 +25,26 @@ const fetchAll = async <T,>(table: "establishments" | "visitor_reports" | "accom
 export async function downloadReportMonitoringWorkbook({
   section,
   specificMonth,
+  establishmentNames,
 }: {
   section: ExportSection;
   specificMonth?: string;
+  establishmentNames?: string[];
 }) {
   const establishments = await fetchAll<EstablishmentReportingRow>(
     "establishments",
     "id,name,type,dot_classification,reporting_mode,ae_id,attraction_code,total_rooms,status,business_permit_number"
   );
+  const selectedNames = establishmentNames?.map((name) => name.trim().toLowerCase()).filter(Boolean);
+  const matchesEstablishment = (name: unknown) =>
+    !selectedNames?.length || selectedNames.includes(String(name || "").trim().toLowerCase());
+  const relatedEstablishmentName = (row: any) => {
+    const related = Array.isArray(row?.establishments) ? row.establishments[0] : row?.establishments;
+    return related?.name;
+  };
+  const filteredEstablishments = selectedNames?.length
+    ? establishments.filter((establishment) => matchesEstablishment(establishment.name))
+    : establishments;
 
   if (section === "daytour") {
     const visitors = await fetchAll<VisitorSourceRecord>(
@@ -46,8 +58,10 @@ export async function downloadReportMonitoringWorkbook({
       year,
       selectedMonths: selectedMonth ? [selectedMonth] : undefined,
       exportSection: "daytour",
-      establishments,
-      visitors,
+      establishments: filteredEstablishments,
+      visitors: selectedNames?.length
+        ? visitors.filter((row) => matchesEstablishment(relatedEstablishmentName(row)))
+        : visitors,
       accommodation: [],
     });
     return;
@@ -64,8 +78,10 @@ export async function downloadReportMonitoringWorkbook({
     year,
     selectedMonths: selectedMonth ? [selectedMonth] : undefined,
     exportSection: "overnight",
-    establishments,
+    establishments: filteredEstablishments,
     visitors: [],
-    accommodation,
+    accommodation: selectedNames?.length
+      ? accommodation.filter((row) => matchesEstablishment(relatedEstablishmentName(row)))
+      : accommodation,
   });
 }

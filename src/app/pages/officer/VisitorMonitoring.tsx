@@ -207,7 +207,12 @@ export default function VisitorMonitoring({ embedded = false }: { embedded?: boo
   const totalFemale = filteredRecords.reduce((sum, r) => sum + r.female, 0);
 
   const handleExport = () => {
-    void downloadReportMonitoringWorkbook({ section: "daytour", specificMonth: specificMonth || undefined })
+    const establishmentNames = searchTerm.trim()
+      ? [...new Set(filteredRecords
+          .filter((record) => record.establishment.toLowerCase().includes(searchTerm.trim().toLowerCase()))
+          .map((record) => record.establishment))]
+      : undefined;
+    void downloadReportMonitoringWorkbook({ section: "daytour", specificMonth: specificMonth || undefined, establishmentNames })
       .then(() => toast.success("Exported Day-tour arrivals workbook"))
       .catch((error) => {
         console.error("Day-tour arrivals export error:", error);

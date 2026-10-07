@@ -39,6 +39,7 @@ interface RecentSubmission {
 interface TopEstablishment {
   name: string;
   visitors: number;
+  rank: string;
 }
 
 interface Demographic {
@@ -232,7 +233,10 @@ setOccupancyRate(occupancyRate);
             stats[id].visitors += Number(item.total_guests || 0);
           }
         });
-        const sorted = Object.values(stats).sort((a, b) => b.visitors - a.visitors).slice(0, 5);
+        const sorted = Object.values(stats).sort((a, b) => b.visitors - a.visitors).slice(0, 5).map((entry, index) => ({
+          ...entry,
+          rank: `#${index + 1}`,
+        }));
         setTopEstablishments(sorted);
         console.log('Top establishments:', sorted);
       }
@@ -280,7 +284,7 @@ setOccupancyRate(occupancyRate);
         .eq('status', 'active')
         .order('detected_at', { ascending: false })
         .limit(5);
-      setAnomalies(anomalyData || []);
+      setAnomalies((anomalyData || []).slice(0, 3));
 
       console.log('=== DASHBOARD DATA LOAD COMPLETE ===');
       
@@ -327,7 +331,7 @@ setOccupancyRate(occupancyRate);
         {[
           { label: "Total visitors", value: totalVisitors.toLocaleString(), helper: "All visitor reports", icon: Users, tone: "bg-cyan-50 text-[#0E5A72] ring-cyan-100" },
           { label: "Yearly arrivals", value: yearlyArrivals.toLocaleString(), helper: "Latest reporting year", icon: TrendingUp, tone: "bg-slate-50 text-[#0B2530] ring-slate-200" },
-          { label: "Occupancy rate", value: `${occupancyRate.toFixed(1)}%`, helper: "Average hotel occupancy", icon: Bed, tone: "bg-[#EAF2F1] text-[#0E5A72] ring-[#b8d2cf]" },
+          { label: "Occupancy rate", value: `${occupancyRate.toFixed(1)}%`, helper: "Average overnight occupancy", icon: Bed, tone: "bg-[#EAF2F1] text-[#0E5A72] ring-[#b8d2cf]" },
           { label: "Establishments", value: totalEstablishments.toString(), helper: "Tourism records", icon: Building2, tone: "bg-emerald-50 text-[#2F5F55] ring-emerald-100" },
 
         ].map((metric) => (
@@ -424,13 +428,13 @@ setOccupancyRate(occupancyRate);
 
       <PanelCard title="Top performing establishments" description="Ranked by overall visitor volume.">
         {topEstablishments.length > 0 ? (
+          <>
           <ResponsiveContainer width="100%" height={320}>
             <BarChart data={topEstablishments}>
               <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
-              <XAxis dataKey="name" angle={-35} textAnchor="end" height={105} interval={0} tickMargin={8} stroke="#64748b" />
+              <XAxis dataKey="rank" interval={0} tickMargin={8} stroke="#64748b" />
               <YAxis stroke="#64748b" />
-              <Tooltip />
-              <Legend />
+              <Tooltip labelFormatter={(rank) => topEstablishments.find((entry) => entry.rank === rank)?.name || rank} formatter={(value) => [Number(value).toLocaleString(), "Visitors"]} />
               <Bar dataKey="visitors" radius={[10, 10, 0, 0]} name="Visitors">
                 {topEstablishments.map((entry, index) => (
                   <Cell key={`${entry.name}-${index}`} fill={VIOLET_BAR_SHADES[index % VIOLET_BAR_SHADES.length]} />
@@ -438,6 +442,15 @@ setOccupancyRate(occupancyRate);
               </Bar>
             </BarChart>
           </ResponsiveContainer>
+          <div className="mt-4 grid gap-2 sm:grid-cols-2" aria-label="Top establishment chart legend">
+            {topEstablishments.map((entry, index) => (
+              <div key={`legend-${entry.name}`} className="flex min-w-0 items-center gap-2 text-sm text-[#405266]">
+                <span className="h-3 w-3 shrink-0 rounded-sm" style={{ backgroundColor: VIOLET_BAR_SHADES[index % VIOLET_BAR_SHADES.length] }} aria-hidden="true" />
+                <span className="truncate"><span className="font-semibold">{entry.rank}</span> {entry.name}</span>
+              </div>
+            ))}
+          </div>
+          </>
         ) : (
           <EmptyState>No establishment data available</EmptyState>
         )}

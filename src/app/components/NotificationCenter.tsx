@@ -90,6 +90,13 @@ function startOfMonthIso() {
   return new Date(now.getFullYear(), now.getMonth(), 1).toISOString().slice(0, 10);
 }
 
+function normalizeReportTerminology(value: string) {
+  return value
+    .replace(/\bvisitor report\b/gi, "day-tour report")
+    .replace(/\baccommodation report\b/gi, "overnight report")
+    .replace(/\bhotel report\b/gi, "overnight report");
+}
+
 function deadlineNotification(role: NotificationCenterProps["role"], canSubmitAccommodation = true): AppNotification {
   const now = new Date();
   // Remind users ten days before the last calendar day of the current month.
@@ -182,8 +189,8 @@ export default function NotificationCenter({ role }: NotificationCenterProps) {
       setDbNotifications(((persisted || []) as DbNotification[]).map((notification) => ({
         id: notification.id,
         source: "database",
-        title: notification.title,
-        message: notification.message,
+        title: normalizeReportTerminology(notification.title),
+        message: normalizeReportTerminology(notification.message),
         type: notification.type || "info",
         actionPath: notification.action_path || (role === "municipal_officer" ? "/officer/report-monitoring" : "/staff/submission-history"),
         createdAt: notification.created_at || nowIso,

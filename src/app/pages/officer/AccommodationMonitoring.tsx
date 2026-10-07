@@ -96,7 +96,7 @@ export default function AccommodationMonitoring({ embedded = false }: { embedded
 
       if (establishmentsError) {
         console.error("Error fetching establishment room totals:", establishmentsError);
-        setLoadError("The accommodation monitoring service returned an error. Please retry.");
+        setLoadError("The overnight monitoring service returned an error. Please retry.");
         toast.error("Failed to load establishment room totals");
         setLoading(false);
         return;
@@ -136,7 +136,7 @@ export default function AccommodationMonitoring({ embedded = false }: { embedded
 
         if (error) {
           console.error("Error fetching accommodation reports:", error);
-          setLoadError("The accommodation monitoring service returned an error. Please retry.");
+          setLoadError("The overnight monitoring service returned an error. Please retry.");
           toast.error("Failed to load accommodation data");
           setLoading(false);
           return;
@@ -215,7 +215,7 @@ export default function AccommodationMonitoring({ embedded = false }: { embedded
 
     } catch (err) {
       console.error("Unexpected error:", err);
-      setLoadError("The accommodation monitoring service returned an error. Please retry.");
+      setLoadError("The overnight monitoring service returned an error. Please retry.");
       toast.error("Failed to load accommodation data");
     } finally {
       setLoading(false);
@@ -407,8 +407,13 @@ export default function AccommodationMonitoring({ embedded = false }: { embedded
   };
 
   const handleExport = () => {
-    void downloadReportMonitoringWorkbook({ section: "overnight", specificMonth: specificMonth || undefined })
-      .then(() => toast.success("Exported hotel Overnight arrivals workbook"))
+    const establishmentNames = searchTerm.trim()
+      ? [...new Set(filteredRecords
+          .filter((record) => record.establishment.toLowerCase().includes(searchTerm.trim().toLowerCase()))
+          .map((record) => record.establishment))]
+      : undefined;
+    void downloadReportMonitoringWorkbook({ section: "overnight", specificMonth: specificMonth || undefined, establishmentNames })
+      .then(() => toast.success("Exported Overnight arrivals workbook"))
       .catch((error) => {
         console.error("Overnight arrivals export error:", error);
         toast.error(error instanceof Error ? error.message : "Failed to export overnight arrivals workbook");
@@ -424,15 +429,15 @@ export default function AccommodationMonitoring({ embedded = false }: { embedded
   }
 
   if (accommodationRecords.length === 0) {
-    return <DataState state="empty" message="No accommodation records have been submitted yet." />;
+    return <DataState state="empty" message="No overnight records have been submitted yet." />;
   }
 
   return (
     <div className="space-y-6">
       {!embedded && (
         <div>
-          <h1 className="text-3xl font-bold text-gray-900">Accommodation Monitoring</h1>
-          <p className="text-gray-600 mt-1">Monitor room occupancy and guest accommodation data</p>
+          <h1 className="text-3xl font-bold text-gray-900">Overnight Monitoring</h1>
+          <p className="text-gray-600 mt-1">Monitor overnight room occupancy and guest accommodation data</p>
         </div>
       )}
 

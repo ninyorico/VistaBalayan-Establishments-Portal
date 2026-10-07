@@ -228,7 +228,7 @@ export default function EstablishmentSubmissionRecords({
             onClick={() => setActiveType("accommodation")}
             className={`rounded-2xl px-5 py-3 text-sm font-semibold transition ${!isVisitor ? "bg-[#0F4C75] text-white shadow-lg shadow-cyan-950/10" : "bg-slate-100 text-slate-600 hover:bg-slate-200"}`}
           >
-            Hotel reports
+            Overnight reports
           </button>
         </div>
       )}

@@ -180,7 +180,7 @@ export default function SubmitAccommodationReport() {
     setEstablishmentName(est?.name || "Your Establishment");
 
     if (!canSubmitAccommodationReport(est)) {
-      toast.error("This establishment is assigned to resort visitor reports only.");
+      toast.error("This establishment is assigned to day-tour reports only.");
       navigate("/staff", { replace: true });
       return;
     }
@@ -584,7 +584,7 @@ export default function SubmitAccommodationReport() {
       if (submitError) {
         toast.error("Failed to submit report: " + submitError.message);
       } else {
-        toast.success("Hotel report submitted successfully");
+        toast.success("Overnight report submitted successfully");
         const draftKey = draftStorageKey(profile.id, profile.establishment_id);
         if (draftKey) localStorage.removeItem(draftKey);
         submissionKeyRef.current = crypto.randomUUID();
@@ -682,7 +682,7 @@ export default function SubmitAccommodationReport() {
               </fieldset>
 
             <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-              <p className="text-sm font-medium text-gray-700">Editable hotel room setup</p>
+              <p className="text-sm font-medium text-gray-700">Editable overnight room setup</p>
               <div className="flex items-end gap-2">
                 <label className="min-w-0 flex-1 text-xs font-medium text-gray-600">
                   Rooms to add
@@ -786,7 +786,7 @@ export default function SubmitAccommodationReport() {
         <div className="p-4 sm:p-5 lg:p-6 border-b border-gray-200">
           <h3 className="text-lg font-semibold text-gray-900">Daily Room Occupancy</h3>
           <p className="mt-1 text-sm text-gray-500 lg:hidden">Compact full-width table for faster phone entry.</p>
-          <p className="mt-2 text-sm text-gray-600">Each room uses one guest value. Double-click the current value to mark it as a new guest; leave it normal for continuing guests.</p>
+          <p className="mt-2 text-sm text-gray-600">Double-click the current date value to switch between continuing and new guest; single-click to edit the value.</p>
 
           {retrievingPreviousData && (
             <div className="mt-4 flex items-center gap-3 rounded-2xl bg-[#E0E5EC] px-4 py-3 text-sm text-[#193364] shadow-[inset_3px_3px_7px_rgba(163,177,198,0.45),inset_-3px_-3px_7px_rgba(255,255,255,0.65)]" role="status" aria-live="polite">
