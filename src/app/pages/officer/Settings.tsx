@@ -1,8 +1,9 @@
 import { useState, useEffect } from "react";
-import { Save, User, Mail, Phone, Shield } from "lucide-react";
+import { Save, User, Mail, Phone, Shield, Cookie } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "../../../lib/supabase";
 import { PageSkeleton } from "../../components/vista/PolishedShell";
+import { openCookiePreferences } from "../../components/CookieConsent";
 
 export default function OfficerProfile() {
   const [profile, setProfile] = useState<any>(null);
@@ -182,6 +183,18 @@ export default function OfficerProfile() {
             </button>
           </div>
         </div>
+      </div>
+
+      {/* Privacy Preferences */}
+      <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+        <h3 className="text-lg font-semibold text-gray-900 mb-2 flex items-center gap-2">
+          <Cookie className="w-5 h-5 text-[#0E5A72]" />
+          Privacy and Cookie Preferences
+        </h3>
+        <p className="text-sm leading-6 text-gray-600">Review or change the optional browser-storage choices saved for this account and device.</p>
+        <button type="button" onClick={openCookiePreferences} className="mt-4 inline-flex items-center gap-2 rounded-lg bg-[#0E5A72] px-4 py-2 text-sm font-semibold text-white transition hover:bg-[#0B4A5E]">
+          <Cookie className="h-4 w-4" /> Manage cookie preferences
+        </button>
       </div>
 
       {/* Save Profile Button */}
