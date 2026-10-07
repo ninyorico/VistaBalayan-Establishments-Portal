@@ -701,7 +701,7 @@ export default function AccommodationMonitoring({ embedded = false }: { embedded
           <div className="max-h-[90dvh] w-full touch-auto overflow-hidden overscroll-contain rounded-t-2xl bg-white shadow-2xl sm:max-w-5xl sm:rounded-2xl" onClick={(event) => event.stopPropagation()}>
             <div className="flex items-start justify-between gap-4 border-b border-gray-200 bg-gray-50 px-4 py-4 sm:px-6">
               <div className="min-w-0">
-                <p className="text-xs font-semibold uppercase tracking-wider text-blue-600">Hotel accommodation records</p>
+                <p className="text-xs font-semibold uppercase tracking-wider text-blue-600">Overnight accommodation records</p>
                 <h3 id="accommodation-records-dialog-title" className="mt-1 truncate text-lg font-semibold text-gray-900 sm:text-xl">{selectedAccommodationGroup.establishment}</h3>
                 <p className="mt-1 text-xs text-gray-600 sm:text-sm">{selectedAccommodationGroup.records.length} record(s) for {monthLabel}</p>
               </div>

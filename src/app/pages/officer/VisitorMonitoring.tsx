@@ -208,10 +208,10 @@ export default function VisitorMonitoring({ embedded = false }: { embedded?: boo
 
   const handleExport = () => {
     void downloadReportMonitoringWorkbook({ section: "daytour", specificMonth: specificMonth || undefined })
-      .then(() => toast.success("Exported resort Day-Tour arrivals workbook"))
+      .then(() => toast.success("Exported Day-tour arrivals workbook"))
       .catch((error) => {
-        console.error("Resort arrivals export error:", error);
-        toast.error(error instanceof Error ? error.message : "Failed to export resort arrivals workbook");
+        console.error("Day-tour arrivals export error:", error);
+        toast.error(error instanceof Error ? error.message : "Failed to export Day-tour arrivals workbook");
       });
   };
 

@@ -172,7 +172,7 @@ const loadProfile = async () => {
         setEstablishmentName(establishment[0]?.name || 'Your Establishment');
 
         if (!canSubmitVisitorReport(establishment[0])) {
-          toast.error('This establishment is assigned to hotel/accommodation reports only.');
+          toast.error('This establishment is assigned to overnight reports only.');
           navigate('/staff', { replace: true });
           return;
         }
@@ -494,7 +494,7 @@ const loadProfile = async () => {
           <Save className="w-5 h-5" /> Save Draft
         </button>
         <button onClick={handleSubmit} disabled={submitting} className="flex w-full sm:w-auto items-center justify-center gap-2 px-6 py-3 bg-[#0F4C75] text-white rounded-lg hover:bg-[#0F4C75] disabled:cursor-not-allowed disabled:opacity-60">
-          <Send className="w-5 h-5" /> {submitting ? "Submitting..." : "Submit Resort Report"}
+          <Send className="w-5 h-5" /> {submitting ? "Submitting..." : "Submit Day-tour Report"}
         </button>
       </div>
     </div>

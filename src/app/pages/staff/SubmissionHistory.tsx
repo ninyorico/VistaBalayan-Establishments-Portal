@@ -42,7 +42,7 @@ const statusStyles = {
 };
 
 const getReportTypeLabel = (type: string) =>
-  type === "Visitor Report" ? "Resort" : type === "Accommodation Report" ? "Hotels" : type;
+  type === "Visitor Report" ? "Day-tour" : type === "Accommodation Report" ? "Overnight" : type;
 
 const monthNames = Array.from({ length: 12 }, (_, index) =>
   new Date(2000, index, 1).toLocaleString("default", { month: "long" })
@@ -130,7 +130,7 @@ export default function SubmissionHistory() {
     // Submission History is a historical record, so it must load every report
     // family belonging to the establishment. Current form eligibility is still
     // used for the sidebar and new-report routes, but it must not hide imported
-    // accommodation history when an establishment's current type is Resort or
+    // accommodation history when an establishment's current type is Day-tour or
     // another category that no longer exposes the accommodation form.
     const [{ data: visitorData, error: visitorError }, { data: accommodationData, error: accommodationError }] = await Promise.all([
       establishmentId
@@ -261,7 +261,7 @@ export default function SubmissionHistory() {
     const period = selectedMonth === -1 ? String(selectedYear) : `${selectedYear}-${String(selectedMonth + 1).padStart(2, "0")}`;
     await downloadOfficialArrivalsWorkbook({
       filename: section === "daytour"
-        ? `Balayan_Resort_Daytour_Arrivals_${period}.xlsx`
+        ? `Balayan_Daytour_Arrivals_${period}.xlsx`
         : `Balayan_Overnight_Arrivals_${period}.xlsx`,
       year: selectedYear,
       selectedMonths,
@@ -281,11 +281,11 @@ export default function SubmissionHistory() {
     });
   };
 
-  const handleExportResortData = () => {
-    void exportOfficialWorkbook("daytour").catch((error) => console.error("Resort workbook export error:", error));
+  const handleExportDayTourData = () => {
+    void exportOfficialWorkbook("daytour").catch((error) => console.error("Day-tour workbook export error:", error));
   };
 
-  const handleExportHotelData = () => {
+  const handleExportOvernightData = () => {
     void exportOfficialWorkbook("overnight").catch((error) => console.error("Overnight workbook export error:", error));
   };
 
@@ -308,7 +308,7 @@ export default function SubmissionHistory() {
     if (submission.type === "Visitor Report") {
       const records = getVisitorRecordsForSubmission(submission);
       await downloadOfficialArrivalsWorkbook({
-        filename: `Balayan_Resort_Daytour_Submission_${submission.reportDate || "report"}.xlsx`,
+        filename: `Balayan_Daytour_Submission_${submission.reportDate || "report"}.xlsx`,
         year: dateParts.year,
         selectedMonths: [dateParts.month + 1],
         exportSection: "daytour",
@@ -346,15 +346,15 @@ export default function SubmissionHistory() {
     { label: "Rejected", value: rejectedCount, icon: XCircle, tone: "text-rose-700 bg-rose-50 ring-rose-100" },
   ];
 
-  const showResortExport = allowedForms.visitor;
-  const showHotelExport = allowedForms.accommodation;
+  const showDayTourExport = allowedForms.visitor;
+  const showOvernightExport = allowedForms.accommodation;
 
   return (
     <EstablishmentSubmissionRecords
       visitorReports={visitorReports}
       accommodationReports={accommodationReports}
-      canSubmitVisitor={showResortExport}
-      canSubmitAccommodation={showHotelExport}
+      canSubmitVisitor={showDayTourExport}
+      canSubmitAccommodation={showOvernightExport}
       searchTerm={searchTerm}
       setSearchTerm={setSearchTerm}
       selectedYear={selectedYear}
@@ -362,8 +362,8 @@ export default function SubmissionHistory() {
       selectedMonth={selectedMonth}
       setSelectedMonth={(month) => { setSelectedMonth(month); setExpandedSubmissionId(null); }}
       availableYears={availableYears}
-      onExportVisitor={handleExportResortData}
-      onExportAccommodation={handleExportHotelData}
+      onExportVisitor={handleExportDayTourData}
+      onExportAccommodation={handleExportOvernightData}
     />
   );
 

@@ -1408,7 +1408,7 @@ export default function Establishments() {
                     <div className="mb-3 flex items-center justify-between gap-3">
                       <div>
                         <label className="block text-sm font-medium text-gray-700">Room Names</label>
-                        <p className="text-xs text-gray-500">These room names/codes appear in the establishment staff hotel report form.</p>
+                        <p className="text-xs text-gray-500">These room names/codes appear in the establishment staff overnight report form.</p>
                       </div>
                       <button type="button" onClick={addRoomConfigRow} className="inline-flex items-center gap-1 rounded-lg bg-blue-50 px-3 py-1.5 text-sm font-medium text-blue-700 hover:bg-blue-100">
                         <Plus className="h-4 w-4" /> Add Room

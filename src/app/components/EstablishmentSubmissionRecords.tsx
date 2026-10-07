@@ -219,7 +219,7 @@ export default function EstablishmentSubmissionRecords({
             onClick={() => setActiveType("visitor")}
             className={`rounded-2xl px-5 py-3 text-sm font-semibold transition ${isVisitor ? "bg-[#0F4C75] text-white shadow-lg shadow-cyan-950/10" : "bg-slate-100 text-slate-600 hover:bg-slate-200"}`}
           >
-            Resort reports
+            Day-tour reports
           </button>
           <button
             type="button"
@@ -248,7 +248,7 @@ export default function EstablishmentSubmissionRecords({
         <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <div>
             <h2 className="text-sm font-bold uppercase tracking-[0.12em] text-slate-500">
-              {isVisitor ? "Resort visitor records" : "Hotel accommodation records"}
+              {isVisitor ? "Day-tour visitor records" : "Overnight accommodation records"}
             </h2>
             <p className="mt-1 text-sm text-slate-500">Filter the same record set used by the tourism officer monitoring screens.</p>
           </div>

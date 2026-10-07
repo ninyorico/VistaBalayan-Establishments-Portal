@@ -98,8 +98,8 @@ const groupKey = (report: TourismReportExportRow) => {
 
   // Municipal exports should compile all establishments into a single monthly
   // worksheet per report form type, instead of creating one worksheet per
-  // establishment. For example, January 2025 Visitor/Resort reports are all
-  // exported in one January 2025 Resort sheet.
+  // establishment. For example, January 2025 day-tour reports are all
+  // exported in one January 2025 day-tour sheet.
   return `${getTourismReportFormType(report)}|${year}|${month}`;
 };
 

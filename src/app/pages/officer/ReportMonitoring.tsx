@@ -13,8 +13,8 @@ const tabs: Array<{
 }> = [
   {
     id: "visitor",
-    label: "Resort reports",
-    description: "Resort arrivals, origin, and demographic records",
+    label: "Day-tour reports",
+    description: "Day-tour arrivals, origin, and demographic records",
     icon: Users,
   },
   {
