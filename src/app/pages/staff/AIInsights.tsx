@@ -40,6 +40,7 @@ export default function StaffAIInsights() {
   const [establishmentName, setEstablishmentName] = useState<string>('')
   const [establishmentId, setEstablishmentId] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
+  const [refreshError, setRefreshError] = useState<string | null>(null)
 
   useEffect(() => {
     loadUserAndData()
@@ -162,7 +163,7 @@ const loadCachedData = async (estId: string) => {
     }
     
     setRefreshing(true)
-    setError(null)
+    setRefreshError(null)
     
     try {
       // Fetch this establishment's visitor data only
@@ -215,7 +216,12 @@ const loadCachedData = async (estId: string) => {
       
     } catch (error) {
       console.error('Error refreshing data:', error)
-      setError('Failed to refresh data. Please try again.')
+      const message = error instanceof Error ? error.message : ''
+      setRefreshError(
+        message.toLowerCase().includes('temporarily busy')
+          ? 'The AI service is temporarily busy. Your current insights are still available; please try again shortly.'
+          : 'Unable to refresh AI insights right now. Your current insights are still available; please try again.'
+      )
     } finally {
       setRefreshing(false)
     }
@@ -251,6 +257,19 @@ const loadCachedData = async (estId: string) => {
       refreshing={refreshing}
       onRefresh={refreshData}
     >
+      {refreshError && (
+        <div className="flex flex-col gap-3 rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900 sm:flex-row sm:items-center sm:justify-between" role="alert">
+          <p>{refreshError}</p>
+          <button
+            type="button"
+            onClick={refreshData}
+            disabled={refreshing}
+            className="w-full shrink-0 rounded-xl bg-amber-600 px-3 py-2 font-semibold text-white transition hover:bg-amber-700 disabled:cursor-not-allowed disabled:opacity-60 sm:w-auto"
+          >
+            Try again
+          </button>
+        </div>
+      )}
       <AiSectionCard
         title="Service gaps"
         countLabel={`${anomalies.filter((a) => a.severity === "medium" || a.severity === "high").length} Active`}
