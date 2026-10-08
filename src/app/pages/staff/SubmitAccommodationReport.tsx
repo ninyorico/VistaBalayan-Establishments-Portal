@@ -442,12 +442,16 @@ export default function SubmitAccommodationReport() {
       if (value === 0) {
         return { ...room, continuingGuests: 0, checkIns: 0, guestNights: 0, isNewGuest: false };
       }
-      // A single click edits the currently selected guest type. The type is
-      // changed only by the explicit double-click toggle below.
-      const updatedRoom = room.isNewGuest
-        ? { ...room, checkIns: value, continuingGuests: 0 }
-        : { ...room, continuingGuests: value, checkIns: 0 };
-      return { ...updatedRoom, guestNights: Number(updatedRoom.continuingGuests || 0) + Number(updatedRoom.checkIns || 0) };
+      // Any positive current-date edit is an explicit new-guest entry.
+      // This applies both when the previous day was blank and when an existing
+      // continuing value is edited. Double-click remains the explicit type toggle.
+      const updatedRoom = {
+        ...room,
+        continuingGuests: 0,
+        checkIns: value,
+        isNewGuest: true,
+      };
+      return { ...updatedRoom, guestNights: Number(updatedRoom.checkIns || 0) };
     }));
   };
 
