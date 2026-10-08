@@ -53,7 +53,7 @@ export default function SubmitAccommodationReport() {
   const [establishmentAmenities, setEstablishmentAmenities] = useState<string>("");
   const [submitting, setSubmitting] = useState(false);
   const submissionKeyRef = useRef(crypto.randomUUID());
-  const lastGuestFieldTapRef = useRef<{ index: number; timestamp: number } | null>(null);
+  const lastGuestFieldTapRef = useRef<{ roomCode: string; timestamp: number } | null>(null);
 
   const draftStorageKey = (userId?: string, establishmentId?: string) =>
     userId && establishmentId ? `accommodationReportDraft:${userId}:${establishmentId}` : null;
@@ -456,9 +456,9 @@ export default function SubmitAccommodationReport() {
     }));
   };
 
-  const toggleGuestType = (index: number) => {
-    setRoomData(roomData.map((room, i) => {
-      if (i !== index) return room;
+  const toggleGuestType = (roomCode: string) => {
+    setRoomData(roomData.map((room) => {
+      if (room.roomCode !== roomCode) return room;
       const nextIsNewGuest = !room.isNewGuest;
       const currentValue = room.isNewGuest ? room.checkIns : room.continuingGuests;
       return {
@@ -471,10 +471,10 @@ export default function SubmitAccommodationReport() {
     }));
   };
 
-  const handleGuestFieldPointerDown = (event: PointerEvent<HTMLInputElement>, index: number) => {
+  const handleGuestFieldPointerDown = (event: PointerEvent<HTMLInputElement>, roomCode: string) => {
     const now = Date.now();
     const lastTap = lastGuestFieldTapRef.current;
-    const isDoubleTap = lastTap?.index === index && now - lastTap.timestamp <= 350;
+    const isDoubleTap = lastTap?.roomCode === roomCode && now - lastTap.timestamp <= 350;
 
     if (isDoubleTap) {
       event.preventDefault();
@@ -482,13 +482,12 @@ export default function SubmitAccommodationReport() {
       lastGuestFieldTapRef.current = null;
       event.currentTarget.setSelectionRange(0, 0);
       event.currentTarget.blur();
-      toggleGuestType(index);
+      toggleGuestType(roomCode);
       return;
     }
 
-    // Do not prevent the first pointer event: iOS Safari needs the native
-    // user gesture to focus the input and open the numeric keyboard.
-    lastGuestFieldTapRef.current = { index, timestamp: now };
+    // Preserve the native first-tap focus so mobile Safari opens the keyboard.
+    lastGuestFieldTapRef.current = { roomCode, timestamp: now };
   };
 
   const getAutomaticallyOccupiedRooms = (room: RoomOccupancy) => room.guestNights > 0 ? 1 : 0;
@@ -853,7 +852,7 @@ export default function SubmitAccommodationReport() {
                           pattern="[0-9]*"
                           value={numericInputValue(room.isNewGuest ? room.checkIns : room.continuingGuests)}
                           onChange={(e) => updateSingleGuestValue(index, parseNonNegativeInteger(e.target.value))}
-                          onPointerDown={(e) => handleGuestFieldPointerDown(e, index)}
+                          onPointerDown={(e) => handleGuestFieldPointerDown(e, room.roomCode)}
                           onCopy={(e) => e.preventDefault()}
                           onCut={(e) => e.preventDefault()}
                           onSelect={(e) => e.preventDefault()}
