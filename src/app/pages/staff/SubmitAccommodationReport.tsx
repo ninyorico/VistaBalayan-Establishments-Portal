@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, type MouseEvent } from "react";
+import { useState, useEffect, useRef, type MouseEvent, type PointerEvent } from "react";
 import { useNavigate } from "react-router";
 import { Save, Send, Settings, AlertTriangle, Plus, Trash2 } from "lucide-react";
 import { toast } from "sonner";
@@ -53,6 +53,7 @@ export default function SubmitAccommodationReport() {
   const [establishmentAmenities, setEstablishmentAmenities] = useState<string>("");
   const [submitting, setSubmitting] = useState(false);
   const submissionKeyRef = useRef(crypto.randomUUID());
+  const lastGuestFieldTapRef = useRef(new Map<string, number>());
 
   const draftStorageKey = (userId?: string, establishmentId?: string) =>
     userId && establishmentId ? `accommodationReportDraft:${userId}:${establishmentId}` : null;
@@ -470,16 +471,34 @@ export default function SubmitAccommodationReport() {
     }));
   };
 
-  const suppressGuestFieldSelection = (event: { preventDefault: () => void; stopPropagation: () => void; currentTarget: HTMLInputElement }) => {
+  const handleGuestFieldPointerDown = (event: PointerEvent<HTMLInputElement>, roomCode: string) => {
+    const now = Date.now();
+    const lastTap = lastGuestFieldTapRef.current.get(roomCode);
+    const isDoubleTap = event.detail >= 2 || (lastTap !== undefined && now - lastTap <= 800);
+
+    if (!isDoubleTap) {
+      // Preserve the first native pointer gesture so mobile Safari opens the keyboard.
+      lastGuestFieldTapRef.current.set(roomCode, now);
+      window.setTimeout(() => {
+        if (lastGuestFieldTapRef.current.get(roomCode) === now) {
+          lastGuestFieldTapRef.current.delete(roomCode);
+        }
+      }, 900);
+      return;
+    }
+
     event.preventDefault();
     event.stopPropagation();
-    const caretPosition = event.currentTarget.value.length;
-    event.currentTarget.setSelectionRange(caretPosition, caretPosition);
+    lastGuestFieldTapRef.current.delete(roomCode);
+    event.currentTarget.setSelectionRange(0, 0);
+    event.currentTarget.blur();
+    toggleGuestType(roomCode);
   };
 
   const handleGuestFieldDoubleClick = (event: MouseEvent<HTMLInputElement>, roomCode: string) => {
     event.preventDefault();
     event.stopPropagation();
+    lastGuestFieldTapRef.current.delete(roomCode);
     event.currentTarget.setSelectionRange(0, 0);
     event.currentTarget.blur();
     toggleGuestType(roomCode);
@@ -847,10 +866,8 @@ export default function SubmitAccommodationReport() {
                           pattern="[0-9]*"
                           value={numericInputValue(room.isNewGuest ? room.checkIns : room.continuingGuests)}
                           onChange={(e) => updateSingleGuestValue(index, parseNonNegativeInteger(e.target.value))}
+                          onPointerDown={(e) => handleGuestFieldPointerDown(e, room.roomCode)}
                           onDoubleClick={(e) => handleGuestFieldDoubleClick(e, room.roomCode)}
-                          onSelectCapture={suppressGuestFieldSelection}
-                          onMouseUp={(e) => e.detail >= 2 && suppressGuestFieldSelection(e)}
-                          onTouchEnd={suppressGuestFieldSelection}
                           onCopy={(e) => e.preventDefault()}
                           onCut={(e) => e.preventDefault()}
                           onSelect={(e) => e.preventDefault()}
