@@ -53,8 +53,7 @@ export default function SubmitAccommodationReport() {
   const [establishmentAmenities, setEstablishmentAmenities] = useState<string>("");
   const [submitting, setSubmitting] = useState(false);
   const submissionKeyRef = useRef(crypto.randomUUID());
-  const guestFieldFocusTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const pendingGuestFieldIndexRef = useRef<number | null>(null);
+  const lastGuestFieldTapRef = useRef<{ index: number; timestamp: number } | null>(null);
 
   const draftStorageKey = (userId?: string, establishmentId?: string) =>
     userId && establishmentId ? `accommodationReportDraft:${userId}:${establishmentId}` : null;
@@ -119,10 +118,6 @@ export default function SubmitAccommodationReport() {
   };
 
   useDialogFocus(showRoomSetup, roomDialogRef, () => setShowRoomSetup(false));
-
-  useEffect(() => () => {
-    if (guestFieldFocusTimerRef.current) clearTimeout(guestFieldFocusTimerRef.current);
-  }, []);
 
   useEffect(() => {
     if (!showRoomSetup) return;
@@ -477,28 +472,23 @@ export default function SubmitAccommodationReport() {
   };
 
   const handleGuestFieldPointerDown = (event: PointerEvent<HTMLInputElement>, index: number) => {
-    event.preventDefault();
-    event.stopPropagation();
+    const now = Date.now();
+    const lastTap = lastGuestFieldTapRef.current;
+    const isDoubleTap = lastTap?.index === index && now - lastTap.timestamp <= 350;
 
-    const isSecondTap = pendingGuestFieldIndexRef.current === index && guestFieldFocusTimerRef.current !== null;
-    if (guestFieldFocusTimerRef.current) {
-      clearTimeout(guestFieldFocusTimerRef.current);
-      guestFieldFocusTimerRef.current = null;
-    }
-
-    if (isSecondTap) {
-      pendingGuestFieldIndexRef.current = null;
+    if (isDoubleTap) {
+      event.preventDefault();
+      event.stopPropagation();
+      lastGuestFieldTapRef.current = null;
+      event.currentTarget.setSelectionRange(0, 0);
+      event.currentTarget.blur();
       toggleGuestType(index);
       return;
     }
 
-    pendingGuestFieldIndexRef.current = index;
-    const input = event.currentTarget;
-    guestFieldFocusTimerRef.current = setTimeout(() => {
-      input.focus({ preventScroll: true });
-      guestFieldFocusTimerRef.current = null;
-      pendingGuestFieldIndexRef.current = null;
-    }, 320);
+    // Do not prevent the first pointer event: iOS Safari needs the native
+    // user gesture to focus the input and open the numeric keyboard.
+    lastGuestFieldTapRef.current = { index, timestamp: now };
   };
 
   const getAutomaticallyOccupiedRooms = (room: RoomOccupancy) => room.guestNights > 0 ? 1 : 0;
@@ -864,8 +854,17 @@ export default function SubmitAccommodationReport() {
                           value={numericInputValue(room.isNewGuest ? room.checkIns : room.continuingGuests)}
                           onChange={(e) => updateSingleGuestValue(index, parseNonNegativeInteger(e.target.value))}
                           onPointerDown={(e) => handleGuestFieldPointerDown(e, index)}
+                          onCopy={(e) => e.preventDefault()}
+                          onCut={(e) => e.preventDefault()}
+                          onSelect={(e) => e.preventDefault()}
+                          onContextMenu={(e) => e.preventDefault()}
                           className={room.isNewGuest ? "mx-auto w-full max-w-[150px] select-none rounded-full border-[3px] !border-red-600 bg-white px-2 py-2 text-center text-sm font-bold tabular-nums text-red-700" : "mx-auto w-full max-w-[150px] select-none rounded-md border border-gray-300 bg-white px-2 py-2 text-center text-sm font-normal tabular-nums text-gray-700"}
-                          style={room.isNewGuest ? { color: "#b91c1c", borderColor: "#dc2626", borderWidth: "3px", borderStyle: "solid", borderRadius: "9999px" } : undefined}
+                          style={{
+                            WebkitUserSelect: "none",
+                            userSelect: "none",
+                            WebkitTouchCallout: "none",
+                            ...(room.isNewGuest ? { color: "#b91c1c", borderColor: "#dc2626", borderWidth: "3px", borderStyle: "solid", borderRadius: "9999px" } : {}),
+                          }}
                           data-new-guest-field={room.isNewGuest ? "true" : undefined}
                           placeholder="0"
                           title="Double-click to switch between continuing and new guest"
