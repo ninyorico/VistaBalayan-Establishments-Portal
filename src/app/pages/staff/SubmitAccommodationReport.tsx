@@ -3,7 +3,7 @@ import { useNavigate } from "react-router";
 import { Save, Send, Settings, AlertTriangle, Plus, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "../../../lib/supabase";
-import { calculateAccommodationOccupancy } from "../../../lib/reportMetrics";
+
 import { canSubmitAccommodationReport } from "../../../lib/establishmentReportForms";
 import { DEFAULT_ROOM_CONFIG, getRoomConfigFromAmenities, normalizeRoomConfig, setRoomConfigInAmenities, type EstablishmentRoomConfig } from "../../../lib/establishmentRoomConfig";
 import { useDialogFocus } from "../../../hooks/useDialogFocus";
@@ -556,11 +556,6 @@ export default function SubmitAccommodationReport() {
     || Number(room.guestNights || 0) > 0
   );
 
-  const avgOccupancyRate = calculateAccommodationOccupancy(
-    totalOccupiedRooms,
-    totalRooms
-  ).toFixed(2);
-
   const handleSaveDraft = () => {
     const key = draftStorageKey(profile?.id, profile?.establishment_id);
     if (!key) {
@@ -942,8 +937,8 @@ export default function SubmitAccommodationReport() {
                     <p className="mt-1 min-h-[1.75rem] text-[9px] leading-tight text-[#5D6F73] sm:min-h-[2.5rem] sm:text-xs lg:min-h-0">new guests</p>
                   </div>
                   <div className="flex min-w-0 self-start flex-col rounded-lg border border-[#6C9772]/35 bg-[#E5E8E1] p-2 sm:self-stretch sm:p-4 lg:p-3" data-hotel-report-daily-occupancy="selected-report-date">
-                    <p className="mb-1 min-h-[2.25rem] text-[10px] font-medium leading-tight text-[#0F3B2D] sm:min-h-[3.5rem] sm:text-sm lg:min-h-0">Daily Room Occupancy Rate</p>
-                    <p className="flex min-h-[2rem] items-center text-xl font-bold text-[#0F3B2D] sm:min-h-[2.25rem] sm:text-3xl lg:min-h-0 lg:text-2xl">{avgOccupancyRate}%</p>
+                    <p className="mb-1 min-h-[2.25rem] text-[10px] font-medium leading-tight text-[#0F3B2D] sm:min-h-[3.5rem] sm:text-sm lg:min-h-0">Rooms Occupied</p>
+                    <p className="flex min-h-[2rem] items-center text-xl font-bold text-[#0F3B2D] sm:min-h-[2.25rem] sm:text-3xl lg:min-h-0 lg:text-2xl">{totalOccupiedRooms}</p>
                     <p className="mt-1 min-h-[1.75rem] text-[9px] leading-tight text-[#5D6F73] sm:min-h-[2.5rem] sm:text-xs lg:min-h-0">selected report date only</p>
                   </div>
                   <div className="flex min-w-0 self-start flex-col rounded-lg border border-[#AFB3B5]/45 bg-[#F5F8FF] p-2 sm:self-stretch sm:p-4 lg:p-3">
