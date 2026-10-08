@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, type MouseEvent, type PointerEvent } from "react";
+import { useState, useEffect, useRef, type MouseEvent, type PointerEvent, type TouchEvent } from "react";
 import { useNavigate } from "react-router";
 import { Save, Send, Settings, AlertTriangle, Plus, Trash2 } from "lucide-react";
 import { toast } from "sonner";
@@ -471,16 +471,10 @@ export default function SubmitAccommodationReport() {
     }));
   };
 
-  const handleGuestFieldPointerDownCapture = (event: PointerEvent<HTMLTableSectionElement>) => {
-    const target = event.target;
-    if (!(target instanceof HTMLInputElement)) return;
-
-    const roomCode = target.dataset.guestRoomCode;
-    if (!roomCode) return;
-
+  const processGuestFieldPress = (event: { preventDefault: () => void; stopPropagation: () => void }, target: HTMLInputElement, roomCode: string) => {
     const now = Date.now();
     const lastTap = lastGuestFieldTapRef.current.get(roomCode);
-    const isDoubleTap = event.detail >= 2 || (lastTap !== undefined && now - lastTap <= 800);
+    const isDoubleTap = lastTap !== undefined && now - lastTap <= 800;
 
     if (!isDoubleTap) {
       lastGuestFieldTapRef.current.set(roomCode, now);
@@ -498,6 +492,21 @@ export default function SubmitAccommodationReport() {
     target.setSelectionRange(0, 0);
     target.blur();
     toggleGuestType(roomCode);
+  };
+
+  const handleGuestFieldPointerDownCapture = (event: PointerEvent<HTMLTableSectionElement>) => {
+    if (event.pointerType === "touch") return;
+    const target = event.target;
+    if (!(target instanceof HTMLInputElement)) return;
+    const roomCode = target.dataset.guestRoomCode;
+    if (roomCode) processGuestFieldPress(event, target, roomCode);
+  };
+
+  const handleGuestFieldTouchStartCapture = (event: TouchEvent<HTMLTableSectionElement>) => {
+    const target = event.target;
+    if (!(target instanceof HTMLInputElement)) return;
+    const roomCode = target.dataset.guestRoomCode;
+    if (roomCode) processGuestFieldPress(event, target, roomCode);
   };
 
   const handleGuestFieldDoubleClick = (event: MouseEvent<HTMLInputElement>, roomCode: string) => {
@@ -851,7 +860,7 @@ export default function SubmitAccommodationReport() {
                 <th className="w-[33%] px-1.5 py-2 text-center text-[10px] font-semibold uppercase leading-tight text-[#0F4C75] sm:px-3 sm:py-3 sm:text-xs">Current Date<div className="mt-1 text-[9px] font-normal normal-case text-gray-500 sm:text-[10px]">{reportDate}</div></th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-gray-200" onPointerDownCapture={handleGuestFieldPointerDownCapture}>
+            <tbody className="divide-y divide-gray-200" onPointerDownCapture={handleGuestFieldPointerDownCapture} onTouchStartCapture={handleGuestFieldTouchStartCapture}>
               {roomData.map((room, index) => {
                   const previousTotal = room.previousGuestNights || 0;
                   const previousNew = Math.min(room.previousNewGuests || 0, previousTotal);
@@ -876,6 +885,8 @@ export default function SubmitAccommodationReport() {
                           onCut={(e) => e.preventDefault()}
                           onSelect={(e) => e.preventDefault()}
                           onContextMenu={(e) => e.preventDefault()}
+                          onDragStart={(e) => e.preventDefault()}
+                          draggable={false}
                           className={room.isNewGuest ? "mx-auto w-full max-w-[150px] select-none rounded-full border-[3px] !border-red-600 bg-white px-2 py-2 text-center text-sm font-bold tabular-nums text-red-700" : "mx-auto w-full max-w-[150px] select-none rounded-md border border-gray-300 bg-white px-2 py-2 text-center text-sm font-normal tabular-nums text-gray-700"}
                           style={{
                             WebkitUserSelect: "none",
