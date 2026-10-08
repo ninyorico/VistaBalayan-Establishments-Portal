@@ -379,6 +379,12 @@ export default function Analytics() {
     return <DataState state="loading" message="Retrieving analytics data..." />;
   }
 
+  const underperformingEstablishments = Array.from(
+    new Map(
+      [...data.lowPerformersDayTour, ...data.lowPerformersOvernight].map((establishment) => [establishment.id, establishment])
+    ).values()
+  );
+
   return (
     <div className="space-y-6">
       <div>
@@ -534,19 +540,10 @@ export default function Analytics() {
         </div>
       </div>
 
-      {([[
-        "Day-tour establishments requiring attention",
-        "Day-tour establishments are flagged for a missing latest report or a visitor decline greater than 20% versus the previous available month.",
-        data.lowPerformersDayTour,
-      ], [
-        "Overnight establishments requiring attention",
-        "Overnight establishments are flagged for a missing latest overnight report or latest room occupancy below the 35% attention benchmark. Establishments with both capabilities also include day-tour reporting gaps or declines.",
-        data.lowPerformersOvernight,
-      ]] as const).map(([title, description, performers]) => (
-        <div key={title} className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
+      <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
           <div className="p-6 border-b border-gray-200">
-            <h3 className="text-lg font-semibold text-gray-900">{title}</h3>
-            <p className="text-sm text-gray-600 mt-1">{description}</p>
+            <h3 className="text-lg font-semibold text-gray-900">Underperforming Establishments</h3>
+            <p className="text-sm text-gray-600 mt-1">Establishments requiring attention based on submitted visitor trends, missing reports, and accommodation occupancy.</p>
           </div>
           <div className="overflow-x-auto">
             <table className="w-full">
@@ -559,7 +556,7 @@ export default function Analytics() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-200">
-                {performers.length > 0 ? performers.map((establishment) => (
+                {underperformingEstablishments.length > 0 ? underperformingEstablishments.map((establishment) => (
                   <Fragment key={establishment.id}>
                     <tr
                       className="cursor-pointer hover:bg-gray-50 focus:outline-none focus-visible:bg-blue-50"
@@ -623,7 +620,6 @@ export default function Analytics() {
             </table>
           </div>
         </div>
-      ))}
     </div>
   );
 }
