@@ -54,6 +54,7 @@ export default function SubmitAccommodationReport() {
   const [submitting, setSubmitting] = useState(false);
   const submissionKeyRef = useRef(crypto.randomUUID());
   const lastGuestFieldTapRef = useRef(new Map<string, number>());
+  const lastGuestFieldToggleRef = useRef(new Map<string, number>());
 
   const draftStorageKey = (userId?: string, establishmentId?: string) =>
     userId && establishmentId ? `accommodationReportDraft:${userId}:${establishmentId}` : null;
@@ -480,6 +481,14 @@ export default function SubmitAccommodationReport() {
     }));
   };
 
+  const toggleGuestTypeOnce = (roomCode: string) => {
+    const now = Date.now();
+    const lastToggle = lastGuestFieldToggleRef.current.get(roomCode);
+    if (lastToggle !== undefined && now - lastToggle < 500) return;
+    lastGuestFieldToggleRef.current.set(roomCode, now);
+    toggleGuestType(roomCode);
+  };
+
   const processGuestFieldPress = (event: { preventDefault: () => void; stopPropagation: () => void }, target: HTMLInputElement, roomCode: string) => {
     const now = Date.now();
     const lastTap = lastGuestFieldTapRef.current.get(roomCode);
@@ -500,7 +509,7 @@ export default function SubmitAccommodationReport() {
     lastGuestFieldTapRef.current.delete(roomCode);
     target.setSelectionRange(0, 0);
     target.blur();
-    toggleGuestType(roomCode);
+    toggleGuestTypeOnce(roomCode);
   };
 
   const handleGuestFieldPointerDownCapture = (event: PointerEvent<HTMLTableSectionElement>) => {
@@ -524,7 +533,7 @@ export default function SubmitAccommodationReport() {
     lastGuestFieldTapRef.current.delete(roomCode);
     event.currentTarget.setSelectionRange(0, 0);
     event.currentTarget.blur();
-    toggleGuestType(roomCode);
+    toggleGuestTypeOnce(roomCode);
   };
 
   const getAutomaticallyOccupiedRooms = (room: RoomOccupancy) => room.guestNights > 0 ? 1 : 0;
