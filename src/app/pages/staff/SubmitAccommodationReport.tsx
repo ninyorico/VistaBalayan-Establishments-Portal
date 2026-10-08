@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, type MouseEvent, type PointerEvent } from "react";
+import { useState, useEffect, useRef, type MouseEvent } from "react";
 import { useNavigate } from "react-router";
 import { Save, Send, Settings, AlertTriangle, Plus, Trash2 } from "lucide-react";
 import { toast } from "sonner";
@@ -53,8 +53,6 @@ export default function SubmitAccommodationReport() {
   const [establishmentAmenities, setEstablishmentAmenities] = useState<string>("");
   const [submitting, setSubmitting] = useState(false);
   const submissionKeyRef = useRef(crypto.randomUUID());
-  const lastGuestFieldTapRef = useRef<{ roomCode: string; timestamp: number } | null>(null);
-  const lastGuestFieldToggleRef = useRef<{ roomCode: string; timestamp: number } | null>(null);
 
   const draftStorageKey = (userId?: string, establishmentId?: string) =>
     userId && establishmentId ? `accommodationReportDraft:${userId}:${establishmentId}` : null;
@@ -472,39 +470,12 @@ export default function SubmitAccommodationReport() {
     }));
   };
 
-  const toggleGuestTypeAfterDoubleTap = (event: { preventDefault: () => void; stopPropagation: () => void; currentTarget: HTMLInputElement }, roomCode: string) => {
-    const now = Date.now();
-    const lastToggle = lastGuestFieldToggleRef.current;
-    if (lastToggle?.roomCode === roomCode && now - lastToggle.timestamp <= 600) {
-      lastGuestFieldToggleRef.current = null;
-      return;
-    }
-
+  const handleGuestFieldDoubleClick = (event: MouseEvent<HTMLInputElement>, roomCode: string) => {
     event.preventDefault();
     event.stopPropagation();
-    lastGuestFieldTapRef.current = null;
-    lastGuestFieldToggleRef.current = { roomCode, timestamp: now };
     event.currentTarget.setSelectionRange(0, 0);
     event.currentTarget.blur();
     toggleGuestType(roomCode);
-  };
-
-  const handleGuestFieldPointerDown = (event: PointerEvent<HTMLInputElement>, roomCode: string) => {
-    const now = Date.now();
-    const lastTap = lastGuestFieldTapRef.current;
-    const isDoubleTap = event.detail >= 2 || (lastTap?.roomCode === roomCode && now - lastTap.timestamp <= 700);
-
-    if (isDoubleTap) {
-      toggleGuestTypeAfterDoubleTap(event, roomCode);
-      return;
-    }
-
-    // Preserve the native first-tap focus so mobile Safari opens the keyboard.
-    lastGuestFieldTapRef.current = { roomCode, timestamp: now };
-  };
-
-  const handleGuestFieldDoubleClick = (event: MouseEvent<HTMLInputElement>, roomCode: string) => {
-    toggleGuestTypeAfterDoubleTap(event, roomCode);
   };
 
   const getAutomaticallyOccupiedRooms = (room: RoomOccupancy) => room.guestNights > 0 ? 1 : 0;
@@ -869,7 +840,6 @@ export default function SubmitAccommodationReport() {
                           pattern="[0-9]*"
                           value={numericInputValue(room.isNewGuest ? room.checkIns : room.continuingGuests)}
                           onChange={(e) => updateSingleGuestValue(index, parseNonNegativeInteger(e.target.value))}
-                          onPointerDown={(e) => handleGuestFieldPointerDown(e, room.roomCode)}
                           onDoubleClick={(e) => handleGuestFieldDoubleClick(e, room.roomCode)}
                           onCopy={(e) => e.preventDefault()}
                           onCut={(e) => e.preventDefault()}
