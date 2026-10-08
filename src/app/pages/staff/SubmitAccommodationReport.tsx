@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, type MouseEvent } from "react";
+import { useState, useEffect, useRef, type PointerEvent } from "react";
 import { useNavigate } from "react-router";
 import { Save, Send, Settings, AlertTriangle, Plus, Trash2 } from "lucide-react";
 import { toast } from "sonner";
@@ -53,6 +53,8 @@ export default function SubmitAccommodationReport() {
   const [establishmentAmenities, setEstablishmentAmenities] = useState<string>("");
   const [submitting, setSubmitting] = useState(false);
   const submissionKeyRef = useRef(crypto.randomUUID());
+  const guestFieldFocusTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const pendingGuestFieldIndexRef = useRef<number | null>(null);
 
   const draftStorageKey = (userId?: string, establishmentId?: string) =>
     userId && establishmentId ? `accommodationReportDraft:${userId}:${establishmentId}` : null;
@@ -117,6 +119,10 @@ export default function SubmitAccommodationReport() {
   };
 
   useDialogFocus(showRoomSetup, roomDialogRef, () => setShowRoomSetup(false));
+
+  useEffect(() => () => {
+    if (guestFieldFocusTimerRef.current) clearTimeout(guestFieldFocusTimerRef.current);
+  }, []);
 
   useEffect(() => {
     if (!showRoomSetup) return;
@@ -470,10 +476,29 @@ export default function SubmitAccommodationReport() {
     }));
   };
 
-  const handleGuestFieldDoubleClick = (event: MouseEvent<HTMLInputElement>, index: number) => {
+  const handleGuestFieldPointerDown = (event: PointerEvent<HTMLInputElement>, index: number) => {
     event.preventDefault();
     event.stopPropagation();
-    toggleGuestType(index);
+
+    const isSecondTap = pendingGuestFieldIndexRef.current === index && guestFieldFocusTimerRef.current !== null;
+    if (guestFieldFocusTimerRef.current) {
+      clearTimeout(guestFieldFocusTimerRef.current);
+      guestFieldFocusTimerRef.current = null;
+    }
+
+    if (isSecondTap) {
+      pendingGuestFieldIndexRef.current = null;
+      toggleGuestType(index);
+      return;
+    }
+
+    pendingGuestFieldIndexRef.current = index;
+    const input = event.currentTarget;
+    guestFieldFocusTimerRef.current = setTimeout(() => {
+      input.focus({ preventScroll: true });
+      guestFieldFocusTimerRef.current = null;
+      pendingGuestFieldIndexRef.current = null;
+    }, 320);
   };
 
   const getAutomaticallyOccupiedRooms = (room: RoomOccupancy) => room.guestNights > 0 ? 1 : 0;
@@ -838,8 +863,8 @@ export default function SubmitAccommodationReport() {
                           pattern="[0-9]*"
                           value={numericInputValue(room.isNewGuest ? room.checkIns : room.continuingGuests)}
                           onChange={(e) => updateSingleGuestValue(index, parseNonNegativeInteger(e.target.value))}
-                          onDoubleClick={(e) => handleGuestFieldDoubleClick(e, index)}
-                          className={room.isNewGuest ? "mx-auto w-full max-w-[150px] rounded-full border-[3px] !border-red-600 bg-white px-2 py-2 text-center text-sm font-bold tabular-nums text-red-700" : "mx-auto w-full max-w-[150px] rounded-md border border-gray-300 bg-white px-2 py-2 text-center text-sm font-normal tabular-nums text-gray-700"}
+                          onPointerDown={(e) => handleGuestFieldPointerDown(e, index)}
+                          className={room.isNewGuest ? "mx-auto w-full max-w-[150px] select-none rounded-full border-[3px] !border-red-600 bg-white px-2 py-2 text-center text-sm font-bold tabular-nums text-red-700" : "mx-auto w-full max-w-[150px] select-none rounded-md border border-gray-300 bg-white px-2 py-2 text-center text-sm font-normal tabular-nums text-gray-700"}
                           style={room.isNewGuest ? { color: "#b91c1c", borderColor: "#dc2626", borderWidth: "3px", borderStyle: "solid", borderRadius: "9999px" } : undefined}
                           data-new-guest-field={room.isNewGuest ? "true" : undefined}
                           placeholder="0"
