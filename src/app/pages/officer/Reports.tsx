@@ -444,7 +444,7 @@ export default function Reports() {
         filename: isAnnual ? `Balayan_Official_Arrivals_Annual_${selectedYear}.xlsx` : `Balayan_Official_Arrivals_${filterType}_${selectedYear}.xlsx`,
         year: Number(selectedYear),
         selectedMonths: exportMonths,
-        includeEstablishmentsWithoutPermit: true,
+        includeEstablishmentsWithoutPermit: false,
         weeklyLabel: filterType === "week" ? `WEEK ${selectedWeek} ${selectedYear}` : undefined,
         weeklyStartDate: filterType === "week" ? startDate : undefined,
         weeklyEndDate: filterType === "week" ? endDate : undefined,
