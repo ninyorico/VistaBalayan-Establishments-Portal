@@ -865,7 +865,7 @@ export default function SubmitAccommodationReport() {
                   const previousTotal = room.previousGuestNights || 0;
                   const previousNew = Math.min(room.previousNewGuests || 0, previousTotal);
                   return (
-                    <tr key={index} className="border-b border-gray-200 bg-white">
+                    <tr key={room.roomCode} className="border-b border-gray-200 bg-white">
                       <th className="sticky left-0 z-10 border-r border-gray-200 bg-white px-1.5 py-2 text-center sm:px-3 sm:py-3">
                         <div className="truncate text-xs font-semibold text-gray-900 sm:text-sm">Room {getGeneratedRoomNumber(room.roomCode)}</div>
                         <div className="mt-0.5 inline-block max-w-full truncate rounded bg-gray-100 px-1.5 py-0.5 font-mono text-[9px] font-normal text-gray-600 sm:mt-1 sm:px-2 sm:text-[10px]">{getBaseRoomCode(room.roomCode)}</div>
@@ -883,6 +883,7 @@ export default function SubmitAccommodationReport() {
                           onDoubleClick={(e) => handleGuestFieldDoubleClick(e, room.roomCode)}
                           onCopy={(e) => e.preventDefault()}
                           onCut={(e) => e.preventDefault()}
+                          onSelectCapture={(e) => e.preventDefault()}
                           onSelect={(e) => e.preventDefault()}
                           onContextMenu={(e) => e.preventDefault()}
                           onDragStart={(e) => e.preventDefault()}
@@ -895,6 +896,7 @@ export default function SubmitAccommodationReport() {
                             ...(room.isNewGuest ? { color: "#b91c1c", borderColor: "#dc2626", borderWidth: "3px", borderStyle: "solid", borderRadius: "9999px" } : {}),
                           }}
                           data-new-guest-field={room.isNewGuest ? "true" : undefined}
+                          data-guest-room-code={room.roomCode}
                           placeholder="0"
                           title="Double-click to switch between continuing and new guest"
                           aria-label={`${room.roomType} current ${room.isNewGuest ? "new" : "continuing"} guest value. Double-click to switch type.`}
