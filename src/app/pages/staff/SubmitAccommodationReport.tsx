@@ -471,13 +471,18 @@ export default function SubmitAccommodationReport() {
     }));
   };
 
-  const handleGuestFieldPointerDown = (event: PointerEvent<HTMLInputElement>, roomCode: string) => {
+  const handleGuestFieldPointerDownCapture = (event: PointerEvent<HTMLTableSectionElement>) => {
+    const target = event.target;
+    if (!(target instanceof HTMLInputElement)) return;
+
+    const roomCode = target.dataset.guestRoomCode;
+    if (!roomCode) return;
+
     const now = Date.now();
     const lastTap = lastGuestFieldTapRef.current.get(roomCode);
     const isDoubleTap = event.detail >= 2 || (lastTap !== undefined && now - lastTap <= 800);
 
     if (!isDoubleTap) {
-      // Preserve the first native pointer gesture so mobile Safari opens the keyboard.
       lastGuestFieldTapRef.current.set(roomCode, now);
       window.setTimeout(() => {
         if (lastGuestFieldTapRef.current.get(roomCode) === now) {
@@ -490,8 +495,8 @@ export default function SubmitAccommodationReport() {
     event.preventDefault();
     event.stopPropagation();
     lastGuestFieldTapRef.current.delete(roomCode);
-    event.currentTarget.setSelectionRange(0, 0);
-    event.currentTarget.blur();
+    target.setSelectionRange(0, 0);
+    target.blur();
     toggleGuestType(roomCode);
   };
 
@@ -846,7 +851,7 @@ export default function SubmitAccommodationReport() {
                 <th className="w-[33%] px-1.5 py-2 text-center text-[10px] font-semibold uppercase leading-tight text-[#0F4C75] sm:px-3 sm:py-3 sm:text-xs">Current Date<div className="mt-1 text-[9px] font-normal normal-case text-gray-500 sm:text-[10px]">{reportDate}</div></th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-gray-200">
+            <tbody className="divide-y divide-gray-200" onPointerDownCapture={handleGuestFieldPointerDownCapture}>
               {roomData.map((room, index) => {
                   const previousTotal = room.previousGuestNights || 0;
                   const previousNew = Math.min(room.previousNewGuests || 0, previousTotal);
@@ -866,7 +871,6 @@ export default function SubmitAccommodationReport() {
                           pattern="[0-9]*"
                           value={numericInputValue(room.isNewGuest ? room.checkIns : room.continuingGuests)}
                           onChange={(e) => updateSingleGuestValue(index, parseNonNegativeInteger(e.target.value))}
-                          onPointerDown={(e) => handleGuestFieldPointerDown(e, room.roomCode)}
                           onDoubleClick={(e) => handleGuestFieldDoubleClick(e, room.roomCode)}
                           onCopy={(e) => e.preventDefault()}
                           onCut={(e) => e.preventDefault()}
