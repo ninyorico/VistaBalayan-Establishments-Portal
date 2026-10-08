@@ -682,7 +682,7 @@ export default function SubmitAccommodationReport() {
   }
 
   return (
-    <div className="space-y-4 pb-12 sm:space-y-6">
+    <div className="space-y-4 pb-16 sm:space-y-6">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">
@@ -832,9 +832,9 @@ export default function SubmitAccommodationReport() {
         </div>
       </div>
 
-      <div className="grid grid-cols-1 gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(300px,360px)] lg:items-stretch">
+      <div className="grid grid-cols-1 gap-6 lg:h-[650px] lg:grid-cols-[minmax(0,1fr)_minmax(300px,360px)] lg:items-stretch">
       {/* Room Occupancy Table */}
-      <div className="flex min-h-0 flex-col overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-sm lg:h-[650px]">
+      <div className="flex min-h-0 flex-col overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-sm lg:h-full">
         <div className="p-4 sm:p-5 lg:p-6 border-b border-gray-200">
           <h3 className="text-lg font-semibold text-gray-900">Daily Room Occupancy</h3>
           <p className="mt-1 text-sm text-gray-500 lg:hidden">Compact full-width table for faster phone entry.</p>
@@ -923,8 +923,8 @@ export default function SubmitAccommodationReport() {
       </div>
 
       {/* Computed Analytics */}
-      <aside className="space-y-4 lg:sticky lg:top-4 lg:h-[650px]">
-      <div className="rounded-lg border border-[#AFB3B5]/45 bg-[#F5F8FF] p-4 shadow-sm sm:p-6">
+      <aside className="flex min-h-0 flex-col space-y-4 lg:sticky lg:top-4 lg:h-full">
+      <div className="min-h-0 flex-1 rounded-lg border border-[#AFB3B5]/45 bg-[#F5F8FF] p-4 shadow-sm sm:p-6">
         <h3 className="text-lg font-semibold text-gray-900 mb-4">Computed Analytics</h3>
         <div className="grid grid-cols-3 items-start gap-2 sm:items-stretch sm:gap-3 lg:grid-cols-1">
                   <div className="flex min-w-0 self-start flex-col rounded-lg border border-[#B88A52]/35 bg-[#FBE7BA] p-2 sm:self-stretch sm:p-4">
@@ -946,7 +946,7 @@ export default function SubmitAccommodationReport() {
       </div>
 
       {/* Action Buttons */}
-      <div className="grid grid-cols-1 gap-3">
+      <div className="grid shrink-0 grid-cols-1 gap-3 pb-1">
         <button onClick={handleSaveDraft} className="flex w-full items-center justify-center gap-2 rounded-lg bg-gray-100 px-6 py-3 text-gray-700 hover:bg-gray-200">
           <Save className="w-5 h-5" /> Save Draft
         </button>
