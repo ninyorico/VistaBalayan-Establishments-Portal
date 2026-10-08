@@ -461,6 +461,15 @@ export default function SubmitAccommodationReport() {
       if (room.roomCode !== roomCode) return room;
       const nextIsNewGuest = !room.isNewGuest;
       const currentValue = room.isNewGuest ? room.checkIns : room.continuingGuests;
+      if (currentValue <= 0) {
+        return {
+          ...room,
+          continuingGuests: 0,
+          checkIns: 0,
+          isNewGuest: false,
+          guestNights: 0,
+        };
+      }
       return {
         ...room,
         continuingGuests: nextIsNewGuest ? 0 : currentValue,
@@ -864,6 +873,8 @@ export default function SubmitAccommodationReport() {
               {roomData.map((room, index) => {
                   const previousTotal = room.previousGuestNights || 0;
                   const previousNew = Math.min(room.previousNewGuests || 0, previousTotal);
+                  const currentGuestValue = Number(room.isNewGuest ? room.checkIns : room.continuingGuests) || 0;
+                  const isActiveNewGuest = room.isNewGuest === true && currentGuestValue > 0;
                   return (
                     <tr key={room.roomCode} className="border-b border-gray-200 bg-white">
                       <th className="sticky left-0 z-10 border-r border-gray-200 bg-white px-1.5 py-2 text-center sm:px-3 sm:py-3">
@@ -878,7 +889,7 @@ export default function SubmitAccommodationReport() {
                           type="text"
                           inputMode="numeric"
                           pattern="[0-9]*"
-                          value={numericInputValue(room.isNewGuest ? room.checkIns : room.continuingGuests)}
+                          value={numericInputValue(currentGuestValue)}
                           onChange={(e) => updateSingleGuestValue(index, parseNonNegativeInteger(e.target.value))}
                           onDoubleClick={(e) => handleGuestFieldDoubleClick(e, room.roomCode)}
                           onCopy={(e) => e.preventDefault()}
@@ -888,18 +899,18 @@ export default function SubmitAccommodationReport() {
                           onContextMenu={(e) => e.preventDefault()}
                           onDragStart={(e) => e.preventDefault()}
                           draggable={false}
-                          className={room.isNewGuest ? "mx-auto w-full max-w-[150px] select-none rounded-full border-[3px] !border-red-600 bg-white px-2 py-2 text-center text-sm font-bold tabular-nums text-red-700" : "mx-auto w-full max-w-[150px] select-none rounded-md border border-gray-300 bg-white px-2 py-2 text-center text-sm font-normal tabular-nums text-gray-700"}
+                          className={isActiveNewGuest ? "mx-auto w-full max-w-[150px] select-none rounded-full border-[3px] !border-red-600 bg-white px-2 py-2 text-center text-sm font-bold tabular-nums text-red-700" : "mx-auto w-full max-w-[150px] select-none rounded-md border border-gray-300 bg-white px-2 py-2 text-center text-sm font-normal tabular-nums text-gray-700"}
                           style={{
                             WebkitUserSelect: "none",
                             userSelect: "none",
                             WebkitTouchCallout: "none",
-                            ...(room.isNewGuest ? { color: "#b91c1c", borderColor: "#dc2626", borderWidth: "3px", borderStyle: "solid", borderRadius: "9999px" } : {}),
+                            ...(isActiveNewGuest ? { color: "#b91c1c", borderColor: "#dc2626", borderWidth: "3px", borderStyle: "solid", borderRadius: "9999px" } : {}),
                           }}
-                          data-new-guest-field={room.isNewGuest ? "true" : undefined}
+                          data-new-guest-field={isActiveNewGuest ? "true" : undefined}
                           data-guest-room-code={room.roomCode}
                           placeholder="0"
                           title="Double-click to switch between continuing and new guest"
-                          aria-label={`${room.roomType} current ${room.isNewGuest ? "new" : "continuing"} guest value. Double-click to switch type.`}
+                          aria-label={`${room.roomType} current ${isActiveNewGuest ? "new" : "continuing"} guest value. Double-click to switch type.`}
                         />
                       </td>
                     </tr>
