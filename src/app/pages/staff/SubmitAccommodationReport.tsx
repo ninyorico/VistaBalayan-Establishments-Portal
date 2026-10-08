@@ -470,6 +470,13 @@ export default function SubmitAccommodationReport() {
     }));
   };
 
+  const suppressGuestFieldSelection = (event: { preventDefault: () => void; stopPropagation: () => void; currentTarget: HTMLInputElement }) => {
+    event.preventDefault();
+    event.stopPropagation();
+    const caretPosition = event.currentTarget.value.length;
+    event.currentTarget.setSelectionRange(caretPosition, caretPosition);
+  };
+
   const handleGuestFieldDoubleClick = (event: MouseEvent<HTMLInputElement>, roomCode: string) => {
     event.preventDefault();
     event.stopPropagation();
@@ -841,6 +848,9 @@ export default function SubmitAccommodationReport() {
                           value={numericInputValue(room.isNewGuest ? room.checkIns : room.continuingGuests)}
                           onChange={(e) => updateSingleGuestValue(index, parseNonNegativeInteger(e.target.value))}
                           onDoubleClick={(e) => handleGuestFieldDoubleClick(e, room.roomCode)}
+                          onSelectCapture={suppressGuestFieldSelection}
+                          onMouseUp={(e) => e.detail >= 2 && suppressGuestFieldSelection(e)}
+                          onTouchEnd={suppressGuestFieldSelection}
                           onCopy={(e) => e.preventDefault()}
                           onCut={(e) => e.preventDefault()}
                           onSelect={(e) => e.preventDefault()}
