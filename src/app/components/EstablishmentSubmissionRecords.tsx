@@ -51,14 +51,6 @@ const monthNames = Array.from({ length: 12 }, (_, index) =>
   new Date(2000, index, 1).toLocaleString("default", { month: "long" })
 );
 
-const statusStyles: Record<string, string> = {
-  approved: "bg-emerald-100 text-emerald-700",
-  pending: "bg-amber-100 text-amber-700",
-  rejected: "bg-rose-100 text-rose-700",
-  submitted: "bg-sky-100 text-sky-700",
-  validated: "bg-violet-100 text-violet-700",
-};
-
 const getDateParts = (value?: string | null) => {
   if (!value) return null;
   const date = new Date(value);
@@ -284,16 +276,16 @@ export default function EstablishmentSubmissionRecords({
           <p className="mt-1 text-sm text-slate-600">{activeCount} record{activeCount === 1 ? "" : "s"} for {selectedMonth === -1 ? "ALL months" : monthNames[selectedMonth]} {selectedYear}.</p>
         </div>
         <div ref={tableScrollRef} className="touch-none overflow-x-auto overscroll-x-contain [-webkit-overflow-scrolling:touch]">
-          <div ref={tableVerticalRef} className={isVisitor ? "min-w-[820px] max-h-[27rem] overflow-y-auto overflow-x-hidden overscroll-y-contain [-webkit-overflow-scrolling:touch]" : "min-w-[760px] max-h-[27rem] overflow-y-auto overflow-x-hidden overscroll-y-contain [-webkit-overflow-scrolling:touch]"}>
+          <div ref={tableVerticalRef} className={isVisitor ? "min-w-[760px] max-h-[27rem] overflow-y-auto overflow-x-hidden overscroll-y-contain [-webkit-overflow-scrolling:touch]" : "min-w-[680px] max-h-[27rem] overflow-y-auto overflow-x-hidden overscroll-y-contain [-webkit-overflow-scrolling:touch]"}>
           {isVisitor ? (
-            <table className="w-full min-w-[820px] text-left text-sm">
-              <thead className="sticky top-0 z-10 border-b border-slate-200 bg-slate-50 text-xs uppercase tracking-wider text-slate-600"><tr><th className="px-5 py-3">Report date</th><th className="px-5 py-3">Status</th><th className="px-5 py-3">Guest / group</th><th className="px-5 py-3">Residence</th><th className="px-5 py-3">Location</th><th className="px-5 py-3">Male</th><th className="px-5 py-3">Female</th><th className="px-5 py-3">Total visitors</th></tr></thead>
-              <tbody className="divide-y divide-slate-100">{filteredVisitors.map((record) => <tr key={record.id} className="hover:bg-slate-50"><td className="px-5 py-4 font-medium text-slate-900">{formatDate(record.report_date)}</td><td className="px-5 py-4"><span className={`rounded-full px-2.5 py-1 text-xs font-semibold capitalize ${statusStyles[record.status || "pending"] || statusStyles.pending}`}>{record.status || "pending"}</span></td><td className="px-5 py-4 text-slate-700">{record.guest_name || "—"}</td><td className="px-5 py-4 text-slate-700">{getResidenceLabel(record)}</td><td className="px-5 py-4 text-slate-700">{getLocationLabel(record)}</td><td className="px-5 py-4 text-blue-600">{Number(record.total_male || 0)}</td><td className="px-5 py-4 text-purple-600">{Number(record.total_female || 0)}</td><td className="px-5 py-4 font-semibold text-slate-900">{Number(record.total_guests || 0)}</td></tr>)}</tbody>
+            <table className="w-full min-w-[760px] text-left text-sm">
+              <thead className="sticky top-0 z-10 border-b border-slate-200 bg-slate-50 text-xs uppercase tracking-wider text-slate-600"><tr><th className="px-5 py-3">Report date</th><th className="px-5 py-3">Guest / group</th><th className="px-5 py-3">Residence</th><th className="px-5 py-3">Location</th><th className="px-5 py-3">Male</th><th className="px-5 py-3">Female</th><th className="px-5 py-3">Total visitors</th></tr></thead>
+              <tbody className="divide-y divide-slate-100">{filteredVisitors.map((record) => <tr key={record.id} className="hover:bg-slate-50"><td className="px-5 py-4 font-medium text-slate-900">{formatDate(record.report_date)}</td><td className="px-5 py-4 text-slate-700">{record.guest_name || "—"}</td><td className="px-5 py-4 text-slate-700">{getResidenceLabel(record)}</td><td className="px-5 py-4 text-slate-700">{getLocationLabel(record)}</td><td className="px-5 py-4 text-blue-600">{Number(record.total_male || 0)}</td><td className="px-5 py-4 text-purple-600">{Number(record.total_female || 0)}</td><td className="px-5 py-4 font-semibold text-slate-900">{Number(record.total_guests || 0)}</td></tr>)}</tbody>
             </table>
           ) : (
-            <table className="w-full min-w-[760px] text-left text-sm">
-              <thead className="sticky top-0 z-10 border-b border-slate-200 bg-slate-50 text-xs uppercase tracking-wider text-slate-600"><tr><th className="px-5 py-3">Report date</th><th className="px-5 py-3">Status</th><th className="px-5 py-3">Total rooms</th><th className="px-5 py-3">Occupied rooms</th><th className="px-5 py-3">Check-ins</th><th className="px-5 py-3">Guest nights</th></tr></thead>
-              <tbody className="divide-y divide-slate-100">{filteredAccommodation.map((record) => <tr key={record.id} className="hover:bg-slate-50"><td className="px-5 py-4 font-medium text-slate-900">{formatDate(record.report_date)}</td><td className="px-5 py-4"><span className={`rounded-full px-2.5 py-1 text-xs font-semibold capitalize ${statusStyles[record.status || "pending"] || statusStyles.pending}`}>{record.status || "pending"}</span></td><td className="px-5 py-4 text-slate-900">{Number(record.total_rooms || 0)}</td><td className="px-5 py-4 text-slate-900">{Number(record.total_occupied_rooms || 0)}</td><td className="px-5 py-4 text-blue-600">{Number(record.total_check_ins || 0)}</td><td className="px-5 py-4 font-semibold text-slate-900">{Number(record.total_guest_nights || 0)}</td></tr>)}</tbody>
+            <table className="w-full min-w-[680px] text-left text-sm">
+              <thead className="sticky top-0 z-10 border-b border-slate-200 bg-slate-50 text-xs uppercase tracking-wider text-slate-600"><tr><th className="px-5 py-3">Report date</th><th className="px-5 py-3">Total rooms</th><th className="px-5 py-3">Occupied rooms</th><th className="px-5 py-3">Check-ins</th><th className="px-5 py-3">Guest nights</th></tr></thead>
+              <tbody className="divide-y divide-slate-100">{filteredAccommodation.map((record) => <tr key={record.id} className="hover:bg-slate-50"><td className="px-5 py-4 font-medium text-slate-900">{formatDate(record.report_date)}</td><td className="px-5 py-4 text-slate-900">{Number(record.total_rooms || 0)}</td><td className="px-5 py-4 text-slate-900">{Number(record.total_occupied_rooms || 0)}</td><td className="px-5 py-4 text-blue-600">{Number(record.total_check_ins || 0)}</td><td className="px-5 py-4 font-semibold text-slate-900">{Number(record.total_guest_nights || 0)}</td></tr>)}</tbody>
             </table>
           )}
           {activeCount === 0 && <p className="px-6 py-12 text-center text-sm font-medium text-slate-500">No records found for the selected filters.</p>}
