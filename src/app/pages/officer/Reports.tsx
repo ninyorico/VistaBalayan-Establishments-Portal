@@ -498,11 +498,12 @@ export default function Reports() {
     return matchesSearch && matchesDate;
   });
 
-  const totalSubmissions = filteredReports.length;
-  const totalVisitors = filteredReports.reduce((sum, report) => sum + report.visitors, 0);
-  const establishmentsCovered = new Set(filteredReports.map((report) => report.establishment)).size;
+  const submittedFilteredReports = filteredReports.filter((report) => normalizeStatus(report.status) === "submitted");
+  const totalSubmissions = submittedFilteredReports.length;
+  const totalVisitors = submittedFilteredReports.reduce((sum, report) => sum + report.visitors, 0);
+  const establishmentsCovered = new Set(submittedFilteredReports.map((report) => report.establishment)).size;
   const topEstablishment = Object.entries(
-    filteredReports.reduce<Record<string, number>>((acc, report) => {
+    submittedFilteredReports.reduce<Record<string, number>>((acc, report) => {
       acc[report.establishment] = (acc[report.establishment] || 0) + report.visitors;
       return acc;
     }, {})
@@ -702,7 +703,7 @@ export default function Reports() {
         </div>
         <p className="mt-4 text-sm text-slate-600">
           Summary: {totalSubmissions} submitted reports are included in this selected period.
-          {visitorStats.difference !== 0 && ` The latest chart period changed by ${visitorStats.difference.toLocaleString()} visitors/check-ins (${visitorStats.percentageChange}%).`}
+          {visitorStats.difference !== 0 && ` The latest chart bucket changed by ${visitorStats.difference.toLocaleString()} visitors/check-ins (${visitorStats.percentageChange}%).`}
         </p>
       </div>
 
@@ -715,7 +716,7 @@ export default function Reports() {
         <div className="min-w-0 rounded-lg border border-gray-200 bg-white p-3 shadow-sm sm:p-6">
           <div className="mb-2 flex min-w-0 items-center gap-1.5 sm:gap-3">
             {visitorStats.isIncrease ? <TrendingUp className="h-4 w-4 shrink-0 text-green-600 sm:h-5 sm:w-5" /> : <TrendingDown className="h-4 w-4 shrink-0 text-red-600 sm:h-5 sm:w-5" />}
-            <p className="truncate text-[11px] text-gray-600 sm:text-sm">Change</p>
+            <p className="truncate text-[11px] text-gray-600 sm:text-sm">Bucket Change</p>
           </div>
           <div className="flex flex-wrap items-baseline gap-x-1 sm:gap-x-2">
             <p className={`text-2xl font-bold sm:text-3xl ${visitorStats.isIncrease ? "text-green-600" : "text-red-600"}`}>
@@ -730,14 +731,14 @@ export default function Reports() {
         <div className="min-w-0 rounded-lg border border-gray-200 bg-white p-3 shadow-sm sm:p-6">
           <div className="mb-2 flex min-w-0 items-center gap-1.5 sm:gap-3">
             <Users className="h-4 w-4 shrink-0 text-blue-600 sm:h-5 sm:w-5" />
-            <p className="truncate text-[11px] text-gray-600 sm:text-sm">Current Period</p>
+            <p className="truncate text-[11px] text-gray-600 sm:text-sm">Latest Chart Bucket</p>
           </div>
           <p className="text-2xl font-bold text-gray-900 sm:text-3xl">{visitorStats.currentTotal.toLocaleString()}</p>
         </div>
         <div className="min-w-0 rounded-lg border border-gray-200 bg-white p-3 shadow-sm sm:p-6">
           <div className="mb-2 flex min-w-0 items-center gap-1.5 sm:gap-3">
             <Users className="h-4 w-4 shrink-0 text-purple-600 sm:h-5 sm:w-5" />
-            <p className="truncate text-[11px] text-gray-600 sm:text-sm">Previous Period</p>
+            <p className="truncate text-[11px] text-gray-600 sm:text-sm">Previous Chart Bucket</p>
           </div>
           <p className="text-2xl font-bold text-gray-900 sm:text-3xl">{visitorStats.previousTotal.toLocaleString()}</p>
         </div>
