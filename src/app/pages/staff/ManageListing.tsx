@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from 'react'
 import L from 'leaflet'
 import 'leaflet/dist/leaflet.css'
-import { Save, Globe, Clock, Phone, Mail, MapPin, Info, ImagePlus, Building2, X, Crosshair, Search, Sparkles } from 'lucide-react'
+import { Save, Globe, Clock, Phone, Mail, MapPin, Info, ImagePlus, Building2, X, Crosshair, Search } from 'lucide-react'
 import { supabase } from '../../../lib/supabase'
 import { compressListingImage } from '../../../lib/listingImages'
 import { toast } from 'sonner'
@@ -551,16 +551,13 @@ export default function ManageListing() {
         <section className="grid grid-cols-1 gap-3" data-manage-listing-profile-card-only="true">
           <Card className="tourism-card group overflow-hidden rounded-[1.75rem] border-0 bg-[#E0E5EC] text-[#193364] shadow-sm">
             <CardContent className="relative p-5 sm:p-6">
-              <div className="relative flex items-start gap-4">
-                <div className="flex size-12 shrink-0 items-center justify-center rounded-2xl bg-[#E0E5EC] text-[#193364] shadow-[inset_5px_5px_10px_rgba(163,177,198,0.55),inset_-5px_-5px_10px_rgba(255,255,255,0.7)] transition-transform duration-500 group-hover:scale-105">
-                  <Sparkles className="size-6 text-[#6C63FF]" />
-                </div>
+              <div className="relative">
                 <div>
                   <p className="text-xs font-medium uppercase tracking-[0.22em] text-[#6C9772]">Public profile</p>
                   <h2 className="mt-2 max-w-3xl text-[clamp(2rem,5vw,3.75rem)] font-black leading-[0.95] tracking-[-0.055em] sm:text-5xl">
                     Shape how visitors see your stay.
                   </h2>
-                  <p className="mt-3 max-w-2xl text-sm leading-6 text-[#6B7280] sm:text-base">
+                  <p className="mt-3 max-w-2xl text-justify text-sm leading-6 text-[#6B7280] sm:text-base">
                     Keep the public tourism card precise: clean details, gallery-ready photos, and an exact visitor pin without exposing backend clutter.
                   </p>
                 </div>
