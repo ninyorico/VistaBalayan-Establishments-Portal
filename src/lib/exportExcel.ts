@@ -352,7 +352,7 @@ const addHotelSheet = (
     worksheet.getCell(rowNumber, 1).value = day;
     worksheet.getCell(rowNumber, 2).value = date.toLocaleDateString("en-US", { weekday: "short" });
 
-    const checkIns = reportsForDay.reduce((sum, report) => sum + Number(report.details?.total_check_ins || report.visitors || 0), 0);
+    const checkIns = reportsForDay.reduce((sum, report) => sum + Number(report.details?.guest_check_ins ?? report.details?.total_check_ins ?? report.visitors ?? 0), 0);
     const guestNights = reportsForDay.reduce((sum, report) => sum + Number(report.details?.total_guest_nights || 0), 0);
     const occupiedRooms = reportsForDay.reduce((sum, report) => sum + Number(report.details?.total_occupied_rooms || 0), 0);
     worksheet.getCell(rowNumber, 24).value = checkIns || "";

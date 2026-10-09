@@ -199,17 +199,25 @@ export default function SubmitAccommodationReport() {
     setRoomTypes(effectiveRoomConfig);
     setTempRoomConfig(effectiveRoomConfig);
     setRetrievingPreviousData(true);
+    let submittedRoomData: RoomOccupancy[] | null = null;
     try {
-      const previousNightRoomData = await loadPreviousNightGuests(
+      submittedRoomData = await loadSubmittedReportForDate(
+        profileData.establishment_id,
+        reportDate,
+        effectiveRoomConfig,
+      );
+      const initialRoomData = submittedRoomData || await loadPreviousNightGuests(
         profileData.establishment_id,
         getPreviousDate(reportDate),
         effectiveRoomConfig
       );
-      setRoomData(previousNightRoomData);
+      setRoomData(initialRoomData);
     } finally {
       setRetrievingPreviousData(false);
     }
-    loadDraft(profileData.id, profileData.establishment_id, effectiveRoomConfig, reportDate);
+    if (!submittedRoomData) {
+      loadDraft(profileData.id, profileData.establishment_id, effectiveRoomConfig, reportDate);
+    }
 
     setLoadingProfile(false);
   };
@@ -279,10 +287,12 @@ export default function SubmitAccommodationReport() {
     const byCode = new Map<string, { guests: number; newGuests: number; shortStayCheckIns: number; occupied: number }>();
     (previousDetails || []).forEach((detail) => {
       const normalizedCode = String(detail.room_code || "").trim().toUpperCase();
+      const shortStayCheckIns = Math.max(0, Number(detail.short_stay_check_ins) || 0);
+      const overnightGuestNights = Math.max(0, (Number(detail.guest_nights) || 0) - shortStayCheckIns);
       const values = {
-        guests: Math.max(0, Number(detail.guest_nights) || 0),
+        guests: overnightGuestNights,
         newGuests: Math.max(0, Number(detail.check_ins) || 0),
-        shortStayCheckIns: Math.max(0, Number(detail.short_stay_check_ins) || 0),
+        shortStayCheckIns: 0,
         occupied: Math.max(0, Number(detail.occupied_rooms) || 0),
       };
       if (!normalizedCode) return;
@@ -311,13 +321,79 @@ export default function SubmitAccommodationReport() {
     });
   };
 
+  const loadSubmittedReportForDate = async (
+    establishmentId: string,
+    date: string,
+    rooms: EstablishmentRoomConfig[],
+  ): Promise<RoomOccupancy[] | null> => {
+    const { data: report, error: reportError } = await supabase
+      .from("accommodation_reports")
+      .select("id")
+      .eq("establishment_id", establishmentId)
+      .eq("report_date", date)
+      .order("created_at", { ascending: false })
+      .limit(1)
+      .maybeSingle();
+
+    if (reportError || !report?.id) {
+      if (reportError) console.error("Could not load submitted accommodation report:", reportError);
+      return null;
+    }
+
+    const { data: details, error: detailsError } = await supabase
+      .from("room_occupancy_details")
+      .select("room_code,guest_nights,check_ins,short_stay_check_ins,occupied_rooms")
+      .eq("accommodation_report_id", report.id);
+
+    if (detailsError) {
+      console.error("Could not load submitted room occupancy details:", detailsError);
+      return null;
+    }
+
+    const byCode = new Map<string, any>();
+    (details || []).forEach((detail) => {
+      const normalizedCode = String(detail.room_code || "").trim().toUpperCase();
+      if (!normalizedCode) return;
+      byCode.set(normalizedCode, detail);
+      const roomNumber = normalizedCode.match(/-(\\d+)$/)?.[1];
+      if (roomNumber) byCode.set(`__room-number:${roomNumber}`, detail);
+    });
+
+    return buildRoomData(rooms).map((room) => {
+      const normalizedRoomCode = room.roomCode.trim().toUpperCase();
+      const baseCode = normalizedRoomCode.replace(/-\\d+$/, "");
+      const roomNumber = normalizedRoomCode.match(/-(\\d+)$/)?.[1];
+      const detail = byCode.get(normalizedRoomCode)
+        || byCode.get(`__room-number:${roomNumber || ""}`)
+        || (normalizedRoomCode.endsWith("-1") ? byCode.get(baseCode) : undefined);
+      const shortStayCheckIns = Math.max(0, Number(detail?.short_stay_check_ins) || 0);
+      const overnightTotal = Math.max(0, (Number(detail?.guest_nights) || 0) - shortStayCheckIns);
+      const checkIns = Math.max(0, Number(detail?.check_ins) || 0);
+      const continuingGuests = Math.max(0, overnightTotal - checkIns);
+      return {
+        ...room,
+        continuingGuests,
+        checkIns,
+        shortStayCheckIns,
+        guestNights: overnightTotal + shortStayCheckIns,
+        occupied: Math.min(Math.max(0, Number(detail?.occupied_rooms) || 0), room.numberOfRooms),
+        isNewGuest: checkIns > 0 && continuingGuests === 0,
+      };
+    });
+  };
+
   const handleReportDateChange = async (date: string) => {
     setReportDate(date);
     if (!profile?.establishment_id || !date || roomTypes.length === 0) return;
 
     setRetrievingPreviousData(true);
     try {
-      const nextRoomData = await loadPreviousNightGuests(
+      const submittedRoomData = await loadSubmittedReportForDate(
+        profile.establishment_id,
+        date,
+        roomTypes,
+      );
+      const nextRoomData = submittedRoomData || await loadPreviousNightGuests(
         profile.establishment_id,
         getPreviousDate(date),
         roomTypes,
