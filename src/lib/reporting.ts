@@ -200,7 +200,7 @@ export const getReportingMode = (establishment?: Pick<EstablishmentReportingRow,
 };
 
 const accommodationValues = (record: AccommodationSourceRecord) => ({
-  guestCheckIns: numeric(record.guest_check_ins ?? record.total_check_ins),
+  guestCheckIns: numeric(record.total_check_ins ?? record.guest_check_ins),
   guestNights: numeric(record.guest_nights ?? record.total_guest_nights),
   roomsOccupied: numeric(record.rooms_occupied ?? record.total_occupied_rooms),
   foreignGuestCheckIns: numeric(record.foreign_guest_check_ins),
