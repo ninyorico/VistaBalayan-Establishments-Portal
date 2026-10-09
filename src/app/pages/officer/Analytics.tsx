@@ -111,21 +111,11 @@ const monthKey = (date: string) => date.slice(0, 7);
 const percentChange = (current: number, previous: number) =>
   previous > 0 ? ((current - previous) / previous) * 100 : current > 0 ? 100 : null;
 
-const ANALYTICS_MONTHS = [
-  "January", "February", "March", "April", "May", "June",
-  "July", "August", "September", "October", "November", "December",
-];
-
-const getAnalyticsRange = (year: string, month: string) => {
-  const yearNumber = Number(year);
-  const monthNumber = Number(month);
-  const lastDay = new Date(yearNumber, monthNumber, 0).getDate();
-  return {
-    label: `${ANALYTICS_MONTHS[monthNumber - 1]} ${yearNumber}`,
-    start: `${yearNumber}-${String(monthNumber).padStart(2, "0")}-01`,
-    end: `${yearNumber}-${String(monthNumber).padStart(2, "0")}-${String(lastDay).padStart(2, "0")}`,
-  };
-};
+const getAnalyticsYearRange = (year: string) => ({
+  label: year,
+  start: `${year}-01-01`,
+  end: `${year}-12-31`,
+});
 
 export default function Analytics() {
   const [data, setData] = useState<AnalyticsData>({
@@ -142,15 +132,14 @@ export default function Analytics() {
   const [expandedLowPerformer, setExpandedLowPerformer] = useState<string | null>(null);
   const currentDate = new Date();
   const [selectedYear, setSelectedYear] = useState(String(currentDate.getFullYear()));
-  const [selectedMonth, setSelectedMonth] = useState(String(currentDate.getMonth() + 1));
 
   useEffect(() => {
     fetchAnalytics();
-  }, [selectedYear, selectedMonth]);
+  }, [selectedYear]);
 
   const fetchAnalytics = async () => {
     setLoading(true);
-    const selectedRange = getAnalyticsRange(selectedYear, selectedMonth);
+    const selectedRange = getAnalyticsYearRange(selectedYear);
 
     const { data: establishmentData, error: establishmentError } = await supabase
       .from("establishments")
@@ -398,34 +387,21 @@ export default function Analytics() {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-3xl font-bold text-gray-900">Analytics Dashboard</h1>
-        <p className="text-gray-600 mt-1">Data-driven tourism analytics and decision support for {getAnalyticsRange(selectedYear, selectedMonth).label}</p>
-      </div>
-
-      <div className="rounded-2xl border border-gray-200 bg-white p-4 shadow-sm sm:p-5">
-        <div className="mb-3 flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
+      <section className="rounded-2xl border border-gray-200 bg-white p-4 shadow-sm sm:p-6">
+        <div className="flex flex-col gap-5 sm:flex-row sm:items-end sm:justify-between">
           <div>
-            <h2 className="text-base font-semibold text-gray-900">Analytics Period</h2>
-            <p className="text-sm text-gray-600">All charts, rankings, origins, and performance findings use this month.</p>
+            <h1 className="text-3xl font-bold text-gray-900">Analytics Dashboard</h1>
+            <p className="mt-1 text-gray-600">Data-driven tourism analytics and decision support for {getAnalyticsYearRange(selectedYear).label}</p>
+            <p className="mt-2 text-sm text-gray-500">All charts, rankings, origins, and performance findings use the selected year.</p>
           </div>
-          <span className="text-xs font-semibold uppercase tracking-wide text-[#0F4C75]">{getAnalyticsRange(selectedYear, selectedMonth).label}</span>
-        </div>
-        <div className="grid grid-cols-2 gap-3 sm:max-w-md">
-          <label className="text-xs font-medium text-gray-600">
-            Month
-            <select value={selectedMonth} onChange={(event) => setSelectedMonth(event.target.value)} className="mt-1 w-full rounded-xl border border-gray-300 bg-white px-3 py-2.5 text-sm text-gray-900 focus:border-[#0F4C75] focus:outline-none focus:ring-2 focus:ring-[#0F4C75]/20">
-              {ANALYTICS_MONTHS.map((month, index) => <option key={month} value={String(index + 1)}>{month}</option>)}
-            </select>
-          </label>
-          <label className="text-xs font-medium text-gray-600">
+          <label className="w-full text-xs font-medium text-gray-600 sm:w-44">
             Year
             <select value={selectedYear} onChange={(event) => setSelectedYear(event.target.value)} className="mt-1 w-full rounded-xl border border-gray-300 bg-white px-3 py-2.5 text-sm text-gray-900 focus:border-[#0F4C75] focus:outline-none focus:ring-2 focus:ring-[#0F4C75]/20">
               {analyticsYears.map((year) => <option key={year} value={year}>{year}</option>)}
             </select>
           </label>
         </div>
-      </div>
+      </section>
 
       <div className="grid grid-cols-3 gap-2 sm:gap-4" data-analytics-kpi-row="mobile-one-row">
         <div className="bg-white rounded-lg border border-gray-200 p-2.5 shadow-sm sm:p-5">
@@ -461,7 +437,7 @@ export default function Analytics() {
       </div>
 
       <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-        <h3 className="text-lg font-semibold text-gray-900 mb-4">Tourism Trends and Seasonal Patterns ({getAnalyticsRange(selectedYear, selectedMonth).label})</h3>
+        <h3 className="text-lg font-semibold text-gray-900 mb-4">Tourism Trends and Seasonal Patterns ({getAnalyticsYearRange(selectedYear).label})</h3>
         {data.seasonalData.length > 0 ? (
           <ResponsiveContainer width="100%" height={350}>
             <AreaChart data={data.seasonalData}>
