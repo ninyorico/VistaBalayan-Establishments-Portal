@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState, type ReactNode } from "react";
 import { BarChart3, Calendar, LineChart as LineChartIcon, Moon, Percent, PieChart, TrendingUp, UsersRound } from "lucide-react";
-import { Bar, BarChart, CartesianGrid, Legend, Line, LineChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
+import { Bar, BarChart, CartesianGrid, Cell, Legend, Line, LineChart, PieChart as RechartsPieChart, Pie as RechartsPie, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 import { supabase } from "../../../lib/supabase";
 import { canSubmitAccommodationReport, canSubmitVisitorReport, getEstablishmentReportingMode } from "../../../lib/establishmentReportForms";
 import { currentMonthKey, currentYear, buildAccommodationMonthlySeries, buildVisitorMonthlySeries, isOfficialReport, residenceTotals, toNumber, type AccommodationReport, type VisitorReport } from "../../../lib/staffAnalytics";
@@ -20,6 +20,33 @@ const MetricGrid = ({ metrics }: { metrics: AnalyticsMetric[] }) => (
 
 const ChartTitle = ({ icon: Icon, children }: { icon: typeof BarChart3; children: ReactNode }) => (
   <div className="mb-4 flex items-center gap-2"><Icon className="h-5 w-5 text-[#6474A5]" /><h3 className="text-lg font-semibold text-[#0B2530]">{children}</h3></div>
+);
+
+const residenceChartColors = ["#6474A5", "#6C63FF", "#38B2AC", "#E7A93B", "#B86B78", "#5E8A75", "#8B7AA8", "#C08A5A"];
+
+const ResidencePieChart = ({ data }: { data: { residence: string; visitors: number }[] }) => (
+  <ResponsiveContainer width="100%" height={340}>
+    <PieChartWithLegend data={data} />
+  </ResponsiveContainer>
+);
+
+const PieChartWithLegend = ({ data }: { data: { residence: string; visitors: number }[] }) => (
+  <RechartsPieChart>
+    <Tooltip />
+    <Legend />
+    <RechartsPie
+      data={data}
+      dataKey="visitors"
+      nameKey="residence"
+      cx="50%"
+      cy="45%"
+      outerRadius="68%"
+      paddingAngle={2}
+      name="Visitors"
+    >
+      {data.map((entry, index) => <Cell key={`${entry.residence}-${index}`} fill={residenceChartColors[index % residenceChartColors.length]} />)}
+    </RechartsPie>
+  </RechartsPieChart>
 );
 
 export default function Analytics() {
@@ -137,7 +164,7 @@ export default function Analytics() {
       {mode === "visitor" && showVisitorAnalytics && <>
         <MetricGrid metrics={visitorMetrics} />
         <div className={chartClass}><ChartTitle icon={LineChartIcon}>Visitor Count Trends ({year})</ChartTitle><ResponsiveContainer width="100%" height={340}><LineChart data={visitorMonths}><CartesianGrid strokeDasharray="3 3" /><XAxis dataKey="month" /><YAxis allowDecimals={false} /><Tooltip /><Legend /><Line type="monotone" dataKey="visitors" stroke="#6474A5" strokeWidth={2} name="Visitors" /><Line type="monotone" dataKey="male" stroke="#6C63FF" strokeWidth={2} name="Male" /><Line type="monotone" dataKey="female" stroke="#B86B78" strokeWidth={2} name="Female" /></LineChart></ResponsiveContainer></div>
-        <div className={chartClass}><ChartTitle icon={BarChart3}>Visitor Demographics by Residence ({year})</ChartTitle><ResponsiveContainer width="100%" height={340}><BarChart data={currentResidenceData}><CartesianGrid strokeDasharray="3 3" /><XAxis dataKey="residence" interval={0} angle={-30} textAnchor="end" height={80} /><YAxis allowDecimals={false} /><Tooltip /><Bar dataKey="visitors" fill="#6474A5" name="Visitors" /></BarChart></ResponsiveContainer></div>
+        <div className={chartClass}><ChartTitle icon={BarChart3}>Visitor Demographics by Residence ({year})</ChartTitle><ResidencePieChart data={currentResidenceData} /></div>
         <div className={panelClass}><h3 className="font-semibold text-[#0B2530]">Best Performing Month</h3><p className="mt-2 text-3xl font-bold text-[#0B2530]">{visitorBestMonth.month}</p><p className="mt-1 text-sm text-[#6474A5]">{visitorBestMonth.visitors.toLocaleString()} visitors · {visitorBestMonth.male.toLocaleString()} male · {visitorBestMonth.female.toLocaleString()} female</p></div>
       </>}
 
@@ -153,7 +180,7 @@ export default function Analytics() {
         <div className={chartClass}><ChartTitle icon={LineChartIcon}>Arrival & Visitor Trends ({year})</ChartTitle><ResponsiveContainer width="100%" height={340}><LineChart data={visitorMonths.map((month, index) => ({ ...month, checkIns: accommodationMonths[index]?.checkIns || 0 }))}><CartesianGrid strokeDasharray="3 3" /><XAxis dataKey="month" /><YAxis allowDecimals={false} /><Tooltip /><Legend /><Line type="monotone" dataKey="visitors" stroke="#6474A5" strokeWidth={2} name="Day-tour Visitors" /><Line type="monotone" dataKey="checkIns" stroke="#38B2AC" strokeWidth={2} name="Guest Check-ins" /></LineChart></ResponsiveContainer></div>
         <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
           <div className={chartClass}><ChartTitle icon={PieChart}>Visitor Demographics ({year})</ChartTitle><ResponsiveContainer width="100%" height={300}><BarChart data={[{ group: "Visitors", male: currentYearMale, female: currentYearFemale }]}><CartesianGrid strokeDasharray="3 3" /><XAxis dataKey="group" /><YAxis allowDecimals={false} /><Tooltip /><Legend /><Bar dataKey="male" fill="#6C63FF" name="Male" /><Bar dataKey="female" fill="#B86B78" name="Female" /></BarChart></ResponsiveContainer></div>
-          <div className={chartClass}><ChartTitle icon={BarChart3}>Visitor Demographics by Residence ({year})</ChartTitle><ResponsiveContainer width="100%" height={340}><BarChart data={currentResidenceData}><CartesianGrid strokeDasharray="3 3" /><XAxis dataKey="residence" interval={0} angle={-30} textAnchor="end" height={80} /><YAxis allowDecimals={false} /><Tooltip /><Bar dataKey="visitors" fill="#6474A5" name="Visitors" /></BarChart></ResponsiveContainer></div>
+          <div className={chartClass}><ChartTitle icon={BarChart3}>Visitor Demographics by Residence ({year})</ChartTitle><ResidencePieChart data={currentResidenceData} /></div>
         </div>
         <div className={chartClass}><ChartTitle icon={BarChart3}>Monthly Performance Overview ({year})</ChartTitle><ResponsiveContainer width="100%" height={340}><BarChart data={visitorMonths.map((month, index) => ({ month: month.month, dayTour: month.visitors, checkIns: accommodationMonths[index]?.checkIns || 0, guestNights: accommodationMonths[index]?.guestNights || 0 }))}><CartesianGrid strokeDasharray="3 3" /><XAxis dataKey="month" /><YAxis allowDecimals={false} /><Tooltip /><Legend /><Bar dataKey="dayTour" fill="#6474A5" name="Day-tour Visitors" /><Bar dataKey="checkIns" fill="#38B2AC" name="Guest Check-ins" /><Bar dataKey="guestNights" fill="#6C63FF" name="Guest Nights" /></BarChart></ResponsiveContainer></div>
         <div className={chartClass}><ChartTitle icon={TrendingUp}>Occupancy Rate and Guests per Room Trend ({year})</ChartTitle><ResponsiveContainer width="100%" height={340}><LineChart data={accommodationMonths}><CartesianGrid strokeDasharray="3 3" /><XAxis dataKey="month" /><YAxis allowDecimals={false} /><Tooltip /><Legend /><Line type="monotone" dataKey="occupancyRate" stroke="#6C63FF" strokeWidth={2} name="Occupancy Rate %" /><Line type="monotone" dataKey="guestsPerRoom" stroke="#38B2AC" strokeWidth={2} name="Guests per Room" /></LineChart></ResponsiveContainer></div>
