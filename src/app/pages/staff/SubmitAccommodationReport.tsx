@@ -879,9 +879,9 @@ export default function SubmitAccommodationReport() {
         {reportFormMode === "old-new" && (
           <div className="overflow-x-auto overscroll-x-contain lg:h-[550px] lg:flex-none lg:overflow-auto lg:overscroll-contain">
             <table className="w-full min-w-0 table-fixed border-collapse">
-              <thead className="sticky top-0 z-20 border-b border-gray-200 bg-gray-50"><tr><th className="w-[28%] bg-gray-50 px-2 py-3 text-center text-xs font-semibold uppercase text-gray-700">Room / Code</th><th className="w-[24%] bg-gray-50 px-2 py-3 text-center text-xs font-semibold uppercase text-gray-700">Previous-day guests</th><th className="w-[48%] bg-gray-50 px-2 py-3 text-center text-xs font-semibold uppercase text-[#0F4C75]">Current old / new</th></tr></thead>
+              <thead className="sticky top-0 z-20 border-b border-gray-200 bg-gray-50"><tr><th className="w-[28%] bg-gray-50 px-2 py-3 text-center text-xs font-semibold uppercase text-gray-700">Room / Code</th><th className="w-[24%] bg-gray-50 px-2 py-3 text-center text-xs font-semibold uppercase text-gray-700">Previous-day guests</th><th className="w-[30%] bg-gray-50 px-2 py-3 text-center text-xs font-semibold uppercase text-[#0F4C75]">Current old / new</th><th className="w-[18%] bg-gray-50 px-2 py-3 text-center text-xs font-semibold uppercase text-[#0F4C75]">Short-stay check-ins</th></tr></thead>
               <tbody className="divide-y divide-gray-200">{roomData.map((room, index) => { const previousTotal = Number(room.previousGuestNights || 0); const previousNew = Math.min(Number(room.previousNewGuests || 0), previousTotal); return (
-                <tr key={room.roomCode} className="border-b border-gray-200 bg-white"><th className="px-2 py-3 text-center"><div className="text-xs font-semibold text-gray-900 sm:text-sm">Room {getGeneratedRoomNumber(room.roomCode)}</div><div className="mt-1 inline-block rounded bg-gray-100 px-2 py-0.5 font-mono text-[10px] text-gray-600">{getBaseRoomCode(room.roomCode)}</div></th><td className="px-2 py-2 text-center"><span className={previousNew > 0 ? "inline-flex h-8 min-w-8 items-center justify-center rounded-full border-[3px] border-red-600 px-2 text-sm font-bold tabular-nums text-red-700" : "inline-flex text-sm font-normal tabular-nums text-gray-700"} style={previousNew > 0 ? { borderColor: "#dc2626", borderWidth: "3px", borderStyle: "solid", borderRadius: "9999px" } : undefined} aria-label={`${room.roomType} previous day guest value${previousNew > 0 ? ", includes new guest" : ", continuing guest"}`}>{previousTotal}</span></td><td className="px-2 py-2"><div className="grid gap-2 sm:grid-cols-2"><label className="text-center text-[10px] font-medium uppercase text-gray-500">Old<input type="text" inputMode="numeric" pattern="[0-9]*" value={numericInputValue(room.continuingGuests)} onChange={(e) => updateRoomData(index, "continuingGuests", parseNonNegativeInteger(e.target.value))} className="mt-1 w-full rounded-xl border-0 bg-[#E0E5EC] px-2 py-2 text-center text-sm tabular-nums text-[#193364]" aria-label={`${room.roomType} current old guest value`} /></label><label className="text-center text-[10px] font-medium uppercase text-gray-500">New<input type="text" inputMode="numeric" pattern="[0-9]*" value={numericInputValue(room.checkIns)} onChange={(e) => updateRoomData(index, "checkIns", parseNonNegativeInteger(e.target.value))} className="mt-1 w-full rounded-xl border-0 bg-[#FBE7BA] px-2 py-2 text-center text-sm tabular-nums text-[#193364]" aria-label={`${room.roomType} current new guest value`} /></label></div><label className="mt-2 block text-center text-[10px] font-medium uppercase text-gray-500">Short-stay check-ins<input type="text" inputMode="numeric" pattern="[0-9]*" value={numericInputValue(room.shortStayCheckIns)} onChange={(e) => updateRoomData(index, "shortStayCheckIns", parseNonNegativeInteger(e.target.value))} className="mt-1 w-full rounded-xl border-0 bg-[#E0E5EC] px-2 py-2 text-center text-sm tabular-nums text-[#193364]" aria-label={`${room.roomType} short-stay check-ins`} /></label></td></tr>
+                <tr key={room.roomCode} className="border-b border-gray-200 bg-white"><th className="px-2 py-3 text-center"><div className="text-xs font-semibold text-gray-900 sm:text-sm">Room {getGeneratedRoomNumber(room.roomCode)}</div><div className="mt-1 inline-block rounded bg-gray-100 px-2 py-0.5 font-mono text-[10px] text-gray-600">{getBaseRoomCode(room.roomCode)}</div></th><td className="px-2 py-2 text-center"><span className={previousNew > 0 ? "inline-flex h-8 min-w-8 items-center justify-center rounded-full border-[3px] border-red-600 px-2 text-sm font-bold tabular-nums text-red-700" : "inline-flex text-sm font-normal tabular-nums text-gray-700"} style={previousNew > 0 ? { borderColor: "#dc2626", borderWidth: "3px", borderStyle: "solid", borderRadius: "9999px" } : undefined} aria-label={`${room.roomType} previous day guest value${previousNew > 0 ? ", includes new guest" : ", continuing guest"}`}>{previousTotal}</span></td><td className="px-2 py-2"><div className="grid gap-2 sm:grid-cols-2"><label className="text-center text-[10px] font-medium uppercase text-gray-500">Old<input type="text" inputMode="numeric" pattern="[0-9]*" value={numericInputValue(room.continuingGuests)} onChange={(e) => updateRoomData(index, "continuingGuests", parseNonNegativeInteger(e.target.value))} className="mt-1 w-full rounded-xl border-0 bg-[#E0E5EC] px-2 py-2 text-center text-sm tabular-nums text-[#193364]" aria-label={`${room.roomType} current old guest value`} /></label><label className="text-center text-[10px] font-medium uppercase text-gray-500">New<input type="text" inputMode="numeric" pattern="[0-9]*" value={numericInputValue(room.checkIns)} onChange={(e) => updateRoomData(index, "checkIns", parseNonNegativeInteger(e.target.value))} className="mt-1 w-full rounded-xl border-0 bg-[#FBE7BA] px-2 py-2 text-center text-sm tabular-nums text-[#193364]" aria-label={`${room.roomType} current new guest value`} /></label></div></td><td className="px-2 py-2 text-center"><input type="text" inputMode="numeric" pattern="[0-9]*" value={numericInputValue(room.shortStayCheckIns)} onChange={(e) => updateRoomData(index, "shortStayCheckIns", parseNonNegativeInteger(e.target.value))} className="mx-auto w-full max-w-[100px] rounded-xl border border-gray-300 bg-white px-2 py-2 text-center text-sm tabular-nums text-[#193364]" aria-label={`${room.roomType} short-stay check-ins`} /></td></tr>
               ); })}</tbody>
             </table>
           </div>
@@ -894,7 +894,8 @@ export default function SubmitAccommodationReport() {
               <tr>
                 <th className="sticky left-0 top-0 z-30 w-[34%] border-r border-gray-200 bg-gray-50 px-1.5 py-2 text-center text-[10px] font-semibold uppercase leading-tight text-gray-700 sm:px-3 sm:py-3 sm:text-xs">Room / Code</th>
                 <th className="w-[33%] border-r border-gray-200 px-1.5 py-2 text-center text-[10px] font-semibold uppercase leading-tight text-gray-700 sm:px-3 sm:py-3 sm:text-xs">Previous Date<div className="mt-1 text-[9px] font-normal normal-case text-gray-500 sm:text-[10px]">{getPreviousDate(reportDate)}</div></th>
-                <th className="w-[33%] px-1.5 py-2 text-center text-[10px] font-semibold uppercase leading-tight text-[#0F4C75] sm:px-3 sm:py-3 sm:text-xs">Current Date<div className="mt-1 text-[9px] font-normal normal-case text-gray-500 sm:text-[10px]">{reportDate}</div></th>
+                <th className="w-[22%] border-r border-gray-200 px-1.5 py-2 text-center text-[10px] font-semibold uppercase leading-tight text-[#0F4C75] sm:px-3 sm:py-3 sm:text-xs">Current Date<div className="mt-1 text-[9px] font-normal normal-case text-gray-500 sm:text-[10px]">{reportDate}</div></th>
+                <th className="w-[11%] px-1.5 py-2 text-center text-[10px] font-semibold uppercase leading-tight text-[#0F4C75] sm:px-3 sm:py-3 sm:text-xs">Short-stay<div className="mt-1 text-[9px] font-normal normal-case text-gray-500 sm:text-[10px]">Check-ins</div></th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-200" onPointerDownCapture={handleGuestFieldPointerDownCapture} onTouchStartCapture={handleGuestFieldTouchStartCapture}>
@@ -940,18 +941,17 @@ export default function SubmitAccommodationReport() {
                           title="Double-click to switch between continuing and new guest"
                           aria-label={`${room.roomType} current ${isActiveNewGuest ? "new" : "continuing"} guest value. Double-click to switch type.`}
                         />
-                        <label className="mx-auto mt-2 block w-full max-w-[150px] text-[9px] font-medium uppercase leading-tight text-gray-500">
-                          Short-stay check-ins
-                          <input
-                            type="text"
-                            inputMode="numeric"
-                            pattern="[0-9]*"
-                            value={numericInputValue(room.shortStayCheckIns)}
-                            onChange={(e) => updateRoomData(index, "shortStayCheckIns", parseNonNegativeInteger(e.target.value))}
-                            className="mt-1 w-full rounded-md border border-gray-300 bg-white px-2 py-1.5 text-center text-xs tabular-nums text-gray-700"
-                            aria-label={`${room.roomType} short-stay check-ins`}
-                          />
-                        </label>
+                      </td>
+                      <td className="px-1.5 py-1.5 text-center sm:px-3 sm:py-2">
+                        <input
+                          type="text"
+                          inputMode="numeric"
+                          pattern="[0-9]*"
+                          value={numericInputValue(room.shortStayCheckIns)}
+                          onChange={(e) => updateRoomData(index, "shortStayCheckIns", parseNonNegativeInteger(e.target.value))}
+                          className="mx-auto w-full max-w-[80px] rounded-md border border-gray-300 bg-white px-1.5 py-2 text-center text-sm tabular-nums text-gray-700"
+                          aria-label={`${room.roomType} short-stay check-ins`}
+                        />
                       </td>
                     </tr>
                   );
