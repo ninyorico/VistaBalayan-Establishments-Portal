@@ -266,8 +266,9 @@ export default function Analytics() {
           score: Math.round(visitorScore + occupancyScore),
         };
       })
+      .filter((establishment) => establishment.score > 0)
       .sort((a, b) => b.score - a.score)
-      .slice(0, 7);
+      .slice(0, 5);
 
     const originByMonth: Record<string, Record<string, number>> = {};
     const originCounts: Record<string, number> = {};
