@@ -26,27 +26,23 @@ const residenceChartColors = ["#6474A5", "#6C63FF", "#38B2AC", "#E7A93B", "#B86B
 
 const ResidencePieChart = ({ data }: { data: { residence: string; visitors: number }[] }) => (
   <ResponsiveContainer width="100%" height={340}>
-    <PieChartWithLegend data={data} />
+    <RechartsPieChart>
+      <Tooltip />
+      <Legend />
+      <RechartsPie
+        data={data}
+        dataKey="visitors"
+        nameKey="residence"
+        cx="50%"
+        cy="45%"
+        outerRadius="68%"
+        paddingAngle={2}
+        name="Visitors"
+      >
+        {data.map((entry, index) => <Cell key={`${entry.residence}-${index}`} fill={residenceChartColors[index % residenceChartColors.length]} />)}
+      </RechartsPie>
+    </RechartsPieChart>
   </ResponsiveContainer>
-);
-
-const PieChartWithLegend = ({ data }: { data: { residence: string; visitors: number }[] }) => (
-  <RechartsPieChart>
-    <Tooltip />
-    <Legend />
-    <RechartsPie
-      data={data}
-      dataKey="visitors"
-      nameKey="residence"
-      cx="50%"
-      cy="45%"
-      outerRadius="68%"
-      paddingAngle={2}
-      name="Visitors"
-    >
-      {data.map((entry, index) => <Cell key={`${entry.residence}-${index}`} fill={residenceChartColors[index % residenceChartColors.length]} />)}
-    </RechartsPie>
-  </RechartsPieChart>
 );
 
 export default function Analytics() {
