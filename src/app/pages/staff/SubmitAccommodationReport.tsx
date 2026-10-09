@@ -447,7 +447,7 @@ export default function SubmitAccommodationReport() {
     setRoomData(roomData.map((room, i) => {
       if (i !== index) return room;
       if (value === 0) {
-        return { ...room, continuingGuests: 0, checkIns: 0, guestNights: 0, isNewGuest: false };
+        return { ...room, continuingGuests: 0, checkIns: 0, guestNights: Number(room.shortStayCheckIns || 0), isNewGuest: false };
       }
       // Any positive current-date edit is an explicit new-guest entry.
       // This applies both when the previous day was blank and when an existing
@@ -458,7 +458,7 @@ export default function SubmitAccommodationReport() {
         checkIns: value,
         isNewGuest: true,
       };
-      return { ...updatedRoom, guestNights: Number(updatedRoom.checkIns || 0) };
+      return { ...updatedRoom, guestNights: Number(updatedRoom.checkIns || 0) + Number(updatedRoom.shortStayCheckIns || 0) };
     }));
   };
 
@@ -473,7 +473,7 @@ export default function SubmitAccommodationReport() {
           continuingGuests: 0,
           checkIns: 0,
           isNewGuest: false,
-          guestNights: 0,
+          guestNights: Number(room.shortStayCheckIns || 0),
         };
       }
       return {
@@ -481,7 +481,7 @@ export default function SubmitAccommodationReport() {
         continuingGuests: nextIsNewGuest ? 0 : currentValue,
         checkIns: nextIsNewGuest ? currentValue : 0,
         isNewGuest: nextIsNewGuest,
-        guestNights: currentValue,
+        guestNights: currentValue + Number(room.shortStayCheckIns || 0),
       };
     }));
   };
