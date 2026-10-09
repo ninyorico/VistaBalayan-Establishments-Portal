@@ -679,7 +679,7 @@ export default function Reports() {
             {filterType} report
           </span>
         </div>
-        <div className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
+        <div className="mt-4 grid grid-cols-2 gap-3 lg:grid-cols-4">
           <div className="min-w-0 rounded-xl bg-[#E0E5EC] p-4 shadow-[inset_4px_4px_8px_rgba(163,177,198,0.42),inset_-4px_-4px_8px_rgba(255,255,255,0.62)]">
             <p className="text-[10px] font-bold uppercase tracking-[0.08em] text-slate-500 sm:text-xs">Total Visitors / Check-ins</p>
             <p className="mt-2 text-2xl font-black tabular-nums text-[#193364]">{totalVisitors.toLocaleString()}</p>
