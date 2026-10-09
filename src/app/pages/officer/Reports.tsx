@@ -3,9 +3,6 @@ import {
   FileSpreadsheet,
   Eye,
   X,
-  TrendingUp,
-  TrendingDown,
-  Users,
   AlertTriangle,
 } from "lucide-react";
 import {
@@ -672,76 +669,39 @@ export default function Reports() {
       </div>
 
       {/* Administrative Summary Output */}
-      <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-        <div className="flex items-start justify-between gap-4 mb-4">
+      <div className="overflow-hidden rounded-2xl border border-slate-300/70 bg-[#E0E5EC] p-4 shadow-[7px_7px_14px_rgba(163,177,198,0.45),-7px_-7px_14px_rgba(255,255,255,0.6)] sm:p-6">
+        <div className="flex flex-col gap-3 border-b border-slate-300/70 pb-4 sm:flex-row sm:items-center sm:justify-between">
           <div>
-            <h3 className="text-lg font-semibold text-gray-900">Administrative Report Summary</h3>
-            <p className="text-sm text-gray-600">Summarized output for review and reference: {getFilterLabel()}</p>
+            <h3 className="text-lg font-bold text-[#193364]">Administrative Report Summary</h3>
+            <p className="mt-1 text-sm text-slate-600">Submitted report totals for {getFilterLabel()}.</p>
           </div>
-          <span className="px-3 py-1 rounded-full bg-blue-50 text-blue-700 text-xs font-medium uppercase">
+          <span className="w-fit rounded-full bg-[#E0E5EC] px-3 py-1 text-[10px] font-bold uppercase tracking-[0.16em] text-[#0F4C75] shadow-[inset_2px_2px_5px_rgba(163,177,198,0.45),inset_-2px_-2px_5px_rgba(255,255,255,0.65)]">
             {filterType} report
           </span>
         </div>
-        <div className="grid grid-cols-2 gap-3 sm:gap-4">
-          <div className="min-w-0 rounded-lg bg-slate-50 p-3 sm:p-4">
-            <p className="text-[10px] font-medium uppercase leading-tight text-slate-500 sm:text-xs">Total Visitors / Check-ins</p>
-            <p className="mt-2 text-xl font-bold text-slate-900 sm:text-2xl">{totalVisitors.toLocaleString()}</p>
+        <div className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
+          <div className="min-w-0 rounded-xl bg-[#E0E5EC] p-4 shadow-[inset_4px_4px_8px_rgba(163,177,198,0.42),inset_-4px_-4px_8px_rgba(255,255,255,0.62)]">
+            <p className="text-[10px] font-bold uppercase tracking-[0.08em] text-slate-500 sm:text-xs">Total Visitors / Check-ins</p>
+            <p className="mt-2 text-2xl font-black tabular-nums text-[#193364]">{totalVisitors.toLocaleString()}</p>
           </div>
-          <div className="min-w-0 rounded-lg bg-slate-50 p-3 sm:p-4">
-            <p className="text-[10px] font-medium uppercase leading-tight text-slate-500 sm:text-xs">Reports Included</p>
-            <p className="mt-2 text-xl font-bold text-slate-900 sm:text-2xl">{totalSubmissions}</p>
+          <div className="min-w-0 rounded-xl bg-[#E0E5EC] p-4 shadow-[inset_4px_4px_8px_rgba(163,177,198,0.42),inset_-4px_-4px_8px_rgba(255,255,255,0.62)]">
+            <p className="text-[10px] font-bold uppercase tracking-[0.08em] text-slate-500 sm:text-xs">Reports Included</p>
+            <p className="mt-2 text-2xl font-black tabular-nums text-[#193364]">{totalSubmissions}</p>
           </div>
-          <div className="min-w-0 rounded-lg bg-slate-50 p-3 sm:p-4">
-            <p className="text-[10px] font-medium uppercase leading-tight text-slate-500 sm:text-xs">Establishments Covered</p>
-            <p className="mt-2 text-xl font-bold text-slate-900 sm:text-2xl">{establishmentsCovered}</p>
+          <div className="min-w-0 rounded-xl bg-[#E0E5EC] p-4 shadow-[inset_4px_4px_8px_rgba(163,177,198,0.42),inset_-4px_-4px_8px_rgba(255,255,255,0.62)]">
+            <p className="text-[10px] font-bold uppercase tracking-[0.08em] text-slate-500 sm:text-xs">Establishments Covered</p>
+            <p className="mt-2 text-2xl font-black tabular-nums text-[#193364]">{establishmentsCovered}</p>
           </div>
-          <div className="min-w-0 rounded-lg bg-slate-50 p-3 sm:p-4">
-            <p className="text-[10px] font-medium uppercase leading-tight text-slate-500 sm:text-xs">Top Establishment</p>
-            <p className="mt-2 truncate text-sm font-bold text-slate-900 sm:text-base">{topEstablishment ? topEstablishment[0] : "N/A"}</p>
-            {topEstablishment && <p className="text-xs text-slate-500 sm:text-sm">{topEstablishment[1].toLocaleString()} visitors/check-ins</p>}
+          <div className="min-w-0 rounded-xl bg-[#E0E5EC] p-4 shadow-[inset_4px_4px_8px_rgba(163,177,198,0.42),inset_-4px_-4px_8px_rgba(255,255,255,0.62)]">
+            <p className="text-[10px] font-bold uppercase tracking-[0.08em] text-slate-500 sm:text-xs">Top Establishment</p>
+            <p className="mt-2 truncate text-base font-black text-[#193364] sm:text-lg">{topEstablishment ? topEstablishment[0] : "N/A"}</p>
+            {topEstablishment && <p className="mt-1 text-xs text-slate-500 sm:text-sm">{topEstablishment[1].toLocaleString()} visitors/check-ins</p>}
           </div>
         </div>
-        <p className="mt-4 text-sm text-slate-600">
-          Summary: {totalSubmissions} submitted reports are included in this selected period.
+        <p className="mt-4 rounded-xl bg-[#F5F8FF] px-4 py-3 text-sm leading-6 text-slate-600 shadow-sm">
+          {totalSubmissions} submitted reports are included in this selected period.
           {visitorStats.difference !== 0 && ` The latest chart bucket changed by ${visitorStats.difference.toLocaleString()} visitors/check-ins (${visitorStats.percentageChange}%).`}
         </p>
-      </div>
-
-      {/* KPI Cards */}
-      <div className="grid grid-cols-2 gap-2 sm:gap-4 lg:grid-cols-4 lg:gap-6">
-        <div className="min-w-0 rounded-lg border border-gray-200 bg-white p-3 shadow-sm sm:p-6">
-          <p className="mb-1 text-[11px] text-gray-600 sm:text-sm">Submitted Reports</p>
-          <p className="text-2xl font-bold text-gray-900 sm:text-3xl">{totalSubmissions}</p>
-        </div>
-        <div className="min-w-0 rounded-lg border border-gray-200 bg-white p-3 shadow-sm sm:p-6">
-          <div className="mb-2 flex min-w-0 items-center gap-1.5 sm:gap-3">
-            {visitorStats.isIncrease ? <TrendingUp className="h-4 w-4 shrink-0 text-green-600 sm:h-5 sm:w-5" /> : <TrendingDown className="h-4 w-4 shrink-0 text-red-600 sm:h-5 sm:w-5" />}
-            <p className="truncate text-[11px] text-gray-600 sm:text-sm">Bucket Change</p>
-          </div>
-          <div className="flex flex-wrap items-baseline gap-x-1 sm:gap-x-2">
-            <p className={`text-2xl font-bold sm:text-3xl ${visitorStats.isIncrease ? "text-green-600" : "text-red-600"}`}>
-              {visitorStats.isIncrease ? "+" : ""}
-              {visitorStats.difference.toLocaleString()}
-            </p>
-            <span className={`text-[11px] font-medium sm:text-sm ${visitorStats.isIncrease ? "text-green-600" : "text-red-600"}`}>
-              ({visitorStats.isIncrease ? "+" : ""}{visitorStats.percentageChange}%)
-            </span>
-          </div>
-        </div>
-        <div className="min-w-0 rounded-lg border border-gray-200 bg-white p-3 shadow-sm sm:p-6">
-          <div className="mb-2 flex min-w-0 items-center gap-1.5 sm:gap-3">
-            <Users className="h-4 w-4 shrink-0 text-blue-600 sm:h-5 sm:w-5" />
-            <p className="truncate text-[11px] text-gray-600 sm:text-sm">Latest Chart Bucket</p>
-          </div>
-          <p className="text-2xl font-bold text-gray-900 sm:text-3xl">{visitorStats.currentTotal.toLocaleString()}</p>
-        </div>
-        <div className="min-w-0 rounded-lg border border-gray-200 bg-white p-3 shadow-sm sm:p-6">
-          <div className="mb-2 flex min-w-0 items-center gap-1.5 sm:gap-3">
-            <Users className="h-4 w-4 shrink-0 text-purple-600 sm:h-5 sm:w-5" />
-            <p className="truncate text-[11px] text-gray-600 sm:text-sm">Previous Chart Bucket</p>
-          </div>
-          <p className="text-2xl font-bold text-gray-900 sm:text-3xl">{visitorStats.previousTotal.toLocaleString()}</p>
-        </div>
       </div>
 
       {/* Submissions Table */}
