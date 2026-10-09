@@ -892,10 +892,10 @@ export default function SubmitAccommodationReport() {
           <table className="w-full min-w-0 table-fixed border-collapse">
             <thead className="sticky top-0 z-20 bg-gray-50 border-b border-gray-200">
               <tr>
-                <th className="sticky left-0 top-0 z-30 w-[34%] border-r border-gray-200 bg-gray-50 px-1.5 py-2 text-center text-[10px] font-semibold uppercase leading-tight text-gray-700 sm:px-3 sm:py-3 sm:text-xs">Room / Code</th>
-                <th className="w-[33%] border-r border-gray-200 px-1.5 py-2 text-center text-[10px] font-semibold uppercase leading-tight text-gray-700 sm:px-3 sm:py-3 sm:text-xs">Previous Date<div className="mt-1 text-[9px] font-normal normal-case text-gray-500 sm:text-[10px]">{getPreviousDate(reportDate)}</div></th>
-                <th className="w-[22%] border-r border-gray-200 px-1.5 py-2 text-center text-[10px] font-semibold uppercase leading-tight text-[#0F4C75] sm:px-3 sm:py-3 sm:text-xs">Current Date<div className="mt-1 text-[9px] font-normal normal-case text-gray-500 sm:text-[10px]">{reportDate}</div></th>
-                <th className="w-[11%] px-1.5 py-2 text-center text-[10px] font-semibold uppercase leading-tight text-[#0F4C75] sm:px-3 sm:py-3 sm:text-xs">Short-stay<div className="mt-1 text-[9px] font-normal normal-case text-gray-500 sm:text-[10px]">Check-ins</div></th>
+                <th className="sticky left-0 top-0 z-30 w-1/4 border-r border-gray-200 bg-gray-50 px-1.5 py-2 text-center text-[10px] font-semibold uppercase leading-tight text-gray-700 sm:px-3 sm:py-3 sm:text-xs">Room / Code</th>
+                <th className="w-1/4 border-r border-gray-200 px-1.5 py-2 text-center text-[10px] font-semibold uppercase leading-tight text-gray-700 sm:px-3 sm:py-3 sm:text-xs">Previous Date<div className="mt-1 text-[9px] font-normal normal-case text-gray-500 sm:text-[10px]">{getPreviousDate(reportDate)}</div></th>
+                <th className="w-1/4 border-r border-gray-200 px-1.5 py-2 text-center text-[10px] font-semibold uppercase leading-tight text-[#0F4C75] sm:px-3 sm:py-3 sm:text-xs">Current Date<div className="mt-1 text-[9px] font-normal normal-case text-gray-500 sm:text-[10px]">{reportDate}</div></th>
+                <th className="w-1/4 px-1.5 py-2 text-center text-[10px] font-semibold uppercase leading-tight text-[#0F4C75] sm:px-3 sm:py-3 sm:text-xs">Short-stay<div className="mt-1 text-[9px] font-normal normal-case text-gray-500 sm:text-[10px]">Check-ins</div></th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-200" onPointerDownCapture={handleGuestFieldPointerDownCapture} onTouchStartCapture={handleGuestFieldTouchStartCapture}>
