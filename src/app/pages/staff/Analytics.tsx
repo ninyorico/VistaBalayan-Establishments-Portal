@@ -37,7 +37,6 @@ const ResidencePieChart = ({ data }: { data: { residence: string; visitors: numb
         cy="45%"
         outerRadius="68%"
         paddingAngle={2}
-        name="Visitors"
       >
         {data.map((entry, index) => <Cell key={`${entry.residence}-${index}`} fill={residenceChartColors[index % residenceChartColors.length]} />)}
       </RechartsPie>
