@@ -96,7 +96,7 @@ export default function SubmitAccommodationReport() {
               continuingGuests: Number(savedRoom.continuingGuests ?? 0) || 0,
               checkIns: Number(savedRoom.checkIns) || 0,
               shortStayCheckIns: Number(savedRoom.shortStayCheckIns) || 0,
-              guestNights: (Number(savedRoom.continuingGuests) || 0) + (Number(savedRoom.checkIns) || 0),
+              guestNights: (Number(savedRoom.continuingGuests) || 0) + (Number(savedRoom.checkIns) || 0) + (Number(savedRoom.shortStayCheckIns) || 0),
               previousNewGuests: Math.max(0, Number(savedRoom.previousNewGuests) || 0),
               previousGuestNights: Math.max(0, Number(savedRoom.previousGuestNights) || 0),
               isNewGuest: Boolean(savedRoom.isNewGuest),
@@ -432,8 +432,8 @@ export default function SubmitAccommodationReport() {
             if (field === "continuingGuests") updatedRoom.checkIns = 0;
           }
 
-          if (field === "checkIns" || field === "continuingGuests") {
-            updatedRoom.guestNights = Number(updatedRoom.continuingGuests || 0) + Number(updatedRoom.checkIns || 0);
+          if (field === "checkIns" || field === "continuingGuests" || field === "shortStayCheckIns") {
+            updatedRoom.guestNights = Number(updatedRoom.continuingGuests || 0) + Number(updatedRoom.checkIns || 0) + Number(updatedRoom.shortStayCheckIns || 0);
           }
 
           return updatedRoom;
@@ -624,7 +624,7 @@ export default function SubmitAccommodationReport() {
       const guestNights = Number(room.guestNights || 0);
       if (!roomCode || roomCodes.has(roomCode)) return true;
       roomCodes.add(roomCode);
-      return rooms <= 0 || occupied < 0 || occupied > rooms || checkIns < 0 || shortStayCheckIns < 0 || guestNights < checkIns;
+      return rooms <= 0 || occupied < 0 || occupied > rooms || checkIns < 0 || shortStayCheckIns < 0 || guestNights < checkIns + shortStayCheckIns;
     });
     if (invalidRoom) {
       toast.error("Each room must have a unique code, valid room count, and consistent occupancy values");
