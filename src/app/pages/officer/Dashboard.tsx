@@ -347,7 +347,7 @@ setOccupancyRate(occupancyRate);
             key={metric.label}
             {...metric}
             compact
-            className="col-span-1 h-full min-h-[118px] sm:min-h-[132px]"
+            className="h-auto min-h-[118px] max-h-[170px] sm:min-h-[132px] sm:max-h-none"
           />
         ))}
       </section>
