@@ -979,7 +979,7 @@ export default function SubmitAccommodationReport() {
                   const previousTotal = room.previousGuestNights || 0;
                   const previousNew = Math.min(room.previousNewGuests || 0, previousTotal);
                   const currentGuestValue = Number(room.isNewGuest ? room.checkIns : room.continuingGuests) || 0;
-                  const isActiveNewGuest = room.isNewGuest === true && currentGuestValue > 0;
+                  const isActiveNewGuest = currentGuestValue > 0 && (room.isNewGuest === true || Number(room.shortStayCheckIns || 0) > 0);
                   return (
                     <tr key={room.roomCode} className="border-b border-gray-200 bg-white">
                       <th className="sticky left-0 z-10 border-r border-gray-200 bg-white px-1.5 py-2 text-center sm:px-3 sm:py-3">
