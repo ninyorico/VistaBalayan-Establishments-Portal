@@ -542,6 +542,9 @@ export default function SubmitAccommodationReport() {
     setRoomData(roomData.map((room) => {
       if (room.roomCode !== roomCode) return room;
       const nextIsNewGuest = !room.isNewGuest;
+      if (Number(room.shortStayCheckIns || 0) > 0 && room.isNewGuest && !nextIsNewGuest) {
+        return room;
+      }
       const currentValue = room.isNewGuest ? room.checkIns : room.continuingGuests;
       if (currentValue <= 0) {
         return {
