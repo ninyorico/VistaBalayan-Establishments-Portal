@@ -108,6 +108,21 @@ function normalizeReportTerminology(value: string) {
     .replace(/\bhotel report\b/gi, "overnight report");
 }
 
+function notificationDay(value: string) {
+  const date = new Date(value);
+  if (!Number.isFinite(date.getTime())) return value;
+  return `${date.getFullYear()}-${date.getMonth() + 1}-${date.getDate()}`;
+}
+
+function notificationDeduplicationKey(notification: AppNotification) {
+  return [
+    notification.type,
+    notification.title.trim().toLowerCase(),
+    notification.message.trim().toLowerCase(),
+    notificationDay(notification.createdAt),
+  ].join("|");
+}
+
 function getNotificationCategory(notification: AppNotification): NotificationCategory {
   const text = `${notification.title} ${notification.message}`.toLowerCase();
   if (text.includes("day-tour") || text.includes("visitor report")) return "daytour";
@@ -439,7 +454,17 @@ export default function NotificationCenter({ role }: NotificationCenterProps) {
     };
   }, [loadNotifications, user?.id]);
 
-  const notifications = useMemo(() => [...dbNotifications, ...systemNotifications].slice(0, 10), [dbNotifications, systemNotifications]);
+  const notifications = useMemo(() => {
+    const seen = new Set<string>();
+    return [...dbNotifications, ...systemNotifications]
+      .filter((notification) => {
+        const key = notificationDeduplicationKey(notification);
+        if (seen.has(key)) return false;
+        seen.add(key);
+        return true;
+      })
+      .slice(0, 10);
+  }, [dbNotifications, systemNotifications]);
   const filteredNotifications = useMemo(
     () => selectedCategory === "all"
       ? notifications
