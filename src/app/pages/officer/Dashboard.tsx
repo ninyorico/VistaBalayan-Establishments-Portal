@@ -440,9 +440,9 @@ setOccupancyRate(occupancyRate);
           <ResponsiveContainer width="100%" height={320}>
             <BarChart data={topEstablishments}>
               <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
-              <XAxis dataKey="rank" interval={0} tickMargin={8} stroke="#64748b" />
+              <XAxis dataKey="name" interval={0} tickMargin={8} stroke="#64748b" angle={-28} textAnchor="end" height={76} tick={{ fontSize: 11 }} />
               <YAxis stroke="#64748b" />
-              <Tooltip labelFormatter={(rank) => topEstablishments.find((entry) => entry.rank === rank)?.name || rank} formatter={(value) => [Number(value).toLocaleString(), "Visitors"]} />
+              <Tooltip labelFormatter={(name) => name} formatter={(value) => [Number(value).toLocaleString(), "Visitors"]} />
               <Bar dataKey="visitors" radius={[10, 10, 0, 0]} name="Visitors">
                 {topEstablishments.map((entry, index) => (
                   <Cell key={`${entry.name}-${index}`} fill={ESTABLISHMENT_BAR_COLORS[index % ESTABLISHMENT_BAR_COLORS.length]} />
@@ -450,16 +450,6 @@ setOccupancyRate(occupancyRate);
               </Bar>
             </BarChart>
           </ResponsiveContainer>
-          <div className="mt-4" data-top-establishment-chart="ranked-color-legend">
-            <div className="grid gap-2 sm:grid-cols-2" aria-label="Top establishment chart legend">
-            {topEstablishments.map((entry, index) => (
-              <div key={`legend-${entry.name}`} className="flex min-w-0 items-center gap-2 text-sm text-[#405266]">
-                <span className="h-3 w-3 shrink-0 rounded-sm" style={{ backgroundColor: ESTABLISHMENT_BAR_COLORS[index % ESTABLISHMENT_BAR_COLORS.length] }} aria-hidden="true" />
-                <span className="truncate"><span className="font-semibold">{entry.rank}</span> {entry.name}</span>
-              </div>
-            ))}
-            </div>
-          </div>
           </>
         ) : (
           <EmptyState>No establishment data available</EmptyState>

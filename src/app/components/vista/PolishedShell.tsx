@@ -83,7 +83,7 @@ export function MetricCard({ label, value, helper, icon: Icon, tone = "bg-cyan-5
   return (
     <Card className={cn("tourism-card h-full gap-0 rounded-3xl p-0 transition duration-200 hover:-translate-y-0.5 hover:shadow-tourism-hover", className)}>
       <CardContent className={cn("h-full", compact ? "p-3 sm:p-4 lg:p-5" : "p-5")}>
-        <div className={cn("flex h-full items-start justify-between", compact ? "flex-col gap-3 sm:flex-row sm:gap-4" : "gap-4")}>
+        <div className={cn("flex h-full items-start justify-between", compact ? "flex-row gap-3 sm:gap-4" : "gap-4")}>
           <div className="flex min-w-0 flex-1 flex-col">
             <p className={cn("min-h-8 font-medium leading-4 text-[#5D6F73]", compact ? "text-[11px] sm:text-sm" : "text-sm")}>{label}</p>
             <p className={cn("mt-2 flex h-16 items-start break-words font-semibold leading-tight tracking-[-0.035em] text-[#0B2530] tabular-nums", compact ? "text-2xl sm:text-3xl" : "text-3xl")}>{value}</p>
