@@ -508,6 +508,12 @@ export default function SubmitAccommodationReport() {
             if (field === "continuingGuests") updatedRoom.checkIns = 0;
           }
 
+          if (field === "shortStayCheckIns" && Number(numericValue) > 0) {
+            updatedRoom.continuingGuests = 0;
+            updatedRoom.checkIns = 0;
+            updatedRoom.isNewGuest = false;
+          }
+
           if (field === "checkIns" || field === "continuingGuests" || field === "shortStayCheckIns") {
             updatedRoom.guestNights = Number(updatedRoom.continuingGuests || 0) + Number(updatedRoom.checkIns || 0) + Number(updatedRoom.shortStayCheckIns || 0);
           }
