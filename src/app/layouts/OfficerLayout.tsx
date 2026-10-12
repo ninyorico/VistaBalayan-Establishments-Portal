@@ -3,6 +3,7 @@ import {
   LayoutDashboard,
   Building2,
   ClipboardCheck,
+  MessageSquareWarning,
   FileText,
   BarChart3,
   Brain,
@@ -18,6 +19,7 @@ import { useAuth } from "../../contexts/AuthContext";
 const menuItems = [
   { path: "/officer", icon: LayoutDashboard, label: "Dashboard" },
   { path: "/officer/establishments", icon: Building2, label: "Establishments" },
+  { path: "/officer/review-moderation", icon: MessageSquareWarning, label: "Review Moderation" },
   { path: "/officer/report-monitoring", icon: ClipboardCheck, label: "Report Monitoring" },
   { path: "/officer/reports", icon: FileText, label: "Reports" },
   { path: "/officer/analytics", icon: BarChart3, label: "Analytics" },

@@ -6,6 +6,7 @@ import StaffLayout from "./layouts/StaffLayout";
 import { ProtectedRoute } from "./components/ProtectedRoute";
 import OfficerDashboard from "./pages/officer/Dashboard";
 import Establishments from "./pages/officer/Establishments";
+import ReviewModeration from "./pages/officer/ReviewModeration";
 import ReportMonitoring from "./pages/officer/ReportMonitoring";
 import Reports from "./pages/officer/Reports";
 import Analytics from "./pages/officer/Analytics";
@@ -38,6 +39,7 @@ export const router = createBrowserRouter([
     children: [
       { index: true, Component: OfficerDashboard },
       { path: "establishments", Component: Establishments },
+      { path: "review-moderation", Component: ReviewModeration },
       { path: "report-monitoring", Component: ReportMonitoring },
       { path: "visitor-monitoring", element: <Navigate to="/officer/report-monitoring" replace /> },
       { path: "accommodation-monitoring", element: <Navigate to="/officer/report-monitoring" replace /> },
