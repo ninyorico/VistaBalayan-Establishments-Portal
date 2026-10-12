@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from "react";
-import { AlertTriangle, Eye, EyeOff, Flag, Loader2, MessageSquareWarning, RefreshCw, ShieldAlert } from "lucide-react";
+import { AlertTriangle, Eye, EyeOff, Flag, Loader2, MessageSquareWarning, RefreshCw, ShieldAlert, X } from "lucide-react";
 import { supabase } from "../../../lib/supabase";
 
 type ModerationReview = {
@@ -17,11 +17,19 @@ type ModerationReview = {
   latest_report_created_at: string | null;
 };
 
+type ModerationTarget = {
+  review: ModerationReview;
+  action: "remove" | "restore";
+};
+
 export default function ReviewModeration() {
   const [reviews, setReviews] = useState<ModerationReview[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [moderationTarget, setModerationTarget] = useState<ModerationTarget | null>(null);
+  const [moderationReason, setModerationReason] = useState("");
+  const [moderating, setModerating] = useState(false);
 
   const loadReviews = useCallback(async (initial = false) => {
     if (initial) setLoading(true);
@@ -38,12 +46,21 @@ export default function ReviewModeration() {
     void loadReviews(true);
   }, [loadReviews]);
 
-  const moderate = async (review: ModerationReview, action: "remove" | "restore") => {
-    if (action === "remove" && review.report_count < 1 && !window.confirm("Remove this review from the public site? Use this only for content that violates the community rules.")) return;
-    const reason = action === "remove"
-      ? window.prompt("Why is this review being removed?", review.latest_report_reason || "Violates public review rules")
-      : null;
-    if (action === "remove" && !reason?.trim()) return;
+  useEffect(() => {
+    if (!moderationTarget) return;
+    const handleEscape = (event: KeyboardEvent) => {
+      if (event.key === "Escape" && !moderating) {
+        setModerationTarget(null);
+        setModerationReason("");
+      }
+    };
+    document.addEventListener("keydown", handleEscape);
+    return () => document.removeEventListener("keydown", handleEscape);
+  }, [moderationTarget, moderating]);
+
+  const executeModeration = async (review: ModerationReview, action: "remove" | "restore", reason: string | null = null) => {
+    setModerating(true);
+    setError(null);
     const { error: moderateError } = await supabase.rpc("moderate_establishment_rating", {
       p_rating_id: review.id,
       p_action: action,
@@ -51,9 +68,26 @@ export default function ReviewModeration() {
     });
     if (moderateError) {
       setError(moderateError.message);
+      setModerating(false);
       return;
     }
+    setModerationTarget(null);
+    setModerationReason("");
     await loadReviews();
+    setModerating(false);
+  };
+
+  const requestRemoval = (review: ModerationReview) => {
+    setModerationReason(review.latest_report_reason || "");
+    setModerationTarget({ review, action: "remove" });
+  };
+
+  const moderate = async (review: ModerationReview, action: "remove" | "restore") => {
+    if (action === "remove") {
+      requestRemoval(review);
+      return;
+    }
+    await executeModeration(review, action);
   };
 
   if (loading) return <div className="flex min-h-64 items-center justify-center gap-3 text-[#6474A5]"><Loader2 className="h-5 w-5 animate-spin" />Loading review moderation...</div>;
@@ -107,6 +141,20 @@ export default function ReviewModeration() {
               </div>
             </article>
           ))}
+        </div>
+      )}
+
+      {moderationTarget && (
+        <div className="fixed inset-0 z-[90] flex items-center justify-center bg-[#193364]/35 p-4 backdrop-blur-sm" role="presentation" onMouseDown={(event) => { if (event.target === event.currentTarget && !moderating) { setModerationTarget(null); setModerationReason(""); } }}>
+          <section className="w-full max-w-lg rounded-[2rem] border border-white/75 bg-[#E0E5EC] p-6 shadow-[14px_14px_30px_rgba(25,51,100,.28),-10px_-10px_24px_rgba(255,255,255,.78)] sm:p-7" role="dialog" aria-modal="true" aria-labelledby="remove-review-title">
+            <div className="flex items-start justify-between gap-4">
+              <div className="flex items-start gap-3"><div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-[#E0E5EC] text-[#A74758] shadow-[inset_4px_4px_8px_rgba(163,177,198,.42),inset_-4px_-4px_8px_rgba(255,255,255,.72)]"><EyeOff className="h-5 w-5" /></div><div><p className="text-xs font-bold uppercase tracking-[0.14em] text-[#6474A5]">Moderation action</p><h2 id="remove-review-title" className="mt-1 text-xl font-bold text-[#193364]">Remove this review?</h2></div></div>
+              <button type="button" onClick={() => { if (!moderating) { setModerationTarget(null); setModerationReason(""); } }} disabled={moderating} className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[#E0E5EC] text-[#6474A5] shadow-[4px_4px_8px_rgba(163,177,198,.42),-4px_-4px_8px_rgba(255,255,255,.7)] transition hover:text-[#193364] active:shadow-[inset_3px_3px_6px_rgba(163,177,198,.4),inset_-3px_-3px_6px_rgba(255,255,255,.7)] disabled:opacity-50" aria-label="Close removal confirmation"><X className="h-5 w-5" /></button>
+            </div>
+            <p className="mt-5 text-sm leading-6 text-[#5D6F73]">Remove the review from the public site? Use this only for content that violates the community rules. The original review will be preserved in the moderation record.</p>
+            <div className="mt-5"><label htmlFor="moderation-reason" className="text-sm font-semibold text-[#193364]">Removal reason <span className="font-normal text-[#A74758]">(required)</span></label><textarea id="moderation-reason" value={moderationReason} onChange={(event) => setModerationReason(event.target.value)} disabled={moderating} maxLength={500} rows={3} placeholder="Explain which community rule was violated" className="mt-2 w-full resize-y rounded-2xl border border-white/70 bg-[#E0E5EC] p-4 text-sm leading-6 text-[#46586A] outline-none shadow-[inset_4px_4px_9px_rgba(163,177,198,.42),inset_-4px_-4px_9px_rgba(255,255,255,.72)] placeholder:text-[#8290A0] focus:border-[#6C63FF]/50 focus:ring-2 focus:ring-[#6C63FF]/20" /> <p className="mt-1 text-right text-xs text-[#6474A5]">{moderationReason.length}/500</p></div>
+            <div className="mt-5 flex flex-col-reverse gap-3 sm:flex-row sm:justify-end"><button type="button" onClick={() => { setModerationTarget(null); setModerationReason(""); }} disabled={moderating} className="min-h-11 rounded-2xl bg-[#E0E5EC] px-5 py-2.5 text-sm font-semibold text-[#193364] shadow-[5px_5px_10px_rgba(163,177,198,.48),-5px_-5px_10px_rgba(255,255,255,.72)] transition hover:text-[#6C63FF] active:shadow-[inset_3px_3px_7px_rgba(163,177,198,.4),inset_-3px_-3px_7px_rgba(255,255,255,.7)] disabled:opacity-50">Cancel</button><button type="button" onClick={() => moderationTarget && void executeModeration(moderationTarget.review, moderationTarget.action, moderationReason)} disabled={moderating || moderationReason.trim().length < 3} className="inline-flex min-h-11 items-center justify-center gap-2 rounded-2xl bg-[#A74758] px-5 py-2.5 text-sm font-semibold text-white shadow-[5px_5px_10px_rgba(163,177,198,.48),-5px_-5px_10px_rgba(255,255,255,.72)] transition hover:bg-[#8B3442] active:translate-y-px active:shadow-[inset_3px_3px_7px_rgba(93,38,51,.4),inset_-3px_-3px_7px_rgba(255,255,255,.35)] disabled:cursor-not-allowed disabled:opacity-50">{moderating ? <><Loader2 className="h-4 w-4 animate-spin" />Removing...</> : <><EyeOff className="h-4 w-4" />Remove review</>}</button></div>
+          </section>
         </div>
       )}
     </div>
