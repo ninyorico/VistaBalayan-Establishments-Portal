@@ -47,7 +47,8 @@ select
   ratings.rating,
   ratings.reviewer_name,
   nullif(trim(ratings.comment), '') as comment,
-  ratings.created_at
+  ratings.created_at,
+  ratings.photo_path
 from public.establishment_ratings ratings
 join public.establishments establishments
   on establishments.id = ratings.establishment_id
