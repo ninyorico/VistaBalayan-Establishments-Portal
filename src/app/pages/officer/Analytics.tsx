@@ -1,4 +1,4 @@
-import { Fragment, useState, useEffect } from "react";
+import { useState, useEffect } from "react";
 import {
   AreaChart,
   Area,
@@ -12,7 +12,7 @@ import {
   Legend,
   ResponsiveContainer,
 } from "recharts";
-import { TrendingUp, TrendingDown, MapPin, ChevronDown, ChevronRight } from "lucide-react";
+import { TrendingUp, TrendingDown, MapPin, X } from "lucide-react";
 import { supabase } from "../../../lib/supabase";
 import { calculateAccommodationOccupancy } from "../../../lib/reportMetrics";
 import { getEstablishmentReportingMode, type ReportingMode } from "../../../lib/establishmentReportForms";
@@ -129,7 +129,7 @@ export default function Analytics() {
     growthRate: null,
   });
   const [loading, setLoading] = useState(true);
-  const [expandedLowPerformer, setExpandedLowPerformer] = useState<string | null>(null);
+  const [selectedLowPerformer, setSelectedLowPerformer] = useState<LowPerformer | null>(null);
   const currentDate = new Date();
   const [selectedYear, setSelectedYear] = useState(String(currentDate.getFullYear()));
 
@@ -569,62 +569,40 @@ export default function Analytics() {
               </thead>
               <tbody className="divide-y divide-gray-200">
                 {underperformingEstablishments.length > 0 ? underperformingEstablishments.map((establishment) => (
-                  <Fragment key={establishment.id}>
-                    <tr
-                      className="cursor-pointer hover:bg-gray-50 focus:outline-none focus-visible:bg-blue-50"
-                      tabIndex={0}
-                      aria-expanded={expandedLowPerformer === establishment.id}
-                      onClick={() => setExpandedLowPerformer((current) => current === establishment.id ? null : establishment.id)}
-                      onKeyDown={(event) => {
-                        if (event.key === "Enter" || event.key === " ") {
-                          event.preventDefault();
-                          setExpandedLowPerformer((current) => current === establishment.id ? null : establishment.id);
-                        }
-                      }}
-                    >
-                      <td className="px-6 py-4">
-                        <div className="flex items-center gap-2 font-medium text-[#0F4C75]">
-                          {expandedLowPerformer === establishment.id ? <ChevronDown className="h-4 w-4 shrink-0" /> : <ChevronRight className="h-4 w-4 shrink-0" />}
-                          <span>{establishment.establishment}</span>
+                  <tr
+                    key={establishment.id}
+                    className="cursor-pointer hover:bg-gray-50 focus:outline-none focus-visible:bg-blue-50"
+                    tabIndex={0}
+                    aria-haspopup="dialog"
+                    onClick={() => setSelectedLowPerformer(establishment)}
+                    onKeyDown={(event) => {
+                      if (event.key === "Enter" || event.key === " ") {
+                        event.preventDefault();
+                        setSelectedLowPerformer(establishment);
+                      }
+                    }}
+                  >
+                    <td className="px-6 py-4 font-medium text-[#0F4C75]">{establishment.establishment}</td>
+                    <td className="px-6 py-4">
+                      {establishment.occupancyRate !== null ? (
+                        <div className="flex items-center gap-2">
+                          <div className="flex-1 bg-gray-200 rounded-full h-2 w-24">
+                            <div className="h-2 rounded-full bg-[#B86B78]" style={{ width: `${Math.min(establishment.occupancyRate, 100)}%` }} />
+                          </div>
+                          <span className="text-sm font-medium text-[#B86B78]">{establishment.occupancyRate.toFixed(1)}%</span>
                         </div>
-                      </td>
-                      <td className="px-6 py-4">
-                        {establishment.occupancyRate !== null ? (
-                          <div className="flex items-center gap-2">
-                            <div className="flex-1 bg-gray-200 rounded-full h-2 w-24">
-                              <div className="h-2 rounded-full bg-[#B86B78]" style={{ width: `${Math.min(establishment.occupancyRate, 100)}%` }} />
-                            </div>
-                            <span className="text-sm font-medium text-[#B86B78]">{establishment.occupancyRate.toFixed(1)}%</span>
-                          </div>
-                        ) : <span className="text-sm text-gray-500">Not applicable / no data</span>}
-                      </td>
-                      <td className="px-6 py-4">
-                        {establishment.visitorTrend === null ? <span className="text-sm text-gray-500">No comparison</span> : (
-                          <div className={`flex items-center gap-1 ${establishment.visitorTrend >= 0 ? "text-green-600" : "text-red-600"}`}>
-                            {establishment.visitorTrend >= 0 ? <TrendingUp className="w-4 h-4" /> : <TrendingDown className="w-4 h-4" />}
-                            <span className="font-medium text-sm">{establishment.visitorTrend >= 0 ? "+" : ""}{establishment.visitorTrend.toFixed(1)}%</span>
-                          </div>
-                        )}
-                      </td>
-                      <td className="max-w-[18rem] px-6 py-4 text-sm text-gray-600"><span className="block max-w-[18rem] truncate" title={establishment.issue}>{establishment.issue}</span></td>
-                    </tr>
-                    {expandedLowPerformer === establishment.id && (
-                      <tr key={`${establishment.id}-details`} className="bg-blue-50/50">
-                        <td colSpan={4} className="px-6 py-4">
-                          <div className="grid gap-3 text-sm sm:grid-cols-2 lg:grid-cols-4">
-                            <div><p className="font-semibold text-gray-500">Latest visitors</p><p className="mt-1 font-bold text-gray-900">{establishment.latestVisitors.toLocaleString()}</p><p className="text-xs text-gray-500">{establishment.latestMonth}</p></div>
-                            <div><p className="font-semibold text-gray-500">Previous visitors</p><p className="mt-1 font-bold text-gray-900">{establishment.previousVisitors === null ? "N/A" : establishment.previousVisitors.toLocaleString()}</p><p className="text-xs text-gray-500">{establishment.previousMonth}</p></div>
-                            <div><p className="font-semibold text-gray-500">Latest reports</p><p className="mt-1 font-bold text-gray-900">{establishment.latestVisitorReportCount} day-tour · {establishment.latestAccommodationReportCount} overnight</p></div>
-                            <div><p className="font-semibold text-gray-500">Guest nights</p><p className="mt-1 font-bold text-gray-900">{establishment.guestNights.toLocaleString()}</p><p className="text-xs text-gray-500">Latest overnight period</p></div>
-                          </div>
-                          <div className="mt-4 rounded-lg border border-blue-100 bg-white p-3">
-                            <p className="font-semibold text-gray-700">Why this establishment is listed</p>
-                            <ul className="mt-2 list-disc space-y-1 pl-5 text-gray-600">{establishment.reasons.map((reason) => <li key={reason}>{reason}</li>)}</ul>
-                          </div>
-                        </td>
-                      </tr>
-                    )}
-                  </Fragment>
+                      ) : <span className="text-sm text-gray-500">Not applicable / no data</span>}
+                    </td>
+                    <td className="px-6 py-4">
+                      {establishment.visitorTrend === null ? <span className="text-sm text-gray-500">No comparison</span> : (
+                        <div className={`flex items-center gap-1 ${establishment.visitorTrend >= 0 ? "text-green-600" : "text-red-600"}`}>
+                          {establishment.visitorTrend >= 0 ? <TrendingUp className="w-4 h-4" /> : <TrendingDown className="w-4 h-4" />}
+                          <span className="font-medium text-sm">{establishment.visitorTrend >= 0 ? "+" : ""}{establishment.visitorTrend.toFixed(1)}%</span>
+                        </div>
+                      )}
+                    </td>
+                    <td className="max-w-[18rem] px-6 py-4 text-sm text-gray-600"><span className="block max-w-[18rem] truncate" title={establishment.issue}>{establishment.issue}</span></td>
+                  </tr>
                 )) : (
                   <tr><td colSpan={4} className="px-6 py-8 text-center text-gray-500">No establishments currently meet the attention criteria.</td></tr>
                 )}
@@ -632,6 +610,25 @@ export default function Analytics() {
             </table>
           </div>
         </div>
+
+        {selectedLowPerformer && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/45 p-4 backdrop-blur-sm" role="presentation" onMouseDown={(event) => { if (event.target === event.currentTarget) setSelectedLowPerformer(null); }}>
+            <section className="max-h-[90vh] w-full max-w-2xl overflow-y-auto rounded-2xl bg-white p-6 shadow-2xl" role="dialog" aria-modal="true" aria-labelledby="underperforming-establishment-title">
+              <div className="flex items-start justify-between gap-4 border-b border-gray-200 pb-4">
+                <div><p className="text-xs font-semibold uppercase tracking-wider text-gray-500">Underperforming establishment</p><h2 id="underperforming-establishment-title" className="mt-1 text-2xl font-bold text-gray-900">{selectedLowPerformer.establishment}</h2><p className="mt-1 text-sm text-gray-500">{selectedLowPerformer.issue}</p></div>
+                <button type="button" onClick={() => setSelectedLowPerformer(null)} className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-gray-500 transition hover:bg-gray-100 hover:text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500" aria-label="Close establishment details"><X className="h-5 w-5" /></button>
+              </div>
+              <div className="mt-5 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+                <div className="rounded-xl bg-gray-50 p-4"><p className="text-xs font-semibold uppercase tracking-wide text-gray-500">Latest visitors</p><p className="mt-2 text-xl font-bold text-gray-900">{selectedLowPerformer.latestVisitors.toLocaleString()}</p><p className="text-xs text-gray-500">{selectedLowPerformer.latestMonth}</p></div>
+                <div className="rounded-xl bg-gray-50 p-4"><p className="text-xs font-semibold uppercase tracking-wide text-gray-500">Previous visitors</p><p className="mt-2 text-xl font-bold text-gray-900">{selectedLowPerformer.previousVisitors === null ? "N/A" : selectedLowPerformer.previousVisitors.toLocaleString()}</p><p className="text-xs text-gray-500">{selectedLowPerformer.previousMonth}</p></div>
+                <div className="rounded-xl bg-gray-50 p-4"><p className="text-xs font-semibold uppercase tracking-wide text-gray-500">Latest reports</p><p className="mt-2 text-sm font-bold text-gray-900">{selectedLowPerformer.latestVisitorReportCount} day-tour · {selectedLowPerformer.latestAccommodationReportCount} overnight</p></div>
+                <div className="rounded-xl bg-gray-50 p-4"><p className="text-xs font-semibold uppercase tracking-wide text-gray-500">Guest nights</p><p className="mt-2 text-xl font-bold text-gray-900">{selectedLowPerformer.guestNights.toLocaleString()}</p><p className="text-xs text-gray-500">Latest overnight period</p></div>
+              </div>
+              <div className="mt-4 rounded-xl border border-blue-100 bg-blue-50/50 p-4"><p className="font-semibold text-gray-800">Why this establishment is listed</p><ul className="mt-2 list-disc space-y-1 pl-5 text-sm text-gray-600">{selectedLowPerformer.reasons.map((reason) => <li key={reason}>{reason}</li>)}</ul></div>
+              <div className="mt-6 flex justify-end"><button type="button" onClick={() => setSelectedLowPerformer(null)} className="rounded-lg bg-[#0F4C75] px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-[#0B3B5C] focus:outline-none focus:ring-2 focus:ring-blue-500">Close</button></div>
+            </section>
+          </div>
+        )}
     </div>
   );
 }
