@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from "react";
-import { AlertTriangle, Eye, EyeOff, Filter, Flag, Loader2, MessageSquareWarning, RefreshCw, ShieldAlert, X } from "lucide-react";
+import { AlertTriangle, Eye, EyeOff, Filter, Flag, Loader2, RefreshCw, ShieldAlert, X } from "lucide-react";
 import { supabase } from "../../../lib/supabase";
 
 type ModerationReview = {
@@ -109,8 +109,7 @@ export default function ReviewModeration() {
     <div className="space-y-6">
       <section className="relative overflow-hidden rounded-[2rem] border border-white/20 tourism-panel-dark p-5 shadow-[0_28px_90px_rgba(7,59,76,0.22)] sm:p-7">
         <div className="flex flex-col justify-between gap-5 lg:flex-row lg:items-center">
-          <div className="flex items-start gap-4">
-            <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-white/10 text-cyan-100 shadow-[inset_0_1px_0_rgba(255,255,255,0.12)]"><MessageSquareWarning className="h-7 w-7" /></div>
+          <div>
             <div>
               <p className="text-xs font-bold uppercase tracking-[0.16em] text-cyan-100">Community safety</p>
               <h1 className="mt-1 text-xl font-semibold tracking-[-0.025em] text-white sm:text-3xl">Review moderation</h1>

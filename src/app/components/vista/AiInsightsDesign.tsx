@@ -1,5 +1,5 @@
 import type { ReactNode } from "react";
-import { AlertTriangle, CheckCircle2, Loader2, RefreshCw, Sparkles, TrendingUp } from "lucide-react";
+import { AlertTriangle, CheckCircle2, Sparkles, TrendingUp } from "lucide-react";
 
 import { cleanAiText, formatConfidence, splitAiRecommendation } from "../../../lib/aiText";
 import { AiFormattedText } from "../AiFormattedText";
@@ -77,11 +77,10 @@ export function AiInsightsShell({
           <div className="pointer-events-none absolute -bottom-20 left-1/3 h-44 w-44 rounded-full bg-white/35 blur-3xl" />
           <div className="relative flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
             <div className="max-w-3xl">
-              <div className="mb-3 inline-flex items-center gap-2 rounded-full border border-slate-200 bg-white/80 px-3 py-1 text-xs font-medium tracking-[0.18em] text-slate-500 shadow-sm backdrop-blur">
-                <span className="h-1.5 w-1.5 rounded-full bg-[#6C63FF]" />
+              <div className="mb-3 inline-flex rounded-full border border-slate-200 bg-white/80 px-3 py-1 text-xs font-medium tracking-[0.18em] text-slate-500 shadow-sm backdrop-blur">
                 GEMINI OPERATIONS DESK
               </div>
-              <h1 className="max-w-5xl text-[clamp(2.35rem,7vw,4.75rem)] font-black leading-[0.92] tracking-[-0.06em] text-slate-950">
+              <h1 className="max-w-5xl text-[clamp(2rem,7vw,3.5rem)] font-semibold leading-tight tracking-[-0.045em] text-slate-950">
                 {title}
               </h1>
               <p className="mt-3 max-w-2xl text-base leading-7 text-slate-600 sm:text-lg">
@@ -99,7 +98,6 @@ export function AiInsightsShell({
               disabled={refreshing}
               className="h-12 rounded-2xl bg-[#6C63FF] px-5 text-white shadow-[5px_5px_12px_rgba(163,177,198,0.55),-5px_-5px_12px_rgba(255,255,255,0.65)] hover:bg-[#5B54D6] sm:h-11"
             >
-              {refreshing ? <Loader2 className="size-4 animate-spin" /> : <RefreshCw className="size-4" />}
               {refreshing ? "Refreshing" : "Refresh Analysis"}
             </Button>
           </div>

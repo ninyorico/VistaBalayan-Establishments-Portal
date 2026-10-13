@@ -1,5 +1,5 @@
 import type { ElementType, ReactNode } from "react";
-import { ArrowRight, Loader2 } from "lucide-react";
+import { Loader2 } from "lucide-react";
 
 import { Button } from "../ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "../ui/card";
@@ -27,10 +27,10 @@ export function PageHero({
 }: PageHeroProps & { compact?: boolean }) {
   return (
     <section className={cn("overflow-hidden rounded-[2rem] border border-white/20 tourism-panel-dark shadow-[0_28px_90px_rgba(7,59,76,0.22)]", compact && "rounded-3xl")}>
-      <div className={cn("relative", compact ? "p-4 sm:p-6 lg:p-8" : "p-6 sm:p-8 lg:p-10")}>
+      <div className={cn("relative", compact ? "p-3 sm:p-5 lg:p-6" : "p-6 sm:p-8 lg:p-10")}>
         <div className="absolute right-0 top-0 h-56 w-56 rounded-full bg-cyan-300/16 blur-3xl" />
         <div className="absolute bottom-0 left-1/4 h-44 w-72 rounded-full bg-white/8 blur-3xl" />
-        <div className={cn("relative flex flex-col lg:flex-row lg:items-end lg:justify-between", compact ? "gap-4" : "gap-6")}>
+        <div className={cn("relative flex flex-col lg:flex-row lg:items-end lg:justify-between", compact ? "gap-3 sm:gap-4" : "gap-6")}>
           <div className="max-w-3xl">
             <p className="text-sm font-semibold uppercase tracking-[0.16em] text-cyan-100">{eyebrow}</p>
             <h1 className={cn("font-semibold tracking-[-0.04em] text-white text-balance", compact ? "mt-2 text-xl leading-tight sm:text-3xl lg:text-4xl" : "mt-3 text-3xl sm:text-4xl lg:text-5xl")}>
@@ -46,9 +46,9 @@ export function PageHero({
           {(metricLabel && metricValue) || (actionLabel && onAction) ? (
             <div className="flex flex-col gap-3 sm:flex-row lg:flex-col lg:items-stretch">
               {metricLabel && metricValue && (
-                <div className="rounded-2xl border border-white/12 bg-white/10 p-4 text-white shadow-[inset_0_1px_0_rgba(255,255,255,0.12)] backdrop-blur-xl">
-                  <p className="text-xs font-semibold uppercase tracking-[0.14em] text-slate-300">{metricLabel}</p>
-                  <p className="mt-2 text-3xl font-semibold tracking-[-0.03em]">{metricValue}</p>
+                <div className={cn("rounded-2xl border border-white/12 bg-white/10 text-white shadow-[inset_0_1px_0_rgba(255,255,255,0.12)] backdrop-blur-xl", compact ? "p-3 sm:p-4" : "p-4")}>
+                  <p className={cn("font-semibold uppercase tracking-[0.14em] text-slate-300", compact ? "text-[10px] sm:text-xs" : "text-xs")}>{metricLabel}</p>
+                  <p className={cn("mt-1 font-semibold tracking-[-0.03em]", compact ? "text-2xl sm:mt-2 sm:text-3xl" : "mt-2 text-3xl")}>{metricValue}</p>
                 </div>
               )}
               {actionLabel && onAction && (
@@ -58,7 +58,6 @@ export function PageHero({
                   className="h-10 rounded-2xl bg-white px-4 text-sm text-[#0B2530] shadow-none hover:bg-cyan-50 active:translate-y-[1px] sm:h-12 sm:px-5"
                 >
                   {actionLabel}
-                  <ArrowRight className="h-4 w-4" strokeWidth={1.8} />
                 </Button>
               )}
             </div>

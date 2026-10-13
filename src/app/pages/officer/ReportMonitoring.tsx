@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react";
-import { Bed, ClipboardCheck, Users } from "lucide-react";
+import { Bed, Users } from "lucide-react";
 import VisitorMonitoring from "./VisitorMonitoring";
 import AccommodationMonitoring from "./AccommodationMonitoring";
 
@@ -37,10 +37,7 @@ export default function ReportMonitoring() {
     <div className="space-y-6">
       <div className="relative overflow-hidden rounded-[2rem] border border-white/20 tourism-panel-dark p-5 shadow-[0_28px_90px_rgba(7,59,76,0.22)] sm:p-6">
         <div className="flex flex-col gap-5 lg:flex-row lg:items-center lg:justify-between">
-          <div className="flex items-start gap-4">
-            <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-white/10 text-cyan-100 shadow-[inset_0_1px_0_rgba(255,255,255,0.12)]">
-              <ClipboardCheck className="h-6 w-6" />
-            </div>
+          <div>
             <div>
               <h1 className="text-xl font-semibold tracking-[-0.025em] text-white sm:text-3xl">
                 Report Monitoring
