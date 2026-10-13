@@ -448,10 +448,10 @@ export default function Analytics() {
         {data.seasonalData.length > 0 ? (
           <div className="-mx-2 sm:mx-0">
             <ResponsiveContainer width="100%" height={350}>
-              <AreaChart data={data.seasonalData} margin={{ top: 8, right: 4, left: -18, bottom: 8 }}>
+              <AreaChart data={data.seasonalData} margin={{ top: 8, right: 4, left: 4, bottom: 8 }}>
                 <CartesianGrid strokeDasharray="3 3" />
                 <XAxis dataKey="month" interval={0} tickFormatter={seasonalTickLabel} height={32} tickMargin={8} />
-                <YAxis width={48} />
+                <YAxis width={52} />
               <Tooltip />
               <Legend />
               <Area
