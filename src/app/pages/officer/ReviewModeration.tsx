@@ -136,11 +136,23 @@ export default function ReviewModeration() {
         <div className="rounded-[2rem] border border-white/70 bg-[#E0E5EC] p-10 text-center shadow-[8px_8px_18px_rgba(163,177,198,.5),-8px_-8px_18px_rgba(255,255,255,.76)]"><div className="mx-auto flex h-16 w-16 items-center justify-center rounded-2xl bg-[#E0E5EC] text-[#6474A5] shadow-[inset_4px_4px_8px_rgba(163,177,198,.45),inset_-4px_-4px_8px_rgba(255,255,255,.72)]"><ShieldAlert className="h-8 w-8" /></div><h2 className="mt-4 text-lg font-semibold text-[#193364]">No matching reviews</h2><p className="mt-1 text-sm text-[#5D6F73]">Try another moderation filter.</p></div>
       ) : (
         <div className="space-y-4">
-          {filteredReviews.map((review) => (
-            <article key={review.id} className={`rounded-[2rem] border p-5 transition sm:p-6 ${review.is_hidden ? "border-slate-300/70 bg-[#D5DAE2] shadow-[inset_5px_5px_11px_rgba(163,177,198,.4),inset_-5px_-5px_11px_rgba(255,255,255,.65)]" : "border-white/70 bg-[#E0E5EC] shadow-[8px_8px_18px_rgba(163,177,198,.5),-8px_-8px_18px_rgba(255,255,255,.76)]"}`}>
+          {filteredReviews.map((review) => {
+            const status = review.is_hidden
+              ? { label: "Removed publicly", icon: EyeOff, tone: "removed" as const }
+              : review.report_count > 0
+                ? { label: "Awaiting review", icon: Flag, tone: "awaiting" as const }
+                : { label: "Visible publicly", icon: Eye, tone: "visible" as const };
+            const StatusIcon = status.icon;
+            const statusStyles = {
+              visible: "border-[#38B2AC]/40 bg-[#DDF3F0] text-[#176F6A] shadow-[inset_3px_3px_7px_rgba(56,178,172,.14),inset_-3px_-3px_7px_rgba(255,255,255,.68)]",
+              awaiting: "border-[#E7A93B]/45 bg-[#F7EAC7] text-[#745B22] shadow-[inset_3px_3px_7px_rgba(190,157,75,.16),inset_-3px_-3px_7px_rgba(255,255,255,.62)]",
+              removed: "border-[#B56B78]/40 bg-[#F4E1E5] text-[#8B3442] shadow-[inset_3px_3px_7px_rgba(181,107,120,.14),inset_-3px_-3px_7px_rgba(255,255,255,.68)]",
+            };
+            return (
+            <article key={review.id} className={`rounded-[2rem] border-l-[5px] border-r border-t border-b p-5 transition sm:p-6 ${review.is_hidden ? "border-l-[#B56B78] border-r-slate-300/70 border-t-slate-300/70 border-b-slate-300/70 bg-[#D5DAE2] shadow-[inset_5px_5px_11px_rgba(163,177,198,.4),inset_-5px_-5px_11px_rgba(255,255,255,.65)]" : review.report_count > 0 ? "border-l-[#E7A93B] border-r-white/70 border-t-white/70 border-b-white/70 bg-[#E0E5EC] shadow-[8px_8px_18px_rgba(163,177,198,.5),-8px_-8px_18px_rgba(255,255,255,.76)]" : "border-l-[#38B2AC] border-r-white/70 border-t-white/70 border-b-white/70 bg-[#E0E5EC] shadow-[8px_8px_18px_rgba(163,177,198,.5),-8px_-8px_18px_rgba(255,255,255,.76)]"}`}>
               <div className="flex flex-col justify-between gap-4 lg:flex-row lg:items-start">
                 <div className="min-w-0 flex-1">
-                  <div className="flex flex-wrap items-center gap-2"><h2 className="font-bold text-[#193364]">{review.establishment_name}</h2><span className="rounded-full bg-[#E0E5EC] px-2.5 py-1 text-xs font-semibold text-[#6474A5]">{review.rating}/5 stars</span>{review.report_count > 0 && <span className="inline-flex items-center gap-1 rounded-full bg-amber-100 px-2.5 py-1 text-xs font-semibold text-amber-800"><Flag className="h-3 w-3" />{review.report_count} report{review.report_count === 1 ? "" : "s"}</span>}{review.is_hidden && <span className="inline-flex items-center gap-1 rounded-full bg-slate-200 px-2.5 py-1 text-xs font-semibold text-slate-700"><EyeOff className="h-3 w-3" />Removed publicly</span>}</div>
+                  <div className="flex flex-wrap items-center gap-2"><h2 className="font-bold text-[#193364]">{review.establishment_name}</h2><span className="rounded-full bg-[#E0E5EC] px-2.5 py-1 text-xs font-semibold text-[#6474A5]">{review.rating}/5 stars</span><span className={`inline-flex items-center gap-1 rounded-full border px-2.5 py-1 text-xs font-semibold ${statusStyles[status.tone]}`}><StatusIcon className="h-3 w-3" />{status.label}</span>{review.report_count > 0 && <span className="inline-flex items-center gap-1 rounded-full border border-[#E7A93B]/45 bg-[#F7EAC7] px-2.5 py-1 text-xs font-semibold text-[#745B22]"><Flag className="h-3 w-3" />{review.report_count} report{review.report_count === 1 ? "" : "s"}</span>}</div>
                   <p className="mt-2 text-sm text-[#5D6F73]">{review.reviewer_name || "Anonymous visitor"} · {new Date(review.created_at).toLocaleString()}</p>
                   {review.comment ? <p className="mt-4 whitespace-pre-wrap rounded-2xl bg-[#E0E5EC] p-4 text-sm leading-6 text-[#46586A] shadow-[inset_4px_4px_8px_rgba(163,177,198,.34),inset_-4px_-4px_8px_rgba(255,255,255,.7)]">{review.comment}</p> : <p className="mt-4 rounded-2xl bg-[#E0E5EC] p-4 text-sm italic text-[#6474A5] shadow-[inset_4px_4px_8px_rgba(163,177,198,.28),inset_-4px_-4px_8px_rgba(255,255,255,.65)]">No comment; rating only.</p>}
                   {review.latest_report_reason && <p className="mt-3 rounded-2xl border border-[#D5B66D]/50 bg-[#F4E8C8] p-3 text-sm text-[#745B22] shadow-[inset_3px_3px_7px_rgba(190,157,75,.16),inset_-3px_-3px_7px_rgba(255,255,255,.62)]"><span className="font-semibold">Latest report:</span> {review.latest_report_reason}</p>}
@@ -152,7 +164,8 @@ export default function ReviewModeration() {
                 </div>
               </div>
             </article>
-          ))}
+            );
+          })}
         </div>
       )}
 
