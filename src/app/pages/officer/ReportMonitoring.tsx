@@ -35,23 +35,23 @@ export default function ReportMonitoring() {
 
   return (
     <div className="space-y-6">
-      <div className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm sm:p-6">
+      <div className="relative overflow-hidden rounded-[2rem] border border-white/20 tourism-panel-dark p-5 shadow-[0_28px_90px_rgba(7,59,76,0.22)] sm:p-6">
         <div className="flex flex-col gap-5 lg:flex-row lg:items-center lg:justify-between">
           <div className="flex items-start gap-4">
-            <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-[#0F4C75] text-white shadow-lg shadow-cyan-950/15">
+            <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-white/10 text-cyan-100 shadow-[inset_0_1px_0_rgba(255,255,255,0.12)]">
               <ClipboardCheck className="h-6 w-6" />
             </div>
             <div>
-              <h1 className="text-2xl font-bold tracking-[-0.025em] text-slate-950 sm:text-3xl">
+              <h1 className="text-2xl font-bold tracking-[-0.025em] text-white sm:text-3xl">
                 Report Monitoring
               </h1>
-              <p className="mt-1 max-w-2xl text-sm leading-6 text-slate-600">
+              <p className="mt-1 max-w-2xl text-sm leading-6 text-slate-200">
                 Review submitted tourism records in one workspace. Use the tabs to switch between day-tour and overnight monitoring without leaving the workflow.
               </p>
             </div>
           </div>
 
-          <div className="inline-flex rounded-2xl bg-slate-100 p-1">
+          <div className="inline-flex rounded-2xl bg-white/10 p-1">
             {tabs.map((tab) => {
               const Icon = tab.icon;
               const isActive = activeTab === tab.id;

@@ -24,6 +24,8 @@ import {
   reportStatusLabel,
 } from "../../../lib/governance";
 
+import { PageHero } from "../../components/vista/PolishedShell";
+
 const getCurrentYear = () => new Date().getFullYear().toString();
 
 const getCurrentMonth = () => new Date().toLocaleString("default", { month: "short" });
@@ -521,10 +523,13 @@ export default function Reports() {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-3xl font-bold text-gray-900">Reports</h1>
-        <p className="text-gray-600 mt-1">Generate and export tourism data reports</p>
-      </div>
+      <PageHero
+        eyebrow="Reporting workspace"
+        title="Reports"
+        description="Generate, review, and export official tourism data reports for municipal decision-making."
+        metricLabel="Reporting year"
+        metricValue={selectedYear}
+      />
 
       {/* Report filters */}
       <div className="rounded-2xl border border-gray-200 bg-white p-3 shadow-sm sm:p-4">

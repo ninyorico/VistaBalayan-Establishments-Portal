@@ -17,6 +17,7 @@ import { supabase } from "../../../lib/supabase";
 import { calculateAccommodationOccupancy } from "../../../lib/reportMetrics";
 import { getEstablishmentReportingMode, type ReportingMode } from "../../../lib/establishmentReportForms";
 import DataState from "../../components/DataState";
+import { PageHero } from "../../components/vista/PolishedShell";
 
 interface AnalyticsData {
   seasonalData: { month: string; visitors: number; guestNights: number }[];
@@ -396,20 +397,20 @@ export default function Analytics() {
 
   return (
     <div className="space-y-6">
+      <PageHero
+        eyebrow="Tourism intelligence"
+        title="Analytics Dashboard"
+        description={`Data-driven tourism analytics and decision support for ${getAnalyticsYearRange(selectedYear).label}. All charts, rankings, origins, and performance findings use the selected year.`}
+        metricLabel="Selected year"
+        metricValue={selectedYear}
+      />
       <section className="rounded-2xl border border-gray-200 bg-white p-4 shadow-sm sm:p-6">
-        <div className="flex flex-col gap-5 sm:flex-row sm:items-end sm:justify-between">
-          <div>
-            <h1 className="text-3xl font-bold text-gray-900">Analytics Dashboard</h1>
-            <p className="mt-1 text-gray-600">Data-driven tourism analytics and decision support for {getAnalyticsYearRange(selectedYear).label}</p>
-            <p className="mt-2 text-sm text-gray-500">All charts, rankings, origins, and performance findings use the selected year.</p>
-          </div>
-          <label className="w-full text-xs font-medium text-gray-600 sm:w-44">
-            Year
-            <select value={selectedYear} onChange={(event) => setSelectedYear(event.target.value)} className="mt-1 w-full rounded-xl border border-gray-300 bg-white px-3 py-2.5 text-sm text-gray-900 focus:border-[#0F4C75] focus:outline-none focus:ring-2 focus:ring-[#0F4C75]/20">
-              {analyticsYears.map((year) => <option key={year} value={year}>{year}</option>)}
-            </select>
-          </label>
-        </div>
+        <label className="block w-full text-xs font-medium text-gray-600 sm:ml-auto sm:w-44">
+          Year
+          <select value={selectedYear} onChange={(event) => setSelectedYear(event.target.value)} className="mt-1 w-full rounded-xl border border-gray-300 bg-white px-3 py-2.5 text-sm text-gray-900 focus:border-[#0F4C75] focus:outline-none focus:ring-2 focus:ring-[#0F4C75]/20">
+            {analyticsYears.map((year) => <option key={year} value={year}>{year}</option>)}
+          </select>
+        </label>
       </section>
 
       <div className="grid grid-cols-3 gap-2 sm:gap-4" data-analytics-kpi-row="mobile-one-row">

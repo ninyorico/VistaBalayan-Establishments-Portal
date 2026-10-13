@@ -1,6 +1,8 @@
 import { useState } from "react";
-import { Plus, Search, Edit, Trash2, UserCog, Mail, Shield } from "lucide-react";
+import { Search, Edit, Trash2, UserCog, Mail, Shield } from "lucide-react";
 import { toast } from "sonner";
+
+import { PageHero } from "../../components/vista/PolishedShell";
 
 const users = [
   {
@@ -78,19 +80,13 @@ export default function UserManagement() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-bold text-gray-900">User Management</h1>
-          <p className="text-gray-600 mt-1">Manage system users and permissions</p>
-        </div>
-        <button
-          onClick={handleAdd}
-          className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition font-medium"
-        >
-          <Plus className="w-5 h-5" />
-          Add User
-        </button>
-      </div>
+      <PageHero
+        eyebrow="Access administration"
+        title="User Management"
+        description="Manage system users, roles, establishment assignments, and account permissions."
+        actionLabel="Add User"
+        onAction={handleAdd}
+      />
 
       {/* Filters and Search */}
       <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
