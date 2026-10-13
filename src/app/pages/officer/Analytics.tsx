@@ -111,11 +111,16 @@ const monthKey = (date: string) => date.slice(0, 7);
 const percentChange = (current: number, previous: number) =>
   previous > 0 ? ((current - previous) / previous) * 100 : current > 0 ? 100 : null;
 
-const getAnalyticsYearRange = (year: string) => ({
-  label: year,
-  start: `${year}-01-01`,
-  end: `${year}-12-31`,
-});
+const getAnalyticsYearRange = (year: string) => {
+  const now = new Date();
+  const currentYear = String(now.getFullYear());
+  const currentDate = `${currentYear}-${String(now.getMonth() + 1).padStart(2, "0")}-${String(now.getDate()).padStart(2, "0")}`;
+  return {
+    label: year,
+    start: `${year}-01-01`,
+    end: year === currentYear ? currentDate : `${year}-12-31`,
+  };
+};
 
 export default function Analytics() {
   const [data, setData] = useState<AnalyticsData>({
@@ -613,16 +618,16 @@ export default function Analytics() {
 
         {selectedLowPerformer && (
           <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/45 p-4 backdrop-blur-sm" role="presentation" onMouseDown={(event) => { if (event.target === event.currentTarget) setSelectedLowPerformer(null); }}>
-            <section className="max-h-[90vh] w-full max-w-2xl overflow-y-auto rounded-2xl bg-white p-6 shadow-2xl" role="dialog" aria-modal="true" aria-labelledby="underperforming-establishment-title">
+            <section className="max-h-[90vh] w-full max-w-2xl overflow-y-auto rounded-2xl bg-white p-4 shadow-2xl sm:p-6" role="dialog" aria-modal="true" aria-labelledby="underperforming-establishment-title">
               <div className="flex items-start justify-between gap-4 border-b border-gray-200 pb-4">
                 <div><p className="text-xs font-semibold uppercase tracking-wider text-gray-500">Underperforming establishment</p><h2 id="underperforming-establishment-title" className="mt-1 text-2xl font-bold text-gray-900">{selectedLowPerformer.establishment}</h2><p className="mt-1 text-sm text-gray-500">{selectedLowPerformer.issue}</p></div>
                 <button type="button" onClick={() => setSelectedLowPerformer(null)} className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-gray-500 transition hover:bg-gray-100 hover:text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500" aria-label="Close establishment details"><X className="h-5 w-5" /></button>
               </div>
-              <div className="mt-5 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-                <div className="rounded-xl bg-gray-50 p-4"><p className="text-xs font-semibold uppercase tracking-wide text-gray-500">Latest visitors</p><p className="mt-2 text-xl font-bold text-gray-900">{selectedLowPerformer.latestVisitors.toLocaleString()}</p><p className="text-xs text-gray-500">{selectedLowPerformer.latestMonth}</p></div>
-                <div className="rounded-xl bg-gray-50 p-4"><p className="text-xs font-semibold uppercase tracking-wide text-gray-500">Previous visitors</p><p className="mt-2 text-xl font-bold text-gray-900">{selectedLowPerformer.previousVisitors === null ? "N/A" : selectedLowPerformer.previousVisitors.toLocaleString()}</p><p className="text-xs text-gray-500">{selectedLowPerformer.previousMonth}</p></div>
-                <div className="rounded-xl bg-gray-50 p-4"><p className="text-xs font-semibold uppercase tracking-wide text-gray-500">Latest reports</p><p className="mt-2 text-sm font-bold text-gray-900">{selectedLowPerformer.latestVisitorReportCount} day-tour · {selectedLowPerformer.latestAccommodationReportCount} overnight</p></div>
-                <div className="rounded-xl bg-gray-50 p-4"><p className="text-xs font-semibold uppercase tracking-wide text-gray-500">Guest nights</p><p className="mt-2 text-xl font-bold text-gray-900">{selectedLowPerformer.guestNights.toLocaleString()}</p><p className="text-xs text-gray-500">Latest overnight period</p></div>
+              <div className="mt-4 grid grid-cols-2 gap-2 sm:mt-5 sm:gap-4 lg:grid-cols-4">
+                <div className="rounded-xl bg-gray-50 p-3 sm:p-4"><p className="text-[10px] font-semibold uppercase tracking-wide text-gray-500 sm:text-xs">Latest visitors</p><p className="mt-1 text-lg font-bold text-gray-900 sm:mt-2 sm:text-xl">{selectedLowPerformer.latestVisitors.toLocaleString()}</p><p className="text-[11px] text-gray-500 sm:text-xs">{selectedLowPerformer.latestMonth}</p></div>
+                <div className="rounded-xl bg-gray-50 p-3 sm:p-4"><p className="text-[10px] font-semibold uppercase tracking-wide text-gray-500 sm:text-xs">Previous visitors</p><p className="mt-1 text-lg font-bold text-gray-900 sm:mt-2 sm:text-xl">{selectedLowPerformer.previousVisitors === null ? "N/A" : selectedLowPerformer.previousVisitors.toLocaleString()}</p><p className="text-[11px] text-gray-500 sm:text-xs">{selectedLowPerformer.previousMonth}</p></div>
+                <div className="rounded-xl bg-gray-50 p-3 sm:p-4"><p className="text-[10px] font-semibold uppercase tracking-wide text-gray-500 sm:text-xs">Latest reports</p><p className="mt-1 text-xs font-bold leading-5 text-gray-900 sm:mt-2 sm:text-sm">{selectedLowPerformer.latestVisitorReportCount} day-tour · {selectedLowPerformer.latestAccommodationReportCount} overnight</p></div>
+                <div className="rounded-xl bg-gray-50 p-3 sm:p-4"><p className="text-[10px] font-semibold uppercase tracking-wide text-gray-500 sm:text-xs">Guest nights</p><p className="mt-1 text-lg font-bold text-gray-900 sm:mt-2 sm:text-xl">{selectedLowPerformer.guestNights.toLocaleString()}</p><p className="text-[11px] text-gray-500 sm:text-xs">Latest overnight period</p></div>
               </div>
               <div className="mt-4 rounded-xl border border-blue-100 bg-blue-50/50 p-4"><p className="font-semibold text-gray-800">Why this establishment is listed</p><ul className="mt-2 list-disc space-y-1 pl-5 text-sm text-gray-600">{selectedLowPerformer.reasons.map((reason) => <li key={reason}>{reason}</li>)}</ul></div>
               <div className="mt-6 flex justify-end"><button type="button" onClick={() => setSelectedLowPerformer(null)} className="rounded-lg bg-[#0F4C75] px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-[#0B3B5C] focus:outline-none focus:ring-2 focus:ring-blue-500">Close</button></div>
