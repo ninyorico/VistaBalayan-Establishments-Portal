@@ -127,6 +127,7 @@ export default function OfficerProfile() {
         eyebrow="Officer account"
         title="Profile"
         description="Manage your account, contact details, security settings, and cookie preferences."
+        compact
       />
 
       {/* Profile Information */}

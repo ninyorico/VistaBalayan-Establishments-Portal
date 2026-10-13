@@ -529,6 +529,7 @@ export default function Reports() {
         description="Generate, review, and export official tourism data reports for municipal decision-making."
         metricLabel="Reporting year"
         metricValue={selectedYear}
+        compact
       />
 
       {/* Report filters */}

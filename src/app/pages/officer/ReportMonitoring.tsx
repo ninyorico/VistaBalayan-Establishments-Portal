@@ -42,7 +42,7 @@ export default function ReportMonitoring() {
               <ClipboardCheck className="h-6 w-6" />
             </div>
             <div>
-              <h1 className="text-2xl font-bold tracking-[-0.025em] text-white sm:text-3xl">
+              <h1 className="text-xl font-semibold tracking-[-0.025em] text-white sm:text-3xl">
                 Report Monitoring
               </h1>
               <p className="mt-1 max-w-2xl text-sm leading-6 text-slate-200">

@@ -341,6 +341,7 @@ setOccupancyRate(occupancyRate);
         description="Monitor records, inspect establishment performance, and act on anomalies before report generation."
         metricLabel="Current occupancy"
         metricValue={`${occupancyRate.toFixed(1)}%`}
+        compact
       />
 
       <section className="grid grid-cols-2 gap-2 sm:grid-cols-4 sm:gap-3 lg:gap-4" data-officer-dashboard-uniform-kpis="true">

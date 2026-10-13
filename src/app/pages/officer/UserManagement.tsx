@@ -86,6 +86,7 @@ export default function UserManagement() {
         description="Manage system users, roles, establishment assignments, and account permissions."
         actionLabel="Add User"
         onAction={handleAdd}
+        compact
       />
 
       {/* Filters and Search */}

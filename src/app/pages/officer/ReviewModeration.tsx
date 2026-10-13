@@ -113,7 +113,7 @@ export default function ReviewModeration() {
             <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-white/10 text-cyan-100 shadow-[inset_0_1px_0_rgba(255,255,255,0.12)]"><MessageSquareWarning className="h-7 w-7" /></div>
             <div>
               <p className="text-xs font-bold uppercase tracking-[0.16em] text-cyan-100">Community safety</p>
-              <h1 className="mt-1 text-2xl font-bold tracking-[-0.025em] text-white sm:text-3xl">Review moderation</h1>
+              <h1 className="mt-1 text-xl font-semibold tracking-[-0.025em] text-white sm:text-3xl">Review moderation</h1>
               <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-200">Review public comments reported by visitors and remove content that violates the community rules. Removal hides the review publicly and keeps an audit record.</p>
             </div>
           </div>

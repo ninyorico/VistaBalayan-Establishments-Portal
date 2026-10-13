@@ -403,6 +403,7 @@ export default function Analytics() {
         description={`Data-driven tourism analytics and decision support for ${getAnalyticsYearRange(selectedYear).label}. All charts, rankings, origins, and performance findings use the selected year.`}
         metricLabel="Selected year"
         metricValue={selectedYear}
+        compact
       />
       <section className="rounded-2xl border border-gray-200 bg-white p-4 shadow-sm sm:p-6">
         <label className="block w-full text-xs font-medium text-gray-600 sm:ml-auto sm:w-44">

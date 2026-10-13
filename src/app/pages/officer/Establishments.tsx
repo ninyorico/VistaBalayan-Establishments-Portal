@@ -855,7 +855,7 @@ export default function Establishments() {
       <div className="relative overflow-hidden rounded-[2rem] border border-white/20 tourism-panel-dark p-5 shadow-[0_28px_90px_rgba(7,59,76,0.22)] sm:p-7">
         <div>
           <p className="text-xs font-bold uppercase tracking-[0.16em] text-cyan-100">Tourism network</p>
-          <h1 className="mt-2 text-2xl sm:text-3xl font-bold text-white">Establishments</h1>
+          <h1 className="mt-2 text-xl sm:text-3xl font-semibold text-white">Establishments</h1>
           <p className="text-slate-200 mt-1 text-sm sm:text-base">
             Manage tourism establishments, staff assignments, and public listing records
           </p>
