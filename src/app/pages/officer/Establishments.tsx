@@ -860,7 +860,7 @@ export default function Establishments() {
             Manage tourism establishments, staff assignments, and public listing records
           </p>
         </div>
-        <div className="flex flex-col sm:flex-row gap-2">
+        <div className="mt-5 flex flex-col gap-2 sm:mt-6 sm:flex-row sm:justify-end">
           <button
             onClick={activeTab === "establishments" ? handleExportEstablishments : handleExportUsers}
             className="flex items-center justify-center gap-2 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition font-medium text-sm sm:text-base whitespace-nowrap"

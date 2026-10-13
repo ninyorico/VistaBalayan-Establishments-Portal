@@ -339,8 +339,6 @@ setOccupancyRate(occupancyRate);
         eyebrow="Officer workspace"
         title="Tourism activity, submissions, and AI alerts in one workspace."
         description="Monitor records, inspect establishment performance, and act on anomalies before report generation."
-        metricLabel="Current occupancy"
-        metricValue={`${occupancyRate.toFixed(1)}%`}
         compact
       />
 
