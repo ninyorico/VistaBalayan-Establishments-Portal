@@ -527,8 +527,6 @@ export default function Reports() {
         eyebrow="Reporting workspace"
         title="Reports"
         description="Generate, review, and export official tourism data reports for municipal decision-making."
-        metricLabel="Reporting year"
-        metricValue={selectedYear}
         compact
       />
 
