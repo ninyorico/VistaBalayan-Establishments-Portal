@@ -363,7 +363,8 @@ setOccupancyRate(occupancyRate);
         <PanelCard title="Yearly visitor trends" description="Aggregated visitor counts by report year.">
           {visitorTrends.length > 0 ? (
             <div className="flex min-w-0 pb-2">
-              <div className="relative h-[240px] w-12 shrink-0 border-r border-[#cbd5e1] bg-white pr-1 text-right text-[11px] text-[#64748b] sm:h-[300px]">
+              <div className="relative h-[240px] w-12 shrink-0 bg-white pr-1 text-right text-[11px] text-[#64748b] sm:h-[300px]">
+                <span className="absolute bottom-[75px] right-0 top-0 border-r border-[#cbd5e1]" aria-hidden="true" />
                 <div className="absolute inset-x-0 top-1 bottom-[75px] flex flex-col justify-between">
                   {visitorTrendTicks.map((tick, index) => (
                     <span key={`${tick}-${index}`} className="relative pr-2">
@@ -384,7 +385,7 @@ setOccupancyRate(occupancyRate);
                       </linearGradient>
                     </defs>
                     <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
-                    <XAxis dataKey="year" stroke="#64748b" interval={0} angle={0} textAnchor="middle" height={42} tickMargin={6} padding={{ left: 12, right: 12 }} />
+                    <XAxis dataKey="year" stroke="#64748b" interval={0} angle={0} textAnchor="middle" height={42} tickMargin={6} padding={{ left: 40, right: 40 }} />
                     <YAxis hide domain={[0, visitorTrendMax]} ticks={visitorTrendTicks} />
                     <Tooltip />
                     <Legend wrapperStyle={{ paddingTop: 0 }} />
