@@ -363,7 +363,7 @@ setOccupancyRate(occupancyRate);
         <PanelCard title="Yearly visitor trends" description="Aggregated visitor counts by report year.">
           {visitorTrends.length > 0 ? (
             <div className="flex min-w-0 pb-2">
-              <div className="relative h-[300px] w-12 shrink-0 border-r border-[#cbd5e1] bg-white pr-1 text-right text-[11px] text-[#64748b]">
+              <div className="relative h-[240px] w-12 shrink-0 border-r border-[#cbd5e1] bg-white pr-1 text-right text-[11px] text-[#64748b] sm:h-[300px]">
                 <div className="absolute inset-x-0 top-1 bottom-[75px] flex flex-col justify-between">
                   {visitorTrendTicks.map((tick, index) => (
                     <span key={`${tick}-${index}`} className="relative pr-2">
@@ -375,8 +375,8 @@ setOccupancyRate(occupancyRate);
               </div>
               <div className={`min-w-0 flex-1 ${visitorTrendNeedsScroll ? "overflow-x-auto" : "overflow-x-hidden"}`}>
                 <div className={visitorTrendNeedsScroll ? "min-w-[720px]" : "w-full"}>
-                <ResponsiveContainer width="100%" height={300}>
-                  <AreaChart data={visitorTrends} margin={{ top: 5, right: 16, bottom: 8, left: 8 }}>
+                <ResponsiveContainer width="100%" height="100%">
+                  <AreaChart data={visitorTrends} margin={{ top: 6, right: 10, bottom: 4, left: 2 }}>
                     <defs>
                       <linearGradient id="visitorFill" x1="0" y1="0" x2="0" y2="1">
                         <stop offset="5%" stopColor="#193364" stopOpacity={0.34} />
@@ -384,10 +384,10 @@ setOccupancyRate(occupancyRate);
                       </linearGradient>
                     </defs>
                     <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
-                    <XAxis dataKey="year" stroke="#64748b" interval={0} angle={0} textAnchor="middle" height={48} tickMargin={8} padding={{ left: 24, right: 24 }} />
+                    <XAxis dataKey="year" stroke="#64748b" interval={0} angle={0} textAnchor="middle" height={42} tickMargin={6} padding={{ left: 12, right: 12 }} />
                     <YAxis hide domain={[0, visitorTrendMax]} ticks={visitorTrendTicks} />
                     <Tooltip />
-                    <Legend />
+                    <Legend wrapperStyle={{ paddingTop: 0 }} />
                     <Area type="monotone" dataKey="visitors" stroke="#193364" fill="url(#visitorFill)" strokeWidth={3} name="Visitors" />
                   </AreaChart>
                 </ResponsiveContainer>
