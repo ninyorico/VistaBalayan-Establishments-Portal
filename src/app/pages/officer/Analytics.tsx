@@ -100,7 +100,7 @@ const monthLabel = (date: string) =>
   new Date(date).toLocaleString("default", { month: "short", year: "numeric" });
 
 const seasonalTickLabel = (value: string, index: number) => {
-  if (index % 2 === 0) return "";
+  if (index % 2 === 0 && index !== 10) return "";
   return String(value).split(" ")[0];
 };
 
@@ -209,10 +209,11 @@ export default function Analytics() {
     });
 
     const sortedMonthKeys = Object.keys(monthlyData).sort();
-    const seasonalData = sortedMonthKeys.map((key) => ({
-      month: monthlyData[key].label,
-      visitors: monthlyData[key].visitors,
-      guestNights: monthlyData[key].guestNights,
+    const calendarMonthKeys = Array.from({ length: 12 }, (_, index) => `${selectedYear}-${String(index + 1).padStart(2, "0")}`);
+    const seasonalData = calendarMonthKeys.map((key) => ({
+      month: monthlyData[key]?.label || monthLabel(`${key}-01`),
+      visitors: monthlyData[key]?.visitors || 0,
+      guestNights: monthlyData[key]?.guestNights || 0,
     }));
 
     const visitorsByEstablishment: Record<string, { id: string; name: string; visitors: number; monthly: Record<string, number>; reportCounts: Record<string, number> }> = {};
