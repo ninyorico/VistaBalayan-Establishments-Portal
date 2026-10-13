@@ -100,7 +100,7 @@ const monthLabel = (date: string) =>
   new Date(date).toLocaleString("default", { month: "short", year: "numeric" });
 
 const seasonalTickLabel = (value: string, index: number) => {
-  if (index % 2 === 0 && index !== 10) return "";
+  if (index % 2 === 0) return "";
   return String(value).split(" ")[0];
 };
 
@@ -443,14 +443,15 @@ export default function Analytics() {
         </div>
       </div>
 
-      <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-        <h3 className="text-lg font-semibold text-gray-900 mb-4">Tourism Trends and Seasonal Patterns ({getAnalyticsYearRange(selectedYear).label})</h3>
+      <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4 sm:p-6">
+        <h3 className="text-base font-semibold text-gray-900 mb-4 sm:text-lg">Tourism Trends and Seasonal Patterns ({getAnalyticsYearRange(selectedYear).label})</h3>
         {data.seasonalData.length > 0 ? (
-          <ResponsiveContainer width="100%" height={350}>
-            <AreaChart data={data.seasonalData}>
-              <CartesianGrid strokeDasharray="3 3" />
-              <XAxis dataKey="month" interval={0} tickFormatter={seasonalTickLabel} height={32} tickMargin={8} />
-              <YAxis />
+          <div className="-mx-2 sm:mx-0">
+            <ResponsiveContainer width="100%" height={350}>
+              <AreaChart data={data.seasonalData} margin={{ top: 8, right: 4, left: -18, bottom: 8 }}>
+                <CartesianGrid strokeDasharray="3 3" />
+                <XAxis dataKey="month" interval={0} tickFormatter={seasonalTickLabel} height={32} tickMargin={8} />
+                <YAxis width={48} />
               <Tooltip />
               <Legend />
               <Area
@@ -474,7 +475,8 @@ export default function Analytics() {
                 name="Occupied room nights"
               />
             </AreaChart>
-          </ResponsiveContainer>
+            </ResponsiveContainer>
+          </div>
         ) : (
           <div className="text-center py-12 text-gray-500">No seasonal data available</div>
         )}
