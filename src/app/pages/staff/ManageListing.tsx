@@ -554,10 +554,10 @@ export default function ManageListing() {
               <div className="relative">
                 <div>
                   <p className="text-xs font-medium uppercase tracking-[0.22em] text-[#6C9772]">Public profile</p>
-                  <h2 className="mt-2 max-w-3xl text-[clamp(2rem,5vw,3.75rem)] font-black leading-[0.95] tracking-[-0.055em] sm:text-5xl">
+                  <h2 className="mt-2 max-w-3xl text-[clamp(1.75rem,7vw,3rem)] font-semibold leading-tight tracking-[-0.04em] sm:text-4xl">
                     Shape how visitors see your stay.
                   </h2>
-                  <p className="mt-3 max-w-2xl text-justify text-sm leading-6 text-[#6B7280] sm:text-base">
+                  <p className="mt-3 max-w-2xl text-sm leading-6 text-[#6B7280] sm:text-base">
                     Keep the public tourism card precise: clean details, gallery-ready photos, and an exact visitor pin without exposing backend clutter.
                   </p>
                 </div>
@@ -571,7 +571,7 @@ export default function ManageListing() {
           <div className="space-y-5">
             <Card className="tourism-card overflow-hidden rounded-[1.5rem] border-0 bg-[#E0E5EC] shadow-sm">
               <CardHeader className="border-0 bg-[#E0E5EC] px-4 py-4 sm:px-6">
-                <CardTitle className="text-xl font-black tracking-[-0.025em] text-slate-950">Public listing details</CardTitle>
+                <CardTitle className="text-lg font-semibold tracking-[-0.02em] text-slate-950 sm:text-xl">Public listing details</CardTitle>
               </CardHeader>
               <CardContent className="space-y-4 px-4 py-5 sm:px-6">
                 <div className="grid gap-4 sm:grid-cols-[1.1fr_0.9fr]">
@@ -619,7 +619,7 @@ export default function ManageListing() {
                 <div className="rounded-[1.35rem] border border-[#AFB3B5]/45 bg-[#E5E8E1]/70 p-3 sm:p-4" data-manage-listing-pin-ui="provider-neutral-exact-pin">
                   <div className="mb-3 flex items-start justify-between gap-3">
                     <div>
-                      <h3 className="text-base font-black tracking-[-0.02em] text-slate-950">Exact Location Pin</h3>
+                      <h3 className="text-base font-semibold tracking-[-0.015em] text-slate-950">Exact Location Pin</h3>
                       <p className="mt-1 text-sm leading-6 text-slate-600">Search, use your current location, click the map, or drag the marker before publishing.</p>
                     </div>
                     <Badge variant="outline" className={hasExactCoordinates ? 'rounded-full border-[#6C9772]/45 bg-[#F5F8FF] text-[#0F3B2D]' : 'rounded-full border-[#B88A52]/45 bg-[#FBE7BA] text-[#193364]'}>
