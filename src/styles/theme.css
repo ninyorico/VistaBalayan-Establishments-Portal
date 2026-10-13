@@ -3,31 +3,31 @@
 :root {
   --font-size: 16px;
 
-  /* VistaBalayan reference palette: airy blue workspace with calm semantic accents */
-  --ocean-blue: #5B92E5;
-  --navy-blue: #234B76;
-  --teal-blue: #3E8C82;
-  --cyan-teal: #55C39A;
-  --bright-cyan: #55C39A;
-  --coastal-sand: #F8D39B;
-  --sunlit-foam: #FFFFFF;
-  --mist-blue: #EAF3FC;
-  --mangrove-green: #55C39A;
-  --sunset-coral: #F0A85B;
+  /* Supplied Neumorphic palette: navy, warm gold, cream, green, and soft neutrals */
+  --ocean-blue: #193364;
+  --navy-blue: #193364;
+  --teal-blue: #0F3B2D;
+  --cyan-teal: #6C9772;
+  --bright-cyan: #6C9772;
+  --coastal-sand: #FBE7BA;
+  --sunlit-foam: #F5F8FF;
+  --mist-blue: #E5E8E1;
+  --mangrove-green: #6C9772;
+  --sunset-coral: #B88A52;
 
   /* Neutral Colors */
-  --pure-white: #FFFFFF;
-  --light-gray-bg: #EEF5FC;
-  --border-gray: #D9E7F4;
-  --text-secondary: #6B7D93;
-  --text-dark-navy: #18324C;
+  --pure-white: #F5F8FF;
+  --light-gray-bg: #E5E8E1;
+  --border-gray: #AFB3B5;
+  --text-secondary: #323232;
+  --text-dark-navy: #1A1A1A;
 
-  /* Semantic accents from the reference screens */
-  --success-green: #49BE8A;
-  --warning-orange: #EFA65A;
-  --alert-yellow: #F2C46D;
-  --soft-purple: #9B8AE8;
-  --info-blue: #5B92E5;
+  /* Accent Colors kept muted for dashboards */
+  --success-green: #6C9772;
+  --warning-orange: #B88A52;
+  --alert-yellow: #FDBC02;
+  --soft-purple: #6C63FF;
+  --info-blue: #193364;
 
   /* Application Variables */
   --background: var(--light-gray-bg);
@@ -54,12 +54,12 @@
   --font-weight-normal: 400;
   --ring: var(--teal-blue);
 
-  /* Chart palette: blue, green, orange, lavender, and teal */
-  --chart-1: #5B92E5;
-  --chart-2: #55C39A;
-  --chart-3: #F0A85B;
-  --chart-4: #9B8AE8;
-  --chart-5: #3E8C82;
+  /* Chart colors: restrained, mostly coastal monochrome */
+  --chart-1: #193364;
+  --chart-2: #6C9772;
+  --chart-3: #B88A52;
+  --chart-4: #FDBC02;
+  --chart-5: #0F3B2D;
 
   --radius: 1rem;
   --sidebar: var(--pure-white);
@@ -85,7 +85,9 @@
 
   body {
     min-height: 100dvh;
-    background: #EEF5FC;
+    background:
+      radial-gradient(circle at 10% 0%, rgba(193, 197, 195, 0.22), transparent 28rem),
+      linear-gradient(180deg, #F5F8FF 0%, #E5E8E1 58%, #FBE7BA 140%);
     color: var(--foreground);
     font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
     font-feature-settings: "cv02", "cv03", "cv04", "tnum";
@@ -444,142 +446,4 @@ input {
   font-size: 1rem;
   font-weight: var(--font-weight-normal);
   line-height: 1.5;
-}
-
-/* Reference visual system: light-blue workspace, white cards, blue primary actions. */
-@layer components {
-  .dashboard-neumorphic {
-    --neu-surface: #EEF5FC;
-    --neu-text: #18324C;
-    --neu-muted: #6B7D93;
-    --neu-violet: #9B8AE8;
-    --neu-teal: #55C39A;
-    background: #EEF5FC !important;
-    color: #18324C !important;
-  }
-
-  .dashboard-neumorphic .tourism-shell {
-    background: #EEF5FC !important;
-    background-image: none !important;
-  }
-
-  .dashboard-neumorphic .tourism-panel-dark,
-  .dashboard-neumorphic .tourism-card,
-  .dashboard-neumorphic [class*="bg-white"],
-  .dashboard-neumorphic [class*="bg-slate-50"],
-  .dashboard-neumorphic [class~="bg-gray-50"] {
-    background: #FFFFFF !important;
-    background-image: none !important;
-    border: 1px solid #D9E7F4 !important;
-    color: #18324C !important;
-    box-shadow: 0 8px 24px rgba(91, 146, 229, 0.12) !important;
-    backdrop-filter: none !important;
-  }
-
-  .dashboard-neumorphic .tourism-panel-dark h1,
-  .dashboard-neumorphic .tourism-panel-dark h2,
-  .dashboard-neumorphic .tourism-panel-dark h3,
-  .dashboard-neumorphic .tourism-panel-dark p {
-    color: #18324C !important;
-  }
-
-  .dashboard-neumorphic .tourism-card:hover,
-  .dashboard-neumorphic [class*="shadow-sm"]:hover {
-    box-shadow: 0 12px 30px rgba(91, 146, 229, 0.18) !important;
-  }
-
-  .dashboard-neumorphic .vb-neu-sidebar {
-    background: #FFFFFF !important;
-    border: 0 !important;
-    border-right: 1px solid #D9E7F4 !important;
-    box-shadow: 4px 0 18px rgba(91, 146, 229, 0.08) !important;
-  }
-
-  .dashboard-neumorphic .vb-neu-brand,
-  .dashboard-neumorphic .vb-neu-topbar {
-    background: #FFFFFF !important;
-    border: 0 !important;
-    border-bottom: 1px solid #D9E7F4 !important;
-  }
-
-  .dashboard-neumorphic .vb-neu-avatar,
-  .dashboard-neumorphic .vb-neu-control {
-    background: #EAF3FC !important;
-    border: 1px solid #D9E7F4 !important;
-    border-radius: 14px !important;
-    color: #5B92E5 !important;
-    box-shadow: none !important;
-  }
-
-  .dashboard-neumorphic .vb-neu-nav-item {
-    border: 0 !important;
-    border-radius: 12px !important;
-    color: #58708A !important;
-  }
-
-  .dashboard-neumorphic .vb-neu-nav-item:hover {
-    background: #EAF3FC !important;
-    color: #3E78C2 !important;
-    box-shadow: none !important;
-  }
-
-  .dashboard-neumorphic .vb-neu-nav-active {
-    background: #5B92E5 !important;
-    color: #FFFFFF !important;
-    box-shadow: 0 6px 14px rgba(91, 146, 229, 0.24) !important;
-  }
-
-  .dashboard-neumorphic .vb-neu-dropdown {
-    background: #FFFFFF !important;
-    border: 1px solid #D9E7F4 !important;
-    border-radius: 14px !important;
-    box-shadow: 0 12px 30px rgba(43, 82, 120, 0.14) !important;
-  }
-
-  .dashboard-neumorphic input,
-  .dashboard-neumorphic textarea,
-  .dashboard-neumorphic select {
-    background: #FFFFFF !important;
-    border: 1px solid #D9E7F4 !important;
-    box-shadow: inset 0 1px 2px rgba(43, 82, 120, 0.04) !important;
-    color: #18324C !important;
-  }
-
-  .dashboard-neumorphic button[class*="bg-blue-600"],
-  .dashboard-neumorphic button[class*="bg-gradient-to"],
-  .dashboard-neumorphic .tourism-button {
-    background-color: #5B92E5 !important;
-    background-image: none !important;
-    color: #FFFFFF !important;
-    box-shadow: 0 6px 14px rgba(91, 146, 229, 0.24) !important;
-  }
-
-  .dashboard-neumorphic button[class*="bg-blue-600"]:hover,
-  .dashboard-neumorphic button[class*="bg-gradient-to"]:hover,
-  .dashboard-neumorphic .tourism-button:hover {
-    background-color: #477FCF !important;
-  }
-
-  .dashboard-neumorphic [class~="bg-emerald-50"],
-  .dashboard-neumorphic [class~="bg-green-50"],
-  .dashboard-neumorphic [class~="bg-teal-50"] {
-    background-color: #E7F8F0 !important;
-  }
-
-  .dashboard-neumorphic [class~="bg-amber-50"],
-  .dashboard-neumorphic [class~="bg-orange-50"],
-  .dashboard-neumorphic [class~="bg-yellow-50"] {
-    background-color: #FFF4E4 !important;
-  }
-
-  .dashboard-neumorphic [class~="bg-purple-50"],
-  .dashboard-neumorphic [class~="bg-violet-50"] {
-    background-color: #F0EDFF !important;
-  }
-
-  .dashboard-neumorphic [class~="bg-sky-50"],
-  .dashboard-neumorphic [class~="bg-blue-50"],
-  .dashboard-neumorphic [class~="bg-cyan-50"] {
-    background-color: #EAF3FC !important;
-  }
 }
