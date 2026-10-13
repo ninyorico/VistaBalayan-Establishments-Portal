@@ -49,10 +49,10 @@ interface Demographic {
   color: string;
 }
 
-const DEMOGRAPHIC_COLORS = ["#5E8A75", "#6C63FF", "#B28B52", "#6474A5", "#B86B78", "#7D89A5"];
+const DEMOGRAPHIC_COLORS = ["#193364", "#0E5A72", "#6C9772", "#E9C98A", "#6C63FF", "#E65355"];
 
 const MAX_VISIBLE_DEMOGRAPHICS = 4;
-const ESTABLISHMENT_BAR_COLORS = ["#6C63FF", "#2C9C95", "#E0A458", "#D95D75", "#4A78A8", "#7A5AA6"];
+const ESTABLISHMENT_BAR_COLORS = ["#193364", "#0E5A72", "#6C9772", "#E9C98A", "#6C63FF", "#E65355"];
 const SERVICE_GAP_SEVERITY_RANK: Record<string, number> = { critical: 0, high: 1, medium: 2, low: 3 };
 
 const getDemographicColor = (name: string, index: number) => {
@@ -380,8 +380,8 @@ setOccupancyRate(occupancyRate);
                   <AreaChart data={visitorTrends} margin={{ top: 5, right: 16, bottom: 8, left: 8 }}>
                     <defs>
                       <linearGradient id="visitorFill" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="5%" stopColor="#6C63FF" stopOpacity={0.34} />
-                        <stop offset="95%" stopColor="#6C63FF" stopOpacity={0.03} />
+                        <stop offset="5%" stopColor="#193364" stopOpacity={0.34} />
+                        <stop offset="95%" stopColor="#193364" stopOpacity={0.03} />
                       </linearGradient>
                     </defs>
                     <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
@@ -389,7 +389,7 @@ setOccupancyRate(occupancyRate);
                     <YAxis hide domain={[0, visitorTrendMax]} ticks={visitorTrendTicks} />
                     <Tooltip />
                     <Legend />
-                    <Area type="monotone" dataKey="visitors" stroke="#6C63FF" fill="url(#visitorFill)" strokeWidth={3} name="Visitors" />
+                    <Area type="monotone" dataKey="visitors" stroke="#193364" fill="url(#visitorFill)" strokeWidth={3} name="Visitors" />
                   </AreaChart>
                 </ResponsiveContainer>
                 </div>

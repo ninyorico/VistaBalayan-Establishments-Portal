@@ -104,7 +104,7 @@ const seasonalTickLabel = (value: string, index: number) => {
   return String(value).split(" ")[0];
 };
 
-const performanceColors = ["#6474A5", "#5E8A75", "#B07A55", "#8B7AA8", "#C08A5A", "#5D8794"];
+const performanceColors = ["#193364", "#0E5A72", "#6C9772", "#E9C98A", "#6C63FF", "#E65355"];
 
 const monthKey = (date: string) => date.slice(0, 7);
 
@@ -459,20 +459,20 @@ export default function Analytics() {
               <Area
                 type="monotone"
                 dataKey="visitors"
-                stroke="#6474A5"
-                fill="#6474A5"
+                stroke="#193364"
+                fill="#193364"
                 fillOpacity={0.28}
-                dot={{ r: 3, strokeWidth: 1, fill: "#6474A5" }}
+                dot={{ r: 3, strokeWidth: 1, fill: "#193364" }}
                 activeDot={{ r: 5 }}
                 name="Visitors"
               />
               <Area
                 type="monotone"
                 dataKey="guestNights"
-                stroke="#5E8A75"
-                fill="#5E8A75"
+                stroke="#0E5A72"
+                fill="#0E5A72"
                 fillOpacity={0.2}
-                dot={{ r: 3, strokeWidth: 1, fill: "#5E8A75" }}
+                dot={{ r: 3, strokeWidth: 1, fill: "#0E5A72" }}
                 activeDot={{ r: 5 }}
                 name="Occupied room nights"
               />
