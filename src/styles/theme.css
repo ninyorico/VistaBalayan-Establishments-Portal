@@ -215,10 +215,10 @@
   .dashboard-neumorphic .vb-neu-control { background: var(--neu-surface) !important; border: 0 !important; border-radius: 16px !important; color: var(--neu-violet) !important; box-shadow: 5px 5px 10px rgba(174,184,196,.65), -5px -5px 10px rgba(255,255,255,.52) !important; }
   .dashboard-neumorphic .vb-neu-control:active { box-shadow: inset 5px 5px 10px rgba(174,184,196,.65), inset -5px -5px 10px rgba(255,255,255,.52) !important; }
   .dashboard-neumorphic .vb-neu-nav-item { border: 0 !important; border-radius: 16px !important; color: var(--neu-text) !important; }
-  .dashboard-neumorphic .vb-neu-nav-item:hover { background: var(--neu-surface) !important; color: var(--neu-violet) !important; box-shadow: 5px 5px 10px rgba(174,184,196,.65), -5px -5px 10px rgba(255,255,255,.52) !important; }
-  .dashboard-neumorphic .vb-neu-nav-active { background: var(--neu-surface) !important; color: var(--neu-violet) !important; box-shadow: inset 6px 6px 10px rgba(174,184,196,.65), inset -6px -6px 10px rgba(255,255,255,.88) !important; }
-  .dashboard-neumorphic .vb-neu-dropdown { background: var(--neu-surface) !important; border: 0 !important; border-radius: 20px !important; box-shadow: 9px 9px 16px rgba(174,184,196,.65), -9px -9px 16px rgba(255,255,255,.88) !important; }
-  .dashboard-neumorphic .vb-neu-inset { border: 0 !important; border-radius: 20px !important; background: var(--neu-surface) !important; box-shadow: inset 6px 6px 10px rgba(174,184,196,.65), inset -6px -6px 10px rgba(255,255,255,.88) !important; }
+  .dashboard-neumorphic .vb-neu-nav-item:hover { background: #D9E0E8 !important; color: #0E5A72 !important; box-shadow: 5px 5px 10px rgba(174,184,196,.65), -5px -5px 10px rgba(255,255,255,.88) !important; }
+  .dashboard-neumorphic .vb-neu-nav-active { background: #193364 !important; color: #FFFFFF !important; box-shadow: 0 6px 14px rgba(25,51,100,.24) !important; }
+  .dashboard-neumorphic .vb-neu-dropdown { background: var(--neu-surface) !important; border: 0 !important; border-radius: 20px !important; box-shadow: 8px 8px 16px rgba(174,184,196,.65), -8px -8px 16px rgba(255,255,255,.88) !important; }
+  .dashboard-neumorphic .vb-neu-inset { border: 0 !important; border-radius: 20px !important; background: var(--neu-surface) !important; box-shadow: inset 4px 4px 8px rgba(174,184,196,.60), inset -4px -4px 8px rgba(255,255,255,.85) !important; }
   /* Keep dashboard surfaces continuous instead of stacking white sheets. */
   .dashboard-neumorphic .bg-white,
   .dashboard-neumorphic .bg-white\/80,
@@ -276,14 +276,14 @@
   .dashboard-neumorphic button[class~="bg-[#0F4C75]"],
   .dashboard-neumorphic button[class~="bg-[#0E5A72]"],
   .dashboard-neumorphic button[class~="bg-blue-600"] {
-    background-color: #5b6fae !important;
+    background-color: #193364 !important;
     color: #ffffff !important;
     box-shadow: 6px 6px 12px rgba(163,177,198,.62), -6px -6px 12px rgba(255,255,255,.88), inset 0 0 0 transparent !important;
   }
   .dashboard-neumorphic button[class~="bg-[#0F4C75]"]:hover,
   .dashboard-neumorphic button[class~="bg-[#0E5A72]"]:hover,
   .dashboard-neumorphic button[class~="bg-blue-600"]:hover {
-    background-color: #50639f !important;
+    background-color: #0E5A72 !important;
   }
   .dashboard-neumorphic button[class~="bg-[#0F4C75]"]:active,
   .dashboard-neumorphic button[class~="bg-[#0E5A72]"]:active,
@@ -292,23 +292,23 @@
   }
   .dashboard-neumorphic button[class~="bg-green-600"],
   .dashboard-neumorphic button[class~="bg-emerald-600"] {
-    background-color: #4f9276 !important;
+    background-color: #6C9772 !important;
     color: #ffffff !important;
     box-shadow: 6px 6px 12px rgba(163,177,198,.62), -6px -6px 12px rgba(255,255,255,.88) !important;
   }
   .dashboard-neumorphic button[class~="bg-red-600"] {
-    background-color: #bd6c78 !important;
+    background-color: #E65355 !important;
     color: #ffffff !important;
     box-shadow: 6px 6px 12px rgba(163,177,198,.62), -6px -6px 12px rgba(255,255,255,.88) !important;
   }
   .dashboard-neumorphic button[class~="bg-orange-600"] {
-    background-color: #b77b4e !important;
+    background-color: #D69A3A !important;
     color: #ffffff !important;
     box-shadow: 6px 6px 12px rgba(163,177,198,.62), -6px -6px 12px rgba(255,255,255,.88) !important;
   }
   .dashboard-neumorphic button[class*="bg-gradient-to"] {
     background-image: none !important;
-    background-color: #6c63ff !important;
+    background-color: #193364 !important;
     color: #ffffff !important;
     box-shadow: 6px 6px 12px rgba(163,177,198,.62), -6px -6px 12px rgba(255,255,255,.88) !important;
   }
@@ -371,7 +371,7 @@
   .dashboard-neumorphic .dashboard-neu-icon {
     background-color: var(--neu-surface) !important;
     border-color: transparent !important;
-    color: #6c63ff !important;
+    color: #0E5A72 !important;
     box-shadow: inset 4px 4px 8px rgba(163,177,198,.38), inset -4px -4px 8px rgba(255,255,255,.85) !important;
   }
 
