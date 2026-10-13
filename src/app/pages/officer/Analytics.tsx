@@ -280,11 +280,13 @@ export default function Analytics() {
     const originCounts: Record<string, number> = {};
     visitors.forEach((item) => {
       const category = normalizeResidenceCategory(item);
-      if (!category) return;
-      const origin = getSpecificOriginLabel(item, category);
-      if (!origin) return;
-      const key = monthKey(item.report_date);
+      const origin = category
+        ? getSpecificOriginLabel(item, category) || (
+          category === "THIS_PROVINCE" ? "Batangas" : category === "OTHER_PROVINCE" ? "Other Province" : "Foreign Residence"
+        )
+        : "Unknown";
       originCounts[origin] = (originCounts[origin] || 0) + (item.total_guests || 0);
+      const key = monthKey(item.report_date);
       if (!originByMonth[origin]) originByMonth[origin] = {};
       originByMonth[origin][key] = (originByMonth[origin][key] || 0) + (item.total_guests || 0);
     });

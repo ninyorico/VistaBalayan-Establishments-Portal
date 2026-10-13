@@ -22,6 +22,7 @@ import {
 } from "recharts";
 import { supabase } from "../../../lib/supabase";
 import { calculateAccommodationOccupancy } from "../../../lib/reportMetrics";
+import { normalizeResidenceCategory } from "../../../lib/reporting";
 
 import { Button } from "../../components/ui/button";
 import { EmptyState, LoadingState, MetricCard, PageHero, PanelCard } from "../../components/vista/PolishedShell";
@@ -214,8 +215,15 @@ setOccupancyRate(occupancyRate);
       if (visitorData.length > 0) {
         const dist: Record<string, number> = {};
         visitorData.forEach((item) => {
-          const type = item.residence_type || "Unknown";
-          dist[type] = (dist[type] || 0) + Number(item.total_guests || 0);
+          const category = normalizeResidenceCategory(item);
+          const label = category === "THIS_PROVINCE"
+            ? "This Province / Batangas"
+            : category === "OTHER_PROVINCE"
+              ? "Other Province / Domestic"
+              : category === "FOREIGN"
+                ? "Foreign Residence"
+                : "Unknown";
+          dist[label] = (dist[label] || 0) + Number(item.total_guests || 0);
         });
         const totalDemo = Object.values(dist).reduce((a, b) => a + b, 0);
         const chartData = buildDemographicChartData(dist, totalDemo);
