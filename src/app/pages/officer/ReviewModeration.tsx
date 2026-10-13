@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from "react";
-import { AlertTriangle, Eye, EyeOff, Flag, Loader2, MessageSquareWarning, RefreshCw, ShieldAlert, X } from "lucide-react";
+import { AlertTriangle, Eye, EyeOff, Filter, Flag, Loader2, MessageSquareWarning, RefreshCw, ShieldAlert, X } from "lucide-react";
 import { supabase } from "../../../lib/supabase";
 
 type ModerationReview = {
@@ -22,6 +22,8 @@ type ModerationTarget = {
   action: "remove" | "restore";
 };
 
+type ReviewFilter = "all" | "awaiting" | "visible" | "removed";
+
 export default function ReviewModeration() {
   const [reviews, setReviews] = useState<ModerationReview[]>([]);
   const [loading, setLoading] = useState(true);
@@ -30,6 +32,7 @@ export default function ReviewModeration() {
   const [moderationTarget, setModerationTarget] = useState<ModerationTarget | null>(null);
   const [moderationReason, setModerationReason] = useState("");
   const [moderating, setModerating] = useState(false);
+  const [reviewFilter, setReviewFilter] = useState<ReviewFilter>("all");
 
   const loadReviews = useCallback(async (initial = false) => {
     if (initial) setLoading(true);
@@ -95,6 +98,12 @@ export default function ReviewModeration() {
   const reportedCount = reviews.filter((review) => review.report_count > 0 && !review.is_hidden).length;
   const removedCount = reviews.filter((review) => review.is_hidden).length;
   const visibleCount = reviews.length - removedCount;
+  const filteredReviews = reviews.filter((review) => {
+    if (reviewFilter === "awaiting") return review.report_count > 0 && !review.is_hidden;
+    if (reviewFilter === "visible") return !review.is_hidden;
+    if (reviewFilter === "removed") return review.is_hidden;
+    return true;
+  });
 
   return (
     <div className="space-y-6">
@@ -108,23 +117,26 @@ export default function ReviewModeration() {
               <p className="mt-2 max-w-2xl text-sm leading-6 text-[#5D6F73]">Review public comments reported by visitors and remove content that violates the community rules. Removal hides the review publicly and keeps an audit record.</p>
             </div>
           </div>
-          <button type="button" onClick={() => void loadReviews()} disabled={refreshing} className="inline-flex min-h-11 items-center justify-center gap-2 rounded-2xl bg-[#E0E5EC] px-5 py-2.5 text-sm font-semibold text-[#193364] shadow-[5px_5px_10px_rgba(163,177,198,.5),-5px_-5px_10px_rgba(255,255,255,.75)] transition hover:text-[#6C63FF] active:translate-y-px active:shadow-[inset_3px_3px_7px_rgba(163,177,198,.45),inset_-3px_-3px_7px_rgba(255,255,255,.75)] disabled:opacity-60"><RefreshCw className={`h-4 w-4 ${refreshing ? "animate-spin" : ""}`} />Refresh reviews</button>
+          <div className="flex w-full flex-col gap-3 sm:w-auto sm:flex-row">
+            <label className="relative flex min-h-11 items-center gap-2 rounded-2xl bg-[#E0E5EC] px-4 text-sm font-semibold text-[#193364] shadow-[inset_4px_4px_8px_rgba(163,177,198,.4),inset_-4px_-4px_8px_rgba(255,255,255,.72)]"><Filter className="h-4 w-4 shrink-0 text-[#6C63FF]" /><span className="sr-only">Filter reviews</span><select value={reviewFilter} onChange={(event) => setReviewFilter(event.target.value as ReviewFilter)} className="min-w-0 flex-1 appearance-none bg-transparent pr-5 outline-none"><option value="all">All reviews</option><option value="awaiting">Awaiting review</option><option value="visible">Visible reviews</option><option value="removed">Removed reviews</option></select><span className="pointer-events-none absolute right-4 text-xs text-[#6474A5]">⌄</span></label>
+            <button type="button" onClick={() => void loadReviews()} disabled={refreshing} className="inline-flex min-h-11 items-center justify-center gap-2 rounded-2xl bg-[#E0E5EC] px-5 py-2.5 text-sm font-semibold text-[#193364] shadow-[5px_5px_10px_rgba(163,177,198,.5),-5px_-5px_10px_rgba(255,255,255,.75)] transition hover:text-[#6C63FF] active:translate-y-px active:shadow-[inset_3px_3px_7px_rgba(163,177,198,.45),inset_-3px_-3px_7px_rgba(255,255,255,.75)] disabled:opacity-60"><RefreshCw className={`h-4 w-4 ${refreshing ? "animate-spin" : ""}`} />Refresh reviews</button>
+          </div>
         </div>
       </section>
 
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
-        <div className="rounded-3xl border border-white/70 bg-[#E0E5EC] p-5 shadow-[7px_7px_14px_rgba(163,177,198,.48),-7px_-7px_14px_rgba(255,255,255,.72)]"><p className="text-xs font-bold uppercase tracking-[0.12em] text-[#6474A5]">Awaiting review</p><p className="mt-2 text-3xl font-bold text-[#193364]">{reportedCount}</p><p className="mt-1 text-xs text-[#5D6F73]">Reported public reviews</p></div>
-        <div className="rounded-3xl border border-white/70 bg-[#E0E5EC] p-5 shadow-[7px_7px_14px_rgba(163,177,198,.48),-7px_-7px_14px_rgba(255,255,255,.72)]"><p className="text-xs font-bold uppercase tracking-[0.12em] text-[#6474A5]">Visible reviews</p><p className="mt-2 text-3xl font-bold text-[#38B2AC]">{visibleCount}</p><p className="mt-1 text-xs text-[#5D6F73]">Currently shown publicly</p></div>
-        <div className="rounded-3xl border border-white/70 bg-[#E0E5EC] p-5 shadow-[7px_7px_14px_rgba(163,177,198,.48),-7px_-7px_14px_rgba(255,255,255,.72)]"><p className="text-xs font-bold uppercase tracking-[0.12em] text-[#6474A5]">Removed</p><p className="mt-2 text-3xl font-bold text-[#B56B78]">{removedCount}</p><p className="mt-1 text-xs text-[#5D6F73]">Hidden with audit history</p></div>
+      <div className="grid grid-cols-3 gap-2 sm:gap-4">
+        <div className="min-w-0 rounded-2xl border border-white/70 bg-[#E0E5EC] p-3 shadow-[5px_5px_10px_rgba(163,177,198,.48),-5px_-5px_10px_rgba(255,255,255,.72)] sm:rounded-3xl sm:p-5"><p className="truncate text-[9px] font-bold uppercase tracking-[0.08em] text-[#6474A5] sm:text-xs sm:tracking-[0.12em]">Awaiting review</p><p className="mt-1 text-2xl font-bold leading-tight text-[#193364] sm:mt-2 sm:text-3xl">{reportedCount}</p><p className="mt-1 hidden text-xs text-[#5D6F73] sm:block">Reported public reviews</p></div>
+        <div className="min-w-0 rounded-2xl border border-white/70 bg-[#E0E5EC] p-3 shadow-[5px_5px_10px_rgba(163,177,198,.48),-5px_-5px_10px_rgba(255,255,255,.72)] sm:rounded-3xl sm:p-5"><p className="truncate text-[9px] font-bold uppercase tracking-[0.08em] text-[#6474A5] sm:text-xs sm:tracking-[0.12em]">Visible reviews</p><p className="mt-1 text-2xl font-bold leading-tight text-[#38B2AC] sm:mt-2 sm:text-3xl">{visibleCount}</p><p className="mt-1 hidden text-xs text-[#5D6F73] sm:block">Currently shown publicly</p></div>
+        <div className="min-w-0 rounded-2xl border border-white/70 bg-[#E0E5EC] p-3 shadow-[5px_5px_10px_rgba(163,177,198,.48),-5px_-5px_10px_rgba(255,255,255,.72)] sm:rounded-3xl sm:p-5"><p className="truncate text-[9px] font-bold uppercase tracking-[0.08em] text-[#6474A5] sm:text-xs sm:tracking-[0.12em]">Removed</p><p className="mt-1 text-2xl font-bold leading-tight text-[#B56B78] sm:mt-2 sm:text-3xl">{removedCount}</p><p className="mt-1 hidden text-xs text-[#5D6F73] sm:block">Hidden with audit history</p></div>
       </div>
 
       {error && <div role="alert" className="rounded-2xl border border-red-200/70 bg-[#F7E6E8] px-4 py-3 text-sm text-[#8B3442] shadow-[inset_3px_3px_7px_rgba(181,107,120,.12),inset_-3px_-3px_7px_rgba(255,255,255,.65)]">{error}</div>}
 
-      {reviews.length === 0 ? (
-        <div className="rounded-[2rem] border border-white/70 bg-[#E0E5EC] p-10 text-center shadow-[8px_8px_18px_rgba(163,177,198,.5),-8px_-8px_18px_rgba(255,255,255,.76)]"><div className="mx-auto flex h-16 w-16 items-center justify-center rounded-2xl bg-[#E0E5EC] text-[#6474A5] shadow-[inset_4px_4px_8px_rgba(163,177,198,.45),inset_-4px_-4px_8px_rgba(255,255,255,.72)]"><ShieldAlert className="h-8 w-8" /></div><h2 className="mt-4 text-lg font-semibold text-[#193364]">No reviews to moderate</h2><p className="mt-1 text-sm text-[#5D6F73]">Public reviews and reports will appear here.</p></div>
+      {filteredReviews.length === 0 ? (
+        <div className="rounded-[2rem] border border-white/70 bg-[#E0E5EC] p-10 text-center shadow-[8px_8px_18px_rgba(163,177,198,.5),-8px_-8px_18px_rgba(255,255,255,.76)]"><div className="mx-auto flex h-16 w-16 items-center justify-center rounded-2xl bg-[#E0E5EC] text-[#6474A5] shadow-[inset_4px_4px_8px_rgba(163,177,198,.45),inset_-4px_-4px_8px_rgba(255,255,255,.72)]"><ShieldAlert className="h-8 w-8" /></div><h2 className="mt-4 text-lg font-semibold text-[#193364]">No matching reviews</h2><p className="mt-1 text-sm text-[#5D6F73]">Try another moderation filter.</p></div>
       ) : (
         <div className="space-y-4">
-          {reviews.map((review) => (
+          {filteredReviews.map((review) => (
             <article key={review.id} className={`rounded-[2rem] border p-5 transition sm:p-6 ${review.is_hidden ? "border-slate-300/70 bg-[#D5DAE2] shadow-[inset_5px_5px_11px_rgba(163,177,198,.4),inset_-5px_-5px_11px_rgba(255,255,255,.65)]" : "border-white/70 bg-[#E0E5EC] shadow-[8px_8px_18px_rgba(163,177,198,.5),-8px_-8px_18px_rgba(255,255,255,.76)]"}`}>
               <div className="flex flex-col justify-between gap-4 lg:flex-row lg:items-start">
                 <div className="min-w-0 flex-1">
