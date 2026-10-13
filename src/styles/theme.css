@@ -212,7 +212,7 @@
   .dashboard-neumorphic .vb-neu-brand,
   .dashboard-neumorphic .vb-neu-topbar { background: var(--neu-surface) !important; border: 0 !important; }
   .dashboard-neumorphic .vb-neu-avatar,
-  .dashboard-neumorphic .vb-neu-control { background: var(--neu-surface) !important; border: 0 !important; border-radius: 16px !important; color: var(--neu-violet) !important; box-shadow: 5px 5px 10px rgba(174,184,196,.65), -5px -5px 10px rgba(255,255,255,.52) !important; }
+  .dashboard-neumorphic .vb-neu-control { background: var(--neu-surface) !important; border: 0 !important; border-radius: 16px !important; color: var(--neu-navy) !important; box-shadow: 5px 5px 10px rgba(174,184,196,.65), -5px -5px 10px rgba(255,255,255,.52) !important; }
   .dashboard-neumorphic .vb-neu-control:active { box-shadow: inset 5px 5px 10px rgba(174,184,196,.65), inset -5px -5px 10px rgba(255,255,255,.52) !important; }
   .dashboard-neumorphic .vb-neu-nav-item { border: 0 !important; border-radius: 16px !important; color: var(--neu-text) !important; }
   .dashboard-neumorphic .vb-neu-nav-item:hover { background: #D9E0E8 !important; color: #0E5A72 !important; box-shadow: 5px 5px 10px rgba(174,184,196,.65), -5px -5px 10px rgba(255,255,255,.88) !important; }

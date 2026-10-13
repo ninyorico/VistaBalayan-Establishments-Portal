@@ -122,7 +122,7 @@ export default function OfficerLayout() {
                 onClick={() => setSidebarOpen(!sidebarOpen)}
                 className="vb-neu-control p-2.5 transition-all duration-200 lg:hidden"
               >
-                <Menu className="w-5 h-5 text-[#6C63FF]" />
+                <Menu className="w-5 h-5 text-[#193364]" />
               </button>
 
             </div>
