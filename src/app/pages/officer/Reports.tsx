@@ -635,8 +635,9 @@ export default function Reports() {
           Tourism Trends ({getFilterLabel()})
         </h3>
         {chartData.length > 0 ? (
-          <div className="flex min-w-0">
-            <div className="relative h-[350px] w-14 shrink-0 border-r border-gray-200 bg-white pr-1 text-right text-[11px] text-gray-500">
+          <div className="flex min-w-0 pb-2">
+            <div className="relative h-[300px] w-12 shrink-0 bg-white pr-1 text-right text-[11px] text-gray-500 sm:h-[350px]">
+              <span className="absolute bottom-[75px] right-0 top-0 border-r border-gray-200" aria-hidden="true" />
               <div className="absolute inset-x-0 top-1 bottom-[75px] flex flex-col justify-between">
                 {reportTrendTicks.map((tick, index) => (
                   <span key={`${tick}-${index}`} className="relative pr-2">
@@ -646,10 +647,10 @@ export default function Reports() {
                 ))}
               </div>
             </div>
-            <div className={`min-w-0 flex-1 ${chartData.length > 8 ? "overflow-x-auto" : "overflow-x-hidden"}`}>
-              <div className={chartData.length > 8 ? "min-w-[960px]" : "w-full"}>
-                <ResponsiveContainer width="100%" height={350}>
-                  <AreaChart data={chartData} margin={{ top: 5, right: 16, bottom: 8, left: 8 }}>
+            <div className={`h-[300px] min-w-0 flex-1 ${chartData.length > 8 ? "overflow-x-auto" : "overflow-x-hidden"} sm:h-[350px]`}>
+              <div className={`h-full ${chartData.length > 8 ? "min-w-[960px]" : "w-full"}`}>
+                <ResponsiveContainer width="100%" height="100%">
+                  <AreaChart data={chartData} margin={{ top: 6, right: 10, bottom: 4, left: 2 }}>
                     <defs>
                       <linearGradient id="reportsVisitorFill" x1="0" y1="0" x2="0" y2="1">
                         <stop offset="5%" stopColor="#193364" stopOpacity={0.34} />
@@ -657,7 +658,7 @@ export default function Reports() {
                       </linearGradient>
                     </defs>
                     <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
-                    <XAxis dataKey="period" interval={0} tick={renderResponsivePeriodTick} />
+                    <XAxis dataKey="period" interval={0} tick={renderResponsivePeriodTick} height={42} tickMargin={6} padding={{ left: 8, right: 40 }} />
                     <YAxis hide domain={[0, reportTrendMax]} ticks={reportTrendTicks} />
                     <Tooltip />
                     <Legend />
