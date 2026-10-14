@@ -536,8 +536,6 @@ export default function Reports() {
   const reportTrendTicks = Array.from({ length: 5 }, (_, index) =>
     Math.round((reportTrendMax * (4 - index)) / 4)
   );
-  const shouldScrollReportChart = false;
-  const reportXAxisInterval = filterType === "year" ? 1 : 0;
   const monthYearValue = selectedMonth
     ? `${selectedYear}-${String(months.indexOf(selectedMonth) + 1).padStart(2, "0")}`
     : `${selectedYear}-01`;
@@ -661,47 +659,42 @@ export default function Reports() {
           Tourism Trends ({getFilterLabel()})
         </h3>
         {chartData.length > 0 ? (
-          <div className="flex min-w-0 pb-2">
-            <div className="relative h-[300px] w-12 shrink-0 bg-white pr-1 text-right text-[11px] text-gray-500 sm:h-[350px]">
-              <span className="absolute bottom-[75px] right-0 top-0 border-r border-gray-200" aria-hidden="true" />
-              <div className="absolute inset-x-0 top-1 bottom-[75px] flex flex-col justify-between">
-                {reportTrendTicks.map((tick, index) => (
-                  <span key={`${tick}-${index}`} className="relative pr-2">
-                    {tick.toLocaleString()}
-                    <span className="absolute right-[-4px] top-1/2 h-px w-1 bg-gray-400" aria-hidden="true" />
-                  </span>
-                ))}
-              </div>
-            </div>
-            <div className={`h-[300px] min-w-0 flex-1 ${shouldScrollReportChart ? "overflow-x-auto" : "overflow-x-hidden"} sm:h-[350px]`}>
-              <div className={`h-full ${shouldScrollReportChart ? "min-w-[960px]" : "w-full"}`}>
-                <ResponsiveContainer width="100%" height="100%">
-                  <AreaChart data={chartData} margin={{ top: 6, right: 10, bottom: 4, left: 2 }}>
-                    <defs>
-                      <linearGradient id="reportsVisitorFill" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="5%" stopColor="#193364" stopOpacity={0.34} />
-                        <stop offset="95%" stopColor="#193364" stopOpacity={0.03} />
-                      </linearGradient>
-                    </defs>
-                    <CartesianGrid strokeDasharray="3 3" stroke="#cbd5e1" />
-                    <XAxis dataKey="period" interval={reportXAxisInterval} tick={filterType === "year" ? renderYearlyPeriodTick : renderResponsivePeriodTick} height={42} tickMargin={6} padding={{ left: 8, right: 8 }} />
-                    <YAxis hide domain={[0, reportTrendMax]} ticks={reportTrendTicks} />
-                    <Tooltip />
-                    <Legend />
-                    <Area
-                      type="monotone"
-                      dataKey="visitors"
-                      stroke="#193364"
-                      fill="url(#reportsVisitorFill)"
-                      strokeWidth={3}
-                      dot={{ r: 3, strokeWidth: 1, fill: "#193364" }}
-                      activeDot={{ r: 5 }}
-                      name="Visitors"
-                    />
-                  </AreaChart>
-                </ResponsiveContainer>
-              </div>
-            </div>
+          <div className="-mx-2 sm:mx-0">
+            <ResponsiveContainer width="100%" height={350}>
+              <AreaChart data={chartData} margin={{ top: 8, right: 4, left: 4, bottom: 8 }}>
+                <defs>
+                  <linearGradient id="reportsVisitorFill" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="5%" stopColor="#193364" stopOpacity={0.34} />
+                    <stop offset="95%" stopColor="#193364" stopOpacity={0.03} />
+                  </linearGradient>
+                </defs>
+                <CartesianGrid strokeDasharray="3 3" />
+                <XAxis
+                  dataKey="period"
+                  interval={0}
+                  tickFormatter={(value: string, index: number) => {
+                    if (filterType === "year") return index % 2 === 0 ? "" : value.slice(0, 3);
+                    return filterType === "month" ? value.replace("Week ", "Wk") : value.slice(0, 3);
+                  }}
+                  height={32}
+                  tickMargin={8}
+                  padding={{ left: 0, right: 0 }}
+                />
+                <YAxis width={52} domain={[0, reportTrendMax]} ticks={reportTrendTicks} />
+                <Tooltip />
+                <Legend />
+                <Area
+                  type="monotone"
+                  dataKey="visitors"
+                  stroke="#193364"
+                  fill="url(#reportsVisitorFill)"
+                  fillOpacity={0.28}
+                  dot={{ r: 3, strokeWidth: 1, fill: "#193364" }}
+                  activeDot={{ r: 5 }}
+                  name="Visitors"
+                />
+              </AreaChart>
+            </ResponsiveContainer>
           </div>
         ) : (
           <div className="text-center py-12 text-gray-500">No data available for the selected period</div>
