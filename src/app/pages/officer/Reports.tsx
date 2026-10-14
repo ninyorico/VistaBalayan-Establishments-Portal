@@ -312,10 +312,15 @@ export default function Reports() {
     }
 
     const trendRows = [
-      ...(visitorData || []).map((item: any) => ({ report_date: item.report_date, visitors: Number(item.total_guests || 0) })),
+      ...(visitorData || []).map((item: any) => ({
+        report_date: item.report_date,
+        visitors: Number(item.total_guests || 0),
+        guestCheckIns: 0,
+      })),
       ...(accommodationData || []).map((item: any) => ({
         report_date: item.report_date,
-        visitors: Number(item.total_check_ins ?? item.guest_check_ins ?? 0),
+        visitors: 0,
+        guestCheckIns: Number(item.guest_check_ins ?? item.total_check_ins ?? 0),
       })),
     ].sort((a, b) => a.report_date.localeCompare(b.report_date));
 
@@ -332,16 +337,22 @@ export default function Reports() {
                 date.setDate(date.getDate() + index);
                 return date.toLocaleDateString("default", { weekday: "short" });
               });
-      const grouped: Record<string, number> = Object.fromEntries(periodOrder.map((period) => [period, 0]));
+      const grouped: Record<string, { visitors: number; guestCheckIns: number }> = Object.fromEntries(
+        periodOrder.map((period) => [period, { visitors: 0, guestCheckIns: 0 }])
+      );
       trendRows.forEach((item) => {
         const date = new Date(item.report_date);
         const key = filterType === "year" ? months[date.getMonth()] : getChartPeriod(date, item.report_date);
-        grouped[key] = (grouped[key] || 0) + item.visitors;
+        if (!grouped[key]) grouped[key] = { visitors: 0, guestCheckIns: 0 };
+        grouped[key].visitors += item.visitors;
+        grouped[key].guestCheckIns += item.guestCheckIns;
       });
 
       const chartDataArray = periodOrder.map((period) => ({
         period,
-        visitors: grouped[period] || 0,
+        visitors: (grouped[period]?.visitors || 0) + (grouped[period]?.guestCheckIns || 0),
+        dayTourVisitors: grouped[period]?.visitors || 0,
+        guestCheckIns: grouped[period]?.guestCheckIns || 0,
       }));
       setChartData(chartDataArray);
       
@@ -532,7 +543,10 @@ export default function Reports() {
     }, {})
   ).sort((a, b) => b[1] - a[1])[0];
 
-  const reportTrendMax = Math.max(1, ...chartData.map((item) => Number(item.visitors) || 0));
+  const reportTrendMax = Math.max(
+    1,
+    ...chartData.flatMap((item) => [Number(item.dayTourVisitors) || 0, Number(item.guestCheckIns) || 0])
+  );
   const reportTrendTicks = Array.from({ length: 5 }, (_, index) =>
     Math.round((reportTrendMax * (4 - index)) / 4)
   );
@@ -685,13 +699,23 @@ export default function Reports() {
                 <Legend />
                 <Area
                   type="monotone"
-                  dataKey="visitors"
+                  dataKey="dayTourVisitors"
                   stroke="#193364"
                   fill="url(#reportsVisitorFill)"
                   fillOpacity={0.28}
                   dot={{ r: 3, strokeWidth: 1, fill: "#193364" }}
                   activeDot={{ r: 5 }}
-                  name="Visitors"
+                  name="Day-tour visitors"
+                />
+                <Area
+                  type="monotone"
+                  dataKey="guestCheckIns"
+                  stroke="#0E5A72"
+                  fill="#0E5A72"
+                  fillOpacity={0.16}
+                  dot={{ r: 3, strokeWidth: 1, fill: "#0E5A72" }}
+                  activeDot={{ r: 5 }}
+                  name="Guest check-ins"
                 />
               </AreaChart>
             </ResponsiveContainer>
