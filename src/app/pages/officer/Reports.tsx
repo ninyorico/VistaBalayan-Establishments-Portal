@@ -83,6 +83,20 @@ const renderResponsivePeriodTick = ({ x = 0, y = 0, payload }: any) => {
   );
 };
 
+const renderYearlyPeriodTick = ({ x = 0, y = 0, payload, index = 0 }: any) => {
+  const fullLabel = String(payload?.value || "");
+  const compactLabel = fullLabel.slice(0, 3);
+
+  return (
+    <g transform={`translate(${x},${y})`}>
+      <text textAnchor="middle" fill="#64748b" fontSize={12} dy={16}>
+        <tspan className="hidden sm:inline">{fullLabel}</tspan>
+        <tspan className="sm:hidden">{index % 2 === 0 ? "" : compactLabel}</tspan>
+      </text>
+    </g>
+  );
+};
+
 export default function Reports() {
   const [filterType, setFilterType] = useState<"year" | "quarter" | "month" | "week">("month");
   const [selectedYear, setSelectedYear] = useState(getCurrentYear());
@@ -659,7 +673,7 @@ export default function Reports() {
                       </linearGradient>
                     </defs>
                     <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
-                    <XAxis dataKey="period" interval={0} tick={renderResponsivePeriodTick} height={42} tickMargin={6} padding={{ left: 8, right: 40 }} />
+                    <XAxis dataKey="period" interval={0} tick={filterType === "year" ? renderYearlyPeriodTick : renderResponsivePeriodTick} height={42} tickMargin={6} padding={{ left: 8, right: 40 }} />
                     <YAxis hide domain={[0, reportTrendMax]} ticks={reportTrendTicks} />
                     <Tooltip />
                     <Legend />
