@@ -512,6 +512,7 @@ export default function Reports() {
   const reportTrendTicks = Array.from({ length: 5 }, (_, index) =>
     Math.round((reportTrendMax * (4 - index)) / 4)
   );
+  const shouldScrollReportChart = filterType !== "year" && chartData.length > 8;
   const monthYearValue = selectedMonth
     ? `${selectedYear}-${String(months.indexOf(selectedMonth) + 1).padStart(2, "0")}`
     : `${selectedYear}-01`;
@@ -647,8 +648,8 @@ export default function Reports() {
                 ))}
               </div>
             </div>
-            <div className={`h-[300px] min-w-0 flex-1 ${chartData.length > 8 ? "overflow-x-auto" : "overflow-x-hidden"} sm:h-[350px]`}>
-              <div className={`h-full ${chartData.length > 8 ? "min-w-[960px]" : "w-full"}`}>
+            <div className={`h-[300px] min-w-0 flex-1 ${shouldScrollReportChart ? "overflow-x-auto" : "overflow-x-hidden"} sm:h-[350px]`}>
+              <div className={`h-full ${shouldScrollReportChart ? "min-w-[960px]" : "w-full"}`}>
                 <ResponsiveContainer width="100%" height="100%">
                   <AreaChart data={chartData} margin={{ top: 6, right: 10, bottom: 4, left: 2 }}>
                     <defs>
@@ -662,7 +663,16 @@ export default function Reports() {
                     <YAxis hide domain={[0, reportTrendMax]} ticks={reportTrendTicks} />
                     <Tooltip />
                     <Legend />
-                    <Area type="monotone" dataKey="visitors" stroke="#193364" fill="url(#reportsVisitorFill)" strokeWidth={3} name="Visitors" />
+                    <Area
+                      type="monotone"
+                      dataKey="visitors"
+                      stroke="#193364"
+                      fill="url(#reportsVisitorFill)"
+                      strokeWidth={3}
+                      dot={{ r: 3, strokeWidth: 1, fill: "#193364" }}
+                      activeDot={{ r: 5 }}
+                      name="Visitors"
+                    />
                   </AreaChart>
                 </ResponsiveContainer>
               </div>
