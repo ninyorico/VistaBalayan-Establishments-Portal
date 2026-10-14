@@ -674,7 +674,7 @@ export default function Reports() {
                       </linearGradient>
                     </defs>
                     <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
-                    <XAxis dataKey="period" interval={reportXAxisInterval} tick={filterType === "year" ? renderYearlyPeriodTick : renderResponsivePeriodTick} height={42} tickMargin={6} padding={{ left: 8, right: 40 }} />
+                    <XAxis dataKey="period" interval={reportXAxisInterval} tick={filterType === "year" ? renderYearlyPeriodTick : renderResponsivePeriodTick} height={42} tickMargin={6} padding={{ left: 8, right: 8 }} />
                     <YAxis hide domain={[0, reportTrendMax]} ticks={reportTrendTicks} />
                     <Tooltip />
                     <Legend />
