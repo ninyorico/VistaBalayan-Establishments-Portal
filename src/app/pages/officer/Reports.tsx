@@ -83,7 +83,7 @@ const renderResponsivePeriodTick = ({ x = 0, y = 0, payload }: any) => {
   );
 };
 
-const renderYearlyPeriodTick = ({ x = 0, y = 0, payload, index = 0 }: any) => {
+const renderYearlyPeriodTick = ({ x = 0, y = 0, payload }: any) => {
   const fullLabel = String(payload?.value || "");
   const compactLabel = fullLabel.slice(0, 3);
 
@@ -91,7 +91,7 @@ const renderYearlyPeriodTick = ({ x = 0, y = 0, payload, index = 0 }: any) => {
     <g transform={`translate(${x},${y})`}>
       <text textAnchor="middle" fill="#64748b" fontSize={12} dy={16}>
         <tspan className="hidden sm:inline">{fullLabel}</tspan>
-        <tspan className="sm:hidden">{index % 2 === 0 ? "" : compactLabel}</tspan>
+        <tspan className="sm:hidden">{compactLabel}</tspan>
       </text>
     </g>
   );
@@ -526,7 +526,8 @@ export default function Reports() {
   const reportTrendTicks = Array.from({ length: 5 }, (_, index) =>
     Math.round((reportTrendMax * (4 - index)) / 4)
   );
-  const shouldScrollReportChart = filterType !== "year" && chartData.length > 8;
+  const shouldScrollReportChart = false;
+  const reportXAxisInterval = filterType === "year" ? 1 : 0;
   const monthYearValue = selectedMonth
     ? `${selectedYear}-${String(months.indexOf(selectedMonth) + 1).padStart(2, "0")}`
     : `${selectedYear}-01`;
@@ -673,7 +674,7 @@ export default function Reports() {
                       </linearGradient>
                     </defs>
                     <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
-                    <XAxis dataKey="period" interval={0} tick={filterType === "year" ? renderYearlyPeriodTick : renderResponsivePeriodTick} height={42} tickMargin={6} padding={{ left: 8, right: 40 }} />
+                    <XAxis dataKey="period" interval={reportXAxisInterval} tick={filterType === "year" ? renderYearlyPeriodTick : renderResponsivePeriodTick} height={42} tickMargin={6} padding={{ left: 8, right: 40 }} />
                     <YAxis hide domain={[0, reportTrendMax]} ticks={reportTrendTicks} />
                     <Tooltip />
                     <Legend />
