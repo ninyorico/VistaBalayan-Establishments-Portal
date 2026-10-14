@@ -320,18 +320,28 @@ export default function Reports() {
     ].sort((a, b) => a.report_date.localeCompare(b.report_date));
 
     if (trendRows.length || filterType === "year") {
-      const grouped: Record<string, number> = filterType === "year"
-        ? Object.fromEntries(months.map((month) => [month, 0]))
-        : {};
+      const { startDate } = getReportRange();
+      const periodOrder = filterType === "year"
+        ? months
+        : filterType === "quarter"
+          ? months.slice((Number(selectedQuarter) - 1) * 3, Number(selectedQuarter) * 3)
+          : filterType === "month"
+            ? Array.from({ length: 5 }, (_, index) => `Week ${index + 1}`)
+            : Array.from({ length: 7 }, (_, index) => {
+                const date = new Date(`${startDate}T00:00:00`);
+                date.setDate(date.getDate() + index);
+                return date.toLocaleDateString("default", { weekday: "short" });
+              });
+      const grouped: Record<string, number> = Object.fromEntries(periodOrder.map((period) => [period, 0]));
       trendRows.forEach((item) => {
         const date = new Date(item.report_date);
         const key = filterType === "year" ? months[date.getMonth()] : getChartPeriod(date, item.report_date);
         grouped[key] = (grouped[key] || 0) + item.visitors;
       });
 
-      const chartDataArray = Object.entries(grouped).map(([period, visitors]) => ({
+      const chartDataArray = periodOrder.map((period) => ({
         period,
-        visitors,
+        visitors: grouped[period] || 0,
       }));
       setChartData(chartDataArray);
       
