@@ -452,7 +452,7 @@ export default function Analytics() {
             <ResponsiveContainer width="100%" height={350}>
               <AreaChart data={data.seasonalData} margin={{ top: 8, right: 4, left: 4, bottom: 8 }}>
                 <CartesianGrid strokeDasharray="3 3" />
-                <XAxis dataKey="month" interval={0} tickFormatter={seasonalTickLabel} height={32} tickMargin={8} />
+                <XAxis dataKey="month" interval={0} tickFormatter={seasonalTickLabel} height={32} tickMargin={8} padding={{ left: 0, right: 0 }} />
                 <YAxis width={52} />
               <Tooltip />
               <Legend />
