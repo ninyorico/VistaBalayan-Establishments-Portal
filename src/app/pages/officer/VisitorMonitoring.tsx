@@ -5,7 +5,7 @@ import { supabase } from "../../../lib/supabase";
 import { downloadReportMonitoringWorkbook } from "../../../lib/reportMonitoringExport";
 import DataState from "../../components/DataState";
 import { useDialogFocus } from "../../../hooks/useDialogFocus";
-import { getVisitorResidenceLabel, getVisitorResidenceLocation } from "../../../lib/reporting";
+import { getVisitorResidenceLabel, getVisitorResidenceLocation, normalizeResidenceCategory } from "../../../lib/reporting";
 
 interface VisitorRecord {
   id: string;
@@ -16,6 +16,7 @@ interface VisitorRecord {
   female: number;
   total: number;
   residenceType: string;
+  residenceCategory: string;
   location: string;
 }
 
@@ -118,6 +119,7 @@ export default function VisitorMonitoring({ embedded = false }: { embedded?: boo
       female: item.total_female || 0,
       total: item.total_guests || 0,
       residenceType: getVisitorResidenceLabel(item),
+      residenceCategory: normalizeResidenceCategory(item) || "UNKNOWN",
       location: getVisitorResidenceLocation(item),
     }));
 
@@ -131,7 +133,7 @@ export default function VisitorMonitoring({ embedded = false }: { embedded?: boo
       record.establishment.toLowerCase().includes(searchTerm.toLowerCase()) ||
       record.location.toLowerCase().includes(searchTerm.toLowerCase());
     
-    const matchesResidence = filterResidence === "all" || record.residenceType === filterResidence;
+    const matchesResidence = filterResidence === "all" || record.residenceCategory === filterResidence;
       
     let matchesDate = true;
     if (specificMonth) {
