@@ -13,6 +13,7 @@ interface PageHeroProps {
   metricValue?: string;
   actionLabel?: string;
   onAction?: () => void;
+  children?: ReactNode;
 }
 
 export function PageHero({
@@ -23,6 +24,7 @@ export function PageHero({
   metricValue,
   actionLabel,
   onAction,
+  children,
   compact = false,
 }: PageHeroProps & { compact?: boolean }) {
   return (
@@ -43,7 +45,7 @@ export function PageHero({
             )}
           </div>
 
-          {(metricLabel && metricValue) || (actionLabel && onAction) ? (
+          {(metricLabel && metricValue) || (actionLabel && onAction) || children ? (
             <div className="flex flex-col gap-3 sm:flex-row lg:flex-col lg:items-stretch">
               {metricLabel && metricValue && (
                 <div className={cn("rounded-2xl border border-white/12 bg-white/10 text-white shadow-[inset_0_1px_0_rgba(255,255,255,0.12)] backdrop-blur-xl", compact ? "p-3 sm:p-4" : "p-4")}>
@@ -60,6 +62,7 @@ export function PageHero({
                   {actionLabel}
                 </Button>
               )}
+              {children}
             </div>
           ) : null}
         </div>

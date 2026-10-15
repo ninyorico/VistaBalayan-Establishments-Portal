@@ -406,15 +406,14 @@ export default function Analytics() {
         title="Analytics Dashboard"
         description={`Data-driven tourism analytics and decision support for ${getAnalyticsYearRange(selectedYear).label}. All charts, rankings, origins, and performance findings use the selected year.`}
         compact
-      />
-      <section className="rounded-2xl border border-gray-200 bg-white p-4 shadow-sm sm:p-6">
-        <label className="block w-full text-xs font-medium text-gray-600 sm:ml-auto sm:w-44">
+      >
+        <label className="block w-full text-xs font-medium text-slate-200 sm:w-44">
           Year
-          <select value={selectedYear} onChange={(event) => setSelectedYear(event.target.value)} className="mt-1 w-full rounded-xl border border-gray-300 bg-white px-3 py-2.5 text-sm text-gray-900 focus:border-[#0F4C75] focus:outline-none focus:ring-2 focus:ring-[#0F4C75]/20">
+          <select value={selectedYear} onChange={(event) => setSelectedYear(event.target.value)} className="mt-1 w-full rounded-xl border border-white/20 bg-white px-3 py-2.5 text-sm text-gray-900 focus:border-cyan-200 focus:outline-none focus:ring-2 focus:ring-cyan-200/30">
             {analyticsYears.map((year) => <option key={year} value={year}>{year}</option>)}
           </select>
         </label>
-      </section>
+      </PageHero>
 
       <div className="grid grid-cols-3 gap-2 sm:gap-4" data-analytics-kpi-row="mobile-one-row">
         <div className="bg-white rounded-lg border border-gray-200 p-2.5 shadow-sm sm:p-5">
