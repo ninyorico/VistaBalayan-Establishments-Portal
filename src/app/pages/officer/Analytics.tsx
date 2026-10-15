@@ -454,7 +454,13 @@ export default function Analytics() {
           <div className="-mx-2 sm:mx-0">
             <ResponsiveContainer width="100%" height={350}>
               <AreaChart data={data.seasonalData} margin={{ top: 8, right: 4, left: 4, bottom: 8 }}>
-                <CartesianGrid strokeDasharray="3 3" />
+                <defs>
+                  <linearGradient id="analyticsVisitorFill" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="5%" stopColor="#193364" stopOpacity={0.34} />
+                    <stop offset="95%" stopColor="#193364" stopOpacity={0.03} />
+                  </linearGradient>
+                </defs>
+                <CartesianGrid strokeDasharray="3 3" vertical={true} horizontal={true} />
                 <XAxis dataKey="month" interval={0} tickFormatter={seasonalTickLabel} height={32} tickMargin={8} padding={{ left: 0, right: 0 }} />
                 <YAxis width={52} />
               <Tooltip />
@@ -463,7 +469,7 @@ export default function Analytics() {
                 type="monotone"
                 dataKey="visitors"
                 stroke="#193364"
-                fill="#193364"
+                fill="url(#analyticsVisitorFill)"
                 fillOpacity={0.28}
                 dot={{ r: 3, strokeWidth: 1, fill: "#193364" }}
                 activeDot={{ r: 5 }}
