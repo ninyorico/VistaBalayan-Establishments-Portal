@@ -472,16 +472,6 @@ export default function Analytics() {
               />
               <Area
                 type="monotone"
-                dataKey="guestNights"
-                stroke="#0E5A72"
-                fill="#0E5A72"
-                fillOpacity={0.2}
-                dot={{ r: 3, strokeWidth: 1, fill: "#0E5A72" }}
-                activeDot={{ r: 5 }}
-                name="Occupied room nights"
-              />
-              <Area
-                type="monotone"
                 dataKey="guestCheckIns"
                 stroke="#6C9772"
                 fill="#6C9772"
