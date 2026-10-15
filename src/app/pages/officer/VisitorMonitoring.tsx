@@ -251,11 +251,11 @@ export default function VisitorMonitoring({ embedded = false }: { embedded?: boo
         </div>
         <div className="rounded-lg border border-gray-200 bg-white p-4 shadow-sm sm:p-6">
           <p className="mb-1 text-xs text-gray-600 sm:text-sm">Male</p>
-          <p className="text-2xl font-bold text-blue-600 sm:text-3xl">{totalMale}</p>
+          <p className="text-2xl font-bold text-gray-900 sm:text-3xl">{totalMale}</p>
         </div>
         <div className="rounded-lg border border-gray-200 bg-white p-4 shadow-sm sm:p-6">
           <p className="mb-1 text-xs text-gray-600 sm:text-sm">Female</p>
-          <p className="text-2xl font-bold text-purple-600 sm:text-3xl">{totalFemale}</p>
+          <p className="text-2xl font-bold text-gray-900 sm:text-3xl">{totalFemale}</p>
         </div>
         <div className="rounded-lg border border-gray-200 bg-white p-4 shadow-sm sm:p-6">
           <p className="mb-1 text-xs text-gray-600 sm:text-sm">Total Records</p>

@@ -449,26 +449,26 @@ export default function AccommodationMonitoring({ embedded = false }: { embedded
         </div>
         <div className="flex min-w-0 flex-col rounded-2xl border border-gray-200 bg-white p-3 shadow-sm sm:p-5">
           <p className="mb-1 break-words text-[11px] leading-tight text-gray-600 sm:text-sm">Check-ins</p>
-          <p className="mt-auto text-2xl font-bold text-blue-600 sm:text-3xl">{filteredStats.totalGuests}</p>
+          <p className="mt-auto text-2xl font-bold text-gray-900 sm:text-3xl">{filteredStats.totalGuests}</p>
         </div>
         <div className="flex min-w-0 flex-col rounded-2xl border border-gray-200 bg-white p-3 shadow-sm sm:p-5">
           <p className="mb-1 break-words text-[11px] leading-tight text-gray-600 sm:text-sm">Total Guest Nights</p>
-          <p className="mt-auto text-2xl font-bold text-purple-600 sm:text-3xl">{filteredStats.totalGuestNights}</p>
+          <p className="mt-auto text-2xl font-bold text-gray-900 sm:text-3xl">{filteredStats.totalGuestNights}</p>
         </div>
         <div className="flex min-w-0 flex-col rounded-2xl border border-gray-200 bg-white p-3 shadow-sm sm:p-5">
           <p className="mb-1 break-words text-[11px] leading-tight text-gray-600 sm:text-sm">Avg Guest-Night</p>
-          <p className="mt-auto text-2xl font-bold text-orange-600 sm:text-3xl">{filteredStats.avgGuestNight.toFixed(2)}</p>
+          <p className="mt-auto text-2xl font-bold text-gray-900 sm:text-3xl">{filteredStats.avgGuestNight.toFixed(2)}</p>
         </div>
         <div className="flex min-w-0 flex-col rounded-2xl border border-gray-200 bg-white p-3 shadow-sm sm:p-5">
           <div className="mb-1 flex items-start gap-1 sm:items-center sm:gap-2">
             <p className="break-words text-[11px] leading-tight text-gray-600 sm:text-sm">Avg Room Occupancy Rate</p>
-            <TrendingUp className="w-4 h-4 text-green-600" />
+            <TrendingUp className="w-4 h-4 text-gray-900" />
           </div>
-          <p className="mt-auto text-2xl font-bold text-green-600 sm:text-3xl">{filteredStats.avgOccupancyRate.toFixed(1)}%</p>
+          <p className="mt-auto text-2xl font-bold text-gray-900 sm:text-3xl">{filteredStats.avgOccupancyRate.toFixed(1)}%</p>
         </div>
         <div className="flex min-w-0 flex-col rounded-2xl border border-gray-200 bg-white p-3 shadow-sm sm:p-5">
           <p className="mb-1 break-words text-[11px] leading-tight text-gray-600 sm:text-sm">Avg Guests per Room</p>
-          <p className="mt-auto text-2xl font-bold text-teal-600 sm:text-3xl">{filteredStats.avgGuestsPerRoom.toFixed(2)}</p>
+          <p className="mt-auto text-2xl font-bold text-gray-900 sm:text-3xl">{filteredStats.avgGuestsPerRoom.toFixed(2)}</p>
         </div>
       </div>
 
