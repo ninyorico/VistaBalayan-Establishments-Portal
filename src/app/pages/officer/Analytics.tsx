@@ -20,7 +20,7 @@ import DataState from "../../components/DataState";
 import { PageHero } from "../../components/vista/PolishedShell";
 
 interface AnalyticsData {
-  seasonalData: { month: string; visitors: number; guestNights: number }[];
+  seasonalData: { month: string; visitors: number; guestCheckIns: number; guestNights: number }[];
   performanceData: { name: string; visitors: number; occupancyRate: number; score: number }[];
   visitorOrigins: { location: string; visitors: number; growth: number }[];
   lowPerformersDayTour: LowPerformer[];
@@ -70,6 +70,7 @@ type AccommodationReport = {
   report_date: string;
   total_rooms: number | null;
   total_occupied_rooms: number | null;
+  total_check_ins: number | null;
   total_guest_nights: number | null;
   establishments?: { name: string } | null;
 };
@@ -177,6 +178,7 @@ export default function Analytics() {
         report_date,
         total_rooms,
         total_occupied_rooms,
+        total_check_ins,
         total_guest_nights,
         establishments (name)
       `)
@@ -192,11 +194,11 @@ export default function Analytics() {
     const visitors = (visitorData || []) as unknown as VisitorReport[];
     const accommodations = (accommodationData || []) as unknown as AccommodationReport[];
 
-    const monthlyData: Record<string, { label: string; visitors: number; guestNights: number }> = {};
+    const monthlyData: Record<string, { label: string; visitors: number; guestCheckIns: number; guestNights: number }> = {};
     visitors.forEach((item) => {
       const key = monthKey(item.report_date);
       if (!monthlyData[key]) {
-        monthlyData[key] = { label: monthLabel(item.report_date), visitors: 0, guestNights: 0 };
+        monthlyData[key] = { label: monthLabel(item.report_date), visitors: 0, guestCheckIns: 0, guestNights: 0 };
       }
       monthlyData[key].visitors += item.total_guests || 0;
     });
@@ -204,8 +206,9 @@ export default function Analytics() {
     accommodations.forEach((item) => {
       const key = monthKey(item.report_date);
       if (!monthlyData[key]) {
-        monthlyData[key] = { label: monthLabel(item.report_date), visitors: 0, guestNights: 0 };
+        monthlyData[key] = { label: monthLabel(item.report_date), visitors: 0, guestCheckIns: 0, guestNights: 0 };
       }
+      monthlyData[key].guestCheckIns += item.total_check_ins || 0;
       monthlyData[key].guestNights += item.total_guest_nights || 0;
     });
 
@@ -214,6 +217,7 @@ export default function Analytics() {
     const seasonalData = calendarMonthKeys.map((key) => ({
       month: monthlyData[key]?.label || monthLabel(`${key}-01`),
       visitors: monthlyData[key]?.visitors || 0,
+      guestCheckIns: monthlyData[key]?.guestCheckIns || 0,
       guestNights: monthlyData[key]?.guestNights || 0,
     }));
 
@@ -475,6 +479,16 @@ export default function Analytics() {
                 dot={{ r: 3, strokeWidth: 1, fill: "#0E5A72" }}
                 activeDot={{ r: 5 }}
                 name="Occupied room nights"
+              />
+              <Area
+                type="monotone"
+                dataKey="guestCheckIns"
+                stroke="#6C9772"
+                fill="#6C9772"
+                fillOpacity={0.16}
+                dot={{ r: 3, strokeWidth: 1, fill: "#6C9772" }}
+                activeDot={{ r: 5 }}
+                name="Guest check-ins"
               />
             </AreaChart>
             </ResponsiveContainer>
