@@ -710,10 +710,10 @@ export default function Reports() {
                 <Area
                   type="monotone"
                   dataKey="guestCheckIns"
-                  stroke="#0E5A72"
-                  fill="#0E5A72"
+                  stroke="#D69A3A"
+                  fill="#D69A3A"
                   fillOpacity={0.16}
-                  dot={{ r: 3, strokeWidth: 1, fill: "#0E5A72" }}
+                  dot={{ r: 3, strokeWidth: 1, fill: "#D69A3A" }}
                   activeDot={{ r: 5 }}
                   name="Guest check-ins"
                 />
