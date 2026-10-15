@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { AlertTriangle } from 'lucide-react'
+import { AlertTriangle, TrendingUp } from 'lucide-react'
 import { supabase } from '../../../lib/supabase'
 import { useAuth } from '../../../contexts/AuthContext'
 import { geminiService } from '../../../services/geminiService'
@@ -331,10 +331,12 @@ const loadCachedData = async (estId: string, generateIfEmpty = true) => {
         countLabel={`${activeAnomalies.length} Active`}
         icon={<AlertTriangle className="size-5 text-amber-600" />}
       >
-        <div className="space-y-3">
+        <div className="grid grid-cols-1 gap-3 lg:grid-cols-2">
           {activeAnomalies.length > 0 ? (
-            visibleAnomalies.map((anomaly) => (
-              <AiAnomalyCard key={anomaly.id} {...anomaly} establishments={{ name: establishmentName || 'Your establishment' }} />
+            visibleAnomalies.map((anomaly, index) => (
+              <div key={anomaly.id} className={`h-full ${!showAllServiceGaps && index === 4 ? 'lg:col-span-2' : ''}`}>
+                <AiAnomalyCard {...anomaly} establishments={{ name: establishmentName || 'Your establishment' }} />
+              </div>
             ))
           ) : (
             <AiEmptyState variant="gaps" />
@@ -350,11 +352,15 @@ const loadCachedData = async (estId: string, generateIfEmpty = true) => {
       <AiSectionCard
         title="Recommended actions"
         countLabel={`${insights.length} Ready`}
-        icon={<span className="size-2.5 rounded-full bg-[#1CA7C9] shadow-[0_0_0_6px_rgba(28,167,201,0.12)]" />}
+        icon={<TrendingUp className="size-5 text-[#0F4C75]" />}
       >
         <div className="grid grid-cols-1 gap-3 lg:grid-cols-2">
           {insights.length > 0 ? (
-            visibleInsights.map((insight) => <AiRecommendationCard key={insight.id} {...insight} />)
+            visibleInsights.map((insight, index) => (
+              <div key={insight.id} className={`h-full ${!showAllRecommendations && index === 4 ? 'lg:col-span-2' : ''}`}>
+                <AiRecommendationCard {...insight} />
+              </div>
+            ))
           ) : (
             <div className="lg:col-span-2">
               <AiEmptyState variant="recommendations" />
