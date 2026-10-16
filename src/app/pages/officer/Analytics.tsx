@@ -164,8 +164,8 @@ export default function Analytics() {
         place_of_residence,
         establishments (name)
       `)
-      .eq("status", "submitted")
-      .gte("report_date", selectedRange.start)
+      .in("status", ["pending", "submitted", "validated", "approved"])
+            .gte("report_date", selectedRange.start)
             .lte("report_date", selectedRange.end)
       .order("report_date", { ascending: true });
 
@@ -182,8 +182,8 @@ export default function Analytics() {
         total_guest_nights,
         establishments (name)
       `)
-      .eq("status", "submitted")
-      .gte("report_date", selectedRange.start)
+      .in("status", ["pending", "submitted", "validated", "approved"])
+            .gte("report_date", selectedRange.start)
             .lte("report_date", selectedRange.end)
       .order("report_date", { ascending: true });
 
