@@ -385,7 +385,7 @@ setOccupancyRate(occupancyRate);
                       </linearGradient>
                     </defs>
                     <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
-                    <XAxis dataKey="year" stroke="#64748b" interval={0} angle={0} textAnchor="middle" height={42} tickMargin={6} padding={{ left: 0, right: 0 }} />
+                    <XAxis dataKey="year" stroke="#64748b" interval={0} angle={0} textAnchor="middle" height={42} tickMargin={6} padding={{ left: 18, right: 18 }} />
                     <YAxis hide domain={[0, visitorTrendMax]} ticks={visitorTrendTicks} />
                     <Tooltip />
                     <Legend wrapperStyle={{ paddingTop: 0 }} />
