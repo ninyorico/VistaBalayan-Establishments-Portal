@@ -290,22 +290,36 @@ export default function Reports() {
   const fetchChartData = async () => {
     const { startDate, endDate } = getReportRange();
 
-    const [{ data: visitorData, error: visitorError }, { data: accommodationData, error: accommodationError }] = await Promise.all([
-      supabase
-        .from("visitor_reports")
-        .select("report_date, total_guests")
-        .eq("status", "submitted")
-        .gte("report_date", startDate)
-        .lte("report_date", endDate)
-        .order("report_date", { ascending: true }),
-      supabase
-        .from("accommodation_reports")
-        .select("report_date, total_check_ins, guest_check_ins")
-        .eq("status", "submitted")
-        .gte("report_date", startDate)
-        .lte("report_date", endDate)
-        .order("report_date", { ascending: true }),
+    const fetchTrendReports = async (
+      table: "visitor_reports" | "accommodation_reports",
+      select: string,
+    ) => {
+      const rows: any[] = [];
+      const pageSize = 1000;
+      for (let offset = 0; ; offset += pageSize) {
+        const { data, error } = await supabase
+          .from(table)
+          .select(select)
+          .eq("status", "submitted")
+          .gte("report_date", startDate)
+          .lte("report_date", endDate)
+          .order("report_date", { ascending: true })
+          .range(offset, offset + pageSize - 1);
+        if (error) return { data: null, error };
+        rows.push(...(data || []));
+        if (!data || data.length < pageSize) break;
+      }
+      return { data: rows, error: null };
+    };
+
+    const [visitorResult, accommodationResult] = await Promise.all([
+      fetchTrendReports("visitor_reports", "report_date, total_guests"),
+      fetchTrendReports("accommodation_reports", "report_date, total_check_ins, guest_check_ins"),
     ]);
+    const visitorData = visitorResult.data;
+    const accommodationData = accommodationResult.data;
+    const visitorError = visitorResult.error;
+    const accommodationError = accommodationResult.error;
 
     if (visitorError || accommodationError) {
       console.error("Visitor trends loading error:", visitorError || accommodationError);
