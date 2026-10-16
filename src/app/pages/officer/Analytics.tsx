@@ -154,26 +154,48 @@ export default function Analytics() {
 
     if (establishmentError) console.error("Error fetching establishments:", establishmentError);
 
-    const { data: visitorData, error: visitorError } = await supabase
-      .from("visitor_reports")
-      .select(`
+    const fetchAllReports = async (
+      table: "visitor_reports" | "accommodation_reports",
+      select: string,
+    ) => {
+      const pageSize = 1000;
+      const allRows: Record<string, unknown>[] = [];
+
+      for (let page = 0; ; page += 1) {
+        const { data, error } = await supabase
+          .from(table)
+          .select(select)
+          .eq("status", "submitted")
+          .gte("report_date", selectedRange.start)
+          .lte("report_date", selectedRange.end)
+          .order("report_date", { ascending: true })
+          .range(page * pageSize, (page + 1) * pageSize - 1);
+
+        if (error) return { data: null, error };
+        allRows.push(...((data || []) as unknown as Record<string, unknown>[]));
+        if (!data || data.length < pageSize) break;
+      }
+
+      return { data: allRows, error: null };
+    };
+
+    const { data: visitorData, error: visitorError } = await fetchAllReports(
+      "visitor_reports",
+      `
         establishment_id,
         report_date,
         total_guests,
         residence_type,
         place_of_residence,
         establishments (name)
-      `)
-      .in("status", ["pending", "submitted", "validated", "approved"])
-            .gte("report_date", selectedRange.start)
-            .lte("report_date", selectedRange.end)
-      .order("report_date", { ascending: true });
+      `,
+    );
 
     if (visitorError) console.error("Error fetching visitor data:", visitorError);
 
-    const { data: accommodationData, error: accError } = await supabase
-      .from("accommodation_reports")
-      .select(`
+    const { data: accommodationData, error: accError } = await fetchAllReports(
+      "accommodation_reports",
+      `
         establishment_id,
         report_date,
         total_rooms,
@@ -181,11 +203,8 @@ export default function Analytics() {
         total_check_ins,
         total_guest_nights,
         establishments (name)
-      `)
-      .in("status", ["pending", "submitted", "validated", "approved"])
-            .gte("report_date", selectedRange.start)
-            .lte("report_date", selectedRange.end)
-      .order("report_date", { ascending: true });
+      `,
+    );
 
     if (accError) console.error("Error fetching accommodation data:", accError);
 
