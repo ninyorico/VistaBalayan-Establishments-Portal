@@ -167,17 +167,14 @@ export default function Analytics() {
         description={`Yearly and monthly performance for ${establishment.name || "your establishment"}.`}
         compact
       >
-        <label className="flex min-w-[10rem] flex-col gap-1 text-xs font-semibold uppercase tracking-[0.14em] text-slate-300">
-          Reporting year
-          <select
-            value={selectedYear}
-            onChange={(event) => setSelectedYear(Number(event.target.value))}
-            className="h-10 rounded-2xl border border-white/15 bg-white/10 px-3 text-sm font-semibold normal-case tracking-normal text-white outline-none backdrop-blur-xl focus:ring-2 focus:ring-cyan-200/60 sm:h-12"
-            aria-label="Filter analytics by reporting year"
-          >
-            {yearOptions.map((option) => <option key={option} value={option} className="text-[#0B2530]">{option}</option>)}
-          </select>
-        </label>
+        <select
+          value={selectedYear}
+          onChange={(event) => setSelectedYear(Number(event.target.value))}
+          className="h-10 w-full min-w-[8rem] rounded-2xl border border-white/70 bg-white px-4 text-sm font-bold text-[#0B2530] shadow-[0_6px_14px_rgba(7,59,76,0.16)] outline-none transition focus:ring-2 focus:ring-cyan-200/80 sm:h-12 sm:w-auto"
+          aria-label="Filter analytics by reporting year"
+        >
+          {yearOptions.map((option) => <option key={option} value={option}>{option}</option>)}
+        </select>
       </PageHero>
 
       {mode === "visitor" && showVisitorAnalytics && <>
