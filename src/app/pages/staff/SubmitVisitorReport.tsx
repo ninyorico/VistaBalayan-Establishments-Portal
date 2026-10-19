@@ -4,7 +4,7 @@ import { Save, Send, Plus, Trash2, AlertTriangle} from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "../../../lib/supabase";
 import { canSubmitVisitorReport } from "../../../lib/establishmentReportForms";
-import { LoadingState } from "../../components/vista/PolishedShell";
+import { LoadingState, PageHero } from "../../components/vista/PolishedShell";
 
 interface VisitorEntry {
   id: number;
@@ -380,10 +380,12 @@ const loadProfile = async () => {
 
   return (
     <div className="space-y-4 sm:space-y-6">
-      <div>
-        <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">Daily Tourist Arrival Encoding</h1>
-        <p className="text-sm sm:text-base text-gray-600 mt-1">Record same-day visitors by residence category</p>
-      </div>
+      <PageHero
+        eyebrow="Daily reporting"
+        title="Daily Tourist Arrival Encoding"
+        description="Record same-day visitors by residence category."
+        compact
+      />
 
       <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4 sm:p-6 overflow-hidden">
         <div className="grid grid-cols-2 gap-3 sm:gap-6">

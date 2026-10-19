@@ -12,7 +12,7 @@ import { Input } from '../../components/ui/input'
 import { Label } from '../../components/ui/label'
 import { Separator } from '../../components/ui/separator'
 import { Textarea } from '../../components/ui/textarea'
-import { LoadingState } from '../../components/vista/PolishedShell'
+import { LoadingState, PageHero } from '../../components/vista/PolishedShell'
 
 const BALAYAN_CENTER = { latitude: 13.9385, longitude: 120.7332 }
 const LEAFLET_ATTRIBUTION = '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
@@ -547,25 +547,13 @@ export default function ManageListing() {
 
   return (
     <main className="w-full max-w-full overflow-x-hidden" data-manage-listing-redesign="shadcn-taste-editorial">
-      <div className="space-y-5 sm:space-y-7" data-manage-listing-hero-removed="true">
-        <section className="grid grid-cols-1 gap-3" data-manage-listing-profile-card-only="true">
-          <Card className="tourism-card group overflow-hidden rounded-[1.75rem] border-0 bg-[#E0E5EC] text-[#193364] shadow-sm">
-            <CardContent className="relative p-5 sm:p-6">
-              <div className="relative">
-                <div>
-                  <p className="text-xs font-medium uppercase tracking-[0.22em] text-[#6C9772]">Public profile</p>
-                  <h2 className="mt-2 max-w-3xl text-[clamp(1.75rem,7vw,3rem)] font-semibold leading-tight tracking-[-0.04em] sm:text-4xl">
-                    Shape how visitors see your stay.
-                  </h2>
-                  <p className="mt-3 max-w-2xl text-sm leading-6 text-[#6B7280] sm:text-base">
-                    Keep the public tourism card precise: clean details, gallery-ready photos, and an exact visitor pin without exposing backend clutter.
-                  </p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
-        </section>
+      <div className="space-y-5 sm:space-y-7" data-manage-listing-hero="dashboard-style">
+        <PageHero
+          eyebrow="Public profile"
+          title="Shape how visitors see your stay."
+          description="Keep the public tourism card precise: clean details, gallery-ready photos, and an exact visitor pin without exposing backend clutter."
+          compact
+        />
 
         <div className="grid grid-cols-1 gap-5 lg:grid-cols-[minmax(0,1.45fr)_minmax(320px,0.75fr)]">
           <div className="space-y-5">

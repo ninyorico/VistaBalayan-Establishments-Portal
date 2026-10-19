@@ -4,7 +4,7 @@ import { Area, AreaChart, Bar, BarChart, CartesianGrid, Cell, Legend, PieChart a
 import { supabase } from "../../../lib/supabase";
 import { canSubmitAccommodationReport, canSubmitVisitorReport, getEstablishmentReportingMode } from "../../../lib/establishmentReportForms";
 import { currentMonthKey, currentYear, buildAccommodationMonthlySeries, buildVisitorMonthlySeries, isOfficialReport, residenceTotals, toNumber, type AccommodationReport, type VisitorReport } from "../../../lib/staffAnalytics";
-import { LoadingState, MetricCard } from "../../components/vista/PolishedShell";
+import { LoadingState, MetricCard, PageHero } from "../../components/vista/PolishedShell";
 import DataState from "../../components/DataState";
 
 const panelClass = "rounded-3xl border border-[#C3CBD7] bg-[#E0E5EC] p-5 shadow-[8px_8px_15px_rgba(163,177,198,.48),-8px_-8px_15px_rgba(255,255,255,.48)] sm:p-6";
@@ -154,7 +154,12 @@ export default function Analytics() {
 
   return (
     <div className="space-y-6" data-staff-analytics-mode={mode}>
-      <div><h1 className="text-3xl font-bold text-[#0B2530]">Establishment Analytics</h1><p className="mt-1 text-[#5D6F73]">Current-year and current-month performance for {establishment.name || "your establishment"}.</p></div>
+      <PageHero
+        eyebrow="Establishment portal"
+        title="Establishment Analytics"
+        description={`Current-year and current-month performance for ${establishment.name || "your establishment"}.`}
+        compact
+      />
 
       {mode === "visitor" && showVisitorAnalytics && <>
         <MetricGrid metrics={visitorMetrics} />

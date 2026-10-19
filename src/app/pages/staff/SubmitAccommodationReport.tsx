@@ -1,13 +1,13 @@
 import { useState, useEffect, useRef, type MouseEvent, type PointerEvent, type TouchEvent } from "react";
 import { useNavigate } from "react-router";
-import { Save, Send, Settings, AlertTriangle, Plus, Trash2 } from "lucide-react";
+import { Save, Send, AlertTriangle, Plus, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "../../../lib/supabase";
 
 import { canSubmitAccommodationReport } from "../../../lib/establishmentReportForms";
 import { DEFAULT_ROOM_CONFIG, getRoomConfigFromAmenities, normalizeRoomConfig, setRoomConfigInAmenities, type EstablishmentRoomConfig } from "../../../lib/establishmentRoomConfig";
 import { useDialogFocus } from "../../../hooks/useDialogFocus";
-import { LoadingState } from "../../components/vista/PolishedShell";
+import { LoadingState, PageHero } from "../../components/vista/PolishedShell";
 
 interface RoomOccupancy {
   roomType: string;
@@ -47,7 +47,7 @@ export default function SubmitAccommodationReport() {
   const [reportFormMode, setReportFormMode] = useState<AccommodationFormMode>("single");
   const [tempReportFormMode, setTempReportFormMode] = useState<AccommodationFormMode>("single");
   const [roomsToAdd, setRoomsToAdd] = useState("1");
-  const roomSetupTriggerRef = useRef<HTMLButtonElement>(null);
+
   const roomDialogRef = useRef<HTMLDivElement>(null);
   const [tempRoomConfig, setTempRoomConfig] = useState<EstablishmentRoomConfig[]>(DEFAULT_ROOM_CONFIG);
   const [roomTypes, setRoomTypes] = useState<EstablishmentRoomConfig[]>(DEFAULT_ROOM_CONFIG);
@@ -795,27 +795,14 @@ export default function SubmitAccommodationReport() {
 
   return (
     <div className="space-y-4 pb-16 sm:space-y-6">
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <div>
-          <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">
-              Digital DAE-1A
-            </h1>
-            <p className="text-gray-600 mt-1 text-sm sm:text-base">
-              Daily accommodation source record for MCTAO reporting
-            </p>
-        </div>
-        <button
-          ref={roomSetupTriggerRef}
-          type="button"
-          aria-label="Configure Rooms"
-          onClick={() => { setTempReportFormMode(reportFormMode); setShowRoomSetup(true); }}
-          className="flex items-center justify-center gap-2 rounded-lg bg-[#0F4C75] px-4 py-2 font-medium text-white transition hover:bg-[#0F4C75]"
-        >
-          <Settings className="w-4 h-4 sm:w-5 sm:h-5" />
-          <span className="hidden sm:inline">Configure Rooms</span>
-          <span className="sm:hidden">Configure</span>
-        </button>
-      </div>
+      <PageHero
+        eyebrow="Daily reporting"
+        title="Digital DAE-1A"
+        description="Daily accommodation source record for MCTAO reporting."
+        actionLabel="Configure Rooms"
+        onAction={() => { setTempReportFormMode(reportFormMode); setShowRoomSetup(true); }}
+        compact
+      />
 
       {/* Room Setup Modal */}
       {showRoomSetup && (

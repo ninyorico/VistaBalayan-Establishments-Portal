@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { Download, Search } from "lucide-react";
 import { formatDate } from "../../lib/reportMetrics";
 import { getVisitorResidenceLabel, getVisitorResidenceLocation } from "../../lib/reporting";
+import { PageHero } from "./vista/PolishedShell";
 
 interface VisitorRecord {
   id: string;
@@ -197,10 +198,12 @@ export default function EstablishmentSubmissionRecords({
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-3xl font-bold tracking-[-0.035em] text-slate-950">Submission history</h1>
-        <p className="mt-1 text-slate-600">Review the reports submitted by this establishment.</p>
-      </div>
+      <PageHero
+        eyebrow="Establishment portal"
+        title="Submission history"
+        description="Review the reports submitted by this establishment."
+        compact
+      />
 
       {canSubmitVisitor && canSubmitAccommodation && (
         <div className="flex flex-wrap gap-2" role="tablist" aria-label="Submission report type">
