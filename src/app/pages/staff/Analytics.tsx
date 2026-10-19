@@ -50,6 +50,7 @@ export default function Analytics() {
   const [establishment, setEstablishment] = useState<any>(null);
   const [visitorReports, setVisitorReports] = useState<VisitorReport[]>([]);
   const [accommodationReports, setAccommodationReports] = useState<AccommodationReport[]>([]);
+  const [selectedYear, setSelectedYear] = useState(currentYear());
 
   useEffect(() => { loadAnalytics(); }, []);
 
@@ -97,8 +98,14 @@ export default function Analytics() {
   const mode = getEstablishmentReportingMode(establishment);
   const showVisitorAnalytics = canSubmitVisitorReport(establishment);
   const showAccommodationAnalytics = canSubmitAccommodationReport(establishment);
-  const year = currentYear();
-  const monthKey = currentMonthKey();
+  const yearOptions = useMemo(() => {
+    const years = [...visitorReports, ...accommodationReports]
+      .map((report) => Number((report.report_date || report.created_at || "").slice(0, 4)))
+      .filter((value) => Number.isFinite(value) && value > 2000);
+    return Array.from(new Set([currentYear(), ...years])).sort((a, b) => b - a);
+  }, [visitorReports, accommodationReports]);
+  const year = selectedYear;
+  const monthKey = `${year}-${currentMonthKey().slice(5)}`;
   const visitorYearReports = visitorReports.filter((report) => (report.report_date || report.created_at || "").startsWith(String(year)));
   const accommodationYearReports = accommodationReports.filter((report) => (report.report_date || report.created_at || "").startsWith(String(year)));
   const visitorMonths = useMemo(() => buildVisitorMonthlySeries(visitorYearReports, year), [visitorYearReports, year]);
@@ -157,9 +164,21 @@ export default function Analytics() {
       <PageHero
         eyebrow="Establishment portal"
         title="Establishment Analytics"
-        description={`Current-year and current-month performance for ${establishment.name || "your establishment"}.`}
+        description={`Yearly and monthly performance for ${establishment.name || "your establishment"}.`}
         compact
-      />
+      >
+        <label className="flex min-w-[10rem] flex-col gap-1 text-xs font-semibold uppercase tracking-[0.14em] text-slate-300">
+          Reporting year
+          <select
+            value={selectedYear}
+            onChange={(event) => setSelectedYear(Number(event.target.value))}
+            className="h-10 rounded-2xl border border-white/15 bg-white/10 px-3 text-sm font-semibold normal-case tracking-normal text-white outline-none backdrop-blur-xl focus:ring-2 focus:ring-cyan-200/60 sm:h-12"
+            aria-label="Filter analytics by reporting year"
+          >
+            {yearOptions.map((option) => <option key={option} value={option} className="text-[#0B2530]">{option}</option>)}
+          </select>
+        </label>
+      </PageHero>
 
       {mode === "visitor" && showVisitorAnalytics && <>
         <MetricGrid metrics={visitorMetrics} />
