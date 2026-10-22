@@ -55,11 +55,15 @@ export default function Login() {
 
         const { data: establishment, error: establishmentError } = await supabase
           .from("establishments")
-          .select("type,reporting_mode,total_rooms")
+          .select("type,reporting_mode,total_rooms,status")
           .eq("id", profile.establishment_id)
           .maybeSingle();
 
         if (establishmentError) throw establishmentError;
+        if (establishment?.status !== "active") {
+          await supabase.auth.signOut();
+          throw new Error("This account's linked establishment is inactive. Please contact the municipal tourism office.");
+        }
         const reportingMode = getEstablishmentReportingMode(establishment);
         destination = reportingMode === "visitor"
           ? "/staff/submit-visitor-report"

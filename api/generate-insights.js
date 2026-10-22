@@ -54,7 +54,7 @@ const rateLimit = (userId) => {
   return true;
 };
 const isOfficer = (profile) => profile?.role === 'municipal_officer' && profile?.status === 'active';
-const isStaff = (profile) => profile?.role === 'establishment_staff' && profile?.status === 'active' && Boolean(profile.establishment_id);
+const isStaff = (profile, establishmentStatus) => profile?.role === 'establishment_staff' && profile?.status === 'active' && establishmentStatus === 'active' && Boolean(profile.establishment_id);
 
 const isRetryableModelError = (error) => {
   const message = error instanceof Error ? error.message : String(error || '');
@@ -173,12 +173,25 @@ export default async function handler(req, res) {
     const { data: userData, error: userError } = await supabaseAdmin.auth.getUser(token);
     if (userError || !userData?.user?.id) return sendJson(res, 401, { error: 'Invalid session' });
     const { data: profile, error: profileError } = await supabaseAdmin.from('profiles').select('id,role,status,establishment_id').eq('id', userData.user.id).maybeSingle();
-    if (profileError || (!isOfficer(profile) && !isStaff(profile))) return sendJson(res, 403, { error: 'AI insights are not available for this account' });
+    if (profileError) return sendJson(res, 403, { error: 'Unable to verify account access' });
+
+    let establishmentStatus = null;
+    if (profile?.role === 'establishment_staff' && profile.establishment_id) {
+      const { data: establishment, error: establishmentError } = await supabaseAdmin
+        .from('establishments')
+        .select('status')
+        .eq('id', profile.establishment_id)
+        .maybeSingle();
+      if (establishmentError) return sendJson(res, 403, { error: 'Unable to verify establishment access' });
+      establishmentStatus = establishment?.status || null;
+    }
+
+    if (!isOfficer(profile) && !isStaff(profile, establishmentStatus)) return sendJson(res, 403, { error: 'AI insights are not available for this account' });
     if (!rateLimit(userData.user.id)) return sendJson(res, 429, { error: 'Too many AI requests. Please try again later.' });
     const body = await readBody(req);
     const scope = body.scope === 'establishment' ? 'establishment' : body.scope === 'municipality' ? 'municipality' : null;
     const requestId = String(body.request_id || '').trim() || crypto.randomUUID();
-    if (!scope || (scope === 'municipality' && !isOfficer(profile)) || (scope === 'establishment' && !isStaff(profile))) return sendJson(res, 403, { error: 'You are not authorized for this AI scope' });
+    if (!scope || (scope === 'municipality' && !isOfficer(profile)) || (scope === 'establishment' && !isStaff(profile, establishmentStatus))) return sendJson(res, 403, { error: 'You are not authorized for this AI scope' });
     if (requestId.length > 100) return sendJson(res, 400, { error: 'Invalid AI request identifier' });
     const cachedResults = await findCachedResults(supabaseAdmin, scope, profile.establishment_id, requestId);
     if (cachedResults) return sendJson(res, 200, cachedResults);

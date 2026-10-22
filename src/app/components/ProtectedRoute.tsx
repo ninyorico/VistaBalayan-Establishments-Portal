@@ -1,14 +1,23 @@
 import { Navigate, useLocation } from "react-router";
+import { useEffect, useState } from "react";
 import { ShieldAlert } from "lucide-react";
 import { PageSkeleton } from "./vista/PolishedShell";
 import { useAuth } from "../../contexts/AuthContext";
 import { roleHomePath } from "../../lib/governance";
 
 export function ProtectedRoute({ children, allowedRoles }: { children: JSX.Element; allowedRoles?: string[] }) {
-  const { profile, loading } = useAuth();
+  const { profile, loading, refreshProfile } = useAuth();
   const location = useLocation();
+  const [checkingStaffAccess, setCheckingStaffAccess] = useState(false);
 
-  if (loading) {
+  useEffect(() => {
+    if (!loading && profile?.role === "establishment_staff") {
+      setCheckingStaffAccess(true);
+      void refreshProfile().finally(() => setCheckingStaffAccess(false));
+    }
+  }, [location.pathname]);
+
+  if (loading || checkingStaffAccess) {
     return <PageSkeleton label="Checking your access" />;
   }
 

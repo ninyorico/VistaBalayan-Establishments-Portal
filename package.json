@@ -6,7 +6,7 @@
   "scripts": {
     "build": "vite build",
     "dev": "vite",
-    "test": "vitest run src/lib/reportMetrics.test.ts",
+    "test": "vitest run src/lib",
     "test:e2e": "playwright test",
     "test:a11y": "playwright test tests/e2e/accessibility.spec.ts",
     "test:keyboard": "playwright test tests/e2e/keyboard.spec.ts",

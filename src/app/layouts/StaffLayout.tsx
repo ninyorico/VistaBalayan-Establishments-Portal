@@ -31,7 +31,7 @@ const menuItems = [
 
 export default function StaffLayout() {
   const navigate = useNavigate();
-  const { profile, signOut } = useAuth();
+  const { profile, signOut, refreshProfile } = useAuth();
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [profileDropdownOpen, setProfileDropdownOpen] = useState(false);
   const [establishment, setEstablishment] = useState<any>(null);
@@ -42,9 +42,14 @@ export default function StaffLayout() {
 
       const { data: establishmentData } = await supabase
         .from("establishments")
-        .select("type,total_rooms,reporting_mode")
+        .select("type,total_rooms,reporting_mode,status")
         .eq("id", profile.establishment_id)
         .maybeSingle();
+
+      if (establishmentData?.status !== "active") {
+        await refreshProfile();
+        return;
+      }
 
       setEstablishment(establishmentData);
     };

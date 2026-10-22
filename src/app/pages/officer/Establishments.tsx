@@ -636,7 +636,7 @@ export default function Establishments() {
         toast.error("Failed to update: " + error.message);
       } else {
         toast.success("User updated successfully");
-        fetchUsers();
+        await Promise.all([fetchUsers(), fetchEstablishments()]);
         setShowUserModal(false);
       }
     } else {
