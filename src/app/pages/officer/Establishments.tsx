@@ -491,6 +491,11 @@ export default function Establishments() {
       return;
     }
 
+    if (!establishmentForm.contact_number || !/^\d{11}$/.test(establishmentForm.contact_number)) {
+      toast.error("Contact number must contain exactly 11 digits");
+      return;
+    }
+
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/i.test(email)) {
       toast.error("Please use a valid work email address");
       return;
@@ -528,6 +533,7 @@ export default function Establishments() {
         email: email,
         password: newAccountForm.password,
         fullName: newAccountForm.full_name.trim(),
+        contactNumber: establishmentForm.contact_number,
       });
 
       const userId = accountResult.userId as string | undefined;
@@ -1270,7 +1276,7 @@ export default function Establishments() {
                       <div><label className="block text-sm font-medium text-gray-700 mb-2">Establishment Class *</label><select value={establishmentForm.dot_classification} onChange={(e) => setEstablishmentClass(e.target.value as DotClassification)} className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#1CA7C9]/50 focus:border-[#1CA7C9] outline-none transition-all">{DOT_ESTABLISHMENT_CLASSES.map((item) => <option key={item.code} value={item.code}>{item.code} — {item.label}</option>)}</select></div>
                       <div><label className="block text-sm font-medium text-gray-700 mb-2">Report Types *</label><select value={establishmentForm.reporting_mode} onChange={(e) => setEstablishmentForm({ ...establishmentForm, reporting_mode: e.target.value as ReportingMode })} className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#1CA7C9]/50 focus:border-[#1CA7C9] outline-none transition-all"><option value="accommodation">Overnight reports</option><option value="visitor">Day-tour reports</option><option value="both">Day-tour and overnight reports</option></select><p className="mt-1 text-xs text-gray-500">Choose both for day visitors and overnight guests.</p></div>
                       <div><label className="block text-sm font-medium text-gray-700 mb-2">Address *</label><input type="text" value={establishmentForm.address} onChange={(e) => setEstablishmentForm({ ...establishmentForm, address: e.target.value })} className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#1CA7C9]/50 focus:border-[#1CA7C9] outline-none transition-all" placeholder="Enter address" /></div>
-                      <div><label className="block text-sm font-medium text-gray-700 mb-2">Contact Number *</label><input type="text" value={establishmentForm.contact_number} onChange={(e) => setEstablishmentForm({ ...establishmentForm, contact_number: e.target.value })} className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#1CA7C9]/50 focus:border-[#1CA7C9] outline-none transition-all" placeholder="+63 917 123 4567" /></div>
+                      <div><label className="block text-sm font-medium text-gray-700 mb-2">Contact Number *</label><input type="text" inputMode="numeric" pattern="[0-9]{11}" maxLength={11} value={establishmentForm.contact_number} onChange={(e) => setEstablishmentForm({ ...establishmentForm, contact_number: e.target.value.replace(/\D/g, "").slice(0, 11) })} className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#1CA7C9]/50 focus:border-[#1CA7C9] outline-none transition-all" placeholder="09171234567" /><p className="mt-1 text-xs text-gray-500">Enter exactly 11 digits. Letters, symbols, and extra digits are not accepted.</p></div>
                       <div>
                         <label className="block text-sm font-medium text-gray-700 mb-2">Business Permit Number</label>
                         <input type="text" value={establishmentForm.business_permit_number} onChange={(e) => setEstablishmentForm({ ...establishmentForm, business_permit_number: e.target.value })} className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#1CA7C9]/50 focus:border-[#1CA7C9] outline-none transition-all" placeholder="Enter only after officer verification" />

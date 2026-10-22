@@ -17,6 +17,11 @@ export default async function handler(req, res) {
     const email = normalizeEmail(body.email);
     const password = String(body.password || '');
     const fullName = String(body.fullName || '').trim();
+    const contactNumber = String(body.contactNumber || '').trim();
+
+    if (!/^\d{11}$/.test(contactNumber)) {
+      return sendJson(res, 400, { error: 'Contact number must contain exactly 11 digits.' });
+    }
 
     if (!/^\S+@[^\s@]+\.[^\s@]+$/i.test(email)) {
       return sendJson(res, 400, { error: 'Use a valid work email address.' });
