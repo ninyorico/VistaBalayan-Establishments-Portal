@@ -1014,12 +1014,7 @@ export default function Establishments() {
                     filteredEstablishments.map((establishment) => (
                       <tr key={establishment.id} className="hover:bg-gray-50">
                         <td className="px-6 py-4">
-                          <div className="flex items-center gap-3">
-                            <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
-                              <Building2 className="w-5 h-5 text-blue-600" />
-                            </div>
-                            <p className="font-medium text-gray-900">{establishment.name}</p>
-                          </div>
+                          <p className="font-medium text-gray-900">{establishment.name}</p>
                         </td>
                         <td className="px-6 py-4 text-gray-600">{establishment.type}</td>
                         <td className="px-6 py-4">
