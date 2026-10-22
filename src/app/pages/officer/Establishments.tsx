@@ -1185,16 +1185,11 @@ export default function Establishments() {
                       return (
                         <tr key={user.id} className="hover:bg-gray-50">
                           <td className="px-6 py-4">
-                            <div className="flex items-center gap-3">
-                              <div className="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center">
-                                <span className="text-blue-600 font-medium">{user.full_name?.charAt(0) || "?"}</span>
-                              </div>
-                              <div>
-                                <p className="font-medium text-gray-900">{user.full_name || "Unknown"}</p>
-                                <div className="flex items-center gap-1 text-gray-500 text-sm">
-                                  <Mail className="w-3 h-3" />
-                                  <span>{user.email}</span>
-                                </div>
+                            <div>
+                              <p className="font-medium text-gray-900">{user.full_name || "Unknown"}</p>
+                              <div className="flex items-center gap-1 text-gray-500 text-sm">
+                                <Mail className="w-3 h-3" />
+                                <span>{user.email}</span>
                               </div>
                             </div>
                           </td>
