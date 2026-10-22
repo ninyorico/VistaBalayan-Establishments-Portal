@@ -142,12 +142,19 @@ export default function Establishments() {
     const { data, error } = await supabase
       .from('profiles')
       .select('*')
-      .order('created_at', { ascending: false });
+      .order('full_name', { ascending: true });
     
     if (error) {
       console.error("Error fetching users:", error);
     } else {
-      setUsers(data || []);
+      const alphabetizedUsers = [...(data || [])].sort((a, b) =>
+        (a.full_name || a.email || "").localeCompare(
+          b.full_name || b.email || "",
+          undefined,
+          { sensitivity: "base" }
+        )
+      );
+      setUsers(alphabetizedUsers);
     }
   }
 
