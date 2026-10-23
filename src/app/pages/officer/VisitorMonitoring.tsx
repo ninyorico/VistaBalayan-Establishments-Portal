@@ -6,6 +6,8 @@ import { downloadReportMonitoringWorkbook } from "../../../lib/reportMonitoringE
 import DataState from "../../components/DataState";
 import { useDialogFocus } from "../../../hooks/useDialogFocus";
 import { getVisitorResidenceLabel, getVisitorResidenceLocation, normalizeResidenceCategory } from "../../../lib/reporting";
+import ReportPeriodFilter from "../../components/ReportPeriodFilter";
+import { periodMatchesDate, periodToMonthValue, type ReportPeriodSelection } from "../../../lib/reportPeriod";
 
 interface VisitorRecord {
   id: string;
@@ -26,7 +28,8 @@ export default function VisitorMonitoring({ embedded = false }: { embedded?: boo
   const [loadError, setLoadError] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState("");
   const [filterResidence, setFilterResidence] = useState("all");
-  const [specificMonth, setSpecificMonth] = useState("");
+  const now = new Date();
+  const [period, setPeriod] = useState<ReportPeriodSelection>({ type: "month", year: now.getFullYear(), month: now.getMonth(), quarter: Math.floor(now.getMonth() / 3) + 1 });
   const [selectedEstablishment, setSelectedEstablishment] = useState<string | null>(null);
   const visitorDialogRef = useRef<HTMLDivElement>(null);
   const tableTouchRef = useRef<{ x: number; y: number; lastX: number; lastY: number; axis: "x" | "y" | null }>({
@@ -135,11 +138,8 @@ export default function VisitorMonitoring({ embedded = false }: { embedded?: boo
     
     const matchesResidence = filterResidence === "all" || record.residenceCategory === filterResidence;
       
-    let matchesDate = true;
-    if (specificMonth) {
-      matchesDate = record.date.startsWith(specificMonth);
-    }
-    
+    const matchesDate = periodMatchesDate(record.date, period);
+
     return matchesSearch && matchesResidence && matchesDate;
   });
 
@@ -200,9 +200,10 @@ export default function VisitorMonitoring({ embedded = false }: { embedded?: boo
     };
   }, [selectedGroup]);
 
-  const monthLabel = specificMonth
-    ? new Date(`${specificMonth}-01T00:00:00`).toLocaleString("default", { month: "long", year: "numeric" })
-    : "all available months";
+  const availableYears = useMemo(() => Array.from(new Set(visitorRecords.map((record) => Number(record.date.slice(0, 4))).filter((year) => Number.isFinite(year)))).sort((a, b) => b - a), [visitorRecords]);
+  const monthLabel = period.type === "month"
+    ? new Date(`${periodToMonthValue(period)}-01T00:00:00`).toLocaleString("default", { month: "long", year: "numeric" })
+    : period.type === "quarter" ? `Q${period.quarter} ${period.year}` : `${period.type === "week" ? "Weeks" : "Year"} ${period.year}`;
 
   const totalVisitors = filteredRecords.reduce((sum, r) => sum + r.total, 0);
   const totalMale = filteredRecords.reduce((sum, r) => sum + r.male, 0);
@@ -214,7 +215,7 @@ export default function VisitorMonitoring({ embedded = false }: { embedded?: boo
           .filter((record) => record.establishment.toLowerCase().includes(searchTerm.trim().toLowerCase()))
           .map((record) => record.establishment))]
       : undefined;
-    void downloadReportMonitoringWorkbook({ section: "daytour", specificMonth: specificMonth || undefined, establishmentNames })
+    void downloadReportMonitoringWorkbook({ section: "daytour", specificMonth: period.type === "month" ? periodToMonthValue(period) : undefined, establishmentNames })
       .then(() => toast.success("Exported Day-tour arrivals workbook"))
       .catch((error) => {
         console.error("Day-tour arrivals export error:", error);
@@ -292,17 +293,7 @@ export default function VisitorMonitoring({ embedded = false }: { embedded?: boo
               <option value="FOREIGN">Foreign</option>
             </select>
           </div>
-          <label className="min-w-0 flex-1 sm:flex-none" htmlFor="visitor-report-month">
-            <span className="sr-only">Month</span>
-            <input
-              id="visitor-report-month"
-              type="month"
-              value={specificMonth}
-              onChange={(e) => setSpecificMonth(e.target.value)}
-              className="w-full min-w-0 rounded-lg border border-gray-300 px-3 py-2 text-sm outline-none focus:border-transparent focus:ring-2 focus:ring-blue-500 sm:px-4 sm:text-base"
-              title="Select report month"
-            />
-          </label>
+          <ReportPeriodFilter value={period} availableYears={availableYears} onChange={setPeriod} className="col-span-2 sm:col-span-1" />
           <button 
             className="flex items-center gap-2 rounded-lg bg-blue-600 px-3 py-2 text-sm text-white transition hover:bg-blue-700 sm:px-4 sm:text-base"
             onClick={handleExport}

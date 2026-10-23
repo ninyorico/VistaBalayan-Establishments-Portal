@@ -6,6 +6,8 @@ import { supabase } from "../../../lib/supabase";
 import { downloadReportMonitoringWorkbook } from "../../../lib/reportMonitoringExport";
 import { calculateAccommodationOccupancy, calculateAverageAccommodationOccupancy } from "../../../lib/reportMetrics";
 import { useDialogFocus } from "../../../hooks/useDialogFocus";
+import ReportPeriodFilter from "../../components/ReportPeriodFilter";
+import { periodMatchesDate, periodToMonthValue, type ReportPeriodSelection } from "../../../lib/reportPeriod";
 
 interface AccommodationRecord {
   id: string;
@@ -28,7 +30,8 @@ export default function AccommodationMonitoring({ embedded = false }: { embedded
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState("");
-  const [specificMonth, setSpecificMonth] = useState("");
+  const now = new Date();
+  const [period, setPeriod] = useState<ReportPeriodSelection>({ type: "month", year: now.getFullYear(), month: now.getMonth(), quarter: Math.floor(now.getMonth() / 3) + 1 });
   const [establishmentTotalRooms, setEstablishmentTotalRooms] = useState(0);
   const [expandedEstablishments, setExpandedEstablishments] = useState<Set<string>>(new Set());
   const [selectedAccommodationGroupKey, setSelectedAccommodationGroupKey] = useState<string | null>(null);
@@ -281,13 +284,7 @@ export default function AccommodationMonitoring({ embedded = false }: { embedded
   // Filter records based on search and date/month
   const filteredRecords = accommodationRecords.filter((record) => {
     const matchesSearch = record.establishment.toLowerCase().includes(searchTerm.toLowerCase());
-    let matchesDate = true;
-    
-    if (specificMonth) {
-      matchesDate = record.date.startsWith(specificMonth);
-    }
-
-    return matchesSearch && matchesDate;
+    return matchesSearch && periodMatchesDate(record.date, period);
   });
 
   const groupedRecords = useMemo(() => {
@@ -371,13 +368,14 @@ export default function AccommodationMonitoring({ embedded = false }: { embedded
     };
   }, [selectedAccommodationGroup]);
 
-  const monthLabel = specificMonth
-    ? new Date(`${specificMonth}-01T00:00:00`).toLocaleString("default", { month: "long", year: "numeric" })
-    : "all available months";
+  const availableYears = useMemo(() => Array.from(new Set(accommodationRecords.map((record) => Number(record.date.slice(0, 4))).filter((year) => Number.isFinite(year)))).sort((a, b) => b - a), [accommodationRecords]);
+  const monthLabel = period.type === "month"
+    ? new Date(`${periodToMonthValue(period)}-01T00:00:00`).toLocaleString("default", { month: "long", year: "numeric" })
+    : period.type === "quarter" ? `Q${period.quarter} ${period.year}` : `${period.type === "week" ? "Weeks" : "Year"} ${period.year}`;
 
   // Recalculate stats for filtered records
   const filteredStats = {
-    totalRooms: searchTerm || specificMonth
+    totalRooms: searchTerm || period.type !== "year"
       ? Array.from(
           filteredRecords.reduce((roomsByEstablishment, record) => {
             roomsByEstablishment.set(
@@ -412,7 +410,7 @@ export default function AccommodationMonitoring({ embedded = false }: { embedded
           .filter((record) => record.establishment.toLowerCase().includes(searchTerm.trim().toLowerCase()))
           .map((record) => record.establishment))]
       : undefined;
-    void downloadReportMonitoringWorkbook({ section: "overnight", specificMonth: specificMonth || undefined, establishmentNames })
+    void downloadReportMonitoringWorkbook({ section: "overnight", specificMonth: period.type === "month" ? periodToMonthValue(period) : undefined, establishmentNames })
       .then(() => toast.success("Exported Overnight arrivals workbook"))
       .catch((error) => {
         console.error("Overnight arrivals export error:", error);
@@ -488,22 +486,7 @@ export default function AccommodationMonitoring({ embedded = false }: { embedded
             </div>
           </div>
           <div className="flex w-full min-w-0 items-center gap-2 sm:w-auto">
-            <div className="flex shrink-0 items-center gap-1 rounded-lg bg-gray-100 p-1">
-              <button
-                type="button"
-                className="rounded-lg bg-blue-600 px-3 py-1.5 text-sm text-white transition"
-                aria-pressed="true"
-              >
-                Month
-              </button>
-            </div>
-            <input
-              type="month"
-              value={specificMonth}
-              onChange={(e) => setSpecificMonth(e.target.value)}
-              className="min-w-0 flex-1 rounded-lg border border-gray-300 px-3 py-2 outline-none focus:border-transparent focus:ring-2 focus:ring-blue-500 sm:flex-none sm:px-4"
-              title="Select report month"
-            />
+            <ReportPeriodFilter value={period} availableYears={availableYears} onChange={setPeriod} className="min-w-0 flex-1" />
             <button
               type="button"
               className="flex shrink-0 items-center gap-2 rounded-lg bg-blue-600 px-3 py-2 text-white transition hover:bg-blue-700 sm:px-4"

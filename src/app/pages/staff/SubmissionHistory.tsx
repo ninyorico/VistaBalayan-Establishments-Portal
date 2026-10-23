@@ -5,6 +5,7 @@ import { formatDate, formatMonthYear, groupStaffSubmissions, StaffSubmissionSumm
 import { canSubmitAccommodationReport, canSubmitVisitorReport } from "../../../lib/establishmentReportForms";
 import { downloadOfficialArrivalsWorkbook } from "../../../lib/officialArrivalsExport";
 import type { EstablishmentReportingRow } from "../../../lib/reporting";
+import type { ReportPeriodSelection } from "../../../lib/reportPeriod";
 import DataState from "../../components/DataState";
 import EstablishmentSubmissionRecords from "../../components/EstablishmentSubmissionRecords";
 import { LoadingState } from "../../components/vista/PolishedShell";
@@ -84,6 +85,7 @@ export default function SubmissionHistory() {
   const now = new Date();
   const [selectedYear, setSelectedYear] = useState(now.getFullYear());
   const [selectedMonth, setSelectedMonth] = useState(now.getMonth());
+  const [period, setPeriod] = useState<ReportPeriodSelection>({ type: "month", year: now.getFullYear(), month: now.getMonth(), quarter: Math.floor(now.getMonth() / 3) + 1 });
   const [expandedWeek, setExpandedWeek] = useState<number | null>(getWeekNumberInFourWeekMonth(now.getDate()));
   const [expandedSubmissionId, setExpandedSubmissionId] = useState<string | null>(null);
   const [viewingSubmission, setViewingSubmission] = useState<StaffSubmissionSummary | null>(null);
@@ -179,6 +181,7 @@ export default function SubmissionHistory() {
       if (newestParts) {
         setSelectedYear(newestParts.year);
         setSelectedMonth(newestParts.month);
+        setPeriod({ type: "month", year: newestParts.year, month: newestParts.month, quarter: Math.floor(newestParts.month / 3) + 1 });
         setExpandedWeek(getWeekNumberInFourWeekMonth(newestParts.day));
       }
     }
@@ -257,13 +260,19 @@ export default function SubmissionHistory() {
 
   const exportOfficialWorkbook = async (section: "daytour" | "overnight") => {
     if (!establishment) throw new Error("Establishment information is unavailable. Please retry.");
-    const selectedMonths = selectedMonth === -1 ? undefined : [selectedMonth + 1];
-    const period = selectedMonth === -1 ? String(selectedYear) : `${selectedYear}-${String(selectedMonth + 1).padStart(2, "0")}`;
+    const selectedMonths = period.type === "month"
+      ? [period.month + 1]
+      : period.type === "quarter"
+        ? [period.quarter * 3 - 2, period.quarter * 3 - 1, period.quarter * 3]
+        : undefined;
+    const periodLabel = period.type === "month"
+      ? `${period.year}-${String(period.month + 1).padStart(2, "0")}`
+      : period.type === "quarter" ? `${period.year}-Q${period.quarter}` : String(period.year);
     await downloadOfficialArrivalsWorkbook({
       filename: section === "daytour"
-        ? `Balayan_Daytour_Arrivals_${period}.xlsx`
-        : `Balayan_Overnight_Arrivals_${period}.xlsx`,
-      year: selectedYear,
+        ? `Balayan_Daytour_Arrivals_${periodLabel}.xlsx`
+        : `Balayan_Overnight_Arrivals_${periodLabel}.xlsx`,
+      year: period.year,
       selectedMonths,
       exportSection: section,
       includeEstablishmentsWithoutPermit: true,
@@ -348,6 +357,12 @@ export default function SubmissionHistory() {
 
   const showDayTourExport = allowedForms.visitor;
   const showOvernightExport = allowedForms.accommodation;
+  const handlePeriodChange = (nextPeriod: ReportPeriodSelection) => {
+    setPeriod(nextPeriod);
+    setSelectedYear(nextPeriod.year);
+    setSelectedMonth(nextPeriod.type === "month" ? nextPeriod.month : -1);
+    setExpandedSubmissionId(null);
+  };
 
   return (
     <EstablishmentSubmissionRecords
@@ -359,8 +374,8 @@ export default function SubmissionHistory() {
       setSearchTerm={setSearchTerm}
       selectedYear={selectedYear}
       setSelectedYear={(year) => { setSelectedYear(year); setExpandedSubmissionId(null); }}
-      selectedMonth={selectedMonth}
-      setSelectedMonth={(month) => { setSelectedMonth(month); setExpandedSubmissionId(null); }}
+      period={period}
+      onPeriodChange={handlePeriodChange}
       availableYears={availableYears}
       onExportVisitor={handleExportDayTourData}
       onExportAccommodation={handleExportOvernightData}

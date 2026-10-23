@@ -2,6 +2,8 @@ import { useEffect, useRef, useState } from "react";
 import { Download, Search } from "lucide-react";
 import { formatDate } from "../../lib/reportMetrics";
 import { getVisitorResidenceLabel, getVisitorResidenceLocation } from "../../lib/reporting";
+import ReportPeriodFilter from "./ReportPeriodFilter";
+import type { ReportPeriodSelection } from "../../lib/reportPeriod";
 import { PageHero } from "./vista/PolishedShell";
 
 interface VisitorRecord {
@@ -41,8 +43,8 @@ interface Props {
   setSearchTerm: (value: string) => void;
   selectedYear: number;
   setSelectedYear: (value: number) => void;
-  selectedMonth: number;
-  setSelectedMonth: (value: number) => void;
+  period: ReportPeriodSelection;
+  onPeriodChange: (value: ReportPeriodSelection) => void;
   availableYears: number[];
   onExportVisitor: () => void;
   onExportAccommodation: () => void;
@@ -67,17 +69,15 @@ const getLocationLabel = (record: VisitorRecord) => getVisitorResidenceLocation(
 const matchesCommonFilters = (
   record: { report_date?: string | null; created_at?: string | null; status?: string | null },
   searchTerm: string,
-  selectedYear: number,
-  selectedMonth: number,
+  period: ReportPeriodSelection,
   extraText: string
 ) => {
   const parts = getDateParts(record.report_date);
   const searchText = [record.report_date, record.created_at, record.status, extraText].join(" ").toLowerCase();
-  return (
-    parts?.year === selectedYear &&
-    (selectedMonth === -1 || parts.month === selectedMonth) &&
-    searchText.includes(searchTerm.toLowerCase())
-  );
+  const recordDate = record.report_date ? new Date(`${record.report_date.slice(0, 10)}T00:00:00`) : null;
+  const matchesPeriod = recordDate && !Number.isNaN(recordDate.getTime()) && recordDate.getFullYear() === period.year
+    && (period.type === "year" || period.type === "week" || (period.type === "month" ? recordDate.getMonth() === period.month : Math.floor(recordDate.getMonth() / 3) + 1 === period.quarter));
+  return Boolean(parts && matchesPeriod && searchText.includes(searchTerm.toLowerCase()));
 };
 
 export default function EstablishmentSubmissionRecords({
@@ -89,8 +89,8 @@ export default function EstablishmentSubmissionRecords({
   setSearchTerm,
   selectedYear,
   setSelectedYear,
-  selectedMonth,
-  setSelectedMonth,
+  period,
+  onPeriodChange,
   availableYears,
   onExportVisitor,
   onExportAccommodation,
@@ -162,8 +162,7 @@ export default function EstablishmentSubmissionRecords({
     matchesCommonFilters(
       record,
       searchTerm,
-      selectedYear,
-      selectedMonth,
+      period,
       [record.guest_name, record.residence_category, record.residence_type, record.place_of_residence, record.municipality, record.province, record.country].join(" ")
     )
   );
@@ -171,8 +170,7 @@ export default function EstablishmentSubmissionRecords({
     matchesCommonFilters(
       record,
       searchTerm,
-      selectedYear,
-      selectedMonth,
+      period,
       [record.total_rooms, record.total_check_ins, record.total_guest_nights].join(" ")
     )
   );
@@ -263,20 +261,14 @@ export default function EstablishmentSubmissionRecords({
             <Search className="absolute left-2 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400 sm:left-3 sm:h-5 sm:w-5" />
             <input value={searchTerm} onChange={(event) => setSearchTerm(event.target.value)} placeholder={isVisitor ? "Search residence or location" : "Search accommodation records"} className="w-full min-w-0 rounded-2xl border border-slate-200 bg-slate-50 py-3 pl-8 pr-2 text-xs outline-none focus:border-[#0F4C75] focus:ring-4 focus:ring-cyan-100 sm:pl-10 sm:pr-4 sm:text-sm" />
           </div>
-          <select value={selectedYear} onChange={(event) => setSelectedYear(Number(event.target.value))} className="min-w-0 rounded-2xl border border-slate-200 bg-slate-50 px-2 py-3 text-xs sm:px-4 sm:text-sm" aria-label="Filter by year">
-            {(availableYears.length > 0 ? availableYears : [selectedYear]).map((year) => <option key={year} value={year}>{year}</option>)}
-          </select>
-          <select value={selectedMonth} onChange={(event) => setSelectedMonth(Number(event.target.value))} className="min-w-0 rounded-2xl border border-slate-200 bg-slate-50 px-2 py-3 text-xs sm:px-4 sm:text-sm" aria-label="Filter by month">
-            <option value={-1}>ALL months</option>
-            {monthNames.map((month, index) => <option key={month} value={index}>{month}</option>)}
-          </select>
+          <ReportPeriodFilter value={period} availableYears={availableYears} onChange={onPeriodChange} className="col-span-3 md:col-span-2" />
         </div>
       </div>
 
       <div className="overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-sm">
         <div className="border-b border-slate-200 bg-slate-50 px-5 py-4 sm:px-6">
           <h2 className="text-base font-semibold text-slate-900">{isVisitor ? "Visitor records by establishment" : "Accommodation records by establishment"}</h2>
-          <p className="mt-1 text-sm text-slate-600">{activeCount} record{activeCount === 1 ? "" : "s"} for {selectedMonth === -1 ? "ALL months" : monthNames[selectedMonth]} {selectedYear}.</p>
+          <p className="mt-1 text-sm text-slate-600">{activeCount} record{activeCount === 1 ? "" : "s"} for {period.type === "month" ? `${monthNames[period.month]} ${period.year}` : period.type === "quarter" ? `Q${period.quarter} ${period.year}` : `${period.type === "week" ? "Weeks" : "Year"} ${period.year}`}.</p>
         </div>
         <div ref={tableScrollRef} className="touch-none overflow-x-auto overscroll-x-contain [-webkit-overflow-scrolling:touch]">
           <div ref={tableVerticalRef} className={isVisitor ? "min-w-[760px] max-h-[27rem] overflow-y-auto overflow-x-hidden overscroll-y-contain [-webkit-overflow-scrolling:touch]" : "min-w-[680px] max-h-[27rem] overflow-y-auto overflow-x-hidden overscroll-y-contain [-webkit-overflow-scrolling:touch]"}>
