@@ -488,11 +488,11 @@ export default function AccommodationMonitoring({ embedded = false }: { embedded
               />
             </div>
           </div>
-          <div className="flex w-full min-w-0 items-center gap-2 sm:w-auto">
-            <ReportPeriodFilter value={period} availableYears={availableYears} onChange={setPeriod} className="min-w-0 flex-1" />
+          <div className="flex w-full min-w-0 flex-col gap-3 sm:w-auto sm:flex-row sm:items-center sm:gap-4">
+            <ReportPeriodFilter value={period} availableYears={availableYears} onChange={setPeriod} className="w-full" />
             <button
               type="button"
-              className="flex shrink-0 items-center gap-2 rounded-lg bg-blue-600 px-3 py-2 text-white transition hover:bg-blue-700 sm:px-4"
+              className="flex w-full shrink-0 items-center justify-center gap-2 rounded-lg bg-blue-600 px-3 py-2 text-white transition hover:bg-blue-700 sm:w-auto sm:px-4"
               onClick={handleExport}
             >
               <Download className="h-4 w-4" /> <span>Export</span>

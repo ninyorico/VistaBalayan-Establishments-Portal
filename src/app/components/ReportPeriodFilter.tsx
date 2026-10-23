@@ -21,12 +21,20 @@ export default function ReportPeriodFilter({ value, availableYears, onChange, cl
   const years = availableYears.length > 0 ? availableYears : [value.year];
   const monthValue = periodToMonthValue(value);
 
+  const layoutClass = value.type === "month"
+    ? "grid grid-cols-[116px_minmax(0,1fr)] gap-2 sm:grid-cols-[116px_190px]"
+    : value.type === "quarter"
+      ? "grid grid-cols-[116px_96px_76px] gap-2"
+      : value.type === "week"
+        ? "grid grid-cols-[116px_96px_minmax(0,1fr)] gap-2 sm:grid-cols-[116px_96px_310px]"
+        : "grid grid-cols-[116px_96px] gap-2";
+
   return (
-    <div className={`flex min-w-0 flex-wrap items-center gap-2 ${className}`}>
+    <div className={`min-w-0 ${layoutClass} ${className}`}>
       <select
         value={value.type}
         onChange={(event) => onChange({ ...value, type: event.target.value as ReportPeriodType })}
-        className={`${selectClass} w-[116px] shrink-0`}
+        className={`${selectClass} w-full min-w-0`}
         aria-label="Select reporting period type"
       >
         {periodOptions.map((option) => <option key={option.value} value={option.value}>{option.label}</option>)}
@@ -39,7 +47,7 @@ export default function ReportPeriodFilter({ value, availableYears, onChange, cl
             const [year, month] = event.target.value.split("-").map(Number);
             onChange({ ...value, year, month: month - 1 });
           }}
-          className={`${selectClass} w-[190px] shrink-0`}
+          className={`${selectClass} w-full min-w-0`}
           aria-label="Select reporting month"
         >
           {years.flatMap((year) => monthNames.map((month, index) => (
@@ -53,7 +61,7 @@ export default function ReportPeriodFilter({ value, availableYears, onChange, cl
           <select
             value={value.year}
             onChange={(event) => onChange({ ...value, year: Number(event.target.value) })}
-            className={`${selectClass} w-[96px] shrink-0`}
+            className={`${selectClass} w-full min-w-0`}
             aria-label="Select reporting year"
           >
             {years.map((year) => <option key={year} value={year}>{year}</option>)}
@@ -61,7 +69,7 @@ export default function ReportPeriodFilter({ value, availableYears, onChange, cl
           <select
             value={value.week}
             onChange={(event) => onChange({ ...value, week: Number(event.target.value) })}
-            className={`${selectClass} w-[132px] sm:w-[310px] shrink-0`}
+            className={`${selectClass} w-full min-w-0`}
             aria-label="Select reporting week"
           >
             {Array.from({ length: 53 }, (_, index) => index + 1).map((week) => (
@@ -74,7 +82,7 @@ export default function ReportPeriodFilter({ value, availableYears, onChange, cl
           <select
             value={value.year}
             onChange={(event) => onChange({ ...value, year: Number(event.target.value) })}
-            className={`${selectClass} w-[96px] shrink-0`}
+            className={`${selectClass} w-full min-w-0`}
             aria-label="Select reporting year"
           >
             {years.map((year) => <option key={year} value={year}>{year}</option>)}
