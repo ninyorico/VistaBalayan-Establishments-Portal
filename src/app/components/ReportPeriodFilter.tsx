@@ -22,11 +22,11 @@ export default function ReportPeriodFilter({ value, availableYears, onChange, cl
   const monthValue = periodToMonthValue(value);
 
   const layoutClass = value.type === "month"
-    ? "grid grid-cols-[116px_minmax(0,1fr)] gap-2 sm:grid-cols-[116px_190px]"
+    ? "grid grid-cols-[116px_minmax(0,1fr)] gap-2 sm:grid-cols-[116px_190px] lg:grid-cols-[116px_minmax(190px,1fr)]"
     : value.type === "quarter"
       ? "grid grid-cols-[116px_96px_76px] gap-2"
       : value.type === "week"
-        ? "grid grid-cols-[116px_96px_minmax(0,1fr)] gap-2 sm:grid-cols-[116px_96px_310px]"
+        ? "grid grid-cols-[116px_96px_minmax(0,1fr)] gap-2 sm:grid-cols-[116px_96px_310px] lg:grid-cols-[116px_96px_minmax(0,1fr)]"
         : "grid grid-cols-[116px_96px] gap-2";
 
   return (

@@ -475,8 +475,8 @@ export default function AccommodationMonitoring({ embedded = false }: { embedded
 
       {/* Filters */}
       <div className="rounded-lg border border-gray-200 bg-white p-4 shadow-sm sm:p-6">
-        <div className="flex flex-wrap items-center gap-3 sm:gap-4">
-          <div className="min-w-0 basis-full sm:flex-1 sm:min-w-64">
+        <div className="flex flex-wrap items-center gap-3 sm:gap-4 lg:grid lg:grid-cols-[minmax(220px,1fr)_minmax(304px,auto)_auto] lg:items-center lg:gap-4">
+                  <div className="min-w-0 basis-full sm:flex-1 sm:min-w-64 lg:min-w-0">
             <div className="relative">
               <Search className="absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-gray-400" />
               <input
@@ -488,8 +488,8 @@ export default function AccommodationMonitoring({ embedded = false }: { embedded
               />
             </div>
           </div>
-          <div className="flex w-full min-w-0 flex-col gap-3 sm:w-auto sm:flex-row sm:items-center sm:gap-4">
-            <ReportPeriodFilter value={period} availableYears={availableYears} onChange={setPeriod} className="w-full" />
+          <div className="flex w-full min-w-0 flex-col gap-3 sm:w-auto sm:flex-row sm:items-center sm:gap-4 lg:w-auto lg:min-w-0">
+            <ReportPeriodFilter value={period} availableYears={availableYears} onChange={setPeriod} className="w-full lg:min-w-0" />
             <button
               type="button"
               className="flex w-full shrink-0 items-center justify-center gap-2 rounded-lg bg-blue-600 px-3 py-2 text-white transition hover:bg-blue-700 sm:w-auto sm:px-4"

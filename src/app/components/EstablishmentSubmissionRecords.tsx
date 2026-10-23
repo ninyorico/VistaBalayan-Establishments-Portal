@@ -256,12 +256,12 @@ export default function EstablishmentSubmissionRecords({
           </button>
         </div>
 
-        <div className="grid grid-cols-3 gap-2 sm:gap-3 md:grid-cols-4">
-          <div className="relative col-span-3 min-w-0 md:col-span-2">
+        <div className="grid grid-cols-3 gap-2 sm:gap-3 md:grid-cols-4 lg:grid-cols-[minmax(0,1fr)_minmax(304px,auto)] lg:items-center">
+          <div className="relative col-span-3 min-w-0 md:col-span-2 lg:col-span-1">
             <Search className="absolute left-2 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400 sm:left-3 sm:h-5 sm:w-5" />
             <input value={searchTerm} onChange={(event) => setSearchTerm(event.target.value)} placeholder={isVisitor ? "Search residence or location" : "Search accommodation records"} className="w-full min-w-0 rounded-2xl border border-slate-200 bg-slate-50 py-3 pl-8 pr-2 text-xs outline-none focus:border-[#0F4C75] focus:ring-4 focus:ring-cyan-100 sm:pl-10 sm:pr-4 sm:text-sm" />
           </div>
-          <ReportPeriodFilter value={period} availableYears={availableYears} onChange={onPeriodChange} className="col-span-3 md:col-span-2" />
+          <ReportPeriodFilter value={period} availableYears={availableYears} onChange={onPeriodChange} className="col-span-3 md:col-span-2 lg:col-span-1 lg:min-w-0" />
         </div>
       </div>
 

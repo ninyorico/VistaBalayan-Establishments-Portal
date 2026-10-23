@@ -274,8 +274,8 @@ export default function VisitorMonitoring({ embedded = false }: { embedded?: boo
 
       {/* Filters */}
       <div className="rounded-lg border border-gray-200 bg-white p-4 shadow-sm sm:p-6">
-        <div className="grid grid-cols-2 gap-3 sm:flex sm:flex-wrap sm:items-center sm:gap-4">
-          <div className="relative col-span-2 min-w-0">
+        <div className="grid grid-cols-2 gap-3 sm:flex sm:flex-wrap sm:items-center sm:gap-4 lg:grid lg:grid-cols-[minmax(220px,1.35fr)_minmax(180px,1fr)_minmax(304px,1.8fr)_auto] lg:gap-4">
+                  <div className="relative col-span-2 min-w-0 lg:col-span-1">
             <div className="relative">
               <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400 sm:h-5 sm:w-5" />
               <input
@@ -287,7 +287,7 @@ export default function VisitorMonitoring({ embedded = false }: { embedded?: boo
               />
             </div>
           </div>
-          <div className="col-span-2 min-w-0 flex-1 sm:flex-none">
+          <div className="col-span-2 min-w-0 flex-1 sm:flex-none lg:col-span-1 lg:w-auto">
             <select
               value={filterResidence}
               onChange={(e) => setFilterResidence(e.target.value)}
@@ -299,7 +299,7 @@ export default function VisitorMonitoring({ embedded = false }: { embedded?: boo
               <option value="FOREIGN">Foreign</option>
             </select>
           </div>
-          <ReportPeriodFilter value={period} availableYears={availableYears} onChange={setPeriod} className="col-span-2 sm:col-span-1" />
+          <ReportPeriodFilter value={period} availableYears={availableYears} onChange={setPeriod} className="col-span-2 sm:col-span-1 lg:col-span-1 lg:min-w-0" />
           <button
             className="col-span-2 flex items-center justify-center gap-2 rounded-lg bg-blue-600 px-3 py-2 text-sm text-white transition hover:bg-blue-700 sm:col-span-1 sm:px-4 sm:text-base"
             onClick={handleExport}
