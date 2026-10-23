@@ -12,11 +12,15 @@ const chartClass = "rounded-3xl border border-[#AFB3B5]/45 bg-[#F5F8FF]/88 p-4 s
 
 type AnalyticsMetric = { label: string; value: ReactNode; helper: string; icon: typeof UsersRound; tone: string };
 
-const MetricGrid = ({ metrics }: { metrics: AnalyticsMetric[] }) => (
-  <div className={`grid grid-cols-2 gap-3 ${metrics.length >= 6 ? "lg:grid-cols-6" : "lg:grid-cols-4"}`}>
-    {metrics.map((metric) => <MetricCard key={metric.label} label={metric.label} value={metric.value} helper={metric.helper} icon={metric.icon} tone={metric.tone} compact className="bg-[#f8fbf8] shadow-none" />)}
-  </div>
-);
+const MetricGrid = ({ metrics }: { metrics: AnalyticsMetric[] }) => {
+  const alignValues = metrics.length >= 6;
+
+  return (
+    <div className={`grid grid-cols-2 gap-3 ${alignValues ? "lg:grid-cols-6" : "lg:grid-cols-4"}`}>
+      {metrics.map((metric) => <MetricCard key={metric.label} label={metric.label} value={metric.value} helper={metric.helper} icon={metric.icon} tone={metric.tone} compact alignValue={alignValues} className="bg-[#f8fbf8] shadow-none" />)}
+    </div>
+  );
+};
 
 const ChartTitle = ({ icon: Icon, children }: { icon: typeof BarChart3; children: ReactNode }) => (
   <div className="mb-4 flex items-center gap-2"><Icon className="h-5 w-5 text-[#193364]" /><h3 className="text-lg font-semibold text-[#0B2530]">{children}</h3></div>
