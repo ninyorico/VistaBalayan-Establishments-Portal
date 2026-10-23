@@ -123,14 +123,19 @@ export default function Profile() {
     }
     
     // Update profile in database
+    const profileUpdates: Record<string, unknown> = {
+      full_name: formData.full_name,
+      contact_number: formData.contact_number,
+      updated_at: new Date(),
+    };
+
+    if (!profile?.establishment_id) {
+      profileUpdates.position = formData.position;
+    }
+
     const { error: updateError } = await supabase
       .from("profiles")
-      .update({
-        full_name: formData.full_name,
-        contact_number: formData.contact_number,
-        position: formData.position,
-        updated_at: new Date(),
-      })
+      .update(profileUpdates)
       .eq("id", user.id);
     
     if (updateError) {
@@ -369,9 +374,14 @@ export default function Profile() {
               <input
                 type="text"
                 value={formData.position}
+                readOnly={Boolean(profile?.establishment_id)}
+                disabled={Boolean(profile?.establishment_id)}
                 onChange={(e) => setFormData({ ...formData, position: e.target.value })}
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none"
+                className={`w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none ${profile?.establishment_id ? "cursor-not-allowed bg-gray-50 text-gray-500" : ""}`}
               />
+              {profile?.establishment_id && (
+                <p className="mt-1 text-xs text-gray-500">Position is managed by a municipal tourism officer.</p>
+              )}
             </div>
           </div>
         </div>
