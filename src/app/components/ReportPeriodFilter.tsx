@@ -26,7 +26,7 @@ export default function ReportPeriodFilter({ value, availableYears, onChange, cl
       <select
         value={value.type}
         onChange={(event) => onChange({ ...value, type: event.target.value as ReportPeriodType })}
-        className={`${selectClass} w-full sm:w-auto`}
+        className={`${selectClass} w-[116px] shrink-0`}
         aria-label="Select reporting period type"
       >
         {periodOptions.map((option) => <option key={option.value} value={option.value}>{option.label}</option>)}
@@ -39,7 +39,7 @@ export default function ReportPeriodFilter({ value, availableYears, onChange, cl
             const [year, month] = event.target.value.split("-").map(Number);
             onChange({ ...value, year, month: month - 1 });
           }}
-          className={`${selectClass} min-w-0 flex-1 sm:w-44 sm:flex-none`}
+          className={`${selectClass} w-[190px] shrink-0`}
           aria-label="Select reporting month"
         >
           {years.flatMap((year) => monthNames.map((month, index) => (
@@ -53,7 +53,7 @@ export default function ReportPeriodFilter({ value, availableYears, onChange, cl
           <select
             value={value.year}
             onChange={(event) => onChange({ ...value, year: Number(event.target.value) })}
-            className={`${selectClass} min-w-0 flex-1 sm:w-24 sm:flex-none`}
+            className={`${selectClass} w-[96px] shrink-0`}
             aria-label="Select reporting year"
           >
             {years.map((year) => <option key={year} value={year}>{year}</option>)}
@@ -62,7 +62,7 @@ export default function ReportPeriodFilter({ value, availableYears, onChange, cl
             <select
               value={value.quarter}
               onChange={(event) => onChange({ ...value, quarter: Number(event.target.value) })}
-              className={`${selectClass} min-w-0 flex-1 sm:w-20 sm:flex-none`}
+              className={`${selectClass} w-[76px] shrink-0`}
               aria-label="Select reporting quarter"
             >
               {[1, 2, 3, 4].map((quarter) => <option key={quarter} value={quarter}>Q{quarter}</option>)}
