@@ -132,10 +132,10 @@ const normalizeOvernightMetricFormats = (sheet: ExcelJS.Worksheet, startRow: num
     averageGuestsPerRoom.numFmt = "0.00";
   }
 };
-const normalizeOvernightThirdMetric = (sheet: ExcelJS.Worksheet, startRow: number, endRow: number) => {
+const normalizeOvernightThirdMetric = (sheet: ExcelJS.Worksheet, headerRow: number, startRow: number, endRow: number) => {
   const title = "Average Number of Guest per room";
-  const titleCell = sheet.getCell("J42");
-  titleCell.style = JSON.parse(JSON.stringify(sheet.getCell("I42").style));
+  const titleCell = sheet.getCell(headerRow, 10);
+  titleCell.style = JSON.parse(JSON.stringify(sheet.getCell(headerRow, 9).style));
   titleCell.value = title;
   for (let row = startRow; row <= endRow; row += 1) {
     const valueCell = sheet.getCell(row, 10);
@@ -441,7 +441,7 @@ export const downloadOfficialArrivalsWorkbook = async ({
     normalizeNoRecordSubmittedFonts(sheet, 15, daytourTotalRow - 1);
     normalizeNoRecordSubmittedFonts(sheet, overnightStartRow, overnightTotalRow - 1);
     normalizeOvernightMetricFormats(sheet, overnightStartRow, overnightTotalRow - 1);
-    normalizeOvernightThirdMetric(sheet, overnightStartRow, overnightTotalRow - 1);
+    normalizeOvernightThirdMetric(sheet, overnightStartRow - 3, overnightStartRow, overnightTotalRow - 1);
     normalizeOvernightSpacerBorders(sheet, 43, overnightTotalRow);
     autoFitExportColumns(sheet);
 
