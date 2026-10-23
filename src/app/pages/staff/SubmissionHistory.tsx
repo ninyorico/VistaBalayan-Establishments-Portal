@@ -6,6 +6,7 @@ import { canSubmitAccommodationReport, canSubmitVisitorReport } from "../../../l
 import { downloadOfficialArrivalsWorkbook } from "../../../lib/officialArrivalsExport";
 import type { EstablishmentReportingRow } from "../../../lib/reporting";
 import type { ReportPeriodSelection } from "../../../lib/reportPeriod";
+import { getReportWeekRange } from "../../../lib/reportPeriod";
 import DataState from "../../components/DataState";
 import EstablishmentSubmissionRecords from "../../components/EstablishmentSubmissionRecords";
 import { LoadingState } from "../../components/vista/PolishedShell";
@@ -85,7 +86,7 @@ export default function SubmissionHistory() {
   const now = new Date();
   const [selectedYear, setSelectedYear] = useState(now.getFullYear());
   const [selectedMonth, setSelectedMonth] = useState(now.getMonth());
-  const [period, setPeriod] = useState<ReportPeriodSelection>({ type: "month", year: now.getFullYear(), month: now.getMonth(), quarter: Math.floor(now.getMonth() / 3) + 1 });
+  const [period, setPeriod] = useState<ReportPeriodSelection>({ type: "month", year: now.getFullYear(), month: now.getMonth(), quarter: Math.floor(now.getMonth() / 3) + 1, week: 1 });
   const [expandedWeek, setExpandedWeek] = useState<number | null>(getWeekNumberInFourWeekMonth(now.getDate()));
   const [expandedSubmissionId, setExpandedSubmissionId] = useState<string | null>(null);
   const [viewingSubmission, setViewingSubmission] = useState<StaffSubmissionSummary | null>(null);
@@ -181,7 +182,7 @@ export default function SubmissionHistory() {
       if (newestParts) {
         setSelectedYear(newestParts.year);
         setSelectedMonth(newestParts.month);
-        setPeriod({ type: "month", year: newestParts.year, month: newestParts.month, quarter: Math.floor(newestParts.month / 3) + 1 });
+        setPeriod({ type: "month", year: newestParts.year, month: newestParts.month, quarter: Math.floor(newestParts.month / 3) + 1, week: 1 });
         setExpandedWeek(getWeekNumberInFourWeekMonth(newestParts.day));
       }
     }
@@ -265,15 +266,19 @@ export default function SubmissionHistory() {
       : period.type === "quarter"
         ? [period.quarter * 3 - 2, period.quarter * 3 - 1, period.quarter * 3]
         : undefined;
+    const weekRange = period.type === "week" ? getReportWeekRange(period.year, period.week) : undefined;
     const periodLabel = period.type === "month"
       ? `${period.year}-${String(period.month + 1).padStart(2, "0")}`
-      : period.type === "quarter" ? `${period.year}-Q${period.quarter}` : String(period.year);
+      : period.type === "quarter" ? `${period.year}-Q${period.quarter}` : `Week${period.week}-${period.year}`;
     await downloadOfficialArrivalsWorkbook({
       filename: section === "daytour"
         ? `Balayan_Daytour_Arrivals_${periodLabel}.xlsx`
         : `Balayan_Overnight_Arrivals_${periodLabel}.xlsx`,
       year: period.year,
       selectedMonths,
+      weeklyLabel: period.type === "week" ? `Week ${period.week} (${weekRange?.startDate} to ${weekRange?.endDate})` : undefined,
+      weeklyStartDate: weekRange?.startDate,
+      weeklyEndDate: weekRange?.endDate,
       exportSection: section,
       includeEstablishmentsWithoutPermit: true,
       establishments: [establishment],

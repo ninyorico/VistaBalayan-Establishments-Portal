@@ -1,5 +1,5 @@
 import type { ReportPeriodSelection, ReportPeriodType } from "../../lib/reportPeriod";
-import { monthNames, periodToMonthValue } from "../../lib/reportPeriod";
+import { monthNames, periodToMonthValue, getReportWeekLabel } from "../../lib/reportPeriod";
 
 interface Props {
   value: ReportPeriodSelection;
@@ -48,6 +48,27 @@ export default function ReportPeriodFilter({ value, availableYears, onChange, cl
             </option>
           )))}
         </select>
+      ) : value.type === "week" ? (
+        <>
+          <select
+            value={value.year}
+            onChange={(event) => onChange({ ...value, year: Number(event.target.value) })}
+            className={`${selectClass} w-[96px] shrink-0`}
+            aria-label="Select reporting year"
+          >
+            {years.map((year) => <option key={year} value={year}>{year}</option>)}
+          </select>
+          <select
+            value={value.week}
+            onChange={(event) => onChange({ ...value, week: Number(event.target.value) })}
+            className={`${selectClass} w-[132px] sm:w-[310px] shrink-0`}
+            aria-label="Select reporting week"
+          >
+            {Array.from({ length: 53 }, (_, index) => index + 1).map((week) => (
+              <option key={week} value={week}>{getReportWeekLabel(value.year, week)}</option>
+            ))}
+          </select>
+        </>
       ) : (
         <>
           <select

@@ -7,7 +7,7 @@ import { downloadReportMonitoringWorkbook } from "../../../lib/reportMonitoringE
 import { calculateAccommodationOccupancy, calculateAverageAccommodationOccupancy } from "../../../lib/reportMetrics";
 import { useDialogFocus } from "../../../hooks/useDialogFocus";
 import ReportPeriodFilter from "../../components/ReportPeriodFilter";
-import { periodMatchesDate, periodToMonthValue, type ReportPeriodSelection } from "../../../lib/reportPeriod";
+import { periodMatchesDate, periodToMonthValue, getReportWeekRange, getReportWeekLabel, type ReportPeriodSelection } from "../../../lib/reportPeriod";
 
 interface AccommodationRecord {
   id: string;
@@ -31,7 +31,7 @@ export default function AccommodationMonitoring({ embedded = false }: { embedded
   const [loadError, setLoadError] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState("");
   const now = new Date();
-  const [period, setPeriod] = useState<ReportPeriodSelection>({ type: "month", year: now.getFullYear(), month: now.getMonth(), quarter: Math.floor(now.getMonth() / 3) + 1 });
+  const [period, setPeriod] = useState<ReportPeriodSelection>({ type: "month", year: now.getFullYear(), month: now.getMonth(), quarter: Math.floor(now.getMonth() / 3) + 1, week: 1 });
   const [establishmentTotalRooms, setEstablishmentTotalRooms] = useState(0);
   const [expandedEstablishments, setExpandedEstablishments] = useState<Set<string>>(new Set());
   const [selectedAccommodationGroupKey, setSelectedAccommodationGroupKey] = useState<string | null>(null);
@@ -415,7 +415,8 @@ export default function AccommodationMonitoring({ embedded = false }: { embedded
       : period.type === "quarter"
         ? [period.quarter * 3 - 2, period.quarter * 3 - 1, period.quarter * 3]
         : undefined;
-    void downloadReportMonitoringWorkbook({ section: "overnight", year: period.year, selectedMonths, establishmentNames })
+    const weekRange = period.type === "week" ? getReportWeekRange(period.year, period.week) : undefined;
+    void downloadReportMonitoringWorkbook({ section: "overnight", year: period.year, selectedMonths, weeklyLabel: period.type === "week" ? getReportWeekLabel(period.year, period.week) : undefined, weeklyStartDate: weekRange?.startDate, weeklyEndDate: weekRange?.endDate, establishmentNames })
       .then(() => toast.success("Exported Overnight arrivals workbook"))
       .catch((error) => {
         console.error("Overnight arrivals export error:", error);

@@ -26,12 +26,18 @@ export async function downloadReportMonitoringWorkbook({
   section,
   year,
   selectedMonths,
+  weeklyLabel,
+  weeklyStartDate,
+  weeklyEndDate,
   specificMonth,
   establishmentNames,
 }: {
   section: ExportSection;
   year?: number;
   selectedMonths?: number[];
+  weeklyLabel?: string;
+  weeklyStartDate?: string;
+  weeklyEndDate?: string;
   specificMonth?: string;
   establishmentNames?: string[];
 }) {
@@ -59,13 +65,18 @@ export async function downloadReportMonitoringWorkbook({
     const latestYear = visitors.reduce((latest, row) => Math.max(latest, Number(row.report_date.slice(0, 4))), new Date().getFullYear());
     const exportYear = year ?? (specificMonth ? Number(specificMonth.slice(0, 4)) : latestYear);
     const exportMonths = selectedMonths ?? (specificMonth ? [Number(specificMonth.slice(5, 7))] : undefined);
-    const exportLabel = exportMonths?.length === 1
-      ? `${exportYear}-${String(exportMonths[0]).padStart(2, "0")}`
-      : exportMonths?.length === 3 ? `${exportYear}-Q${Math.floor((exportMonths[0] - 1) / 3) + 1}` : String(exportYear);
+    const exportLabel = weeklyLabel
+      ? weeklyLabel.replace(/[^A-Za-z0-9-]+/g, "_")
+      : exportMonths?.length === 1
+        ? `${exportYear}-${String(exportMonths[0]).padStart(2, "0")}`
+        : exportMonths?.length === 3 ? `${exportYear}-Q${Math.floor((exportMonths[0] - 1) / 3) + 1}` : String(exportYear);
     await downloadOfficialArrivalsWorkbook({
       filename: `Balayan_Resort_Daytour_Arrivals_${exportLabel}.xlsx`,
       year: exportYear,
       selectedMonths: exportMonths,
+      weeklyLabel,
+      weeklyStartDate,
+      weeklyEndDate,
       exportSection: "daytour",
       establishments: filteredEstablishments,
       visitors: establishmentFilterActive
@@ -83,13 +94,18 @@ export async function downloadReportMonitoringWorkbook({
   const latestYear = accommodation.reduce((latest, row) => Math.max(latest, Number(row.report_date.slice(0, 4))), new Date().getFullYear());
   const exportYear = year ?? (specificMonth ? Number(specificMonth.slice(0, 4)) : latestYear);
   const exportMonths = selectedMonths ?? (specificMonth ? [Number(specificMonth.slice(5, 7))] : undefined);
-  const exportLabel = exportMonths?.length === 1
-    ? `${exportYear}-${String(exportMonths[0]).padStart(2, "0")}`
-    : exportMonths?.length === 3 ? `${exportYear}-Q${Math.floor((exportMonths[0] - 1) / 3) + 1}` : String(exportYear);
+  const exportLabel = weeklyLabel
+    ? weeklyLabel.replace(/[^A-Za-z0-9-]+/g, "_")
+    : exportMonths?.length === 1
+      ? `${exportYear}-${String(exportMonths[0]).padStart(2, "0")}`
+      : exportMonths?.length === 3 ? `${exportYear}-Q${Math.floor((exportMonths[0] - 1) / 3) + 1}` : String(exportYear);
   await downloadOfficialArrivalsWorkbook({
     filename: `Balayan_Overnight_Arrivals_${exportLabel}.xlsx`,
     year: exportYear,
     selectedMonths: exportMonths,
+    weeklyLabel,
+    weeklyStartDate,
+    weeklyEndDate,
     exportSection: "overnight",
     establishments: filteredEstablishments,
     visitors: [],

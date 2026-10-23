@@ -7,7 +7,7 @@ import DataState from "../../components/DataState";
 import { useDialogFocus } from "../../../hooks/useDialogFocus";
 import { getVisitorResidenceLabel, getVisitorResidenceLocation, normalizeResidenceCategory } from "../../../lib/reporting";
 import ReportPeriodFilter from "../../components/ReportPeriodFilter";
-import { periodMatchesDate, periodToMonthValue, type ReportPeriodSelection } from "../../../lib/reportPeriod";
+import { periodMatchesDate, periodToMonthValue, getReportWeekRange, getReportWeekLabel, type ReportPeriodSelection } from "../../../lib/reportPeriod";
 
 interface VisitorRecord {
   id: string;
@@ -29,7 +29,7 @@ export default function VisitorMonitoring({ embedded = false }: { embedded?: boo
   const [searchTerm, setSearchTerm] = useState("");
   const [filterResidence, setFilterResidence] = useState("all");
   const now = new Date();
-  const [period, setPeriod] = useState<ReportPeriodSelection>({ type: "month", year: now.getFullYear(), month: now.getMonth(), quarter: Math.floor(now.getMonth() / 3) + 1 });
+  const [period, setPeriod] = useState<ReportPeriodSelection>({ type: "month", year: now.getFullYear(), month: now.getMonth(), quarter: Math.floor(now.getMonth() / 3) + 1, week: 1 });
   const [selectedEstablishment, setSelectedEstablishment] = useState<string | null>(null);
   const visitorDialogRef = useRef<HTMLDivElement>(null);
   const tableTouchRef = useRef<{ x: number; y: number; lastX: number; lastY: number; axis: "x" | "y" | null }>({
@@ -220,7 +220,8 @@ export default function VisitorMonitoring({ embedded = false }: { embedded?: boo
       : period.type === "quarter"
         ? [period.quarter * 3 - 2, period.quarter * 3 - 1, period.quarter * 3]
         : undefined;
-    void downloadReportMonitoringWorkbook({ section: "daytour", year: period.year, selectedMonths, establishmentNames })
+    const weekRange = period.type === "week" ? getReportWeekRange(period.year, period.week) : undefined;
+    void downloadReportMonitoringWorkbook({ section: "daytour", year: period.year, selectedMonths, weeklyLabel: period.type === "week" ? getReportWeekLabel(period.year, period.week) : undefined, weeklyStartDate: weekRange?.startDate, weeklyEndDate: weekRange?.endDate, establishmentNames })
       .then(() => toast.success("Exported Day-tour arrivals workbook"))
       .catch((error) => {
         console.error("Day-tour arrivals export error:", error);
