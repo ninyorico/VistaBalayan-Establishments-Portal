@@ -215,7 +215,12 @@ export default function VisitorMonitoring({ embedded = false }: { embedded?: boo
           .filter((record) => record.establishment.toLowerCase().includes(searchTerm.trim().toLowerCase()))
           .map((record) => record.establishment))]
       : undefined;
-    void downloadReportMonitoringWorkbook({ section: "daytour", specificMonth: period.type === "month" ? periodToMonthValue(period) : undefined, establishmentNames })
+    const selectedMonths = period.type === "month"
+      ? [period.month + 1]
+      : period.type === "quarter"
+        ? [period.quarter * 3 - 2, period.quarter * 3 - 1, period.quarter * 3]
+        : undefined;
+    void downloadReportMonitoringWorkbook({ section: "daytour", year: period.year, selectedMonths, establishmentNames })
       .then(() => toast.success("Exported Day-tour arrivals workbook"))
       .catch((error) => {
         console.error("Day-tour arrivals export error:", error);

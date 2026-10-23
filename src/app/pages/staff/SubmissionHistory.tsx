@@ -277,12 +277,12 @@ export default function SubmissionHistory() {
       exportSection: section,
       includeEstablishmentsWithoutPermit: true,
       establishments: [establishment],
-      visitors: section === "daytour" ? visitorReports.map((report) => ({
+      visitors: section === "daytour" ? filteredVisitorReports.map((report) => ({
         ...report,
         establishment_id: establishment.id,
         report_date: report.report_date || "",
       })) : [],
-      accommodation: section === "overnight" ? accommodationReports.map((report) => ({
+      accommodation: section === "overnight" ? filteredAccommodationReports.map((report) => ({
         ...report,
         establishment_id: establishment.id,
         report_date: report.report_date || "",

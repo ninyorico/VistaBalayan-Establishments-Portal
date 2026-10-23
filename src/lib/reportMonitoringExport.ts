@@ -24,10 +24,14 @@ const fetchAll = async <T,>(table: "establishments" | "visitor_reports" | "accom
 
 export async function downloadReportMonitoringWorkbook({
   section,
+  year,
+  selectedMonths,
   specificMonth,
   establishmentNames,
 }: {
   section: ExportSection;
+  year?: number;
+  selectedMonths?: number[];
   specificMonth?: string;
   establishmentNames?: string[];
 }) {
@@ -52,12 +56,16 @@ export async function downloadReportMonitoringWorkbook({
       "visitor_reports",
       "*, establishments!visitor_reports_establishment_id_fkey (name,type,dot_classification,reporting_mode,ae_id,attraction_code,total_rooms,status,business_permit_number)"
     );
-    const year = specificMonth ? Number(specificMonth.slice(0, 4)) : visitors.reduce((latest, row) => Math.max(latest, Number(row.report_date.slice(0, 4))), new Date().getFullYear());
-    const selectedMonth = specificMonth ? Number(specificMonth.slice(5, 7)) : undefined;
+    const latestYear = visitors.reduce((latest, row) => Math.max(latest, Number(row.report_date.slice(0, 4))), new Date().getFullYear());
+    const exportYear = year ?? (specificMonth ? Number(specificMonth.slice(0, 4)) : latestYear);
+    const exportMonths = selectedMonths ?? (specificMonth ? [Number(specificMonth.slice(5, 7))] : undefined);
+    const exportLabel = exportMonths?.length === 1
+      ? `${exportYear}-${String(exportMonths[0]).padStart(2, "0")}`
+      : exportMonths?.length === 3 ? `${exportYear}-Q${Math.floor((exportMonths[0] - 1) / 3) + 1}` : String(exportYear);
     await downloadOfficialArrivalsWorkbook({
-      filename: specificMonth ? `Balayan_Resort_Daytour_Arrivals_${specificMonth}.xlsx` : `Balayan_Resort_Daytour_Arrivals_${year}.xlsx`,
-      year,
-      selectedMonths: selectedMonth ? [selectedMonth] : undefined,
+      filename: `Balayan_Resort_Daytour_Arrivals_${exportLabel}.xlsx`,
+      year: exportYear,
+      selectedMonths: exportMonths,
       exportSection: "daytour",
       establishments: filteredEstablishments,
       visitors: establishmentFilterActive
@@ -72,12 +80,16 @@ export async function downloadReportMonitoringWorkbook({
     "accommodation_reports",
     "*, establishments!accommodation_reports_establishment_id_fkey (name,type,dot_classification,reporting_mode,ae_id,attraction_code,total_rooms,status,business_permit_number)"
   );
-  const year = specificMonth ? Number(specificMonth.slice(0, 4)) : accommodation.reduce((latest, row) => Math.max(latest, Number(row.report_date.slice(0, 4))), new Date().getFullYear());
-  const selectedMonth = specificMonth ? Number(specificMonth.slice(5, 7)) : undefined;
+  const latestYear = accommodation.reduce((latest, row) => Math.max(latest, Number(row.report_date.slice(0, 4))), new Date().getFullYear());
+  const exportYear = year ?? (specificMonth ? Number(specificMonth.slice(0, 4)) : latestYear);
+  const exportMonths = selectedMonths ?? (specificMonth ? [Number(specificMonth.slice(5, 7))] : undefined);
+  const exportLabel = exportMonths?.length === 1
+    ? `${exportYear}-${String(exportMonths[0]).padStart(2, "0")}`
+    : exportMonths?.length === 3 ? `${exportYear}-Q${Math.floor((exportMonths[0] - 1) / 3) + 1}` : String(exportYear);
   await downloadOfficialArrivalsWorkbook({
-    filename: specificMonth ? `Balayan_Overnight_Arrivals_${specificMonth}.xlsx` : `Balayan_Overnight_Arrivals_${year}.xlsx`,
-    year,
-    selectedMonths: selectedMonth ? [selectedMonth] : undefined,
+    filename: `Balayan_Overnight_Arrivals_${exportLabel}.xlsx`,
+    year: exportYear,
+    selectedMonths: exportMonths,
     exportSection: "overnight",
     establishments: filteredEstablishments,
     visitors: [],

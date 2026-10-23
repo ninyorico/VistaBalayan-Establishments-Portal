@@ -410,7 +410,12 @@ export default function AccommodationMonitoring({ embedded = false }: { embedded
           .filter((record) => record.establishment.toLowerCase().includes(searchTerm.trim().toLowerCase()))
           .map((record) => record.establishment))]
       : undefined;
-    void downloadReportMonitoringWorkbook({ section: "overnight", specificMonth: period.type === "month" ? periodToMonthValue(period) : undefined, establishmentNames })
+    const selectedMonths = period.type === "month"
+      ? [period.month + 1]
+      : period.type === "quarter"
+        ? [period.quarter * 3 - 2, period.quarter * 3 - 1, period.quarter * 3]
+        : undefined;
+    void downloadReportMonitoringWorkbook({ section: "overnight", year: period.year, selectedMonths, establishmentNames })
       .then(() => toast.success("Exported Overnight arrivals workbook"))
       .catch((error) => {
         console.error("Overnight arrivals export error:", error);

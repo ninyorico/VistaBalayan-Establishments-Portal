@@ -422,8 +422,12 @@ export const downloadOfficialArrivalsWorkbook = async ({
       sheet.getCell(rowNumber, 9).value = hasData && summary ? summary.occupancyRate : "";
       const averageGuestsPerRoom = sheet.getCell(rowNumber, 10);
       averageGuestsPerRoom.style = JSON.parse(JSON.stringify(sheet.getCell(rowNumber, 9).style));
-      if (hasData && summary) setFormula(averageGuestsPerRoom, `IFERROR(F${rowNumber}/G${rowNumber},0)`);
-      else averageGuestsPerRoom.value = "";
+      if (hasData && summary) {
+        averageGuestsPerRoom.value = {
+          formula: `IFERROR(F${rowNumber}/G${rowNumber},0)`,
+          result: summary.averageGuestsPerOccupiedRoom,
+        };
+      } else averageGuestsPerRoom.value = "";
     }
     for (let column = 5; column <= 16; column += 1) {
       const letter = String.fromCharCode(64 + column);
@@ -456,6 +460,16 @@ export const downloadOfficialArrivalsWorkbook = async ({
       for (let column = 5; column <= 7; column += 1) {
         const letter = String.fromCharCode(64 + column);
         setFormula(sheet.getCell(compactOvernightTotalRow, column), `SUM(${letter}${compactOvernightStartRow}:${letter}${compactOvernightTotalRow - 1})`);
+      }
+      for (let row = compactOvernightStartRow; row < compactOvernightTotalRow; row += 1) {
+        const averageGuestsPerRoom = sheet.getCell(row, 10);
+        const currentValue = averageGuestsPerRoom.value;
+        if (currentValue && typeof currentValue === "object" && "result" in currentValue) {
+          averageGuestsPerRoom.value = {
+            formula: `IFERROR(F${row}/G${row},0)`,
+            result: currentValue.result,
+          };
+        }
       }
       (sheet as ExcelJS.Worksheet & { _rows: unknown[] })._rows.length = 26 + overnightExtraRows;
     }
