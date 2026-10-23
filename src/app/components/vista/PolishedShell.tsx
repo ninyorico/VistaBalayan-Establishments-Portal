@@ -86,13 +86,13 @@ export function MetricCard({ label, value, helper, icon: Icon, tone = "bg-cyan-5
   return (
     <Card className={cn("tourism-card h-full gap-0 rounded-3xl p-0 transition duration-200 hover:-translate-y-0.5 hover:shadow-tourism-hover", className)}>
       <CardContent className={cn("h-full", compact ? "p-3 sm:p-4 lg:p-5" : "p-5")}>
-        <div className={cn("flex h-full items-start justify-between", compact ? "flex-row gap-3 sm:gap-4" : "gap-4")}>
+        <div className={cn("relative flex h-full items-start", compact ? "gap-3 sm:gap-4" : "gap-4")}>
           <div className="flex min-w-0 flex-1 flex-col">
-            <p className={cn("font-medium leading-4 text-[#5D6F73]", alignValue ? "min-h-16 text-[11px] sm:text-xs lg:text-xs" : compact ? "min-h-8 text-[11px] sm:text-sm" : "min-h-8 text-sm")}>{label}</p>
-            <p className={cn("mt-2 flex items-start break-words font-semibold leading-tight tracking-[-0.035em] text-[#0B2530] tabular-nums", alignValue ? "h-14 text-xl sm:h-16 sm:text-2xl" : compact ? "h-16 text-2xl sm:text-3xl" : "h-16 text-3xl")}>{value}</p>
+            <p className={cn("pr-10 font-medium leading-4 text-[#5D6F73]", alignValue ? "min-h-16 text-[11px] sm:text-xs lg:text-xs" : compact ? "min-h-8 text-[11px] sm:text-sm" : "min-h-8 text-sm")}>{label}</p>
+            <p className={cn("mt-2 flex items-start break-words pr-10 font-semibold leading-tight tracking-[-0.035em] text-[#0B2530] tabular-nums", alignValue ? "h-14 text-xl sm:h-16 sm:text-2xl" : compact ? "h-16 text-2xl sm:text-3xl" : "h-16 text-3xl")}>{value}</p>
             {helper && <p className={cn("mt-1 leading-5 text-[#5D6F73]", compact ? "text-[10px] sm:text-xs" : "text-xs")}>{helper}</p>}
           </div>
-          <div className={cn("dashboard-neu-icon flex shrink-0 items-center justify-center rounded-2xl ring-1", compact ? "h-9 w-9 sm:h-11 sm:w-11" : "h-11 w-11", tone)}>
+          <div className={cn("dashboard-neu-icon absolute right-0 top-0 flex shrink-0 items-center justify-center rounded-2xl ring-1", compact ? "h-9 w-9 sm:h-11 sm:w-11" : "h-11 w-11", tone)}>
             <Icon className={cn(compact ? "h-4 w-4 sm:h-5 sm:w-5" : "h-5 w-5")} strokeWidth={1.8} />
           </div>
         </div>

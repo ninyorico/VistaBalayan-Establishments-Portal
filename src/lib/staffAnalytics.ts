@@ -37,6 +37,8 @@ export type AccommodationMonth = {
   checkIns: number;
   guestNights: number;
   occupancyRate: number;
+  occupiedRooms: number;
+  averageOccupiedRooms: number;
   guestsPerRoom: number;
   guestNightAverage: number;
   reportCount: number;
@@ -132,6 +134,8 @@ export const buildAccommodationHistoricalSeries = (reports: AccommodationReport[
     checkIns: month.checkIns,
     guestNights: month.guestNights,
     occupancyRate: month.occupancyRates.length > 0 ? Number((month.occupancyRates.reduce((sum, rate) => sum + rate, 0) / month.occupancyRates.length).toFixed(2)) : 0,
+    occupiedRooms: month.occupiedRooms,
+    averageOccupiedRooms: month.reportCount > 0 ? Number((month.occupiedRooms / month.reportCount).toFixed(2)) : 0,
     guestsPerRoom: month.occupiedRooms > 0 ? Number((month.guestNights / month.occupiedRooms).toFixed(2)) : 0,
     guestNightAverage: month.checkIns > 0 ? Number((month.guestNights / month.checkIns).toFixed(2)) : 0,
     reportCount: month.reportCount,
@@ -171,6 +175,8 @@ export const buildAccommodationMonthlySeries = (reports: AccommodationReport[], 
     occupancyRate: month.occupancyRates.length > 0
       ? Number((month.occupancyRates.reduce((sum, rate) => sum + rate, 0) / month.occupancyRates.length).toFixed(2))
       : 0,
+    occupiedRooms: month.occupiedRooms,
+    averageOccupiedRooms: month.reportCount > 0 ? Number((month.occupiedRooms / month.reportCount).toFixed(2)) : 0,
     guestsPerRoom: month.occupiedRooms > 0 ? Number((month.guestNights / month.occupiedRooms).toFixed(2)) : 0,
     guestNightAverage: month.checkIns > 0 ? Number((month.guestNights / month.checkIns).toFixed(2)) : 0,
     reportCount: month.reportCount,

@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState, type ReactNode } from "react";
-import { BarChart3, Calendar, LineChart as LineChartIcon, Moon, Percent, PieChart, TrendingUp, UsersRound } from "lucide-react";
+import { BarChart3, BedDouble, Calendar, LineChart as LineChartIcon, Moon, PieChart, TrendingUp, UsersRound } from "lucide-react";
 import { Area, AreaChart, Bar, BarChart, CartesianGrid, Cell, Legend, PieChart as RechartsPieChart, Pie as RechartsPie, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 import { supabase } from "../../../lib/supabase";
 import { canSubmitAccommodationReport, canSubmitVisitorReport, getEstablishmentReportingMode } from "../../../lib/establishmentReportForms";
@@ -149,7 +149,7 @@ export default function Analytics() {
     { label: "Monthly Demographics", value: demographicValue, helper: demographicHelper, icon: PieChart, tone: "bg-violet-50 text-violet-700 ring-violet-100" },
   ];
   const accommodationMetrics: AnalyticsMetric[] = [
-    { label: "Monthly Average Occupancy Rate", value: `${(currentAccommodationMonth?.occupancyRate || 0).toFixed(2)}%`, helper: "current month", icon: Percent, tone: "bg-violet-50 text-violet-700 ring-violet-100" },
+    { label: "Monthly Average Occupied Rooms", value: (currentAccommodationMonth?.averageOccupiedRooms || 0).toFixed(2), helper: "occupied rooms per report", icon: BedDouble, tone: "bg-violet-50 text-violet-700 ring-violet-100" },
     { label: "Monthly Average Guest Per Room", value: (currentAccommodationMonth?.guestsPerRoom || 0).toFixed(2), helper: "current month", icon: UsersRound, tone: "bg-emerald-50 text-emerald-700 ring-emerald-100" },
     { label: "Monthly Total Check-ins", value: currentMonthCheckIns.toLocaleString(), helper: "current month", icon: UsersRound, tone: "bg-sky-50 text-sky-700 ring-sky-100" },
     { label: "Monthly Average Guest Night", value: (currentAccommodationMonth?.guestNightAverage || 0).toFixed(2), helper: "nights per check-in", icon: Moon, tone: "bg-amber-50 text-amber-700 ring-amber-100" },
@@ -157,9 +157,9 @@ export default function Analytics() {
   const combinedMetrics: AnalyticsMetric[] = [
     { label: "Monthly Day-tour Arrivals", value: currentMonthVisitorTotal.toLocaleString(), helper: "current month", icon: UsersRound, tone: "bg-emerald-50 text-emerald-700 ring-emerald-100" },
     { label: "Monthly Total Check-ins", value: currentMonthCheckIns.toLocaleString(), helper: "current month", icon: UsersRound, tone: "bg-sky-50 text-sky-700 ring-sky-100" },
-    { label: "Monthly Average Arrivals", value: (combinedReportCount > 0 ? currentMonthCombined / combinedReportCount : 0).toFixed(2), helper: "day-tour + check-ins per report", icon: Calendar, tone: "bg-cyan-50 text-cyan-700 ring-cyan-100" },
+    { label: "Monthly Average Arrivals", value: (combinedReportCount > 0 ? currentMonthCombined / combinedReportCount : 0).toFixed(2), helper: "day-tour + check-ins/report", icon: Calendar, tone: "bg-cyan-50 text-cyan-700 ring-cyan-100" },
     { label: "Monthly Demographics", value: demographicValue, helper: demographicHelper, icon: PieChart, tone: "bg-violet-50 text-violet-700 ring-violet-100" },
-    { label: "Monthly Average Occupancy Rate", value: `${(currentAccommodationMonth?.occupancyRate || 0).toFixed(2)}%`, helper: "current month", icon: Percent, tone: "bg-purple-50 text-purple-700 ring-purple-100" },
+    { label: "Monthly Average Occupied Rooms", value: (currentAccommodationMonth?.averageOccupiedRooms || 0).toFixed(2), helper: "occupied rooms per report", icon: BedDouble, tone: "bg-purple-50 text-purple-700 ring-purple-100" },
     { label: "Monthly Average Guests per Room", value: (currentAccommodationMonth?.guestsPerRoom || 0).toFixed(2), helper: "current month", icon: UsersRound, tone: "bg-rose-50 text-rose-700 ring-rose-100" },
   ];
 
