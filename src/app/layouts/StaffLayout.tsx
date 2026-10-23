@@ -62,11 +62,17 @@ export default function StaffLayout() {
     return () => document.removeEventListener("keydown", handleEscape);
   }, []);
 
-  const canModifyStaffData = profile?.status === "active" && establishment?.status === "active";
+  const establishmentForMenu = establishment ?? {
+    type: profile?.establishment_type,
+    total_rooms: profile?.establishment_total_rooms,
+    reporting_mode: profile?.establishment_reporting_mode,
+    status: profile?.establishment_status,
+  };
+  const canModifyStaffData = profile?.status === "active" && establishmentForMenu.status === "active";
 
   const visibleMenuItems = menuItems.filter((item) => {
-    if (item.form === "visitor") return canModifyStaffData && canSubmitVisitorReport(establishment);
-    if (item.form === "accommodation") return canModifyStaffData && canSubmitAccommodationReport(establishment);
+    if (item.form === "visitor") return canModifyStaffData && canSubmitVisitorReport(establishmentForMenu);
+    if (item.form === "accommodation") return canModifyStaffData && canSubmitAccommodationReport(establishmentForMenu);
     if (item.path === "/staff/manage-listing") return canModifyStaffData;
     return true;
   });

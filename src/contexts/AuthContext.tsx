@@ -9,6 +9,9 @@ interface Profile {
   role: 'municipal_officer' | 'establishment_staff'
   establishment_id: string | null
   establishment_status?: string | null
+  establishment_type?: string | null
+  establishment_total_rooms?: number | null
+  establishment_reporting_mode?: 'visitor' | 'accommodation' | 'both' | null
   status?: string
 }
 
@@ -45,7 +48,7 @@ const loadProfile = async (userId: string): Promise<Profile | null> => {
 
     const { data: establishment, error: establishmentError } = await supabase
       .from('establishments')
-      .select('status')
+      .select('type,total_rooms,reporting_mode,status')
       .eq('id', nextProfile.establishment_id)
       .maybeSingle()
 
@@ -54,7 +57,13 @@ const loadProfile = async (userId: string): Promise<Profile | null> => {
       return null
     }
 
-    return { ...nextProfile, establishment_status: establishment?.status || null }
+    return {
+      ...nextProfile,
+      establishment_status: establishment?.status || null,
+      establishment_type: establishment?.type || null,
+      establishment_total_rooms: establishment?.total_rooms || null,
+      establishment_reporting_mode: establishment?.reporting_mode || null,
+    }
   }
 
   return nextProfile
