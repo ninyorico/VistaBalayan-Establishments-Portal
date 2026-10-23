@@ -1,7 +1,6 @@
 import { createContext, useContext, useEffect, useRef, useState } from 'react'
 import { supabase } from '../lib/supabase'
 import { User } from '@supabase/supabase-js'
-import { isActiveEstablishmentStaff } from '../lib/accessControl'
 
 interface Profile {
   id: string
@@ -37,7 +36,7 @@ const loadProfile = async (userId: string): Promise<Profile | null> => {
   }
 
   const nextProfile = data as Profile | null
-  if (!nextProfile || nextProfile.status === 'inactive' || nextProfile.status === 'deleted') {
+  if (!nextProfile || nextProfile.status === 'deleted') {
     return null
   }
 
@@ -55,17 +54,7 @@ const loadProfile = async (userId: string): Promise<Profile | null> => {
       return null
     }
 
-    const establishmentStatus = establishment?.status || null
-    if (!isActiveEstablishmentStaff({
-      role: nextProfile.role,
-      status: nextProfile.status,
-      establishmentStatus,
-      establishmentId: nextProfile.establishment_id,
-    })) {
-      return null
-    }
-
-    return { ...nextProfile, establishment_status: establishmentStatus }
+    return { ...nextProfile, establishment_status: establishment?.status || null }
   }
 
   return nextProfile

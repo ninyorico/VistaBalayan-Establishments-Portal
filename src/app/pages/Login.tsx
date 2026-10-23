@@ -41,9 +41,9 @@ export default function Login() {
         .maybeSingle();
 
       if (profileError) throw profileError;
-      if (profile?.status !== "active") {
+      if (!profile || profile.status === "deleted") {
         await supabase.auth.signOut();
-        throw new Error("This account is not active. Please contact the municipal tourism office.");
+        throw new Error("This account is not available. Please contact the municipal tourism office.");
       }
 
       let destination = roleHomePath(profile.role);
@@ -60,16 +60,15 @@ export default function Login() {
           .maybeSingle();
 
         if (establishmentError) throw establishmentError;
-        if (establishment?.status !== "active") {
-          await supabase.auth.signOut();
-          throw new Error("This account's linked establishment is inactive. Please contact the municipal tourism office.");
-        }
         const reportingMode = getEstablishmentReportingMode(establishment);
-        destination = reportingMode === "visitor"
-          ? "/staff/submit-visitor-report"
-          : reportingMode === "accommodation"
-            ? "/staff/submit-accommodation-report"
-            : "/staff";
+        const isInactiveAccount = profile.status !== "active" || establishment?.status !== "active";
+        destination = isInactiveAccount
+          ? "/staff"
+          : reportingMode === "visitor"
+            ? "/staff/submit-visitor-report"
+            : reportingMode === "accommodation"
+              ? "/staff/submit-accommodation-report"
+              : "/staff";
       }
 
       if (!destination) {

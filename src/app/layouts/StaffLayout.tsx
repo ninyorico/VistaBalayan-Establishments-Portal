@@ -31,7 +31,7 @@ const menuItems = [
 
 export default function StaffLayout() {
   const navigate = useNavigate();
-  const { profile, signOut, refreshProfile } = useAuth();
+  const { profile, signOut } = useAuth();
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [profileDropdownOpen, setProfileDropdownOpen] = useState(false);
   const [establishment, setEstablishment] = useState<any>(null);
@@ -45,11 +45,6 @@ export default function StaffLayout() {
         .select("type,total_rooms,reporting_mode,status")
         .eq("id", profile.establishment_id)
         .maybeSingle();
-
-      if (establishmentData?.status !== "active") {
-        await refreshProfile();
-        return;
-      }
 
       setEstablishment(establishmentData);
     };
@@ -67,9 +62,12 @@ export default function StaffLayout() {
     return () => document.removeEventListener("keydown", handleEscape);
   }, []);
 
+  const canModifyStaffData = profile?.status === "active" && establishment?.status === "active";
+
   const visibleMenuItems = menuItems.filter((item) => {
-    if (item.form === "visitor") return canSubmitVisitorReport(establishment);
-    if (item.form === "accommodation") return canSubmitAccommodationReport(establishment);
+    if (item.form === "visitor") return canModifyStaffData && canSubmitVisitorReport(establishment);
+    if (item.form === "accommodation") return canModifyStaffData && canSubmitAccommodationReport(establishment);
+    if (item.path === "/staff/manage-listing") return canModifyStaffData;
     return true;
   });
 

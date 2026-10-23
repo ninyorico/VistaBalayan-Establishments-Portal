@@ -50,6 +50,8 @@ export default function StaffAIInsights() {
   const [showAllServiceGaps, setShowAllServiceGaps] = useState(false)
   const [showAllRecommendations, setShowAllRecommendations] = useState(false)
 
+  const canRefreshAnalysis = authenticatedProfile?.status === "active" && authenticatedProfile.establishment_status === "active"
+
   useEffect(() => {
     if (!authLoading) loadUserAndData()
   }, [authLoading, authenticatedProfile?.id])
@@ -183,7 +185,7 @@ const loadCachedData = async (estId: string, generateIfEmpty = true) => {
       setLastUpdated(formatPhilippineDateTime(cacheData?.generated_at))
     }
 
-    if (generateIfEmpty && ((!anomaliesData || anomaliesData.length === 0) && (!insightsData || insightsData.length === 0) || !cacheData || (cacheData.expires_at && new Date(cacheData.expires_at).getTime() <= Date.now()))) {
+    if (generateIfEmpty && canRefreshAnalysis && ((!anomaliesData || anomaliesData.length === 0) && (!insightsData || insightsData.length === 0) || !cacheData || (cacheData.expires_at && new Date(cacheData.expires_at).getTime() <= Date.now()))) {
       await refreshData(estId)
     }
   } catch (error) {
@@ -193,6 +195,11 @@ const loadCachedData = async (estId: string, generateIfEmpty = true) => {
 
   const refreshData = async (requestedEstablishmentId = establishmentId ?? authenticatedProfile?.establishment_id) => {
     const resolvedEstablishmentId = requestedEstablishmentId ?? authenticatedProfile?.establishment_id
+    if (!canRefreshAnalysis) {
+      setRefreshError('Inactive accounts can view saved insights but cannot generate new analysis.')
+      return
+    }
+
     if (!resolvedEstablishmentId) {
       setError('No establishment associated with your account')
       return
@@ -311,6 +318,7 @@ const loadCachedData = async (estId: string, generateIfEmpty = true) => {
       subtitle={`Recommendation review and service-gap tracking for ${establishmentName || 'your establishment'}.`}
       lastUpdated={lastUpdated}
       refreshing={refreshing}
+      canRefresh={canRefreshAnalysis}
       onRefresh={refreshData}
     >
       {refreshError && (

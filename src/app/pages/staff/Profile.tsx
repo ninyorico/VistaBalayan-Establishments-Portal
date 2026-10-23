@@ -15,6 +15,8 @@ interface ProfileData {
   establishment_address: string;
   establishment_type: string;
   establishment_id: string | null;
+  status?: string | null;
+  establishment_status?: string | null;
 }
 
 export default function Profile() {
@@ -67,6 +69,7 @@ export default function Profile() {
     let establishmentName = "N/A";
     let establishmentAddress = "N/A";
     let establishmentType = "N/A";
+    let establishmentStatus: string | null = null;
 
 
     if (profileData.establishment_id) {
@@ -80,6 +83,7 @@ export default function Profile() {
         establishmentName = estData.name;
         establishmentAddress = estData.address;
         establishmentType = estData.type;
+        establishmentStatus = estData.status || null;
       }
     }
     
@@ -93,6 +97,8 @@ export default function Profile() {
       establishment_address: establishmentAddress,
       establishment_type: establishmentType,
       establishment_id: profileData.establishment_id || null,
+      status: profileData.status || null,
+      establishment_status: establishmentStatus,
     });
     
     setFormData({
@@ -111,7 +117,14 @@ export default function Profile() {
     setLoading(false);
   };
 
+  const profileReadOnly = profile?.status !== "active" || (profile?.establishment_id !== null && profile?.establishment_status !== "active");
+
   const handleUpdateProfile = async () => {
+    if (profileReadOnly) {
+      toast.error("Inactive accounts cannot edit profile information");
+      return;
+    }
+
     setSaving(true);
     
     const { data: { user } } = await supabase.auth.getUser();
@@ -228,6 +241,11 @@ export default function Profile() {
 
 
   const handleChangePassword = async () => {
+    if (profileReadOnly) {
+      toast.error("Inactive accounts cannot change account information");
+      return;
+    }
+
     if (!formData.new_password) {
       toast.error("Please enter a new password");
       return;
@@ -292,6 +310,7 @@ export default function Profile() {
               <input
                 type="email"
                 value={formData.email}
+                disabled={profileReadOnly}
                 onChange={(e) => {
                   setFormData({ ...formData, email: e.target.value });
                   setGmailVerified(false);
@@ -309,7 +328,7 @@ export default function Profile() {
                   <button
                     type="button"
                     onClick={handleSendEmailOtp}
-                    disabled={saving || !formData.email.trim()}
+                    disabled={profileReadOnly || saving || !formData.email.trim()}
                     className="inline-flex items-center justify-center rounded-lg bg-[#0E5A72] px-3 py-1.5 text-xs font-semibold text-white transition hover:bg-[#0B4A5E] disabled:opacity-50"
                   >
                     {emailVerificationStep === "otp" ? "Resend OTP" : "Verify Gmail"}
@@ -332,7 +351,7 @@ export default function Profile() {
                     <button
                       type="button"
                       onClick={handleVerifyEmailOtp}
-                      disabled={saving || emailOtp.length !== 6}
+                      disabled={profileReadOnly || saving || emailOtp.length !== 6}
                       className="rounded-lg bg-emerald-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-emerald-700 disabled:opacity-50"
                     >
                       Confirm
@@ -349,6 +368,7 @@ export default function Profile() {
               <input
                 type="text"
                 value={formData.full_name}
+                disabled={profileReadOnly}
                 onChange={(e) => setFormData({ ...formData, full_name: e.target.value })}
                 className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none"
               />
@@ -362,6 +382,7 @@ export default function Profile() {
               <input
                 type="tel"
                 value={formData.contact_number}
+                disabled={profileReadOnly}
                 onChange={(e) => setFormData({ ...formData, contact_number: e.target.value })}
                 placeholder="+63 912 345 6789"
                 className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none"
@@ -451,6 +472,7 @@ export default function Profile() {
               <input
                 type="password"
                 value={formData.new_password}
+                disabled={profileReadOnly}
                 onChange={(e) => setFormData({ ...formData, new_password: e.target.value })}
                 placeholder="Enter new password"
                 className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none"
@@ -463,6 +485,7 @@ export default function Profile() {
               <input
                 type="password"
                 value={formData.confirm_password}
+                disabled={profileReadOnly}
                 onChange={(e) => setFormData({ ...formData, confirm_password: e.target.value })}
                 placeholder="Confirm new password"
                 className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none"
@@ -478,7 +501,7 @@ export default function Profile() {
           <div className="flex justify-end">
             <button
               onClick={handleChangePassword}
-              disabled={saving || !formData.new_password || formData.new_password !== formData.confirm_password || formData.new_password.length < 6}
+              disabled={profileReadOnly || saving || !formData.new_password || formData.new_password !== formData.confirm_password || formData.new_password.length < 6}
               className="flex items-center gap-2 px-4 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700 transition disabled:opacity-50"
             >
               <Save className="w-4 h-4" />
@@ -504,7 +527,7 @@ export default function Profile() {
       <div className="flex justify-end">
         <button
           onClick={handleUpdateProfile}
-          disabled={saving}
+          disabled={profileReadOnly || saving}
           className="flex items-center gap-2 px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition font-medium disabled:opacity-50"
         >
           <Save className="w-5 h-5" />

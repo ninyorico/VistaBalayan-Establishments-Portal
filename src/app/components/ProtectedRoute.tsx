@@ -5,7 +5,7 @@ import { PageSkeleton } from "./vista/PolishedShell";
 import { useAuth } from "../../contexts/AuthContext";
 import { roleHomePath } from "../../lib/governance";
 
-export function ProtectedRoute({ children, allowedRoles }: { children: JSX.Element; allowedRoles?: string[] }) {
+export function ProtectedRoute({ children, allowedRoles, requireActiveStaff = false }: { children: JSX.Element; allowedRoles?: string[]; requireActiveStaff?: boolean }) {
   const { profile, loading, refreshProfile } = useAuth();
   const location = useLocation();
   const [checkingStaffAccess, setCheckingStaffAccess] = useState(false);
@@ -22,6 +22,10 @@ export function ProtectedRoute({ children, allowedRoles }: { children: JSX.Eleme
   }
 
   if (!profile) return <Navigate to="/admin/login" replace state={{ from: location.pathname }} />;
+
+  if (requireActiveStaff && profile.role === "establishment_staff" && (profile.status !== "active" || profile.establishment_status !== "active")) {
+    return <Navigate to="/staff" replace state={{ inactiveAccount: true }} />;
+  }
 
   if (allowedRoles && !allowedRoles.includes(profile.role)) {
     return (

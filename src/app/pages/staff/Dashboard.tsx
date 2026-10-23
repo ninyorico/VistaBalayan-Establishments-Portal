@@ -64,7 +64,7 @@ export default function StaffDashboard() {
 
     const { data: establishmentData, error: establishmentError } = await supabase
       .from("establishments")
-      .select("name,type,total_rooms,reporting_mode")
+      .select("name,type,total_rooms,reporting_mode,status")
       .eq("id", profileData.establishment_id)
       .maybeSingle();
     if (establishmentError) {
@@ -112,8 +112,9 @@ export default function StaffDashboard() {
     setLoading(false);
   };
 
-  const showVisitorForm = canSubmitVisitorReport(establishment);
-  const showAccommodationForm = canSubmitAccommodationReport(establishment);
+  const canModifyStaffData = profile?.status === "active" && establishment?.status === "active";
+  const showVisitorForm = canModifyStaffData && canSubmitVisitorReport(establishment);
+  const showAccommodationForm = canModifyStaffData && canSubmitAccommodationReport(establishment);
   const mode = getEstablishmentReportingMode(establishment);
 
   const demographicTotal = dashboardMetrics.totalMale + dashboardMetrics.totalFemale;
@@ -161,7 +162,8 @@ export default function StaffDashboard() {
       <section className={`grid gap-2 sm:gap-4 ${showVisitorForm && showAccommodationForm ? "grid-cols-2 md:grid-cols-2" : "grid-cols-1"}`}>
         {showVisitorForm && <button type="button" onClick={() => navigate("/staff/submit-visitor-report")} className="group min-h-28 rounded-3xl border border-[#d7e5e2] bg-white/90 p-3 text-left shadow-tourism backdrop-blur-xl transition hover:-translate-y-0.5 hover:border-[#0E5A72]/30 hover:shadow-tourism-hover active:scale-[0.99] sm:min-h-32 sm:p-7 lg:min-h-40 lg:p-10"><div className="flex items-start justify-between gap-2 sm:gap-4"><div className="flex min-w-0 items-center gap-2 sm:gap-4"><div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-[#0E5A72] text-white shadow-lg shadow-cyan-950/15 sm:h-14 sm:w-14"><FileUp className="h-5 w-5 sm:h-7 sm:w-7" /></div><div className="min-w-0"><h3 className="text-sm font-bold text-[#0B2530] sm:text-lg">Day-tour</h3><p className="mt-1 text-[11px] leading-4 text-[#5D6F73] sm:text-sm sm:leading-5">Submit resort visitor arrivals by origin and count.</p></div></div><ArrowRight className="h-4 w-4 shrink-0 text-slate-400 transition group-hover:translate-x-1 group-hover:text-[#0E5A72] sm:h-5 sm:w-5" /></div></button>}
         {showAccommodationForm && <button type="button" onClick={() => navigate("/staff/submit-accommodation-report")} className="group min-h-28 rounded-3xl border border-[#d7e5e2] bg-white/90 p-3 text-left shadow-tourism backdrop-blur-xl transition hover:-translate-y-0.5 hover:border-[#0E5A72]/30 hover:shadow-tourism-hover active:scale-[0.99] sm:min-h-32 sm:p-7 lg:min-h-40 lg:p-10"><div className="flex items-start justify-between gap-2 sm:gap-4"><div className="flex min-w-0 items-center gap-2 sm:gap-4"><div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-slate-900 text-white shadow-lg shadow-slate-950/15 sm:h-14 sm:w-14"><Bed className="h-5 w-5 sm:h-7 sm:w-7" /></div><div className="min-w-0"><h3 className="text-sm font-bold text-[#0B2530] sm:text-lg">Overnight</h3><p className="mt-1 text-[11px] leading-4 text-[#5D6F73] sm:text-sm sm:leading-5">Submit hotel room occupancy, check-ins, and guest nights.</p></div></div><ArrowRight className="h-4 w-4 shrink-0 text-slate-400 transition group-hover:translate-x-1 group-hover:text-[#0E5A72] sm:h-5 sm:w-5" /></div></button>}
-        {!showVisitorForm && !showAccommodationForm && <EmptyState>No report form is assigned to this establishment yet. Please ask the municipal tourism officer to update the establishment type or room count.</EmptyState>}
+        {!canModifyStaffData && <EmptyState>Your account is inactive. You can continue viewing your dashboard and previous reports, but report submission is unavailable until the account is reactivated.</EmptyState>}
+        {canModifyStaffData && !showVisitorForm && !showAccommodationForm && <EmptyState>No report form is assigned to this establishment yet. Please ask the municipal tourism officer to update the establishment type or room count.</EmptyState>}
       </section>
 
       <PanelCard title={metricsTitle} description="Overall totals calculated from all official reports submitted for this establishment." className="p-0">
