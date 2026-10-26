@@ -512,41 +512,6 @@ export default function Analytics() {
         )}
       </div>
 
-      <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-        <h3 className="text-lg font-semibold text-gray-900 mb-4">High-Performing Establishments</h3>
-        {data.performanceData.length > 0 ? (
-          <ResponsiveContainer width="100%" height={350}>
-            <BarChart data={data.performanceData} layout="vertical">
-              <CartesianGrid strokeDasharray="3 3" />
-              <XAxis type="number" domain={[0, 100]} />
-              <YAxis dataKey="name" type="category" width={0} tick={false} axisLine={false} tickLine={false} />
-              <Tooltip formatter={(value, name) => [name === "score" ? `${value}/100` : value, name === "score" ? "Performance Score" : name]} />
-              <Bar dataKey="score" name="Performance Score">
-                {data.performanceData.map((entry, index) => (
-                  <Cell key={`${entry.name}-${index}`} fill={performanceColors[index % performanceColors.length]} />
-                ))}
-              </Bar>
-            </BarChart>
-          </ResponsiveContainer>
-        ) : (
-          <div className="text-center py-12 text-gray-500">No establishment data available</div>
-        )}
-        {data.performanceData.length > 0 && (
-          <div className="mt-4 flex flex-wrap justify-center gap-x-4 gap-y-2 text-sm text-gray-700" aria-label="High-performing establishments legend">
-            {data.performanceData.map((entry, index) => (
-              <span key={`legend-${entry.name}-${index}`} className="inline-flex max-w-full items-center gap-2">
-                <span
-                  className="h-3 w-3 shrink-0 rounded-sm"
-                  style={{ backgroundColor: performanceColors[index % performanceColors.length] }}
-                  aria-hidden="true"
-                />
-                <span className="max-w-[14rem] truncate" title={entry.name}>{entry.name}</span>
-              </span>
-            ))}
-          </div>
-        )}
-      </div>
-
       <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
         <div className="p-6 border-b border-gray-200">
           <h3 className="text-lg font-semibold text-gray-900">Visitor Origins & Actual Growth</h3>
@@ -588,6 +553,41 @@ export default function Analytics() {
             </tbody>
           </table>
         </div>
+      </div>
+
+      <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+        <h3 className="text-lg font-semibold text-gray-900 mb-4">High-Performing Establishments</h3>
+        {data.performanceData.length > 0 ? (
+          <ResponsiveContainer width="100%" height={350}>
+            <BarChart data={data.performanceData} layout="vertical">
+              <CartesianGrid strokeDasharray="3 3" />
+              <XAxis type="number" domain={[0, 100]} />
+              <YAxis dataKey="name" type="category" width={0} tick={false} axisLine={false} tickLine={false} />
+              <Tooltip formatter={(value, name) => [name === "score" ? `${value}/100` : value, name === "score" ? "Performance Score" : name]} />
+              <Bar dataKey="score" name="Performance Score">
+                {data.performanceData.map((entry, index) => (
+                  <Cell key={`${entry.name}-${index}`} fill={performanceColors[index % performanceColors.length]} />
+                ))}
+              </Bar>
+            </BarChart>
+          </ResponsiveContainer>
+        ) : (
+          <div className="text-center py-12 text-gray-500">No establishment data available</div>
+        )}
+        {data.performanceData.length > 0 && (
+          <div className="mt-4 flex flex-wrap justify-center gap-x-4 gap-y-2 text-sm text-gray-700" aria-label="High-performing establishments legend">
+            {data.performanceData.map((entry, index) => (
+              <span key={`legend-${entry.name}-${index}`} className="inline-flex max-w-full items-center gap-2">
+                <span
+                  className="h-3 w-3 shrink-0 rounded-sm"
+                  style={{ backgroundColor: performanceColors[index % performanceColors.length] }}
+                  aria-hidden="true"
+                />
+                <span className="max-w-[14rem] truncate" title={entry.name}>{entry.name}</span>
+              </span>
+            ))}
+          </div>
+        )}
       </div>
 
       <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
