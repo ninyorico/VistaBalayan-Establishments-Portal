@@ -620,7 +620,7 @@ export default function Analytics() {
                       }
                     }}
                   >
-                    <td className="px-6 py-4 font-medium text-[#0F4C75]">{establishment.establishment}</td>
+                    <td className="px-6 py-4 font-medium text-gray-900">{establishment.establishment}</td>
                     <td className="px-6 py-4">
                       {establishment.occupancyRate !== null ? (
                         <div className="flex items-center gap-2">
