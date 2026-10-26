@@ -38,7 +38,7 @@ const renderEmphasis = (token: string, kind: EmphasisKind, key: string): ReactNo
     ? 'font-semibold text-red-700'
     : kind === 'number'
       ? 'font-semibold text-[#0F4C75]'
-      : 'font-semibold text-gray-950'
+      : 'font-semibold text-slate-800'
 
   return <strong key={key} className={className}>{label}</strong>
 }

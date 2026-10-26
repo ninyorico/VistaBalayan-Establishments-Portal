@@ -82,7 +82,7 @@ export function AiInsightsShell({
               <div className="mb-3 inline-flex rounded-full border border-slate-200 bg-white/80 px-3 py-1 text-xs font-medium tracking-[0.18em] text-slate-500 shadow-sm backdrop-blur">
                 GEMINI OPERATIONS DESK
               </div>
-              <h1 className="max-w-5xl text-[clamp(2rem,7vw,3.5rem)] font-semibold leading-tight tracking-[-0.045em] text-slate-950">
+              <h1 className="max-w-5xl text-[clamp(2rem,7vw,3.5rem)] font-semibold leading-tight tracking-[-0.045em] text-slate-800">
                 {title}
               </h1>
               <p className="mt-3 max-w-2xl text-base leading-7 text-slate-600 sm:text-lg">
@@ -126,7 +126,7 @@ export function AiSectionCard({
     <section className="isolate overflow-hidden rounded-[1.5rem] border-0 bg-[#E0E5EC] shadow-[8px_8px_18px_rgba(163,177,198,0.45),-8px_-8px_18px_rgba(255,255,255,0.62)]">
       <CardHeader className="rounded-t-[1.5rem] border-b border-[#D2D8E0] bg-[#E0E5EC]/70 px-4 py-4 sm:px-6">
         <div className="flex min-w-0 items-start justify-between gap-3">
-          <CardTitle className="flex min-w-0 items-center gap-2 text-lg font-black tracking-[-0.025em] text-slate-950 sm:text-xl">
+          <CardTitle className="flex min-w-0 items-center gap-2 text-lg font-semibold tracking-[-0.02em] text-slate-800 sm:text-xl">
             {icon}
             <span className="min-w-0">{title}</span>
           </CardTitle>
@@ -154,7 +154,7 @@ export function AiAnomalyCard(anomaly: AiAnomalyCardProps) {
               <AlertTriangle className={cn("size-4", tone.icon)} />
             </div>
             <div className="min-w-0">
-              <h3 className="text-base font-black leading-snug tracking-[-0.025em] text-slate-950 sm:text-lg">
+              <h3 className="text-base font-semibold leading-snug tracking-[-0.015em] text-slate-800 sm:text-lg">
                 {cleanAiText(anomaly.anomaly_type)}
               </h3>
               <div className="mt-2 flex flex-wrap items-center gap-2">
@@ -172,13 +172,13 @@ export function AiAnomalyCard(anomaly: AiAnomalyCardProps) {
           </time>
         </div>
 
-        <div className="mt-4 space-y-3 text-sm leading-6 text-slate-700">
+        <div className="mt-4 space-y-3 text-sm leading-6 text-slate-600">
           <p className="text-justify hyphens-auto indent-5" data-ai-text-spacing="editorial-justified-indent">
             <AiFormattedText text={anomaly.description} />
           </p>
           {anomaly.recommendation && (
             <div className="rounded-2xl border border-slate-200 bg-slate-50/80 p-3 text-justify leading-6 hyphens-auto" data-ai-action-note="editorial-shadcn">
-              <span className="font-bold text-slate-950">Recommendation:</span>{" "}
+              <span className="font-semibold text-slate-800">Recommendation:</span>{" "}
               <AiFormattedText text={anomaly.recommendation} tone="action" />
             </div>
           )}
@@ -201,7 +201,7 @@ export function AiRecommendationCard(insight: AiRecommendationCardProps) {
             <div className={cn("mt-0.5 flex size-9 shrink-0 items-center justify-center rounded-xl", tone.soft)}>
               <TrendingUp className={cn("size-4", tone.icon)} />
             </div>
-            <h3 className="min-w-0 text-base font-black leading-snug tracking-[-0.025em] text-slate-950 sm:text-lg">
+            <h3 className="min-w-0 text-base font-semibold leading-snug tracking-[-0.015em] text-slate-800 sm:text-lg">
               {cleanAiText(insight.title)}
             </h3>
           </div>
@@ -216,12 +216,12 @@ export function AiRecommendationCard(insight: AiRecommendationCardProps) {
           </Badge>
         </div>
 
-        <p className="text-justify text-sm leading-6 text-slate-700 hyphens-auto indent-5" data-ai-text-spacing="editorial-justified-indent">
+        <p className="text-justify text-sm leading-6 text-slate-600 hyphens-auto indent-5" data-ai-text-spacing="editorial-justified-indent">
           <AiFormattedText text={summary} />
         </p>
         {action && (
           <div className="mt-3 rounded-2xl border border-slate-200 bg-slate-50/80 p-3 text-justify text-sm leading-6 text-slate-800 hyphens-auto" data-ai-action-note="editorial-shadcn">
-            <span className="font-bold text-slate-950">Action:</span>{" "}
+            <span className="font-semibold text-slate-800">Action:</span>{" "}
             <AiFormattedText text={action} tone="action" />
           </div>
         )}
