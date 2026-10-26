@@ -516,7 +516,7 @@ export default function Analytics() {
         <div className="p-6 border-b border-gray-200">
           <h3 className="text-lg font-semibold text-gray-900">Visitor Origins & Actual Growth</h3>
         </div>
-        <div className="max-h-[25rem] overflow-auto" aria-label="Visitor origins table; scroll to view more than five locations">
+        <div className="max-h-[22rem] overflow-auto" aria-label="Visitor origins table; scroll to view more than five locations">
           <table className="w-full">
             <thead className="sticky top-0 z-10 bg-gray-50 border-b border-gray-200">
               <tr>
@@ -595,9 +595,9 @@ export default function Analytics() {
             <h3 className="text-lg font-semibold text-gray-900">Underperforming Establishments</h3>
             <p className="text-sm text-gray-600 mt-1">Establishments requiring attention based on submitted visitor trends, missing reports, and accommodation occupancy.</p>
           </div>
-          <div className="overflow-x-auto">
+          <div className="max-h-[22rem] overflow-auto" aria-label="Underperforming establishments table; scroll to view more than five establishments">
             <table className="w-full">
-              <thead className="bg-gray-50 border-b border-gray-200">
+              <thead className="sticky top-0 z-10 bg-gray-50 border-b border-gray-200">
                 <tr>
                   <th className="px-6 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">Establishment</th>
                   <th className="px-6 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">Occupancy Rate</th>
