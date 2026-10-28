@@ -1,10 +1,11 @@
-import { useEffect, useRef, useState } from "react";
+import { useState } from "react";
 import { Download, Search } from "lucide-react";
 import { formatDate } from "../../lib/reportMetrics";
 import { getVisitorResidenceLabel, getVisitorResidenceLocation } from "../../lib/reporting";
 import ReportPeriodFilter from "./ReportPeriodFilter";
 import type { ReportPeriodSelection } from "../../lib/reportPeriod";
 import { PageHero } from "./vista/PolishedShell";
+import { useDominantAxisTableScroll } from "../../hooks/useDominantAxisTableScroll";
 
 interface VisitorRecord {
   id: string;
@@ -99,64 +100,7 @@ export default function EstablishmentSubmissionRecords({
     canSubmitVisitor ? "visitor" : "accommodation"
   );
 
-  const tableScrollRef = useRef<HTMLDivElement>(null);
-  const tableVerticalRef = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    const scrollContainer = tableScrollRef.current;
-    const verticalContainer = tableVerticalRef.current;
-    if (!scrollContainer || !verticalContainer) return;
-
-    let startX = 0;
-    let startY = 0;
-    let lastX = 0;
-    let lastY = 0;
-    let axis: "x" | "y" | null = null;
-
-    const handleTouchStart = (event: globalThis.TouchEvent) => {
-      const touch = event.touches[0];
-      startX = lastX = touch.clientX;
-      startY = lastY = touch.clientY;
-      axis = null;
-    };
-
-    const handleTouchMove = (event: globalThis.TouchEvent) => {
-      const touch = event.touches[0];
-      const deltaX = touch.clientX - startX;
-      const deltaY = touch.clientY - startY;
-
-      if (!axis && Math.max(Math.abs(deltaX), Math.abs(deltaY)) > 6) {
-        axis = Math.abs(deltaX) > Math.abs(deltaY) ? "x" : "y";
-      }
-
-      if (axis === "x") {
-        event.preventDefault();
-        scrollContainer.scrollLeft += lastX - touch.clientX;
-      } else if (axis === "y") {
-        event.preventDefault();
-        verticalContainer.scrollTop += lastY - touch.clientY;
-      }
-
-      lastX = touch.clientX;
-      lastY = touch.clientY;
-    };
-
-    const resetAxis = () => {
-      axis = null;
-    };
-
-    scrollContainer.addEventListener("touchstart", handleTouchStart, { passive: true });
-    scrollContainer.addEventListener("touchmove", handleTouchMove, { passive: false });
-    scrollContainer.addEventListener("touchend", resetAxis, { passive: true });
-    scrollContainer.addEventListener("touchcancel", resetAxis, { passive: true });
-
-    return () => {
-      scrollContainer.removeEventListener("touchstart", handleTouchStart);
-      scrollContainer.removeEventListener("touchmove", handleTouchMove);
-      scrollContainer.removeEventListener("touchend", resetAxis);
-      scrollContainer.removeEventListener("touchcancel", resetAxis);
-    };
-  }, []);
+  const { horizontalRef: tableScrollRef, verticalRef: tableVerticalRef } = useDominantAxisTableScroll();
 
   const filteredVisitors = visitorReports.filter((record) =>
     matchesCommonFilters(

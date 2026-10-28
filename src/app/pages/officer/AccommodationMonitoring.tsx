@@ -1,4 +1,4 @@
-import { Fragment, useState, useEffect, useMemo, useRef, type TouchEvent } from "react";
+import { Fragment, useState, useEffect, useMemo, useRef } from "react";
 import { ChevronDown, ChevronRight, Download, Search, TrendingUp, X } from "lucide-react";
 import { toast } from "sonner";
 import DataState from "../../components/DataState";
@@ -6,6 +6,7 @@ import { supabase } from "../../../lib/supabase";
 import { downloadReportMonitoringWorkbook } from "../../../lib/reportMonitoringExport";
 import { calculateAccommodationOccupancy, calculateAverageAccommodationOccupancy } from "../../../lib/reportMetrics";
 import { useDialogFocus } from "../../../hooks/useDialogFocus";
+import { useDominantAxisTableScroll } from "../../../hooks/useDominantAxisTableScroll";
 import ReportPeriodFilter from "../../components/ReportPeriodFilter";
 import { periodMatchesDate, periodToMonthValue, getReportWeekRange, getReportWeekLabel, type ReportPeriodSelection } from "../../../lib/reportPeriod";
 
@@ -35,39 +36,8 @@ export default function AccommodationMonitoring({ embedded = false }: { embedded
   const [expandedEstablishments, setExpandedEstablishments] = useState<Set<string>>(new Set());
   const [selectedAccommodationGroupKey, setSelectedAccommodationGroupKey] = useState<string | null>(null);
   const accommodationDialogRef = useRef<HTMLDivElement>(null);
-  const tableTouchRef = useRef<{ x: number; y: number; lastX: number; lastY: number; axis: "x" | "y" | null }>({
-    x: 0,
-    y: 0,
-    lastX: 0,
-    lastY: 0,
-    axis: null,
-  });
-
-  const handleTableTouchStart = (event: TouchEvent<HTMLDivElement>) => {
-    const touch = event.touches[0];
-    tableTouchRef.current = { x: touch.clientX, y: touch.clientY, lastX: touch.clientX, lastY: touch.clientY, axis: null };
-  };
-
-  const handleTableTouchMove = (event: TouchEvent<HTMLDivElement>) => {
-    const touch = event.touches[0];
-    const state = tableTouchRef.current;
-    const deltaX = touch.clientX - state.x;
-    const deltaY = touch.clientY - state.y;
-
-    if (!state.axis && Math.max(Math.abs(deltaX), Math.abs(deltaY)) > 8) {
-      state.axis = Math.abs(deltaX) > Math.abs(deltaY) ? "x" : "y";
-    }
-
-    if (state.axis === "x") {
-      event.preventDefault();
-      event.currentTarget.scrollLeft += state.lastX - touch.clientX;
-      state.lastX = touch.clientX;
-    } else if (state.axis === "y" && event.currentTarget.scrollHeight > event.currentTarget.clientHeight) {
-      event.preventDefault();
-      event.currentTarget.scrollTop += state.lastY - touch.clientY;
-      state.lastY = touch.clientY;
-    }
-  };
+  const { horizontalRef: summaryTableRef } = useDominantAxisTableScroll();
+  const { horizontalRef: modalTableScrollRef, verticalRef: modalTableVerticalRef } = useDominantAxisTableScroll();
 
   // Summary statistics
   const [summaryStats, setSummaryStats] = useState({
@@ -508,9 +478,8 @@ export default function AccommodationMonitoring({ embedded = false }: { embedded
           <p className="mt-1 text-sm text-gray-600">Click an establishment to open the full {monthLabel} record in a modal table.</p>
         </div>
         <div
-          className="max-h-[26rem] overflow-auto overscroll-contain touch-auto [-webkit-overflow-scrolling:touch]"
-          onTouchStart={handleTableTouchStart}
-          onTouchMove={handleTableTouchMove}
+          ref={summaryTableRef}
+          className="max-h-[26rem] overflow-auto overscroll-contain touch-none [-webkit-overflow-scrolling:touch]"
         >
           <table className="w-full min-w-[640px]">
             <thead className="sticky top-0 z-10 border-b border-gray-200 bg-gray-50">
@@ -728,9 +697,8 @@ export default function AccommodationMonitoring({ embedded = false }: { embedded
                 Swipe sideways to see all table columns.
               </div>
               <div
-                className="overflow-x-auto overscroll-x-contain touch-auto [-webkit-overflow-scrolling:touch]"
-                onTouchStart={handleTableTouchStart}
-                onTouchMove={handleTableTouchMove}
+                ref={modalTableScrollRef}
+                className="overflow-x-auto overscroll-x-contain touch-none [-webkit-overflow-scrolling:touch]"
               >
                 <div className="min-w-[760px] sm:min-w-[900px]">
                   <div className="grid grid-cols-[18%_17%_17%_17%_17%_14%] border-b border-gray-200 bg-white shadow-[0_1px_0_rgba(148,163,184,0.35)]" data-accommodation-records-table-modal="phone-fixed-header">
@@ -742,7 +710,7 @@ export default function AccommodationMonitoring({ embedded = false }: { embedded
                     <div className="flex min-h-10 items-center justify-center px-2 py-2 text-center text-[10px] font-semibold uppercase leading-tight tracking-wider text-gray-600 sm:min-h-0 sm:px-4 sm:text-xs">Guests</div>
                     <div className="flex min-h-10 items-center justify-center px-2 py-2 text-center text-[10px] font-semibold uppercase leading-tight tracking-wider text-gray-600 sm:min-h-0 sm:px-4 sm:text-xs">Guest Nights</div>
                   </div>
-                  <div className="max-h-[48dvh] divide-y divide-gray-100 overflow-y-auto overflow-x-hidden overscroll-y-contain [-webkit-overflow-scrolling:touch] sm:max-h-[54vh]">
+                  <div ref={modalTableVerticalRef} className="max-h-[48dvh] divide-y divide-gray-100 overflow-y-auto overflow-x-hidden overscroll-y-contain [-webkit-overflow-scrolling:touch] sm:max-h-[54vh]">
                     {selectedAccommodationGroup.records.map((record) => (
                       <div key={record.id} className="grid grid-cols-[18%_17%_17%_17%_17%_14%] align-top">
                         <div className="break-words px-2 py-2 text-[11px] text-gray-600 sm:px-4 sm:py-3 sm:text-sm">{record.date}</div>
