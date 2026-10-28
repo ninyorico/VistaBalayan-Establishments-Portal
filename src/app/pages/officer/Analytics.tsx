@@ -479,7 +479,13 @@ export default function Analytics() {
           <h3 className="text-lg font-semibold text-gray-900">Visitor Origins & Actual Growth</h3>
         </div>
         <div ref={originsTableRef} className="max-h-[20rem] overflow-auto overscroll-contain touch-none [-webkit-overflow-scrolling:touch]" aria-label="Visitor origins table; scroll to view more than five locations">
-          <table className="w-full min-w-[34rem]">
+          <table className="w-full min-w-[30rem] table-fixed sm:min-w-0">
+            <colgroup>
+              <col className="w-[8rem]" />
+              <col className="w-[6rem]" />
+              <col className="w-[8rem]" />
+              <col className="w-[8rem]" />
+            </colgroup>
             <thead className="sticky top-0 z-10 bg-gray-50 border-b border-gray-200">
               <tr>
                 <th className="sticky left-0 z-20 bg-gray-50 px-2 py-1.5 text-left text-[9px] font-semibold uppercase tracking-wider text-gray-700 shadow-[2px_0_4px_rgba(148,163,184,0.24)] sm:px-6 sm:py-3 sm:text-xs">Location</th>
@@ -495,7 +501,7 @@ export default function Analytics() {
                     <td className="sticky left-0 z-10 bg-white px-2 py-1.5 text-[10px] font-medium text-gray-900 shadow-[2px_0_4px_rgba(148,163,184,0.18)] group-hover:bg-gray-50 sm:px-6 sm:py-4 sm:text-sm">{origin.location}</td>
                     <td className="px-2 py-1.5 text-[10px] text-gray-900 sm:px-6 sm:py-4 sm:text-sm">{origin.visitors.toLocaleString()}</td>
                     <td className="px-2 py-1.5 sm:px-6 sm:py-4">
-                      <span className={`font-medium ${origin.growth >= 0 ? "text-green-600" : "text-red-600"}`}>
+                      <span className={`text-[10px] font-medium sm:text-sm ${origin.growth >= 0 ? "text-green-600" : "text-red-600"}`}>
                         {origin.growth >= 0 ? "+" : ""}{origin.growth.toFixed(1)}%
                       </span>
                     </td>
