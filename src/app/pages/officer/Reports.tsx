@@ -795,7 +795,15 @@ export default function Reports() {
               ))}
             </div>
           ) : (
-            <table className="w-full min-w-[720px]">
+            <table className="w-full min-w-[38rem] table-fixed">
+              <colgroup>
+                <col className="w-[25%]" />
+                <col className="w-[18%]" />
+                <col className="w-[17%]" />
+                <col className="w-[12%]" />
+                <col className="w-[18%]" />
+                <col className="w-[10%]" />
+              </colgroup>
               <thead className="sticky top-0 z-20 bg-gray-50 shadow-sm">
                 <tr>
                   <th className="sticky left-0 z-20 bg-gray-50 px-2 py-2 text-left text-[10px] font-semibold text-gray-700 shadow-[2px_0_4px_rgba(148,163,184,0.24)] sm:px-4 sm:py-3 sm:text-xs">Establishment</th>
