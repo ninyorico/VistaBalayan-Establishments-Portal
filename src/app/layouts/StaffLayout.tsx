@@ -89,7 +89,7 @@ export default function StaffLayout() {
   };
 
   return (
-    <div className="dashboard-neumorphic min-h-[100dvh] tourism-shell text-slate-950">
+    <div className="dashboard-neumorphic min-h-[100dvh] overflow-x-clip touch-pan-y tourism-shell text-slate-950">
       {/* Mobile Overlay */}
       {sidebarOpen && (
         <button
@@ -211,7 +211,7 @@ export default function StaffLayout() {
         </header>
 
         {/* Page Content */}
-        <main className="min-h-[calc(100dvh-4rem)] w-full bg-[#E0E5EC] p-3 sm:p-4 lg:min-h-[calc(100dvh-4.5rem)] lg:p-4 xl:p-5 2xl:p-6">
+        <main className="min-h-[calc(100dvh-4rem)] w-full overflow-visible touch-pan-y bg-[#E0E5EC] p-3 sm:p-4 lg:min-h-[calc(100dvh-4.5rem)] lg:p-4 xl:p-5 2xl:p-6">
           <Outlet />
         </main>
       </div>

@@ -61,7 +61,7 @@ export default function OfficerLayout() {
   };
 
   return (
-    <div className="dashboard-neumorphic min-h-[100dvh] tourism-shell text-slate-950">
+    <div className="dashboard-neumorphic min-h-[100dvh] overflow-x-clip touch-pan-y tourism-shell text-slate-950">
       {/* Mobile Overlay */}
       {sidebarOpen && (
         <button
@@ -184,7 +184,7 @@ export default function OfficerLayout() {
         </header>
 
         {/* Page Content */}
-        <main className="mx-auto max-w-[1500px] p-4 sm:p-6 lg:p-8">
+        <main className="mx-auto min-h-[calc(100dvh-4rem)] max-w-[1500px] overflow-visible p-4 touch-pan-y sm:p-6 lg:min-h-[calc(100dvh-4.5rem)] lg:p-8">
           <Outlet />
         </main>
       </div>
