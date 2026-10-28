@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { useDominantAxisTableScroll } from "../../../hooks/useDominantAxisTableScroll";
 import {
   FileSpreadsheet,
   Eye,
@@ -98,6 +99,7 @@ const renderYearlyPeriodTick = ({ x = 0, y = 0, payload }: any) => {
 };
 
 export default function Reports() {
+  const { horizontalRef: submissionsTableRef } = useDominantAxisTableScroll();
   const [filterType, setFilterType] = useState<"year" | "quarter" | "month" | "week">("month");
   const [selectedYear, setSelectedYear] = useState(getCurrentYear());
   const [selectedQuarter, setSelectedQuarter] = useState("1");
@@ -781,7 +783,7 @@ export default function Reports() {
           <h3 className="text-lg font-semibold text-gray-900">Submissions</h3>
           <p className="text-sm text-gray-600">Daily reports submitted by establishments. Municipal officers can view the submitted records without approving or rejecting them.</p>
         </div>
-        <div className="max-h-[28rem] overflow-auto overscroll-contain">
+        <div ref={submissionsTableRef} className="max-h-[28rem] overflow-auto overscroll-contain touch-none [-webkit-overflow-scrolling:touch]">
           {loading ? (
             <div className="space-y-3 p-4" role="status" aria-label="Loading submissions">
               {Array.from({ length: 6 }, (_, index) => (
@@ -794,7 +796,7 @@ export default function Reports() {
             </div>
           ) : (
             <table className="w-full min-w-[720px]">
-              <thead className="sticky top-0 z-10 bg-gray-50 shadow-sm">
+              <thead className="sticky top-0 z-20 bg-gray-50 shadow-sm">
                 <tr>
                   <th className="sticky left-0 z-20 bg-gray-50 px-2 py-2 text-left text-[10px] font-semibold text-gray-700 shadow-[2px_0_4px_rgba(148,163,184,0.24)] sm:px-4 sm:py-3 sm:text-xs">Establishment</th>
                   <th className="px-2 py-2 text-left text-[10px] font-semibold text-gray-700 sm:px-4 sm:py-3 sm:text-xs">Type</th>
