@@ -484,13 +484,13 @@ export default function AccommodationMonitoring({ embedded = false }: { embedded
           <table className="w-full min-w-[640px]">
             <thead className="sticky top-0 z-10 border-b border-gray-200 bg-gray-50">
               <tr>
-                <th className="sticky left-0 z-20 bg-gray-50 px-3 py-2 text-left text-[10px] font-semibold uppercase tracking-wider text-gray-700 shadow-[2px_0_4px_rgba(148,163,184,0.24)]">Establishment</th>
-                <th className="px-3 py-2 text-left text-[10px] font-semibold uppercase tracking-wider text-gray-700">Records</th>
-                <th className="px-3 py-2 text-left text-[10px] font-semibold uppercase tracking-wider text-gray-700">Rooms</th>
-                <th className="px-3 py-2 text-left text-[10px] font-semibold uppercase tracking-wider text-gray-700">Occupancy</th>
-                <th className="px-3 py-2 text-left text-[10px] font-semibold uppercase tracking-wider text-gray-700">Check-ins</th>
-                <th className="px-3 py-2 text-left text-[10px] font-semibold uppercase tracking-wider text-gray-700">Guest Nights</th>
-                <th className="px-3 py-2 text-left text-[10px] font-semibold uppercase tracking-wider text-gray-700">Avg Guest/Room</th>
+                <th className="sticky left-0 z-20 bg-gray-50 px-2 py-1.5 text-left text-[9px] font-semibold uppercase tracking-wider text-gray-700 shadow-[2px_0_4px_rgba(148,163,184,0.24)]">Establishment</th>
+                <th className="px-2 py-1.5 text-left text-[9px] font-semibold uppercase tracking-wider text-gray-700">Records</th>
+                <th className="px-2 py-1.5 text-left text-[9px] font-semibold uppercase tracking-wider text-gray-700">Rooms</th>
+                <th className="px-2 py-1.5 text-left text-[9px] font-semibold uppercase tracking-wider text-gray-700">Occupancy</th>
+                <th className="px-2 py-1.5 text-left text-[9px] font-semibold uppercase tracking-wider text-gray-700">Check-ins</th>
+                <th className="px-2 py-1.5 text-left text-[9px] font-semibold uppercase tracking-wider text-gray-700">Guest Nights</th>
+                <th className="px-2 py-1.5 text-left text-[9px] font-semibold uppercase tracking-wider text-gray-700">Avg Guest/Room</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-200">
@@ -510,17 +510,17 @@ export default function AccommodationMonitoring({ embedded = false }: { embedded
                       }
                     }}
                   >
-                    <td className="sticky left-0 z-10 bg-white px-3 py-3 text-xs font-medium text-gray-900 shadow-[2px_0_4px_rgba(148,163,184,0.18)] group-hover:bg-gray-50">
+                    <td className="sticky left-0 z-10 bg-white px-2 py-1.5 text-[10px] font-medium text-gray-900 shadow-[2px_0_4px_rgba(148,163,184,0.18)] group-hover:bg-gray-50">
                       <div className="flex items-center gap-1.5">
                         {group.establishment}
                       </div>
                     </td>
-                    <td className="px-3 py-3 text-xs text-gray-600">{group.records.length}</td>
-                    <td className="px-3 py-3 text-xs text-gray-900">{group.totalRooms}</td>
-                    <td className="px-3 py-3 text-xs font-medium text-green-700">{group.avgOccupancy.toFixed(1)}%</td>
-                    <td className="px-3 py-3 text-xs font-medium text-blue-600">{group.totalGuests}</td>
-                    <td className="px-3 py-3 text-xs text-gray-900">{group.guestNights}</td>
-                    <td className="px-3 py-3 text-xs font-medium text-teal-600">{group.avgGuestsPerRoom.toFixed(2)}</td>
+                    <td className="px-2 py-1.5 text-[10px] text-gray-600">{group.records.length}</td>
+                    <td className="px-2 py-1.5 text-[10px] text-gray-900">{group.totalRooms}</td>
+                    <td className="px-2 py-1.5 text-[10px] font-medium text-green-700">{group.avgOccupancy.toFixed(1)}%</td>
+                    <td className="px-2 py-1.5 text-[10px] font-medium text-blue-600">{group.totalGuests}</td>
+                    <td className="px-2 py-1.5 text-[10px] text-gray-900">{group.guestNights}</td>
+                    <td className="px-2 py-1.5 text-[10px] font-medium text-teal-600">{group.avgGuestsPerRoom.toFixed(2)}</td>
                   </tr>
                 ))
               ) : (
@@ -701,25 +701,25 @@ export default function AccommodationMonitoring({ embedded = false }: { embedded
                 className="overflow-x-auto overscroll-x-contain touch-none [-webkit-overflow-scrolling:touch]"
               >
                 <div className="min-w-[760px] sm:min-w-[900px]">
-                  <div className="grid grid-cols-[18%_17%_17%_17%_17%_14%] border-b border-gray-200 bg-white shadow-[0_1px_0_rgba(148,163,184,0.35)]" data-accommodation-records-table-modal="phone-fixed-header">
-                    <div className="sticky left-0 z-20 flex min-h-10 items-center justify-center bg-white px-2 py-2 text-center text-[10px] font-semibold uppercase leading-tight tracking-wider text-gray-600 shadow-[2px_0_4px_rgba(148,163,184,0.24)] sm:min-h-0 sm:px-4 sm:text-xs">Date</div>
+                  <div className="grid grid-cols-[15%_17%_17%_17%_17%_17%] border-b border-gray-200 bg-white shadow-[0_1px_0_rgba(148,163,184,0.35)]" data-accommodation-records-table-modal="phone-fixed-header">
+                    <div className="sticky left-0 z-20 flex min-h-10 items-center justify-center bg-white px-1.5 py-1.5 text-center text-[9px] font-semibold uppercase leading-tight tracking-wider text-gray-600 shadow-[2px_0_4px_rgba(148,163,184,0.24)] sm:min-h-0 sm:px-4 sm:py-2 sm:text-xs">Date</div>
 
-                    <div className="flex min-h-10 items-center justify-center px-2 py-2 text-center text-[10px] font-semibold uppercase leading-tight tracking-wider text-gray-600 sm:min-h-0 sm:px-4 sm:text-xs">Total Rooms</div>
-                    <div className="flex min-h-10 items-center justify-center px-2 py-2 text-center text-[10px] font-semibold uppercase leading-tight tracking-wider text-gray-600 sm:min-h-0 sm:px-4 sm:text-xs">Occupied Rooms</div>
-                    <div className="flex min-h-10 items-center justify-center px-2 py-2 text-center text-[10px] font-semibold uppercase leading-tight tracking-wider text-gray-600 sm:min-h-0 sm:px-4 sm:text-xs">Avg Occupancy</div>
-                    <div className="flex min-h-10 items-center justify-center px-2 py-2 text-center text-[10px] font-semibold uppercase leading-tight tracking-wider text-gray-600 sm:min-h-0 sm:px-4 sm:text-xs">Guests</div>
-                    <div className="flex min-h-10 items-center justify-center px-2 py-2 text-center text-[10px] font-semibold uppercase leading-tight tracking-wider text-gray-600 sm:min-h-0 sm:px-4 sm:text-xs">Guest Nights</div>
+                    <div className="flex min-h-10 items-center justify-center px-1.5 py-1.5 text-center text-[9px] font-semibold uppercase leading-tight tracking-wider text-gray-600 sm:min-h-0 sm:px-4 sm:py-2 sm:text-xs">Total Rooms</div>
+                    <div className="flex min-h-10 items-center justify-center px-1.5 py-1.5 text-center text-[9px] font-semibold uppercase leading-tight tracking-wider text-gray-600 sm:min-h-0 sm:px-4 sm:py-2 sm:text-xs">Occupied Rooms</div>
+                    <div className="flex min-h-10 items-center justify-center px-1.5 py-1.5 text-center text-[9px] font-semibold uppercase leading-tight tracking-wider text-gray-600 sm:min-h-0 sm:px-4 sm:py-2 sm:text-xs">Avg Occupancy</div>
+                    <div className="flex min-h-10 items-center justify-center px-1.5 py-1.5 text-center text-[9px] font-semibold uppercase leading-tight tracking-wider text-gray-600 sm:min-h-0 sm:px-4 sm:py-2 sm:text-xs">Guests</div>
+                    <div className="flex min-h-10 items-center justify-center px-1.5 py-1.5 text-center text-[9px] font-semibold uppercase leading-tight tracking-wider text-gray-600 sm:min-h-0 sm:px-4 sm:py-2 sm:text-xs">Guest Nights</div>
                   </div>
                   <div ref={modalTableVerticalRef} className="max-h-[48dvh] divide-y divide-gray-100 overflow-y-auto overflow-x-clip overscroll-y-contain [-webkit-overflow-scrolling:touch] sm:max-h-[54vh]">
                     {selectedAccommodationGroup.records.map((record) => (
-                      <div key={record.id} className="grid grid-cols-[18%_17%_17%_17%_17%_14%] align-top">
-                        <div className="sticky left-0 z-10 break-words bg-white px-2 py-2 text-[11px] text-gray-600 shadow-[2px_0_4px_rgba(148,163,184,0.18)] sm:px-4 sm:py-3 sm:text-sm">{record.date}</div>
+                      <div key={record.id} className="grid grid-cols-[15%_17%_17%_17%_17%_17%] align-top">
+                        <div className="sticky left-0 z-10 break-words bg-white px-1.5 py-1.5 text-[10px] text-gray-600 shadow-[2px_0_4px_rgba(148,163,184,0.18)] sm:px-4 sm:py-3 sm:text-sm">{record.date}</div>
 
-                        <div className="px-2 py-2 text-[11px] text-gray-900 sm:px-4 sm:py-3 sm:text-sm">{record.totalRooms}</div>
-                        <div className="px-2 py-2 text-[11px] font-medium text-gray-900 sm:px-4 sm:py-3 sm:text-sm">{record.occupiedRooms}</div>
-                        <div className="px-2 py-2 text-[11px] font-medium text-green-700 sm:px-4 sm:py-3 sm:text-sm">{record.avgOccupancy.toFixed(1)}%</div>
-                        <div className="px-2 py-2 text-[11px] font-medium text-blue-600 sm:px-4 sm:py-3 sm:text-sm">{record.totalGuests}</div>
-                        <div className="px-2 py-2 text-[11px] text-gray-900 sm:px-4 sm:py-3 sm:text-sm">{record.guestNights}</div>
+                        <div className="px-1.5 py-1.5 text-[10px] text-gray-900 sm:px-4 sm:py-3 sm:text-sm">{record.totalRooms}</div>
+                        <div className="px-1.5 py-1.5 text-[10px] font-medium text-gray-900 sm:px-4 sm:py-3 sm:text-sm">{record.occupiedRooms}</div>
+                        <div className="px-1.5 py-1.5 text-[10px] font-medium text-green-700 sm:px-4 sm:py-3 sm:text-sm">{record.avgOccupancy.toFixed(1)}%</div>
+                        <div className="px-1.5 py-1.5 text-[10px] font-medium text-blue-600 sm:px-4 sm:py-3 sm:text-sm">{record.totalGuests}</div>
+                        <div className="px-1.5 py-1.5 text-[10px] text-gray-900 sm:px-4 sm:py-3 sm:text-sm">{record.guestNights}</div>
                       </div>
                     ))}
                   </div>

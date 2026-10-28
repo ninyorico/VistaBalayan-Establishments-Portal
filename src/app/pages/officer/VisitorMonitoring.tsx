@@ -293,12 +293,12 @@ export default function VisitorMonitoring({ embedded = false }: { embedded?: boo
           <table className="w-full min-w-[620px] sm:min-w-[860px]">
             <thead className="sticky top-0 z-10 bg-gray-50 border-b border-gray-200">
               <tr>
-                <th className="sticky left-0 z-20 bg-gray-50 px-3 py-2 text-left text-[10px] font-semibold uppercase tracking-wider text-gray-700 shadow-[2px_0_4px_rgba(148,163,184,0.24)] sm:px-6 sm:py-3 sm:text-xs">Establishment</th>
-                <th className="px-3 py-2 text-left text-[10px] font-semibold uppercase tracking-wider text-gray-700 sm:px-6 sm:py-3 sm:text-xs">Records</th>
-                <th className="px-3 py-2 text-left text-[10px] font-semibold uppercase tracking-wider text-gray-700 sm:px-6 sm:py-3 sm:text-xs">Male</th>
-                <th className="px-3 py-2 text-left text-[10px] font-semibold uppercase tracking-wider text-gray-700 sm:px-6 sm:py-3 sm:text-xs">Female</th>
-                <th className="px-3 py-2 text-left text-[10px] font-semibold uppercase tracking-wider text-gray-700 sm:px-6 sm:py-3 sm:text-xs">Total Visitors</th>
-                <th className="px-3 py-2 text-left text-[10px] font-semibold uppercase tracking-wider text-gray-700 sm:px-6 sm:py-3 sm:text-xs">Places of Residence</th>
+                <th className="sticky left-0 z-20 bg-gray-50 px-2 py-1.5 text-left text-[9px] font-semibold uppercase tracking-wider text-gray-700 shadow-[2px_0_4px_rgba(148,163,184,0.24)] sm:px-6 sm:py-3 sm:text-xs">Establishment</th>
+                <th className="px-2 py-1.5 text-left text-[9px] font-semibold uppercase tracking-wider text-gray-700 sm:px-6 sm:py-3 sm:text-xs">Records</th>
+                <th className="px-2 py-1.5 text-left text-[9px] font-semibold uppercase tracking-wider text-gray-700 sm:px-6 sm:py-3 sm:text-xs">Male</th>
+                <th className="px-2 py-1.5 text-left text-[9px] font-semibold uppercase tracking-wider text-gray-700 sm:px-6 sm:py-3 sm:text-xs">Female</th>
+                <th className="px-2 py-1.5 text-left text-[9px] font-semibold uppercase tracking-wider text-gray-700 sm:px-6 sm:py-3 sm:text-xs">Total Visitors</th>
+                <th className="px-2 py-1.5 text-left text-[9px] font-semibold uppercase tracking-wider text-gray-700 sm:px-6 sm:py-3 sm:text-xs">Places of Residence</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-200">
@@ -318,16 +318,16 @@ export default function VisitorMonitoring({ embedded = false }: { embedded?: boo
                           }
                         }}
                       >
-                        <td className="sticky left-0 z-10 bg-white px-3 py-3 text-xs font-medium text-gray-900 shadow-[2px_0_4px_rgba(148,163,184,0.18)] group-hover:bg-gray-50 sm:px-6 sm:py-4 sm:text-sm">
+                        <td className="sticky left-0 z-10 bg-white px-2 py-1.5 text-[10px] font-medium text-gray-900 shadow-[2px_0_4px_rgba(148,163,184,0.18)] group-hover:bg-gray-50 sm:px-6 sm:py-4 sm:text-sm">
                           <div className="flex items-center gap-1.5 sm:gap-2">
                             {group.establishment}
                           </div>
                         </td>
-                        <td className="px-3 py-3 text-xs text-gray-600 sm:px-6 sm:py-4 sm:text-sm">{group.records.length}</td>
-                        <td className="px-3 py-3 text-xs font-medium text-blue-600 sm:px-6 sm:py-4 sm:text-sm">{group.male}</td>
-                        <td className="px-3 py-3 text-xs font-medium text-purple-600 sm:px-6 sm:py-4 sm:text-sm">{group.female}</td>
-                        <td className="px-3 py-3 text-xs font-semibold text-gray-900 sm:px-6 sm:py-4 sm:text-sm">{group.total}</td>
-                        <td className="max-w-[9rem] px-3 py-3 text-xs text-gray-600 sm:max-w-none sm:px-6 sm:py-4 sm:text-sm">{Array.from(group.residenceTypes).join(", ")}</td>
+                        <td className="px-2 py-1.5 text-[10px] text-gray-600 sm:px-6 sm:py-4 sm:text-sm">{group.records.length}</td>
+                        <td className="px-2 py-1.5 text-[10px] font-medium text-blue-600 sm:px-6 sm:py-4 sm:text-sm">{group.male}</td>
+                        <td className="px-2 py-1.5 text-[10px] font-medium text-purple-600 sm:px-6 sm:py-4 sm:text-sm">{group.female}</td>
+                        <td className="px-2 py-1.5 text-[10px] font-semibold text-gray-900 sm:px-6 sm:py-4 sm:text-sm">{group.total}</td>
+                        <td className="max-w-[9rem] px-2 py-1.5 text-[10px] text-gray-600 sm:max-w-none sm:px-6 sm:py-4 sm:text-sm">{Array.from(group.residenceTypes).join(", ")}</td>
                       </tr>
                 ))
               ) : (
@@ -385,23 +385,23 @@ export default function VisitorMonitoring({ embedded = false }: { embedded?: boo
                 className="overflow-x-auto overscroll-x-contain touch-none [-webkit-overflow-scrolling:touch]"
               >
                 <div className="min-w-[620px] sm:min-w-[760px]">
-                  <div className="grid grid-cols-[22%_20%_11%_11%_11%_25%] border-b border-[#D2D8E0] bg-[#E0E5EC] shadow-[0_1px_0_rgba(148,163,184,0.35)]" data-visitor-records-fixed-header="true">
-                    <div className="sticky left-0 z-20 bg-[#E0E5EC] px-2 py-2 text-left text-[10px] font-semibold uppercase tracking-wider text-gray-600 shadow-[2px_0_4px_rgba(148,163,184,0.24)] sm:px-4 sm:text-xs">Date</div>
-                    <div className="px-2 py-2 text-left text-[10px] font-semibold uppercase tracking-wider text-gray-600 sm:px-4 sm:text-xs">Guest/Group</div>
-                    <div className="px-2 py-2 text-left text-[10px] font-semibold uppercase tracking-wider text-gray-600 sm:px-4 sm:text-xs">Male</div>
-                    <div className="px-2 py-2 text-left text-[10px] font-semibold uppercase tracking-wider text-gray-600 sm:px-4 sm:text-xs">Female</div>
-                    <div className="px-2 py-2 text-left text-[10px] font-semibold uppercase tracking-wider text-gray-600 sm:px-4 sm:text-xs">Total</div>
-                    <div className="px-2 py-2 text-left text-[10px] font-semibold uppercase tracking-wider text-gray-600 sm:px-4 sm:text-xs">Location</div>
+                  <div className="grid grid-cols-[16%_22%_11%_11%_11%_29%] border-b border-[#D2D8E0] bg-[#E0E5EC] shadow-[0_1px_0_rgba(148,163,184,0.35)]" data-visitor-records-fixed-header="true">
+                    <div className="sticky left-0 z-20 bg-[#E0E5EC] px-1.5 py-1.5 text-left text-[9px] font-semibold uppercase tracking-wider text-gray-600 shadow-[2px_0_4px_rgba(148,163,184,0.24)] sm:px-4 sm:py-2 sm:text-xs">Date</div>
+                    <div className="px-1.5 py-1.5 text-left text-[9px] font-semibold uppercase tracking-wider text-gray-600 sm:px-4 sm:py-2 sm:text-xs">Guest/Group</div>
+                    <div className="px-1.5 py-1.5 text-left text-[9px] font-semibold uppercase tracking-wider text-gray-600 sm:px-4 sm:py-2 sm:text-xs">Male</div>
+                    <div className="px-1.5 py-1.5 text-left text-[9px] font-semibold uppercase tracking-wider text-gray-600 sm:px-4 sm:py-2 sm:text-xs">Female</div>
+                    <div className="px-1.5 py-1.5 text-left text-[9px] font-semibold uppercase tracking-wider text-gray-600 sm:px-4 sm:py-2 sm:text-xs">Total</div>
+                    <div className="px-1.5 py-1.5 text-left text-[9px] font-semibold uppercase tracking-wider text-gray-600 sm:px-4 sm:py-2 sm:text-xs">Location</div>
                   </div>
                   <div ref={modalTableVerticalRef} className="max-h-[48dvh] divide-y divide-gray-100 overflow-y-auto overflow-x-clip overscroll-y-contain [-webkit-overflow-scrolling:touch] sm:max-h-[54vh]">
                     {selectedGroup.records.map((record) => (
-                      <div key={record.id} className="grid grid-cols-[22%_20%_11%_11%_11%_25%] align-top">
-                        <div className="sticky left-0 z-10 break-words bg-[#E0E5EC] px-2 py-2 text-[11px] text-gray-600 shadow-[2px_0_4px_rgba(148,163,184,0.18)] sm:px-4 sm:py-3 sm:text-sm">{record.date}</div>
-                        <div className="break-words px-2 py-2 text-[11px] text-gray-900 sm:px-4 sm:py-3 sm:text-sm">{record.guestName}</div>
-                        <div className="px-2 py-2 text-[11px] font-medium text-blue-600 sm:px-4 sm:py-3 sm:text-sm">{record.male}</div>
-                        <div className="px-2 py-2 text-[11px] font-medium text-purple-600 sm:px-4 sm:py-3 sm:text-sm">{record.female}</div>
-                        <div className="px-2 py-2 text-[11px] font-semibold text-gray-900 sm:px-4 sm:py-3 sm:text-sm">{record.total}</div>
-                        <div className="break-words px-2 py-2 text-[11px] text-gray-600 sm:px-4 sm:py-3 sm:text-sm">{record.location}</div>
+                      <div key={record.id} className="grid grid-cols-[16%_22%_11%_11%_11%_29%] align-top">
+                        <div className="sticky left-0 z-10 break-words bg-[#E0E5EC] px-1.5 py-1.5 text-[10px] text-gray-600 shadow-[2px_0_4px_rgba(148,163,184,0.18)] sm:px-4 sm:py-3 sm:text-sm">{record.date}</div>
+                        <div className="break-words px-1.5 py-1.5 text-[10px] text-gray-900 sm:px-4 sm:py-3 sm:text-sm">{record.guestName}</div>
+                        <div className="px-1.5 py-1.5 text-[10px] font-medium text-blue-600 sm:px-4 sm:py-3 sm:text-sm">{record.male}</div>
+                        <div className="px-1.5 py-1.5 text-[10px] font-medium text-purple-600 sm:px-4 sm:py-3 sm:text-sm">{record.female}</div>
+                        <div className="px-1.5 py-1.5 text-[10px] font-semibold text-gray-900 sm:px-4 sm:py-3 sm:text-sm">{record.total}</div>
+                        <div className="break-words px-1.5 py-1.5 text-[10px] text-gray-600 sm:px-4 sm:py-3 sm:text-sm">{record.location}</div>
                       </div>
                     ))}
                   </div>

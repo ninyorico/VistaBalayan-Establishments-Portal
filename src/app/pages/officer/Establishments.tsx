@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { useDominantAxisTableScroll } from "../../../hooks/useDominantAxisTableScroll";
 import { Plus, Search, Edit, Trash2, Building2, MapPin, Phone, UserCog, Mail, Shield, X, Loader2, FileImage, ExternalLink } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "../../../lib/supabase";
@@ -59,6 +60,7 @@ interface Profile {
 }
 
 export default function Establishments() {
+  const { horizontalRef: establishmentsTableRef } = useDominantAxisTableScroll();
   const [activeTab, setActiveTab] = useState<"establishments" | "users">("establishments");
   const [searchTerm, setSearchTerm] = useState("");
   const [filterType, setFilterType] = useState("all");
@@ -1006,7 +1008,7 @@ export default function Establishments() {
 
           {/* Establishments Table */}
           <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
-            <div className="max-h-[26rem] overflow-auto overscroll-contain touch-auto">
+            <div ref={establishmentsTableRef} className="max-h-[26rem] overflow-auto overscroll-contain touch-none [-webkit-overflow-scrolling:touch]">
               <div className="min-w-full">
                 <table className="w-full min-w-[1100px]">
                 <thead className="sticky top-0 z-10 bg-gray-50 border-b border-gray-200">

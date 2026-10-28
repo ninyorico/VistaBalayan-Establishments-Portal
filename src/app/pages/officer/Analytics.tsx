@@ -18,6 +18,7 @@ import { getEstablishmentReportingMode, type ReportingMode } from "../../../lib/
 import DataState from "../../components/DataState";
 import { PageHero } from "../../components/vista/PolishedShell";
 import EstablishmentPerformanceDashboard, { type PerformanceInputWithMode } from "../../components/vista/EstablishmentPerformanceDashboard";
+import { useDominantAxisTableScroll } from "../../../hooks/useDominantAxisTableScroll";
 
 interface AnalyticsData {
   seasonalData: { month: string; visitors: number; guestCheckIns: number; guestNights: number }[];
@@ -106,6 +107,7 @@ const getAnalyticsYearRange = (year: string) => {
 };
 
 export default function Analytics() {
+  const { horizontalRef: originsTableRef } = useDominantAxisTableScroll();
   const [data, setData] = useState<AnalyticsData>({
     seasonalData: [],
     visitorOrigins: [],
@@ -476,31 +478,31 @@ export default function Analytics() {
         <div className="p-6 border-b border-gray-200">
           <h3 className="text-lg font-semibold text-gray-900">Visitor Origins & Actual Growth</h3>
         </div>
-        <div className="max-h-[20rem] overflow-auto" aria-label="Visitor origins table; scroll to view more than five locations">
-          <table className="w-full">
+        <div ref={originsTableRef} className="max-h-[20rem] overflow-auto overscroll-contain touch-none [-webkit-overflow-scrolling:touch]" aria-label="Visitor origins table; scroll to view more than five locations">
+          <table className="w-full min-w-[34rem]">
             <thead className="sticky top-0 z-10 bg-gray-50 border-b border-gray-200">
               <tr>
-                <th className="px-6 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">Location</th>
-                <th className="px-6 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">Visitors</th>
-                <th className="px-6 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">Growth Rate</th>
-                <th className="px-6 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">Trend</th>
+                <th className="sticky left-0 z-20 bg-gray-50 px-2 py-1.5 text-left text-[9px] font-semibold uppercase tracking-wider text-gray-700 shadow-[2px_0_4px_rgba(148,163,184,0.24)] sm:px-6 sm:py-3 sm:text-xs">Location</th>
+                <th className="px-2 py-1.5 text-left text-[9px] font-semibold uppercase tracking-wider text-gray-700 sm:px-6 sm:py-3 sm:text-xs">Visitors</th>
+                <th className="px-2 py-1.5 text-left text-[9px] font-semibold uppercase tracking-wider text-gray-700 sm:px-6 sm:py-3 sm:text-xs">Growth Rate</th>
+                <th className="px-2 py-1.5 text-left text-[9px] font-semibold uppercase tracking-wider text-gray-700 sm:px-6 sm:py-3 sm:text-xs">Trend</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-200">
               {data.visitorOrigins.length > 0 ? (
                 data.visitorOrigins.map((origin, index) => (
-                  <tr key={index} className="hover:bg-gray-50">
-                    <td className="px-6 py-4 font-medium text-gray-900">{origin.location}</td>
-                    <td className="px-6 py-4 text-gray-900">{origin.visitors.toLocaleString()}</td>
-                    <td className="px-6 py-4">
+                  <tr key={index} className="group hover:bg-gray-50">
+                    <td className="sticky left-0 z-10 bg-white px-2 py-1.5 text-[10px] font-medium text-gray-900 shadow-[2px_0_4px_rgba(148,163,184,0.18)] group-hover:bg-gray-50 sm:px-6 sm:py-4 sm:text-sm">{origin.location}</td>
+                    <td className="px-2 py-1.5 text-[10px] text-gray-900 sm:px-6 sm:py-4 sm:text-sm">{origin.visitors.toLocaleString()}</td>
+                    <td className="px-2 py-1.5 sm:px-6 sm:py-4">
                       <span className={`font-medium ${origin.growth >= 0 ? "text-green-600" : "text-red-600"}`}>
                         {origin.growth >= 0 ? "+" : ""}{origin.growth.toFixed(1)}%
                       </span>
                     </td>
-                    <td className="px-6 py-4">
+                    <td className="px-2 py-1.5 text-[10px] sm:px-6 sm:py-4 sm:text-sm">
                       <div className={`flex items-center gap-1 ${origin.growth >= 0 ? "text-green-600" : "text-red-600"}`}>
-                        {origin.growth >= 0 ? <TrendingUp className="w-4 h-4" /> : <TrendingDown className="w-4 h-4" />}
-                        <span className="text-sm font-medium">{origin.growth >= 0 ? "Growing" : "Declining"}</span>
+                        {origin.growth >= 0 ? <TrendingUp className="h-3.5 w-3.5 sm:h-4 sm:w-4" /> : <TrendingDown className="h-3.5 w-3.5 sm:h-4 sm:w-4" />}
+                        <span className="text-[10px] font-medium sm:text-sm">{origin.growth >= 0 ? "Growing" : "Declining"}</span>
                       </div>
                     </td>
                   </tr>
