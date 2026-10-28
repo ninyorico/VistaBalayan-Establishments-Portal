@@ -37,7 +37,7 @@ export default function AccommodationMonitoring({ embedded = false }: { embedded
   const [selectedAccommodationGroupKey, setSelectedAccommodationGroupKey] = useState<string | null>(null);
   const accommodationDialogRef = useRef<HTMLDivElement>(null);
   const { horizontalRef: summaryTableRef } = useDominantAxisTableScroll();
-  const { horizontalRef: modalTableScrollRef, verticalRef: modalTableVerticalRef } = useDominantAxisTableScroll();
+  const { horizontalRef: modalTableScrollRef } = useDominantAxisTableScroll();
 
   // Summary statistics
   const [summaryStats, setSummaryStats] = useState({
@@ -698,10 +698,10 @@ export default function AccommodationMonitoring({ embedded = false }: { embedded
               </div>
               <div
                 ref={modalTableScrollRef}
-                className="overflow-x-auto overscroll-x-contain touch-none [-webkit-overflow-scrolling:touch]"
+                className="max-h-[48dvh] overflow-auto overscroll-contain touch-none [-webkit-overflow-scrolling:touch] sm:max-h-[54vh]"
               >
-                <div className="min-w-[760px] sm:min-w-[900px]">
-                  <div className="grid grid-cols-[15%_17%_17%_17%_17%_17%] border-b border-gray-200 bg-white shadow-[0_1px_0_rgba(148,163,184,0.35)]" data-accommodation-records-table-modal="phone-fixed-header">
+                <div className="min-w-[41rem]">
+                  <div className="sticky top-0 z-20 grid grid-cols-[6rem_7rem_7rem_7rem_7rem_7rem] border-b border-gray-200 bg-white shadow-[0_1px_0_rgba(148,163,184,0.35)] sm:grid-cols-[15%_17%_17%_17%_17%_17%]" data-accommodation-records-table-modal="phone-fixed-header">
                     <div className="sticky left-0 z-20 flex min-h-10 items-center justify-center bg-white px-1.5 py-1.5 text-center text-[9px] font-semibold uppercase leading-tight tracking-wider text-gray-600 shadow-[2px_0_4px_rgba(148,163,184,0.24)] sm:min-h-0 sm:px-4 sm:py-2 sm:text-xs">Date</div>
 
                     <div className="flex min-h-10 items-center justify-center px-1.5 py-1.5 text-center text-[9px] font-semibold uppercase leading-tight tracking-wider text-gray-600 sm:min-h-0 sm:px-4 sm:py-2 sm:text-xs">Total Rooms</div>
@@ -710,9 +710,9 @@ export default function AccommodationMonitoring({ embedded = false }: { embedded
                     <div className="flex min-h-10 items-center justify-center px-1.5 py-1.5 text-center text-[9px] font-semibold uppercase leading-tight tracking-wider text-gray-600 sm:min-h-0 sm:px-4 sm:py-2 sm:text-xs">Guests</div>
                     <div className="flex min-h-10 items-center justify-center px-1.5 py-1.5 text-center text-[9px] font-semibold uppercase leading-tight tracking-wider text-gray-600 sm:min-h-0 sm:px-4 sm:py-2 sm:text-xs">Guest Nights</div>
                   </div>
-                  <div ref={modalTableVerticalRef} className="max-h-[48dvh] divide-y divide-gray-100 overflow-y-auto overflow-x-clip overscroll-y-contain [-webkit-overflow-scrolling:touch] sm:max-h-[54vh]">
+                  <div className="divide-y divide-gray-100">
                     {selectedAccommodationGroup.records.map((record) => (
-                      <div key={record.id} className="grid grid-cols-[15%_17%_17%_17%_17%_17%] align-top">
+                      <div key={record.id} className="grid grid-cols-[6rem_7rem_7rem_7rem_7rem_7rem] align-top sm:grid-cols-[15%_17%_17%_17%_17%_17%]">
                         <div className="sticky left-0 z-10 break-words bg-white px-1.5 py-1.5 text-[10px] text-gray-600 shadow-[2px_0_4px_rgba(148,163,184,0.18)] sm:px-4 sm:py-3 sm:text-sm">{record.date}</div>
 
                         <div className="px-1.5 py-1.5 text-[10px] text-gray-900 sm:px-4 sm:py-3 sm:text-sm">{record.totalRooms}</div>

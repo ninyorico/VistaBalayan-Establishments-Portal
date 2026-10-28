@@ -34,7 +34,7 @@ export default function VisitorMonitoring({ embedded = false }: { embedded?: boo
   const [selectedEstablishment, setSelectedEstablishment] = useState<string | null>(null);
   const visitorDialogRef = useRef<HTMLDivElement>(null);
   const { horizontalRef: summaryTableRef } = useDominantAxisTableScroll();
-  const { horizontalRef: modalTableScrollRef, verticalRef: modalTableVerticalRef } = useDominantAxisTableScroll();
+  const { horizontalRef: modalTableScrollRef } = useDominantAxisTableScroll();
 
   useEffect(() => {
     fetchVisitorRecords();
@@ -382,10 +382,10 @@ export default function VisitorMonitoring({ embedded = false }: { embedded?: boo
               </div>
               <div
                 ref={modalTableScrollRef}
-                className="overflow-x-auto overscroll-x-contain touch-none [-webkit-overflow-scrolling:touch]"
+                className="max-h-[48dvh] overflow-auto overscroll-contain touch-none [-webkit-overflow-scrolling:touch] sm:max-h-[54vh]"
               >
-                <div className="min-w-[620px] sm:min-w-[760px]">
-                  <div className="grid grid-cols-[16%_22%_11%_11%_11%_29%] border-b border-[#D2D8E0] bg-[#E0E5EC] shadow-[0_1px_0_rgba(148,163,184,0.35)]" data-visitor-records-fixed-header="true">
+                <div className="min-w-[38rem]">
+                  <div className="sticky top-0 z-20 grid grid-cols-[6rem_9rem_4.5rem_4.5rem_4.5rem_1fr] border-b border-[#D2D8E0] bg-[#E0E5EC] shadow-[0_1px_0_rgba(148,163,184,0.35)] sm:grid-cols-[16%_22%_11%_11%_11%_29%]" data-visitor-records-fixed-header="true">
                     <div className="sticky left-0 z-20 bg-[#E0E5EC] px-1.5 py-1.5 text-left text-[9px] font-semibold uppercase tracking-wider text-gray-600 shadow-[2px_0_4px_rgba(148,163,184,0.24)] sm:px-4 sm:py-2 sm:text-xs">Date</div>
                     <div className="px-1.5 py-1.5 text-left text-[9px] font-semibold uppercase tracking-wider text-gray-600 sm:px-4 sm:py-2 sm:text-xs">Guest/Group</div>
                     <div className="px-1.5 py-1.5 text-left text-[9px] font-semibold uppercase tracking-wider text-gray-600 sm:px-4 sm:py-2 sm:text-xs">Male</div>
@@ -393,9 +393,9 @@ export default function VisitorMonitoring({ embedded = false }: { embedded?: boo
                     <div className="px-1.5 py-1.5 text-left text-[9px] font-semibold uppercase tracking-wider text-gray-600 sm:px-4 sm:py-2 sm:text-xs">Total</div>
                     <div className="px-1.5 py-1.5 text-left text-[9px] font-semibold uppercase tracking-wider text-gray-600 sm:px-4 sm:py-2 sm:text-xs">Location</div>
                   </div>
-                  <div ref={modalTableVerticalRef} className="max-h-[48dvh] divide-y divide-gray-100 overflow-y-auto overflow-x-clip overscroll-y-contain [-webkit-overflow-scrolling:touch] sm:max-h-[54vh]">
+                  <div className="divide-y divide-gray-100">
                     {selectedGroup.records.map((record) => (
-                      <div key={record.id} className="grid grid-cols-[16%_22%_11%_11%_11%_29%] align-top">
+                      <div key={record.id} className="grid grid-cols-[6rem_9rem_4.5rem_4.5rem_4.5rem_1fr] align-top sm:grid-cols-[16%_22%_11%_11%_11%_29%]">
                         <div className="sticky left-0 z-10 break-words bg-[#E0E5EC] px-1.5 py-1.5 text-[10px] text-gray-600 shadow-[2px_0_4px_rgba(148,163,184,0.18)] sm:px-4 sm:py-3 sm:text-sm">{record.date}</div>
                         <div className="break-words px-1.5 py-1.5 text-[10px] text-gray-900 sm:px-4 sm:py-3 sm:text-sm">{record.guestName}</div>
                         <div className="px-1.5 py-1.5 text-[10px] font-medium text-blue-600 sm:px-4 sm:py-3 sm:text-sm">{record.male}</div>
