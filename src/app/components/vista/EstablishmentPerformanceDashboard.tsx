@@ -31,17 +31,20 @@ const colors: Record<PerformanceClassification, string> = {
 };
 const serviceLabels: Record<ReportingMode, string> = { visitor: "Day-Tour Only", accommodation: "Overnight Only", both: "Both" };
 const monthLabel = (key: string) => new Date(`${key}-01T00:00:00`).toLocaleString("default", { month: "long", year: "numeric" });
+const fullYearKey = (year: string) => `${year}-FULL_YEAR`;
+const periodLabel = (key: string) => key.endsWith("-FULL_YEAR") ? `Full Year ${key.slice(0, 4)}` : monthLabel(key);
 
 export default function EstablishmentPerformanceDashboard({ periods, year }: Props) {
-  const availablePeriods = Object.keys(periods).filter((period) => period.startsWith(`${year}-`)).sort();
+  const monthlyPeriods = Object.keys(periods).filter((period) => period.startsWith(`${year}-`) && !period.endsWith("-FULL_YEAR")).sort();
+  const periodOptions = [...monthlyPeriods, fullYearKey(year)];
   const [category, setCategory] = useState<Category>("daytour");
-  const [period, setPeriod] = useState(availablePeriods[availablePeriods.length - 1] || `${year}-01`);
+  const [period, setPeriod] = useState(monthlyPeriods[monthlyPeriods.length - 1] || fullYearKey(year));
   const [query, setQuery] = useState("");
   const [filter, setFilter] = useState<PerformanceClassification | "ALL">("ALL");
   const [sortDescending, setSortDescending] = useState(true);
   const [selected, setSelected] = useState<ReturnType<typeof classifyPerformance>["rows"][number] | null>(null);
 
-  const selectedPeriod = availablePeriods.includes(period) ? period : availablePeriods[availablePeriods.length - 1] || `${year}-01`;
+  const selectedPeriod = periodOptions.includes(period) ? period : monthlyPeriods[monthlyPeriods.length - 1] || fullYearKey(year);
   const categoryRows = (periods[selectedPeriod] || []).filter((row) => row.category === category);
   const result = useMemo(() => classifyPerformance(categoryRows), [categoryRows]);
   const visibleRows = result.rows
@@ -64,9 +67,9 @@ export default function EstablishmentPerformanceDashboard({ periods, year }: Pro
             <p className="mt-1 max-w-3xl text-sm text-gray-600">Compare reported visitor volume by service category using relative percentile-based analysis for Balayan, Batangas.</p>
           </div>
           <label className="text-xs font-semibold text-gray-600">
-            Reporting month
+            Reporting period
             <select value={selectedPeriod} onChange={(event) => setPeriod(event.target.value)} className="mt-1 block min-w-48 rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm font-medium text-gray-900 focus:border-[#0E5A72] focus:outline-none focus:ring-2 focus:ring-[#0E5A72]/20">
-              {availablePeriods.length === 0 ? <option value={`${year}-01`}>{monthLabel(`${year}-01`)}</option> : availablePeriods.map((item) => <option key={item} value={item}>{monthLabel(item)}</option>)}
+              {periodOptions.map((item) => <option key={item} value={item}>{periodLabel(item)}</option>)}
             </select>
           </label>
         </div>
@@ -84,7 +87,7 @@ export default function EstablishmentPerformanceDashboard({ periods, year }: Pro
           const value = key === "TOTAL" ? result.rows.length : counts[key];
           const title = key === "TOTAL" ? "Total Establishments Monitored" : `${classificationLabels[key]} Establishments`;
           const tone = key === "TOTAL" ? "#193364" : colors[key];
-          return <div key={key} className="rounded-lg border border-gray-200 bg-white p-3 shadow-sm sm:p-4"><p className="text-xs font-medium leading-4 text-gray-600">{title}</p><p className="mt-2 text-2xl font-bold" style={{ color: tone }}>{value}</p><p className="mt-1 text-xs text-gray-500">{categoryLabels[category]} · {monthLabel(selectedPeriod)}</p></div>;
+          return <div key={key} className="rounded-lg border border-gray-200 bg-white p-3 shadow-sm sm:p-4"><p className="text-xs font-medium leading-4 text-gray-600">{title}</p><p className="mt-2 text-2xl font-bold" style={{ color: tone }}>{value}</p><p className="mt-1 text-xs text-gray-500">{categoryLabels[category]} · {periodLabel(selectedPeriod)}</p></div>;
         })}
       </div>
 
@@ -99,7 +102,7 @@ export default function EstablishmentPerformanceDashboard({ periods, year }: Pro
         <div className="rounded-lg border border-gray-200 bg-white p-4 shadow-sm"><div className="flex items-center gap-2"><BarChart3 className="h-4 w-4 text-[#0E5A72]" /><h4 className="font-semibold text-gray-900">Performance Distribution</h4></div><div className="mt-4 h-56"><ResponsiveContainer width="100%" height="100%"><BarChart data={chartData} layout="vertical" margin={{ left: 8, right: 12 }}><CartesianGrid strokeDasharray="3 3" horizontal={false} /><XAxis type="number" allowDecimals={false} /><YAxis type="category" dataKey="name" width={96} tick={{ fontSize: 11 }} /><Tooltip /><Bar dataKey="count" name="Establishments">{chartData.map((entry) => <Cell key={entry.name} fill={entry.fill} />)}</Bar></BarChart></ResponsiveContainer></div><div className="mt-2 space-y-1">{chartData.map((entry) => <div key={entry.name} className="flex justify-between text-xs text-gray-600"><span>{entry.name}</span><strong>{entry.count} ({result.rows.length ? Math.round((entry.count / result.rows.length) * 100) : 0}%)</strong></div>)}</div></div>
       </div>
 
-      {selected && <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/45 p-4" role="presentation" onMouseDown={(event) => { if (event.target === event.currentTarget) setSelected(null); }}><section className="max-h-[90vh] w-full max-w-lg overflow-y-auto rounded-2xl bg-white p-5 shadow-2xl" role="dialog" aria-modal="true" aria-labelledby="performance-detail-title"><div className="flex items-start justify-between gap-4"><div><p className="text-xs font-semibold uppercase tracking-wide text-gray-500">{categoryLabels[category]} · {monthLabel(selectedPeriod)}</p><h4 id="performance-detail-title" className="mt-1 text-xl font-bold text-gray-900">{selected.name}</h4></div><button type="button" className="rounded-full p-2 text-gray-500 hover:bg-gray-100" onClick={() => setSelected(null)} aria-label="Close details"><X className="h-5 w-5" /></button></div><div className="mt-5 grid grid-cols-2 gap-3"><div className="rounded-lg bg-gray-50 p-3"><p className="text-xs text-gray-500">Reported visitors</p><p className="mt-1 text-lg font-bold text-gray-900">{selected.visitorCount === null ? "No report submitted" : selected.visitorCount.toLocaleString()}</p></div><div className="rounded-lg bg-gray-50 p-3"><p className="text-xs text-gray-500">Classification</p><p className="mt-1 font-bold" style={{ color: colors[selected.classification] }}>{classificationLabels[selected.classification]}</p></div></div><div className="mt-4 rounded-lg border border-gray-200 p-4 text-sm text-gray-600"><p className="font-semibold text-gray-800">Why this rating?</p><p className="mt-2">{selected.classification === "INSUFFICIENT_DATA" ? "This establishment cannot receive a supported classification because the comparison group has fewer than five valid submitted establishments or this establishment has no valid report for the selected period." : `Its reported visitor count is compared with the eligible ${categoryLabels[category].toLowerCase()} group using inclusive P25 and P75 percentile thresholds.`}</p>{result.thresholds.p25 !== null && <p className="mt-2">P25: {result.thresholds.p25.toLocaleString()} visitors · P75: {result.thresholds.p75?.toLocaleString()} visitors</p>}</div></section></div>}
+      {selected && <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/45 p-4" role="presentation" onMouseDown={(event) => { if (event.target === event.currentTarget) setSelected(null); }}><section className="max-h-[90vh] w-full max-w-lg overflow-y-auto rounded-2xl bg-white p-5 shadow-2xl" role="dialog" aria-modal="true" aria-labelledby="performance-detail-title"><div className="flex items-start justify-between gap-4"><div><p className="text-xs font-semibold uppercase tracking-wide text-gray-500">{categoryLabels[category]} · {periodLabel(selectedPeriod)}</p><h4 id="performance-detail-title" className="mt-1 text-xl font-bold text-gray-900">{selected.name}</h4></div><button type="button" className="rounded-full p-2 text-gray-500 hover:bg-gray-100" onClick={() => setSelected(null)} aria-label="Close details"><X className="h-5 w-5" /></button></div><div className="mt-5 grid grid-cols-2 gap-3"><div className="rounded-lg bg-gray-50 p-3"><p className="text-xs text-gray-500">Reported visitors</p><p className="mt-1 text-lg font-bold text-gray-900">{selected.visitorCount === null ? "No report submitted" : selected.visitorCount.toLocaleString()}</p></div><div className="rounded-lg bg-gray-50 p-3"><p className="text-xs text-gray-500">Classification</p><p className="mt-1 font-bold" style={{ color: colors[selected.classification] }}>{classificationLabels[selected.classification]}</p></div></div><div className="mt-4 rounded-lg border border-gray-200 p-4 text-sm text-gray-600"><p className="font-semibold text-gray-800">Why this rating?</p><p className="mt-2">{selected.classification === "INSUFFICIENT_DATA" ? "This establishment cannot receive a supported classification because the comparison group has fewer than five valid submitted establishments or this establishment has no valid report for the selected period." : `Its reported visitor count is compared with the eligible ${categoryLabels[category].toLowerCase()} group using inclusive P25 and P75 percentile thresholds.`}</p>{result.thresholds.p25 !== null && <p className="mt-2">P25: {result.thresholds.p25.toLocaleString()} visitors · P75: {result.thresholds.p75?.toLocaleString()} visitors</p>}</div></section></div>}
     </section>
   );
 }

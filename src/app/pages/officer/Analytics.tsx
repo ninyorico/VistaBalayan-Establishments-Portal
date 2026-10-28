@@ -220,6 +220,30 @@ export default function Analytics() {
       });
     });
 
+    const performanceYearKeys = Array.from(new Set(performancePeriodKeys.map((periodKey) => periodKey.slice(0, 4))));
+    performanceYearKeys.forEach((performanceYear) => {
+      const visitorTotals = new Map<string, number>();
+      const visitorReportIds = new Set<string>();
+      visitors.filter((item) => item.report_date.startsWith(`${performanceYear}-`)).forEach((item) => {
+        const current = visitorTotals.get(item.establishment_id) || 0;
+        visitorTotals.set(item.establishment_id, current + (item.total_guests ?? 0));
+        visitorReportIds.add(item.establishment_id);
+      });
+      const overnightTotals = new Map<string, number>();
+      const overnightReportIds = new Set<string>();
+      accommodations.filter((item) => item.report_date.startsWith(`${performanceYear}-`)).forEach((item) => {
+        const current = overnightTotals.get(item.establishment_id) || 0;
+        overnightTotals.set(item.establishment_id, current + (item.total_check_ins ?? 0));
+        overnightReportIds.add(item.establishment_id);
+      });
+      performancePeriods[`${performanceYear}-FULL_YEAR`] = establishments.flatMap((establishment) => {
+        const mode = getEstablishmentReportingMode(establishment);
+        const rows: PerformanceInputWithMode[] = [];
+        if (mode === "visitor" || mode === "both") rows.push({ id: establishment.id, name: establishment.name, serviceType: mode, category: "daytour", visitorCount: visitorReportIds.has(establishment.id) ? visitorTotals.get(establishment.id) || 0 : null });
+        if (mode === "accommodation" || mode === "both") rows.push({ id: establishment.id, name: establishment.name, serviceType: mode, category: "overnight", visitorCount: overnightReportIds.has(establishment.id) ? overnightTotals.get(establishment.id) || 0 : null });
+        return rows;
+      });
+    });
     const monthlyData: Record<string, { label: string; visitors: number; guestCheckIns: number; guestNights: number }> = {};
     visitors.forEach((item) => {
       const key = monthKey(item.report_date);
