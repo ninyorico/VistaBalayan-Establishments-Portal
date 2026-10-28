@@ -1,16 +1,24 @@
-import { useEffect, useRef } from "react";
+import { useCallback, useEffect, useRef, type RefCallback } from "react";
+
+type ScrollElement = HTMLDivElement;
 
 /**
  * Keeps a two-axis table gesture on one axis at a time. The outer element owns
  * horizontal movement; an optional nested element owns vertical movement.
+ * Callback refs are used so conditionally rendered modal tables are supported.
  */
 export function useDominantAxisTableScroll() {
-  const horizontalRef = useRef<HTMLDivElement>(null);
-  const verticalRef = useRef<HTMLDivElement>(null);
+  const verticalNodeRef = useRef<ScrollElement | null>(null);
+  const detachHorizontalListenersRef = useRef<(() => void) | null>(null);
 
-  useEffect(() => {
-    const horizontalContainer = horizontalRef.current;
-    if (!horizontalContainer) return;
+  const setVerticalRef = useCallback<RefCallback<ScrollElement>>((node) => {
+    verticalNodeRef.current = node;
+  }, []);
+
+  const setHorizontalRef = useCallback<RefCallback<ScrollElement>>((node) => {
+    detachHorizontalListenersRef.current?.();
+    detachHorizontalListenersRef.current = null;
+    if (!node) return;
 
     let startX = 0;
     let startY = 0;
@@ -36,12 +44,12 @@ export function useDominantAxisTableScroll() {
 
       if (axis === "x") {
         event.preventDefault();
-        horizontalContainer.scrollLeft += lastX - touch.clientX;
+        node.scrollLeft += lastX - touch.clientX;
       } else if (axis === "y") {
-        const verticalContainer = verticalRef.current || horizontalContainer;
-        if (verticalContainer.scrollHeight > verticalContainer.clientHeight) {
+        const verticalNode = verticalNodeRef.current || node;
+        if (verticalNode.scrollHeight > verticalNode.clientHeight) {
           event.preventDefault();
-          verticalContainer.scrollTop += lastY - touch.clientY;
+          verticalNode.scrollTop += lastY - touch.clientY;
         }
       }
 
@@ -53,18 +61,22 @@ export function useDominantAxisTableScroll() {
       axis = null;
     };
 
-    horizontalContainer.addEventListener("touchstart", handleTouchStart, { passive: true });
-    horizontalContainer.addEventListener("touchmove", handleTouchMove, { passive: false });
-    horizontalContainer.addEventListener("touchend", resetAxis, { passive: true });
-    horizontalContainer.addEventListener("touchcancel", resetAxis, { passive: true });
+    node.addEventListener("touchstart", handleTouchStart, { passive: true });
+    node.addEventListener("touchmove", handleTouchMove, { passive: false });
+    node.addEventListener("touchend", resetAxis, { passive: true });
+    node.addEventListener("touchcancel", resetAxis, { passive: true });
 
-    return () => {
-      horizontalContainer.removeEventListener("touchstart", handleTouchStart);
-      horizontalContainer.removeEventListener("touchmove", handleTouchMove);
-      horizontalContainer.removeEventListener("touchend", resetAxis);
-      horizontalContainer.removeEventListener("touchcancel", resetAxis);
+    detachHorizontalListenersRef.current = () => {
+      node.removeEventListener("touchstart", handleTouchStart);
+      node.removeEventListener("touchmove", handleTouchMove);
+      node.removeEventListener("touchend", resetAxis);
+      node.removeEventListener("touchcancel", resetAxis);
     };
   }, []);
 
-  return { horizontalRef, verticalRef };
+  useEffect(() => () => {
+    detachHorizontalListenersRef.current?.();
+  }, []);
+
+  return { horizontalRef: setHorizontalRef, verticalRef: setVerticalRef };
 }
