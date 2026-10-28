@@ -479,12 +479,12 @@ export default function Analytics() {
           <h3 className="text-lg font-semibold text-gray-900">Visitor Origins & Actual Growth</h3>
         </div>
         <div ref={originsTableRef} className="max-h-[20rem] overflow-auto overscroll-contain touch-none [-webkit-overflow-scrolling:touch]" aria-label="Visitor origins table; scroll to view more than five locations">
-          <table className="w-full min-w-[30rem] table-fixed sm:min-w-0">
+          <table className="w-full min-w-[25rem] table-fixed sm:min-w-0">
             <colgroup>
-              <col className="w-[8rem]" />
-              <col className="w-[6rem]" />
-              <col className="w-[8rem]" />
-              <col className="w-[8rem]" />
+              <col className="w-[7rem] sm:w-1/4" />
+              <col className="w-[5rem] sm:w-1/4" />
+              <col className="w-[7rem] sm:w-1/4" />
+              <col className="w-[6rem] sm:w-1/4" />
             </colgroup>
             <thead className="sticky top-0 z-10 bg-gray-50 border-b border-gray-200">
               <tr>
