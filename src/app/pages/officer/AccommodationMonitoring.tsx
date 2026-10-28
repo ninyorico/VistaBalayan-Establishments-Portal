@@ -702,7 +702,7 @@ export default function AccommodationMonitoring({ embedded = false }: { embedded
               >
                 <div className="min-w-[760px] sm:min-w-[900px]">
                   <div className="grid grid-cols-[18%_17%_17%_17%_17%_14%] border-b border-gray-200 bg-white shadow-[0_1px_0_rgba(148,163,184,0.35)]" data-accommodation-records-table-modal="phone-fixed-header">
-                    <div className="flex min-h-10 items-center justify-center px-2 py-2 text-center text-[10px] font-semibold uppercase leading-tight tracking-wider text-gray-600 sm:min-h-0 sm:px-4 sm:text-xs">Date</div>
+                    <div className="sticky left-0 z-20 flex min-h-10 items-center justify-center bg-white px-2 py-2 text-center text-[10px] font-semibold uppercase leading-tight tracking-wider text-gray-600 shadow-[2px_0_4px_rgba(148,163,184,0.24)] sm:min-h-0 sm:px-4 sm:text-xs">Date</div>
 
                     <div className="flex min-h-10 items-center justify-center px-2 py-2 text-center text-[10px] font-semibold uppercase leading-tight tracking-wider text-gray-600 sm:min-h-0 sm:px-4 sm:text-xs">Total Rooms</div>
                     <div className="flex min-h-10 items-center justify-center px-2 py-2 text-center text-[10px] font-semibold uppercase leading-tight tracking-wider text-gray-600 sm:min-h-0 sm:px-4 sm:text-xs">Occupied Rooms</div>
@@ -710,10 +710,10 @@ export default function AccommodationMonitoring({ embedded = false }: { embedded
                     <div className="flex min-h-10 items-center justify-center px-2 py-2 text-center text-[10px] font-semibold uppercase leading-tight tracking-wider text-gray-600 sm:min-h-0 sm:px-4 sm:text-xs">Guests</div>
                     <div className="flex min-h-10 items-center justify-center px-2 py-2 text-center text-[10px] font-semibold uppercase leading-tight tracking-wider text-gray-600 sm:min-h-0 sm:px-4 sm:text-xs">Guest Nights</div>
                   </div>
-                  <div ref={modalTableVerticalRef} className="max-h-[48dvh] divide-y divide-gray-100 overflow-y-auto overflow-x-hidden overscroll-y-contain [-webkit-overflow-scrolling:touch] sm:max-h-[54vh]">
+                  <div ref={modalTableVerticalRef} className="max-h-[48dvh] divide-y divide-gray-100 overflow-y-auto overflow-x-clip overscroll-y-contain [-webkit-overflow-scrolling:touch] sm:max-h-[54vh]">
                     {selectedAccommodationGroup.records.map((record) => (
                       <div key={record.id} className="grid grid-cols-[18%_17%_17%_17%_17%_14%] align-top">
-                        <div className="break-words px-2 py-2 text-[11px] text-gray-600 sm:px-4 sm:py-3 sm:text-sm">{record.date}</div>
+                        <div className="sticky left-0 z-10 break-words bg-white px-2 py-2 text-[11px] text-gray-600 shadow-[2px_0_4px_rgba(148,163,184,0.18)] sm:px-4 sm:py-3 sm:text-sm">{record.date}</div>
 
                         <div className="px-2 py-2 text-[11px] text-gray-900 sm:px-4 sm:py-3 sm:text-sm">{record.totalRooms}</div>
                         <div className="px-2 py-2 text-[11px] font-medium text-gray-900 sm:px-4 sm:py-3 sm:text-sm">{record.occupiedRooms}</div>
