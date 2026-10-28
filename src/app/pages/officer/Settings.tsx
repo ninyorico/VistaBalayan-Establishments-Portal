@@ -4,6 +4,7 @@ import { toast } from "sonner";
 import { supabase } from "../../../lib/supabase";
 import { PageSkeleton, PageHero } from "../../components/vista/PolishedShell";
 import { openCookiePreferences } from "../../components/CookieConsent";
+import { CONTACT_NUMBER_ERROR, isValidContactNumber, sanitizeContactNumber } from "../../../lib/contactNumber";
 
 export default function OfficerProfile() {
   const [profile, setProfile] = useState<any>(null);
@@ -52,6 +53,11 @@ export default function OfficerProfile() {
   };
 
   const handleUpdateProfile = async () => {
+    if (!isValidContactNumber(formData.contact_number)) {
+      toast.error(CONTACT_NUMBER_ERROR);
+      return;
+    }
+
     setSaving(true);
     
     const { data: { user } } = await supabase.auth.getUser();
@@ -151,7 +157,7 @@ export default function OfficerProfile() {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">Contact Number</label>
-              <input type="tel" value={formData.contact_number} onChange={(e) => setFormData({ ...formData, contact_number: e.target.value })} placeholder="+63 912 345 6789" className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500" />
+              <input type="text" inputMode="numeric" pattern="[0-9]{11}" maxLength={11} value={formData.contact_number} onChange={(e) => setFormData({ ...formData, contact_number: sanitizeContactNumber(e.target.value) })} placeholder="09171234567" className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500" />
             </div>
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">Position</label>

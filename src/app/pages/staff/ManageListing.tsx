@@ -13,6 +13,7 @@ import { Label } from '../../components/ui/label'
 import { Separator } from '../../components/ui/separator'
 import { Textarea } from '../../components/ui/textarea'
 import { LoadingState, PageHero } from '../../components/vista/PolishedShell'
+import { CONTACT_NUMBER_ERROR, isValidContactNumber, sanitizeContactNumber } from '../../../lib/contactNumber'
 
 const BALAYAN_CENTER = { latitude: 13.9385, longitude: 120.7332 }
 const LEAFLET_ATTRIBUTION = '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
@@ -481,6 +482,11 @@ export default function ManageListing() {
   const handleSubmit = async () => {
     if (!establishment) return
 
+    if (!isValidContactNumber(formData.contact_number)) {
+      toast.error(CONTACT_NUMBER_ERROR)
+      return
+    }
+
     const latitude = parseCoordinate(formData.latitude, -90, 90)
     const longitude = parseCoordinate(formData.longitude, -180, 180)
     if ((formData.latitude.trim() || formData.longitude.trim()) && (latitude === null || longitude === null)) {
@@ -667,10 +673,13 @@ export default function ManageListing() {
                     <Input
                       id="listing-phone"
                       type="text"
+                      inputMode="numeric"
+                      pattern="[0-9]{11}"
+                      maxLength={11}
                       value={formData.contact_number}
-                      onChange={(e) => setFormData({ ...formData, contact_number: e.target.value })}
+                      onChange={(e) => setFormData({ ...formData, contact_number: sanitizeContactNumber(e.target.value) })}
                       className="h-11 rounded-xl border-0 bg-[#E0E5EC] shadow-[inset_4px_4px_8px_rgba(163,177,198,0.45),inset_-4px_-4px_8px_rgba(255,255,255,0.65)]"
-                      placeholder="+63 912 345 6789"
+                      placeholder="09171234567"
                     />
                   </div>
                   <div className="min-w-0 space-y-2">

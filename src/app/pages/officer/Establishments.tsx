@@ -6,6 +6,7 @@ import { supabase } from "../../../lib/supabase";
 import { datestampedFilename, downloadCsv } from "../../../lib/exportCsv";
 import { compressBusinessPermitImage, BusinessPermitAsset, getBusinessPermitAssets, setBusinessPermitAssetsInAmenities } from "../../../lib/businessPermitImages";
 import { DEFAULT_ROOM_CONFIG, EstablishmentRoomConfig, getRoomConfigFromAmenities, setRoomConfigInAmenities } from "../../../lib/establishmentRoomConfig";
+import { CONTACT_NUMBER_ERROR, isValidContactNumber, sanitizeContactNumber } from "../../../lib/contactNumber";
 import { LoadingState } from "../../components/vista/PolishedShell";
 
 type ReportingMode = "accommodation" | "visitor" | "both";
@@ -334,6 +335,11 @@ export default function Establishments() {
   const handleSaveEstablishment = async () => {
     if (!establishmentForm.name || !establishmentForm.address || !establishmentForm.contact_number) {
       toast.error("Please fill in all required fields");
+      return;
+    }
+
+    if (!isValidContactNumber(establishmentForm.contact_number)) {
+      toast.error(CONTACT_NUMBER_ERROR);
       return;
     }
 
@@ -1368,7 +1374,8 @@ export default function Establishments() {
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">Contact Number *</label>
-                <input type="text" value={establishmentForm.contact_number} onChange={(e) => setEstablishmentForm({ ...establishmentForm, contact_number: e.target.value })} className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#1CA7C9]/50 focus:border-[#1CA7C9] outline-none transition-all" placeholder="+63 917 123 4567" />
+                <input type="text" inputMode="numeric" pattern="[0-9]{11}" maxLength={11} value={establishmentForm.contact_number} onChange={(e) => setEstablishmentForm({ ...establishmentForm, contact_number: sanitizeContactNumber(e.target.value) })} className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#1CA7C9]/50 focus:border-[#1CA7C9] outline-none transition-all" placeholder="09171234567" />
+                <p className="mt-1 text-xs text-gray-500">Enter exactly 11 digits. Letters, symbols, and extra digits are not accepted.</p>
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">Business Permit Number</label>

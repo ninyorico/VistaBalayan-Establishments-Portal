@@ -4,6 +4,7 @@ import { toast } from "sonner";
 import { supabase } from "../../../lib/supabase";
 import { PageHero, PageSkeleton } from "../../components/vista/PolishedShell";
 import { openCookiePreferences } from "../../components/CookieConsent";
+import { CONTACT_NUMBER_ERROR, isValidContactNumber, sanitizeContactNumber } from "../../../lib/contactNumber";
 
 interface ProfileData {
   id: string;
@@ -120,6 +121,11 @@ export default function Profile() {
   const profileReadOnly = profile?.status !== "active" || (profile?.establishment_id !== null && profile?.establishment_status !== "active");
 
   const handleUpdateProfile = async () => {
+    if (!isValidContactNumber(formData.contact_number)) {
+      toast.error(CONTACT_NUMBER_ERROR);
+      return;
+    }
+
     if (profileReadOnly) {
       toast.error("Inactive accounts cannot edit profile information");
       return;
@@ -380,11 +386,13 @@ export default function Profile() {
                 Contact Number
               </label>
               <input
-                type="tel"
-                value={formData.contact_number}
+                type="text"
+                                inputMode="numeric"
+                                pattern="[0-9]{11}"
+                                maxLength={11}
                 disabled={profileReadOnly}
-                onChange={(e) => setFormData({ ...formData, contact_number: e.target.value })}
-                placeholder="+63 912 345 6789"
+                onChange={(e) => setFormData({ ...formData, contact_number: sanitizeContactNumber(e.target.value) })}
+                                placeholder="09171234567"
                 className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none"
               />
             </div>
