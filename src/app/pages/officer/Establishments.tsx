@@ -1013,39 +1013,39 @@ export default function Establishments() {
                 <table className="w-full min-w-[1100px]">
                 <thead className="bg-gray-50 border-b border-gray-200">
                   <tr>
-                    <th className="sticky left-0 top-0 z-30 bg-gray-50 px-6 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider shadow-[2px_0_4px_rgba(148,163,184,0.24)]">Establishment</th>
-                    <th className="sticky top-0 z-20 bg-gray-50 px-6 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">Type</th>
-                    <th className="sticky top-0 z-20 bg-gray-50 px-6 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">Address</th>
-                    <th className="sticky top-0 z-20 bg-gray-50 px-6 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">Contact</th>
-                    <th className="sticky top-0 z-20 bg-gray-50 px-6 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">Rooms</th>
-                    <th className="sticky top-0 z-20 bg-gray-50 px-6 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">Permit</th>
-                    <th className="sticky top-0 z-20 bg-gray-50 px-6 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">Staff</th>
-                    <th className="sticky top-0 z-20 bg-gray-50 px-6 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">Status</th>
-                    <th className="sticky top-0 z-20 bg-gray-50 px-6 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">Actions</th>
+                    <th className="sticky left-0 top-0 z-30 bg-gray-50 px-2 py-2 text-left text-[10px] font-semibold text-gray-700 uppercase tracking-wider sm:px-4 sm:py-3 sm:text-xs shadow-[2px_0_4px_rgba(148,163,184,0.24)]">Establishment</th>
+                    <th className="sticky top-0 z-20 bg-gray-50 px-2 py-2 text-left text-[10px] font-semibold text-gray-700 uppercase tracking-wider sm:px-4 sm:py-3 sm:text-xs">Type</th>
+                    <th className="sticky top-0 z-20 bg-gray-50 px-2 py-2 text-left text-[10px] font-semibold text-gray-700 uppercase tracking-wider sm:px-4 sm:py-3 sm:text-xs">Address</th>
+                    <th className="sticky top-0 z-20 bg-gray-50 px-2 py-2 text-left text-[10px] font-semibold text-gray-700 uppercase tracking-wider sm:px-4 sm:py-3 sm:text-xs">Contact</th>
+                    <th className="sticky top-0 z-20 bg-gray-50 px-2 py-2 text-left text-[10px] font-semibold text-gray-700 uppercase tracking-wider sm:px-4 sm:py-3 sm:text-xs">Rooms</th>
+                    <th className="sticky top-0 z-20 bg-gray-50 px-2 py-2 text-left text-[10px] font-semibold text-gray-700 uppercase tracking-wider sm:px-4 sm:py-3 sm:text-xs">Permit</th>
+                    <th className="sticky top-0 z-20 bg-gray-50 px-2 py-2 text-left text-[10px] font-semibold text-gray-700 uppercase tracking-wider sm:px-4 sm:py-3 sm:text-xs">Staff</th>
+                    <th className="sticky top-0 z-20 bg-gray-50 px-2 py-2 text-left text-[10px] font-semibold text-gray-700 uppercase tracking-wider sm:px-4 sm:py-3 sm:text-xs">Status</th>
+                    <th className="sticky top-0 z-20 bg-gray-50 px-2 py-2 text-left text-[10px] font-semibold text-gray-700 uppercase tracking-wider sm:px-4 sm:py-3 sm:text-xs">Actions</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-200">
                   {filteredEstablishments.length > 0 ? (
                     filteredEstablishments.map((establishment) => (
                       <tr key={establishment.id} className="group hover:bg-gray-50">
-                        <td className="sticky left-0 z-10 bg-white px-6 py-4 shadow-[2px_0_4px_rgba(148,163,184,0.18)] group-hover:bg-gray-50">
-                          <p className="font-medium text-gray-900">{establishment.name}</p>
+                        <td className="sticky left-0 z-10 bg-white px-2 py-2 sm:px-4 sm:py-3 shadow-[2px_0_4px_rgba(148,163,184,0.18)] group-hover:bg-gray-50">
+                          <p className="font-medium text-[10px] leading-4 text-gray-900 sm:text-sm sm:leading-5">{establishment.name}</p>
                         </td>
-                        <td className="px-6 py-4 text-gray-600">{establishment.type}</td>
-                        <td className="px-6 py-4">
+                        <td className="px-2 py-2 sm:px-4 sm:py-3 text-[10px] text-gray-600 sm:text-sm">{establishment.type}</td>
+                        <td className="px-2 py-2 sm:px-4 sm:py-3">
                           <div className="flex min-w-0 items-center gap-2 text-gray-600">
                             <MapPin className="w-4 h-4 shrink-0" />
-                            <span className="block max-w-[14rem] truncate text-sm" title={establishment.address}>{establishment.address}</span>
+                            <span className="block max-w-[14rem] truncate text-[10px] sm:text-xs" title={establishment.address}>{establishment.address}</span>
                           </div>
                         </td>
-                        <td className="px-6 py-4">
+                        <td className="px-2 py-2 sm:px-4 sm:py-3">
                           <div className="flex items-center gap-2 text-gray-600">
                             <Phone className="w-4 h-4" />
-                            <span className="text-sm">{establishment.contact_number}</span>
-                          </div>
+                            <span className="text-[10px] sm:text-xs">{establishment.contact_number}</span>
+                                                      </div>
                         </td>
-                        <td className="px-6 py-4 text-gray-900">{establishment.total_rooms || "N/A"}</td>
-                        <td className="px-6 py-4">
+                        <td className="px-2 py-2 sm:px-4 sm:py-3 text-[10px] text-gray-900 sm:text-sm">{establishment.total_rooms || "N/A"}</td>
+                        <td className="px-2 py-2 sm:px-4 sm:py-3">
                           {Boolean(establishment.business_permit_number?.trim()) || getBusinessPermitAssets(establishment).length > 0 ? (
                             <span className="inline-flex items-center rounded-full border border-[#B8D2C4] bg-[#E7F0EA] px-2.5 py-1 text-xs font-semibold text-[#4E765F] shadow-[inset_2px_2px_4px_rgba(163,177,198,0.22),inset_-2px_-2px_4px_rgba(255,255,255,0.6)]">
                               Has permit
@@ -1056,15 +1056,15 @@ export default function Establishments() {
                             </span>
                           )}
                         </td>
-                        <td className="px-6 py-4 text-gray-900">{staffCountByEstablishment[establishment.id] || 0}</td>
-                        <td className="px-6 py-4">
+                        <td className="px-2 py-2 sm:px-4 sm:py-3 text-[10px] text-gray-900 sm:text-sm">{staffCountByEstablishment[establishment.id] || 0}</td>
+                        <td className="px-2 py-2 sm:px-4 sm:py-3">
                           <span className={`inline-flex px-2.5 py-1 rounded-full text-xs font-medium ${
                             establishment.status === "active" ? "bg-green-100 text-green-700" : "bg-gray-100 text-gray-700"
                           }`}>
                             {establishment.status === "active" ? "Active" : "Inactive"}
                           </span>
                         </td>
-                        <td className="px-6 py-4">
+                        <td className="px-2 py-2 sm:px-4 sm:py-3">
                           <div className="flex items-center gap-2">
                             <button onClick={() => handleEditEstablishment(establishment.id)} className="p-1 text-gray-600 hover:bg-gray-100 rounded transition">
                               <Edit className="w-4 h-4" />
@@ -1173,11 +1173,11 @@ export default function Establishments() {
                 <table className="w-full min-w-[800px]">
                 <thead className="bg-gray-50 border-b border-gray-200">
                   <tr>
-                    <th className="sticky top-0 z-20 bg-gray-50 px-6 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">User</th>
-                    <th className="sticky top-0 z-20 bg-gray-50 px-6 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">Role</th>
-                    <th className="sticky top-0 z-20 bg-gray-50 px-6 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">Establishment</th>
-                    <th className="sticky top-0 z-20 bg-gray-50 px-6 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">Status</th>
-                    <th className="sticky top-0 z-20 bg-gray-50 px-6 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">Actions</th>
+                    <th className="sticky top-0 z-20 bg-gray-50 px-2 py-2 text-left text-[10px] font-semibold text-gray-700 uppercase tracking-wider sm:px-4 sm:py-3 sm:text-xs">User</th>
+                    <th className="sticky top-0 z-20 bg-gray-50 px-2 py-2 text-left text-[10px] font-semibold text-gray-700 uppercase tracking-wider sm:px-4 sm:py-3 sm:text-xs">Role</th>
+                    <th className="sticky top-0 z-20 bg-gray-50 px-2 py-2 text-left text-[10px] font-semibold text-gray-700 uppercase tracking-wider sm:px-4 sm:py-3 sm:text-xs">Establishment</th>
+                    <th className="sticky top-0 z-20 bg-gray-50 px-2 py-2 text-left text-[10px] font-semibold text-gray-700 uppercase tracking-wider sm:px-4 sm:py-3 sm:text-xs">Status</th>
+                    <th className="sticky top-0 z-20 bg-gray-50 px-2 py-2 text-left text-[10px] font-semibold text-gray-700 uppercase tracking-wider sm:px-4 sm:py-3 sm:text-xs">Actions</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-200">
@@ -1186,30 +1186,30 @@ export default function Establishments() {
                       const establishment = establishments.find(e => e.id === user.establishment_id);
                       return (
                         <tr key={user.id} className="hover:bg-gray-50">
-                          <td className="px-6 py-4">
+                          <td className="px-2 py-2 sm:px-4 sm:py-3">
                             <div>
-                              <p className="font-medium text-gray-900">{user.full_name || "Unknown"}</p>
+                              <p className="font-medium text-[10px] leading-4 text-gray-900 sm:text-sm sm:leading-5">{user.full_name || "Unknown"}</p>
                               <div className="flex items-center gap-1 text-gray-500 text-sm">
                                 <Mail className="w-3 h-3" />
                                 <span>{user.email}</span>
                               </div>
                             </div>
                           </td>
-                          <td className="px-6 py-4">
+                          <td className="px-2 py-2 sm:px-4 sm:py-3">
                             <div className="flex items-center gap-2">
                               <Shield className="w-4 h-4 text-purple-600" />
                               <span className="text-sm text-gray-700">{user.role === "municipal_officer" ? "Municipal Tourism Officer" : "Establishment Staff"}</span>
                             </div>
                           </td>
-                          <td className="px-6 py-4 text-gray-600">{establishment?.name || "N/A"}</td>
-                          <td className="px-6 py-4">
+                          <td className="px-2 py-2 sm:px-4 sm:py-3 text-[10px] text-gray-600 sm:text-sm">{establishment?.name || "N/A"}</td>
+                          <td className="px-2 py-2 sm:px-4 sm:py-3">
                             <span className={`inline-flex px-2.5 py-1 rounded-full text-xs font-medium ${
                               user.status === "active" ? "bg-green-100 text-green-700" : "bg-gray-100 text-gray-700"
                             }`}>
                               {user.status === "active" ? "Active" : "Inactive"}
                             </span>
                           </td>
-                          <td className="px-6 py-4">
+                          <td className="px-2 py-2 sm:px-4 sm:py-3">
                             <div className="flex items-center gap-2">
                               <button onClick={() => handleEditUser(user.id)} className="p-1 text-gray-600 hover:bg-gray-100 rounded transition">
                                 <Edit className="w-4 h-4" />
