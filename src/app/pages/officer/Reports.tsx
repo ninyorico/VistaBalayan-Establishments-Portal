@@ -796,7 +796,7 @@ export default function Reports() {
             <table className="w-full min-w-[720px]">
               <thead className="sticky top-0 z-10 bg-gray-50 shadow-sm">
                 <tr>
-                  <th className="px-4 py-3 text-left text-xs font-semibold text-gray-700">Establishment</th>
+                  <th className="sticky left-0 z-20 bg-gray-50 px-4 py-3 text-left text-xs font-semibold text-gray-700 shadow-[2px_0_4px_rgba(148,163,184,0.24)]">Establishment</th>
                   <th className="px-4 py-3 text-left text-xs font-semibold text-gray-700">Type</th>
                   <th className="px-4 py-3 text-left text-xs font-semibold text-gray-700">Date</th>
                   <th className="px-4 py-3 text-left text-xs font-semibold text-gray-700">Visitors</th>
@@ -806,8 +806,8 @@ export default function Reports() {
               </thead>
               <tbody className="divide-y divide-gray-200">
                 {filteredReports.slice(0, 50).map((report) => (
-                  <tr key={report.id} className="hover:bg-gray-50">
-                    <td className="px-4 py-3 text-sm font-medium text-gray-900">{report.establishment}</td>
+                  <tr key={report.id} className="group hover:bg-gray-50">
+                    <td className="sticky left-0 z-10 bg-white px-4 py-3 text-sm font-medium text-gray-900 shadow-[2px_0_4px_rgba(148,163,184,0.18)] group-hover:bg-gray-50">{report.establishment}</td>
                     <td className="px-4 py-3 text-sm text-gray-600">{getReportTypeLabel(report)}</td>
                     <td className="px-4 py-3 text-sm text-gray-900">{report.reportDate}</td>
                     <td className="px-4 py-3 text-sm text-gray-900">{report.visitors}</td>

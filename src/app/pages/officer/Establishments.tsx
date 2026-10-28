@@ -1011,7 +1011,7 @@ export default function Establishments() {
                 <table className="w-full min-w-[1100px]">
                 <thead className="sticky top-0 z-10 bg-gray-50 border-b border-gray-200">
                   <tr>
-                    <th className="px-6 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">Establishment</th>
+                    <th className="sticky left-0 z-20 bg-gray-50 px-6 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider shadow-[2px_0_4px_rgba(148,163,184,0.24)]">Establishment</th>
                     <th className="px-6 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">Type</th>
                     <th className="px-6 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">Address</th>
                     <th className="px-6 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">Contact</th>
@@ -1025,8 +1025,8 @@ export default function Establishments() {
                 <tbody className="divide-y divide-gray-200">
                   {filteredEstablishments.length > 0 ? (
                     filteredEstablishments.map((establishment) => (
-                      <tr key={establishment.id} className="hover:bg-gray-50">
-                        <td className="px-6 py-4">
+                      <tr key={establishment.id} className="group hover:bg-gray-50">
+                        <td className="sticky left-0 z-10 bg-white px-6 py-4 shadow-[2px_0_4px_rgba(148,163,184,0.18)] group-hover:bg-gray-50">
                           <p className="font-medium text-gray-900">{establishment.name}</p>
                         </td>
                         <td className="px-6 py-4 text-gray-600">{establishment.type}</td>

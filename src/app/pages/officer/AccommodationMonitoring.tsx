@@ -484,7 +484,7 @@ export default function AccommodationMonitoring({ embedded = false }: { embedded
           <table className="w-full min-w-[640px]">
             <thead className="sticky top-0 z-10 border-b border-gray-200 bg-gray-50">
               <tr>
-                <th className="px-3 py-2 text-left text-[10px] font-semibold uppercase tracking-wider text-gray-700">Establishment</th>
+                <th className="sticky left-0 z-20 bg-gray-50 px-3 py-2 text-left text-[10px] font-semibold uppercase tracking-wider text-gray-700 shadow-[2px_0_4px_rgba(148,163,184,0.24)]">Establishment</th>
                 <th className="px-3 py-2 text-left text-[10px] font-semibold uppercase tracking-wider text-gray-700">Records</th>
                 <th className="px-3 py-2 text-left text-[10px] font-semibold uppercase tracking-wider text-gray-700">Rooms</th>
                 <th className="px-3 py-2 text-left text-[10px] font-semibold uppercase tracking-wider text-gray-700">Occupancy</th>
@@ -498,7 +498,7 @@ export default function AccommodationMonitoring({ embedded = false }: { embedded
                 groupedRecords.map((group) => (
                   <tr
                     key={group.key}
-                    className="cursor-pointer hover:bg-gray-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-blue-600"
+                    className="group cursor-pointer hover:bg-gray-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-blue-600"
                     role="button"
                     tabIndex={0}
                     aria-label={`Open ${group.establishment} accommodation records`}
@@ -510,7 +510,7 @@ export default function AccommodationMonitoring({ embedded = false }: { embedded
                       }
                     }}
                   >
-                    <td className="px-3 py-3 text-xs font-medium text-gray-900">
+                    <td className="sticky left-0 z-10 bg-white px-3 py-3 text-xs font-medium text-gray-900 shadow-[2px_0_4px_rgba(148,163,184,0.18)] group-hover:bg-gray-50">
                       <div className="flex items-center gap-1.5">
                         {group.establishment}
                       </div>

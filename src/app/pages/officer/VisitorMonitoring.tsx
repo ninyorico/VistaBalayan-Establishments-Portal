@@ -293,7 +293,7 @@ export default function VisitorMonitoring({ embedded = false }: { embedded?: boo
           <table className="w-full min-w-[620px] sm:min-w-[860px]">
             <thead className="sticky top-0 z-10 bg-gray-50 border-b border-gray-200">
               <tr>
-                <th className="px-3 py-2 text-left text-[10px] font-semibold uppercase tracking-wider text-gray-700 sm:px-6 sm:py-3 sm:text-xs">Establishment</th>
+                <th className="sticky left-0 z-20 bg-gray-50 px-3 py-2 text-left text-[10px] font-semibold uppercase tracking-wider text-gray-700 shadow-[2px_0_4px_rgba(148,163,184,0.24)] sm:px-6 sm:py-3 sm:text-xs">Establishment</th>
                 <th className="px-3 py-2 text-left text-[10px] font-semibold uppercase tracking-wider text-gray-700 sm:px-6 sm:py-3 sm:text-xs">Records</th>
                 <th className="px-3 py-2 text-left text-[10px] font-semibold uppercase tracking-wider text-gray-700 sm:px-6 sm:py-3 sm:text-xs">Male</th>
                 <th className="px-3 py-2 text-left text-[10px] font-semibold uppercase tracking-wider text-gray-700 sm:px-6 sm:py-3 sm:text-xs">Female</th>
@@ -306,7 +306,7 @@ export default function VisitorMonitoring({ embedded = false }: { embedded?: boo
                 groupedRecords.map((group) => (
                       <tr
                         key={group.establishment}
-                        className="cursor-pointer hover:bg-gray-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-blue-600"
+                        className="group cursor-pointer hover:bg-gray-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-blue-600"
                         role="button"
                         tabIndex={0}
                         aria-label={`Open ${group.establishment} visitor records`}
@@ -318,7 +318,7 @@ export default function VisitorMonitoring({ embedded = false }: { embedded?: boo
                           }
                         }}
                       >
-                        <td className="px-3 py-3 text-xs font-medium text-gray-900 sm:px-6 sm:py-4 sm:text-sm">
+                        <td className="sticky left-0 z-10 bg-white px-3 py-3 text-xs font-medium text-gray-900 shadow-[2px_0_4px_rgba(148,163,184,0.18)] group-hover:bg-gray-50 sm:px-6 sm:py-4 sm:text-sm">
                           <div className="flex items-center gap-1.5 sm:gap-2">
                             {group.establishment}
                           </div>
