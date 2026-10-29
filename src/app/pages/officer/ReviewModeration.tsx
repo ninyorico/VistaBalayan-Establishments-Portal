@@ -34,6 +34,7 @@ export default function ReviewModeration() {
   const [moderationReason, setModerationReason] = useState("");
   const [moderating, setModerating] = useState(false);
   const [reviewFilter, setReviewFilter] = useState<ReviewFilter>("all");
+  const [photoPreview, setPhotoPreview] = useState<{ url: string; alt: string } | null>(null);
 
   const loadReviews = useCallback(async (initial = false) => {
     if (initial) setLoading(true);
@@ -61,6 +62,15 @@ export default function ReviewModeration() {
     document.addEventListener("keydown", handleEscape);
     return () => document.removeEventListener("keydown", handleEscape);
   }, [moderationTarget, moderating]);
+
+  useEffect(() => {
+    if (!photoPreview) return;
+    const handleEscape = (event: KeyboardEvent) => {
+      if (event.key === "Escape") setPhotoPreview(null);
+    };
+    document.addEventListener("keydown", handleEscape);
+    return () => document.removeEventListener("keydown", handleEscape);
+  }, [photoPreview]);
 
   const executeModeration = async (review: ModerationReview, action: "remove" | "restore", reason: string | null = null) => {
     setModerating(true);
@@ -155,7 +165,7 @@ export default function ReviewModeration() {
                   <div className="flex flex-wrap items-center gap-2"><h2 className="font-bold text-[#193364]">{review.establishment_name}</h2><span className="rounded-full bg-[#E0E5EC] px-2.5 py-1 text-xs font-semibold text-[#6474A5]">{review.rating}/5 stars</span><span className={`inline-flex items-center gap-1 rounded-full border px-2.5 py-1 text-xs font-semibold ${statusStyles[status.tone]}`}><StatusIcon className="h-3 w-3" />{status.label}</span>{review.report_count > 0 && <span className="inline-flex items-center gap-1 rounded-full border border-[#E7A93B]/45 bg-[#F7EAC7] px-2.5 py-1 text-xs font-semibold text-[#745B22]"><Flag className="h-3 w-3" />{review.report_count} report{review.report_count === 1 ? "" : "s"}</span>}</div>
                   <p className="mt-2 text-sm text-[#5D6F73]">{review.reviewer_name || "Anonymous visitor"} · {new Date(review.created_at).toLocaleString()}</p>
                   {review.comment ? <p className="mt-4 whitespace-pre-wrap rounded-2xl bg-[#E0E5EC] p-4 text-sm leading-6 text-[#46586A] shadow-[inset_4px_4px_8px_rgba(163,177,198,.34),inset_-4px_-4px_8px_rgba(255,255,255,.7)]">{review.comment}</p> : <p className="mt-4 rounded-2xl bg-[#E0E5EC] p-4 text-sm italic text-[#6474A5] shadow-[inset_4px_4px_8px_rgba(163,177,198,.28),inset_-4px_-4px_8px_rgba(255,255,255,.65)]">No comment; rating only.</p>}
-                  {review.photo_path && <a href={supabase.storage.from("review-photos").getPublicUrl(review.photo_path).data.publicUrl} target="_blank" rel="noopener noreferrer" className="mt-4 inline-flex max-w-full flex-col gap-2 rounded-2xl bg-[#E0E5EC] p-3 text-sm font-semibold text-[#193364] shadow-[inset_4px_4px_8px_rgba(163,177,198,.3),inset_-4px_-4px_8px_rgba(255,255,255,.7)]"><img src={supabase.storage.from("review-photos").getPublicUrl(review.photo_path).data.publicUrl} alt={`Photo attached to ${review.establishment_name} review`} loading="lazy" className="max-h-64 w-auto max-w-full rounded-xl object-contain" /><span>Open attached review photo</span></a>}
+                  {review.photo_path && <button type="button" onClick={() => setPhotoPreview({ url: supabase.storage.from("review-photos").getPublicUrl(review.photo_path!).data.publicUrl, alt: `Photo attached to ${review.establishment_name} review` })} className="mt-4 inline-flex max-w-full cursor-zoom-in flex-col gap-2 rounded-2xl bg-[#E0E5EC] p-3 text-left text-sm font-semibold text-[#193364] shadow-[inset_4px_4px_8px_rgba(163,177,198,.3),inset_-4px_-4px_8px_rgba(255,255,255,.7)] focus:outline-none focus:ring-2 focus:ring-[#6C63FF]/40"><img src={supabase.storage.from("review-photos").getPublicUrl(review.photo_path).data.publicUrl} alt={`Photo attached to ${review.establishment_name} review`} loading="lazy" className="max-h-64 w-auto max-w-full rounded-xl object-contain" /><span>Review attached photo</span></button>}
                   {review.latest_report_reason && <p className="mt-3 rounded-2xl border border-[#D5B66D]/50 bg-[#F4E8C8] p-3 text-sm text-[#745B22] shadow-[inset_3px_3px_7px_rgba(190,157,75,.16),inset_-3px_-3px_7px_rgba(255,255,255,.62)]"><span className="font-semibold">Latest report:</span> {review.latest_report_reason}</p>}
                   {review.moderation_reason && <p className="mt-3 rounded-2xl bg-[#D5DAE2] p-3 text-sm text-[#46586A] shadow-[inset_3px_3px_7px_rgba(163,177,198,.3),inset_-3px_-3px_7px_rgba(255,255,255,.62)]"><span className="font-semibold">Removal reason:</span> {review.moderation_reason}</p>}
                 </div>
@@ -180,6 +190,15 @@ export default function ReviewModeration() {
             <p className="mt-5 text-sm leading-6 text-[#5D6F73]">Remove the review from the public site? Use this only for content that violates the community rules. The original review will be preserved in the moderation record.</p>
             <div className="mt-5"><label htmlFor="moderation-reason" className="text-sm font-semibold text-[#193364]">Removal reason <span className="font-normal text-[#A74758]">(required)</span></label><textarea id="moderation-reason" value={moderationReason} onChange={(event) => setModerationReason(event.target.value)} disabled={moderating} maxLength={500} rows={3} placeholder="Explain which community rule was violated" className="mt-2 w-full resize-y rounded-2xl border border-white/70 bg-[#E0E5EC] p-4 text-sm leading-6 text-[#46586A] outline-none shadow-[inset_4px_4px_9px_rgba(163,177,198,.42),inset_-4px_-4px_9px_rgba(255,255,255,.72)] placeholder:text-[#8290A0] focus:border-[#6C63FF]/50 focus:ring-2 focus:ring-[#6C63FF]/20" /> <p className="mt-1 text-right text-xs text-[#6474A5]">{moderationReason.length}/500</p></div>
             <div className="mt-5 flex flex-col-reverse gap-3 sm:flex-row sm:justify-end"><button type="button" onClick={() => { setModerationTarget(null); setModerationReason(""); }} disabled={moderating} className="min-h-11 rounded-2xl bg-[#E0E5EC] px-5 py-2.5 text-sm font-semibold text-[#193364] shadow-[5px_5px_10px_rgba(163,177,198,.48),-5px_-5px_10px_rgba(255,255,255,.72)] transition hover:text-[#6C63FF] active:shadow-[inset_3px_3px_7px_rgba(163,177,198,.4),inset_-3px_-3px_7px_rgba(255,255,255,.7)] disabled:opacity-50">Cancel</button><button type="button" onClick={() => moderationTarget && void executeModeration(moderationTarget.review, moderationTarget.action, moderationReason)} disabled={moderating || moderationReason.trim().length < 3} className="inline-flex min-h-11 items-center justify-center gap-2 rounded-2xl bg-[#A74758] px-5 py-2.5 text-sm font-semibold text-white shadow-[5px_5px_10px_rgba(163,177,198,.48),-5px_-5px_10px_rgba(255,255,255,.72)] transition hover:bg-[#8B3442] active:translate-y-px active:shadow-[inset_3px_3px_7px_rgba(93,38,51,.4),inset_-3px_-3px_7px_rgba(255,255,255,.35)] disabled:cursor-not-allowed disabled:opacity-50">{moderating ? <><Loader2 className="h-4 w-4 animate-spin" />Removing...</> : <><EyeOff className="h-4 w-4" />Remove review</>}</button></div>
+          </section>
+        </div>
+      )}
+      {photoPreview && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-[#193364]/55 p-4 backdrop-blur-sm" role="presentation" onMouseDown={(event) => { if (event.target === event.currentTarget) setPhotoPreview(null); }}>
+          <section className="relative flex max-h-[90vh] w-full max-w-5xl flex-col items-center rounded-[2rem] border border-white/75 bg-[#E0E5EC] p-4 shadow-[14px_14px_30px_rgba(25,51,100,.28),-10px_-10px_24px_rgba(255,255,255,.78)] sm:p-6" role="dialog" aria-modal="true" aria-label="Review photo preview">
+            <button type="button" onClick={() => setPhotoPreview(null)} className="absolute right-4 top-4 z-10 flex h-11 w-11 items-center justify-center rounded-xl bg-[#E0E5EC] text-[#6474A5] shadow-[5px_5px_10px_rgba(163,177,198,.48),-5px_-5px_10px_rgba(255,255,255,.72)] transition hover:text-[#193364] focus:outline-none focus:ring-2 focus:ring-[#6C63FF]/40 active:shadow-[inset_3px_3px_6px_rgba(163,177,198,.4),inset_-3px_-3px_6px_rgba(255,255,255,.7)]" aria-label="Close review photo preview"><X className="h-5 w-5" /></button>
+            <img src={photoPreview.url} alt={photoPreview.alt} className="max-h-[calc(90vh-7rem)] max-w-full rounded-2xl object-contain" />
+            <p className="mt-3 pr-12 text-center text-sm font-semibold text-[#193364]">Review photo preview</p>
           </section>
         </div>
       )}
