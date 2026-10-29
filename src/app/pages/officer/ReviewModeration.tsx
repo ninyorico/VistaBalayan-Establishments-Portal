@@ -15,6 +15,7 @@ type ModerationReview = {
   report_count: number;
   latest_report_reason: string | null;
   latest_report_created_at: string | null;
+  photo_path: string | null;
 };
 
 type ModerationTarget = {
@@ -154,6 +155,7 @@ export default function ReviewModeration() {
                   <div className="flex flex-wrap items-center gap-2"><h2 className="font-bold text-[#193364]">{review.establishment_name}</h2><span className="rounded-full bg-[#E0E5EC] px-2.5 py-1 text-xs font-semibold text-[#6474A5]">{review.rating}/5 stars</span><span className={`inline-flex items-center gap-1 rounded-full border px-2.5 py-1 text-xs font-semibold ${statusStyles[status.tone]}`}><StatusIcon className="h-3 w-3" />{status.label}</span>{review.report_count > 0 && <span className="inline-flex items-center gap-1 rounded-full border border-[#E7A93B]/45 bg-[#F7EAC7] px-2.5 py-1 text-xs font-semibold text-[#745B22]"><Flag className="h-3 w-3" />{review.report_count} report{review.report_count === 1 ? "" : "s"}</span>}</div>
                   <p className="mt-2 text-sm text-[#5D6F73]">{review.reviewer_name || "Anonymous visitor"} · {new Date(review.created_at).toLocaleString()}</p>
                   {review.comment ? <p className="mt-4 whitespace-pre-wrap rounded-2xl bg-[#E0E5EC] p-4 text-sm leading-6 text-[#46586A] shadow-[inset_4px_4px_8px_rgba(163,177,198,.34),inset_-4px_-4px_8px_rgba(255,255,255,.7)]">{review.comment}</p> : <p className="mt-4 rounded-2xl bg-[#E0E5EC] p-4 text-sm italic text-[#6474A5] shadow-[inset_4px_4px_8px_rgba(163,177,198,.28),inset_-4px_-4px_8px_rgba(255,255,255,.65)]">No comment; rating only.</p>}
+                  {review.photo_path && <a href={supabase.storage.from("review-photos").getPublicUrl(review.photo_path).data.publicUrl} target="_blank" rel="noopener noreferrer" className="mt-4 inline-flex max-w-full flex-col gap-2 rounded-2xl bg-[#E0E5EC] p-3 text-sm font-semibold text-[#193364] shadow-[inset_4px_4px_8px_rgba(163,177,198,.3),inset_-4px_-4px_8px_rgba(255,255,255,.7)]"><img src={supabase.storage.from("review-photos").getPublicUrl(review.photo_path).data.publicUrl} alt={`Photo attached to ${review.establishment_name} review`} loading="lazy" className="max-h-64 w-auto max-w-full rounded-xl object-contain" /><span>Open attached review photo</span></a>}
                   {review.latest_report_reason && <p className="mt-3 rounded-2xl border border-[#D5B66D]/50 bg-[#F4E8C8] p-3 text-sm text-[#745B22] shadow-[inset_3px_3px_7px_rgba(190,157,75,.16),inset_-3px_-3px_7px_rgba(255,255,255,.62)]"><span className="font-semibold">Latest report:</span> {review.latest_report_reason}</p>}
                   {review.moderation_reason && <p className="mt-3 rounded-2xl bg-[#D5DAE2] p-3 text-sm text-[#46586A] shadow-[inset_3px_3px_7px_rgba(163,177,198,.3),inset_-3px_-3px_7px_rgba(255,255,255,.62)]"><span className="font-semibold">Removal reason:</span> {review.moderation_reason}</p>}
                 </div>
