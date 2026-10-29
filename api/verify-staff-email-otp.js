@@ -10,7 +10,7 @@ import {
   getBearerToken,
 } from './_utils/emailjs.js';
 
-const getActiveStaffFromRequest = async (req, supabaseAdmin) => {
+const getActivePortalUserFromRequest = async (req, supabaseAdmin) => {
   const token = getBearerToken(req);
   if (!token) throw new Error('Missing staff session. Please sign in again.');
 
@@ -24,8 +24,8 @@ const getActiveStaffFromRequest = async (req, supabaseAdmin) => {
     .maybeSingle();
 
   if (profileError) throw profileError;
-  if (profile?.role !== 'establishment_staff' || profile?.status !== 'active') {
-    throw new Error('Only active establishment staff can verify work email addresses.');
+  if (!['establishment_staff', 'municipal_officer'].includes(profile?.role) || profile?.status !== 'active') {
+    throw new Error('Only active portal users can verify work email addresses.');
   }
 
   return { user: userData.user, profile };
@@ -48,7 +48,7 @@ export default async function handler(req, res) {
 
     enforceOtpRateLimit(req, { email, purpose: 'email_verification', action: 'verify' });
     const supabaseAdmin = getSupabaseAdmin();
-    const { user, profile } = await getActiveStaffFromRequest(req, supabaseAdmin);
+    const { user, profile } = await getActivePortalUserFromRequest(req, supabaseAdmin);
 
     const { data: existingProfile, error: existingProfileError } = await supabaseAdmin
       .from('profiles')
@@ -80,8 +80,8 @@ export default async function handler(req, res) {
       user_metadata: {
         ...(user.user_metadata || {}),
         full_name: profile.full_name || user.user_metadata?.full_name || '',
-        role: 'establishment_staff',
-        status: 'active',
+        role: profile.role,
+        status: profile.status || 'active',
         gmail_verified: true,
         gmail_verified_at: verifiedAt,
       },
