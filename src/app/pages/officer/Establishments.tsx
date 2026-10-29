@@ -648,6 +648,8 @@ export default function Establishments() {
       const { error } = await supabase.rpc('officer_update_user_profile', {
         p_user_id: editingUser.id,
         p_full_name: userForm.full_name.trim(),
+        // Editing a user must not change the user's role. Role assignment is
+        // controlled by the account/onboarding flow and database policy.
         p_role: editingUser.role,
         p_establishment_id: userForm.establishment_id || null,
         p_status: userForm.status,
