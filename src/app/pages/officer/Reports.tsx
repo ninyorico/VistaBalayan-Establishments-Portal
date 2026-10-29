@@ -49,7 +49,7 @@ const getWeekRange = (year: string, week: string) => {
   };
 };
 
-const getReportTypeLabel = (report: Submission) => report.type === "Visitor Report" ? "Day-tour" : "Overnight";
+const getReportTypeLabel = (report: Submission) => report.type === "Visitor Report" ? "Day-tour" : "Accommodation";
 
 const statusStyles = reportStatusClasses;
 const normalizeStatus = normalizeReportStatus;

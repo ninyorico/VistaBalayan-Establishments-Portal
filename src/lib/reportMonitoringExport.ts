@@ -71,7 +71,7 @@ export async function downloadReportMonitoringWorkbook({
         ? `${exportYear}-${String(exportMonths[0]).padStart(2, "0")}`
         : exportMonths?.length === 3 ? `${exportYear}-Q${Math.floor((exportMonths[0] - 1) / 3) + 1}` : String(exportYear);
     await downloadOfficialArrivalsWorkbook({
-      filename: `Balayan_Resort_Daytour_Arrivals_${exportLabel}.xlsx`,
+      filename: `Balayan_Resort_Day-tour_Arrivals_${exportLabel}.xlsx`,
       year: exportYear,
       selectedMonths: exportMonths,
       weeklyLabel,
@@ -100,7 +100,7 @@ export async function downloadReportMonitoringWorkbook({
       ? `${exportYear}-${String(exportMonths[0]).padStart(2, "0")}`
       : exportMonths?.length === 3 ? `${exportYear}-Q${Math.floor((exportMonths[0] - 1) / 3) + 1}` : String(exportYear);
   await downloadOfficialArrivalsWorkbook({
-    filename: `Balayan_Overnight_Arrivals_${exportLabel}.xlsx`,
+    filename: `Balayan_Accommodation_Arrivals_${exportLabel}.xlsx`,
     year: exportYear,
     selectedMonths: exportMonths,
     weeklyLabel,

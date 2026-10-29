@@ -261,7 +261,7 @@ const addResortSheet = (
   worksheet.getCell(`I${footerStart + 1}`).value = "Accomplished by:";
   worksheet.getCell(`A${footerStart + 2}`).value = "Anniversary - (A)        Reunion - (R)";
   worksheet.getCell(`B${footerStart + 2}`).value = "Company Outing - (CO)        Others - (OTH)";
-  worksheet.getCell(`C${footerStart + 2}`).value = "(ON) - Overnight - Nighttime";
+  worksheet.getCell(`C${footerStart + 2}`).value = "(AC) - Accommodation - Nighttime";
   worksheet.getCell(`J${footerStart + 2}`).value = "(SIGNATURE OVER PRINTED NAME)";
 
   for (let row = footerStart; row <= footerStart + 2; row += 1) {

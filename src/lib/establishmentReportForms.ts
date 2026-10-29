@@ -45,7 +45,7 @@ export const canSubmitVisitorReport = (establishment?: EstablishmentReportFormSo
 
 export const getPrimaryReportFormLabel = (establishment?: EstablishmentReportFormSource | null) => {
   const mode = getEstablishmentReportingMode(establishment);
-  if (mode === "both") return "Day-tour and overnight reports";
-  if (mode === "accommodation") return "Overnight report";
+  if (mode === "both") return "Day-tour and accommodation reports";
+  if (mode === "accommodation") return "Accommodation report";
   return "Day-tour report";
 };

@@ -68,7 +68,7 @@ export default function AccommodationMonitoring({ embedded = false }: { embedded
 
       if (establishmentsError) {
         console.error("Error fetching establishment room totals:", establishmentsError);
-        setLoadError("The overnight monitoring service returned an error. Please retry.");
+        setLoadError("Accommodation monitoring service returned an error. Please retry.");
         toast.error("Failed to load establishment room totals");
         setLoading(false);
         return;
@@ -108,7 +108,7 @@ export default function AccommodationMonitoring({ embedded = false }: { embedded
 
         if (error) {
           console.error("Error fetching accommodation reports:", error);
-          setLoadError("The overnight monitoring service returned an error. Please retry.");
+          setLoadError("Accommodation monitoring service returned an error. Please retry.");
           toast.error("Failed to load accommodation data");
           setLoading(false);
           return;
@@ -185,7 +185,7 @@ export default function AccommodationMonitoring({ embedded = false }: { embedded
 
     } catch (err) {
       console.error("Unexpected error:", err);
-      setLoadError("The overnight monitoring service returned an error. Please retry.");
+      setLoadError("Accommodation monitoring service returned an error. Please retry.");
       toast.error("Failed to load accommodation data");
     } finally {
       setLoading(false);
@@ -384,10 +384,10 @@ export default function AccommodationMonitoring({ embedded = false }: { embedded
         : undefined;
     const weekRange = period.type === "week" ? getReportWeekRange(period.year, period.week) : undefined;
     void downloadReportMonitoringWorkbook({ section: "overnight", year: period.year, selectedMonths, weeklyLabel: period.type === "week" ? getReportWeekLabel(period.year, period.week) : undefined, weeklyStartDate: weekRange?.startDate, weeklyEndDate: weekRange?.endDate, establishmentNames })
-      .then(() => toast.success("Exported Overnight arrivals workbook"))
+      .then(() => toast.success("Exported Accommodation arrivals workbook"))
       .catch((error) => {
-        console.error("Overnight arrivals export error:", error);
-        toast.error(error instanceof Error ? error.message : "Failed to export overnight arrivals workbook");
+        console.error("Accommodation arrivals export error:", error);
+        toast.error(error instanceof Error ? error.message : "Failed to export accommodation arrivals workbook");
       });
   };
 
@@ -400,15 +400,15 @@ export default function AccommodationMonitoring({ embedded = false }: { embedded
   }
 
   if (accommodationRecords.length === 0) {
-    return <DataState state="empty" message="No overnight records have been submitted yet." />;
+    return <DataState state="empty" message="No accommodation records have been submitted yet." />;
   }
 
   return (
     <div className="space-y-6">
       {!embedded && (
         <div>
-          <h1 className="text-3xl font-bold text-gray-900">Overnight Monitoring</h1>
-          <p className="text-gray-600 mt-1">Monitor overnight room occupancy and guest accommodation data</p>
+          <h1 className="text-3xl font-bold text-gray-900">Accommodation Monitoring</h1>
+          <p className="text-gray-600 mt-1">Monitor accommodation room occupancy and guest accommodation data</p>
         </div>
       )}
 
@@ -659,7 +659,7 @@ export default function AccommodationMonitoring({ embedded = false }: { embedded
           <div className="max-h-[90dvh] w-full touch-auto overflow-hidden overscroll-contain rounded-t-2xl bg-white shadow-2xl sm:max-w-5xl sm:rounded-2xl" onClick={(event) => event.stopPropagation()}>
             <div className="flex items-start justify-between gap-4 border-b border-gray-200 bg-gray-50 px-4 py-4 sm:px-6">
               <div className="min-w-0">
-                <p className="text-xs font-semibold uppercase tracking-wider text-blue-600">Overnight accommodation records</p>
+                <p className="text-xs font-semibold uppercase tracking-wider text-blue-600">Accommodation records</p>
                 <h3 id="accommodation-records-dialog-title" className="mt-1 truncate text-lg font-semibold text-gray-900 sm:text-xl">{selectedAccommodationGroup.establishment}</h3>
                 <p className="mt-1 text-xs text-gray-600 sm:text-sm">{selectedAccommodationGroup.records.length} record(s) for {monthLabel}</p>
               </div>

@@ -125,17 +125,17 @@ export default function EstablishmentSubmissionRecords({
   const submissionKpis = hasBothReportTypes
     ? [
         ["Total report submissions", filteredVisitors.length + filteredAccommodation.length, "text-sky-700"],
-        ["Daytour report submissions", filteredVisitors.length, "text-blue-600"],
-        ["Overnight report submissions", filteredAccommodation.length, "text-purple-600"],
+        ["Day-tour report submissions", filteredVisitors.length, "text-blue-600"],
+        ["Accommodation report submissions", filteredAccommodation.length, "text-purple-600"],
       ]
     : isVisitor
       ? [
           ["Total submissions", filteredVisitors.length, "text-sky-700"],
-          ["Daytour report submissions", filteredVisitors.length, "text-blue-600"],
+          ["Day-tour report submissions", filteredVisitors.length, "text-blue-600"],
         ]
       : [
           ["Total submissions", filteredAccommodation.length, "text-sky-700"],
-          ["Overnight report submissions", filteredAccommodation.length, "text-purple-600"],
+          ["Accommodation report submissions", filteredAccommodation.length, "text-purple-600"],
         ];
 
   return (
@@ -165,7 +165,7 @@ export default function EstablishmentSubmissionRecords({
             onClick={() => setActiveType("accommodation")}
             className={`rounded-2xl px-5 py-3 text-sm font-semibold transition ${!isVisitor ? "bg-[#0F4C75] text-white shadow-lg shadow-cyan-950/10" : "bg-slate-100 text-slate-600 hover:bg-slate-200"}`}
           >
-            Overnight reports
+            Accommodation reports
           </button>
         </div>
       )}
@@ -185,7 +185,7 @@ export default function EstablishmentSubmissionRecords({
         <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <div>
             <h2 className="text-sm font-bold uppercase tracking-[0.12em] text-slate-500">
-              {isVisitor ? "Day-tour visitor records" : "Overnight accommodation records"}
+              {isVisitor ? "Day-tour visitor records" : "Accommodation records"}
             </h2>
             <p className="mt-1 text-sm text-slate-500">Filter the same record set used by the tourism officer monitoring screens.</p>
           </div>

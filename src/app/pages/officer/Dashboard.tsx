@@ -276,7 +276,7 @@ setOccupancyRate(occupancyRate);
         ...(accommodationRecent || []).map((a: any) => ({
           id: a.id,
           establishment_name: a.establishments?.name || "Unknown",
-          type: "Overnight Report",
+          type: "Accommodation Report",
           status: a.status,
           date: a.report_date,
           created_at: a.created_at,
@@ -346,7 +346,7 @@ setOccupancyRate(occupancyRate);
         {[
           { label: "Total visitors", value: totalVisitors.toLocaleString(), helper: "All visitor reports", icon: Users, tone: "bg-cyan-50 text-[#0E5A72] ring-cyan-100" },
           { label: "Yearly arrivals", value: yearlyArrivals.toLocaleString(), helper: "Latest reporting year", icon: TrendingUp, tone: "bg-slate-50 text-[#0B2530] ring-slate-200" },
-          { label: "Occupancy rate", value: `${occupancyRate.toFixed(1)}%`, helper: "Average overnight occupancy", icon: Bed, tone: "bg-[#EAF2F1] text-[#0E5A72] ring-[#b8d2cf]" },
+          { label: "Occupancy rate", value: `${occupancyRate.toFixed(1)}%`, helper: "Average Accommodation occupancy", icon: Bed, tone: "bg-[#EAF2F1] text-[#0E5A72] ring-[#b8d2cf]" },
           { label: "Establishments", value: totalEstablishments.toString(), helper: "Tourism records", icon: Building2, tone: "bg-emerald-50 text-[#2F5F55] ring-emerald-100" },
 
         ].map((metric) => (

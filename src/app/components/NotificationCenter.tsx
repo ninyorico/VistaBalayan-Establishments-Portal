@@ -38,7 +38,7 @@ type NotificationCategory = "all" | "daytour" | "overnight" | "establishments" |
 const notificationCategories: Array<{ id: NotificationCategory; label: string }> = [
   { id: "all", label: "All" },
   { id: "daytour", label: "Day-tour reports" },
-  { id: "overnight", label: "Overnight reports" },
+  { id: "overnight", label: "Accommodation reports" },
   { id: "establishments", label: "Establishments" },
   { id: "insights", label: "AI & reviews" },
   { id: "other", label: "Other" },
@@ -104,8 +104,8 @@ function startOfMonthIso() {
 function normalizeReportTerminology(value: string) {
   return value
     .replace(/\bvisitor report\b/gi, "day-tour report")
-    .replace(/\baccommodation report\b/gi, "overnight report")
-    .replace(/\bhotel report\b/gi, "overnight report");
+    .replace(/\baccommodation report\b/gi, "accommodation report")
+    .replace(/\bhotel report\b/gi, "accommodation report");
 }
 
 function notificationDay(value: string) {

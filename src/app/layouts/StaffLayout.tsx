@@ -22,7 +22,7 @@ import NotificationCenter from "../components/NotificationCenter";
 const menuItems = [
   { path: "/staff", icon: LayoutDashboard, label: "Dashboard" },
   { path: "/staff/submit-visitor-report", icon: FileUp, label: "Day-tour", form: "visitor" },
-  { path: "/staff/submit-accommodation-report", icon: Bed, label: "Overnight", form: "accommodation" },
+  { path: "/staff/submit-accommodation-report", icon: Bed, label: "Accommodation", form: "accommodation" },
   { path: "/staff/submission-history", icon: History, label: "Submission History" },
   { path: "/staff/analytics", icon: BarChart3, label: "Analytics" },
   { path: "/staff/ai-insights", icon: Brain, label: "AI Insights" },

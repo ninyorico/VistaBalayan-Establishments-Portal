@@ -172,7 +172,7 @@ const loadProfile = async () => {
         setEstablishmentName(establishment[0]?.name || 'Your Establishment');
 
         if (!canSubmitVisitorReport(establishment[0])) {
-          toast.error('This establishment is assigned to overnight reports only.');
+          toast.error('This establishment is assigned to accommodation reports only.');
           navigate('/staff', { replace: true });
           return;
         }

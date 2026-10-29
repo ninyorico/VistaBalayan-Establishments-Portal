@@ -747,7 +747,7 @@ export default function SubmitAccommodationReport() {
       if (submitError) {
         toast.error("Failed to submit report: " + submitError.message);
       } else {
-        toast.success("Overnight report submitted successfully");
+        toast.success("Accommodation report submitted successfully");
         const draftKey = draftStorageKey(profile.id, profile.establishment_id);
         if (draftKey) localStorage.removeItem(draftKey);
         submissionKeyRef.current = crypto.randomUUID();
@@ -817,7 +817,7 @@ export default function SubmitAccommodationReport() {
 
             <div className="min-h-0 flex-1 overflow-y-auto overscroll-y-contain p-4 sm:p-6 [-webkit-overflow-scrolling:touch]">
               <fieldset className="mb-5 rounded-2xl bg-[#E0E5EC] p-4 shadow-[inset_4px_4px_8px_rgba(163,177,198,0.4),inset_-4px_-4px_8px_rgba(255,255,255,0.65)]">
-                <legend className="text-sm font-semibold text-[#193364]">Choose overnight report form</legend>
+                <legend className="text-sm font-semibold text-[#193364]">Choose accommodation report form</legend>
                 <div className="mt-3 grid gap-3 sm:grid-cols-2">
                   <label className={`cursor-pointer rounded-2xl p-3 transition ${tempReportFormMode === "single" ? "bg-[#F5F8FF] text-[#193364] shadow-[inset_3px_3px_7px_rgba(163,177,198,0.4),inset_-3px_-3px_7px_rgba(255,255,255,0.65)]" : "text-[#6B7280]"}`}>
                     <input type="radio" name="accommodation-form-mode" value="single" checked={tempReportFormMode === "single"} onChange={() => setTempReportFormMode("single")} className="sr-only" />
@@ -833,7 +833,7 @@ export default function SubmitAccommodationReport() {
               </fieldset>
 
             <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-              <p className="text-sm font-medium text-gray-700">Editable overnight room setup</p>
+              <p className="text-sm font-medium text-gray-700">Editable accommodation room setup</p>
               <div className="flex items-end gap-2">
                 <label className="min-w-0 flex-1 text-xs font-medium text-gray-600">
                   Rooms to add
@@ -966,7 +966,7 @@ export default function SubmitAccommodationReport() {
                 <th className="sticky left-0 top-0 z-30 w-1/4 border-r border-gray-200 bg-gray-50 px-1.5 py-2 text-center text-[10px] font-semibold uppercase leading-tight text-gray-700 sm:px-3 sm:py-3 sm:text-xs">Room / Code</th>
                 <th className="w-1/4 border-r border-gray-200 px-1.5 py-2 text-center text-[10px] font-semibold uppercase leading-tight text-gray-700 sm:px-3 sm:py-3 sm:text-xs">Previous Date<div className="mt-1 text-[9px] font-normal normal-case text-gray-500 sm:text-[10px]">{getPreviousDate(reportDate)}</div></th>
                 <th className="w-1/4 border-r border-gray-200 px-1.5 py-2 text-center text-[10px] font-semibold uppercase leading-tight text-[#0F4C75] sm:px-3 sm:py-3 sm:text-xs">Short-stay<div className="mt-1 text-[9px] font-normal normal-case text-gray-500 sm:text-[10px]">Check-ins</div></th>
-                <th className="w-1/4 px-1.5 py-2 text-center text-[10px] font-semibold uppercase leading-tight text-[#0F4C75] sm:px-3 sm:py-3 sm:text-xs">Overnight<div className="mt-1 text-[9px] font-normal normal-case text-gray-500 sm:text-[10px]">{reportDate}</div></th>
+                <th className="w-1/4 px-1.5 py-2 text-center text-[10px] font-semibold uppercase leading-tight text-[#0F4C75] sm:px-3 sm:py-3 sm:text-xs">Accommodation<div className="mt-1 text-[9px] font-normal normal-case text-gray-500 sm:text-[10px]">{reportDate}</div></th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-200" onPointerDownCapture={handleGuestFieldPointerDownCapture} onTouchStartCapture={handleGuestFieldTouchStartCapture}>
@@ -1021,7 +1021,7 @@ export default function SubmitAccommodationReport() {
                           data-guest-room-code={room.roomCode}
                           placeholder="0"
                           title="Double-click to switch between continuing and new guest"
-                          aria-label={`${room.roomType} overnight ${isActiveNewGuest ? "new" : "continuing"} guest value. Double-click to switch type.`}
+                          aria-label={`${room.roomType} accommodation ${isActiveNewGuest ? "new" : "continuing"} guest value. Double-click to switch type.`}
                         />
                       </td>
                     </tr>
@@ -1041,7 +1041,7 @@ export default function SubmitAccommodationReport() {
                   <div className="flex min-w-0 flex-col rounded-lg border border-[#6474A5]/35 bg-[#EEF2FF] p-2 sm:p-4 lg:p-3">
                     <p className="mb-1 min-h-[2.25rem] text-[10px] font-medium leading-tight text-[#193364] sm:min-h-[3.5rem] sm:text-sm lg:min-h-0">Guest Check-ins</p>
                     <p className="flex min-h-[2rem] items-center text-xl font-bold text-[#193364] sm:min-h-[2.25rem] sm:text-3xl lg:min-h-0 lg:text-2xl">{totalCheckIns}</p>
-                    <p className="mt-1 min-h-[1.75rem] text-[9px] leading-tight text-[#5D6F73] sm:min-h-[2.5rem] sm:text-xs lg:min-h-0">new overnight + short-stay guests</p>
+                    <p className="mt-1 min-h-[1.75rem] text-[9px] leading-tight text-[#5D6F73] sm:min-h-[2.5rem] sm:text-xs lg:min-h-0">new accommodation + short-stay guests</p>
                   </div>
                   <div className="flex min-w-0 flex-col rounded-lg border border-[#6C9772]/35 bg-[#E5E8E1] p-2 sm:p-4 lg:p-3" data-hotel-report-daily-occupancy="selected-report-date">
                     <p className="mb-1 min-h-[2.25rem] text-[10px] font-medium leading-tight text-[#0F3B2D] sm:min-h-[3.5rem] sm:text-sm lg:min-h-0">Rooms Occupied</p>
@@ -1062,7 +1062,7 @@ export default function SubmitAccommodationReport() {
           <Save className="w-5 h-5" /> Save Draft
         </button>
         <button onClick={handleSubmit} disabled={submitting || !hasAccommodationEntries} title={!hasAccommodationEntries ? "Enter at least one guest value before submitting" : undefined} className="flex w-full items-center justify-center gap-2 rounded-lg bg-[#0F4C75] px-6 py-3 text-white hover:bg-[#0F4C75] disabled:cursor-not-allowed disabled:opacity-60">
-          <Send className="w-5 h-5" /> {submitting ? "Submitting..." : "Submit Overnight Report"}
+          <Send className="w-5 h-5" /> {submitting ? "Submitting..." : "Submit Accommodation Report"}
         </button>
       </div>
       </aside>

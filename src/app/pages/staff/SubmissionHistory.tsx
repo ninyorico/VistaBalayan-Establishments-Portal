@@ -44,7 +44,7 @@ const statusStyles = {
 };
 
 const getReportTypeLabel = (type: string) =>
-  type === "Visitor Report" ? "Day-tour" : type === "Accommodation Report" ? "Overnight" : type;
+  type === "Visitor Report" ? "Day-tour" : type === "Accommodation Report" ? "Accommodation" : type;
 
 const monthNames = Array.from({ length: 12 }, (_, index) =>
   new Date(2000, index, 1).toLocaleString("default", { month: "long" })
@@ -272,8 +272,8 @@ export default function SubmissionHistory() {
       : period.type === "quarter" ? `${period.year}-Q${period.quarter}` : `Week${period.week}-${period.year}`;
     await downloadOfficialArrivalsWorkbook({
       filename: section === "daytour"
-        ? `Balayan_Daytour_Arrivals_${periodLabel}.xlsx`
-        : `Balayan_Overnight_Arrivals_${periodLabel}.xlsx`,
+        ? `Balayan_Day-tour_Arrivals_${periodLabel}.xlsx`
+        : `Balayan_Accommodation_Arrivals_${periodLabel}.xlsx`,
       year: period.year,
       selectedMonths,
       weeklyLabel: period.type === "week" ? `Week ${period.week} (${weekRange?.startDate} to ${weekRange?.endDate})` : undefined,
@@ -322,7 +322,7 @@ export default function SubmissionHistory() {
     if (submission.type === "Visitor Report") {
       const records = getVisitorRecordsForSubmission(submission);
       await downloadOfficialArrivalsWorkbook({
-        filename: `Balayan_Daytour_Submission_${submission.reportDate || "report"}.xlsx`,
+        filename: `Balayan_Day-tour_Submission_${submission.reportDate || "report"}.xlsx`,
         year: dateParts.year,
         selectedMonths: [dateParts.month + 1],
         exportSection: "daytour",
@@ -336,7 +336,7 @@ export default function SubmissionHistory() {
 
     const report = getAccommodationRecordForSubmission(submission);
     await downloadOfficialArrivalsWorkbook({
-      filename: `Balayan_Overnight_Submission_${submission.reportDate || "report"}.xlsx`,
+      filename: `Balayan_Accommodation_Submission_${submission.reportDate || "report"}.xlsx`,
       year: dateParts.year,
       selectedMonths: [dateParts.month + 1],
       exportSection: "overnight",

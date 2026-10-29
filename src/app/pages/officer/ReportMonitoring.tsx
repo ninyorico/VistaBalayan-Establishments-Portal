@@ -19,8 +19,8 @@ const tabs: Array<{
   },
   {
     id: "accommodation",
-    label: "Overnight reports",
-    description: "Overnight room occupancy, guest nights, and check-in records",
+    label: "Accommodation reports",
+    description: "Accommodation room occupancy, guest nights, and check-in records",
     icon: Bed,
   },
 ];
@@ -43,7 +43,7 @@ export default function ReportMonitoring() {
                 Report Monitoring
               </h1>
               <p className="mt-1 max-w-2xl text-sm leading-6 text-slate-200">
-                Review submitted tourism records in one workspace. Use the tabs to switch between day-tour and overnight monitoring without leaving the workflow.
+                Review submitted tourism records in one workspace. Use the tabs to switch between day-tour and accommodation monitoring without leaving the workflow.
               </p>
             </div>
           </div>

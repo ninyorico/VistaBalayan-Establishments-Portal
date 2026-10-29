@@ -17,7 +17,7 @@ type Props = {
   year: string;
 };
 
-const categoryLabels: Record<Category, string> = { daytour: "Day-Tour Performance", overnight: "Overnight Performance" };
+const categoryLabels: Record<Category, string> = { daytour: "Day-Tour Performance", overnight: "Accommodation Performance" };
 const classificationLabels: Record<PerformanceClassification, string> = {
   HIGH: "High Volume",
   MODERATE: "Moderate Volume",
