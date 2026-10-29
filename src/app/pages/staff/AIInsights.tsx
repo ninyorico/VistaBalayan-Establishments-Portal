@@ -213,7 +213,7 @@ const loadCachedData = async (estId: string, generateIfEmpty = true) => {
       const { data: visitorData, error: visitorError } = await supabase
         .from('visitor_reports')
         .select('report_date, total_guests, residence_type')
-        .eq('establishment_id', requestedEstablishmentId)
+        .eq('establishment_id', resolvedEstablishmentId)
         .eq('status', OFFICIAL_REPORT_STATUS)
         .order('report_date', { ascending: false })
         .limit(200)
@@ -226,7 +226,7 @@ const loadCachedData = async (estId: string, generateIfEmpty = true) => {
       const { data: accommodationData, error: accError } = await supabase
         .from('accommodation_reports')
         .select('id, report_date, total_rooms, total_occupied_rooms')
-        .eq('establishment_id', requestedEstablishmentId)
+        .eq('establishment_id', resolvedEstablishmentId)
         .eq('status', OFFICIAL_REPORT_STATUS)
 
       if (accError) {
@@ -319,7 +319,7 @@ const loadCachedData = async (estId: string, generateIfEmpty = true) => {
       lastUpdated={lastUpdated}
       refreshing={refreshing}
       canRefresh={canRefreshAnalysis}
-      onRefresh={refreshData}
+      onRefresh={() => void refreshData()}
     >
       {refreshError && (
         <div className="flex flex-col gap-3 rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900 sm:flex-row sm:items-center sm:justify-between" role="alert">
