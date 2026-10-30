@@ -794,7 +794,7 @@ export default function SubmitAccommodationReport() {
   }
 
   return (
-    <div className="space-y-4 pb-16 sm:space-y-6">
+    <div className="space-y-4 pb-4 sm:space-y-6">
       <PageHero
         eyebrow="Daily reporting"
         title="Digital DAE-1A"
@@ -931,7 +931,7 @@ export default function SubmitAccommodationReport() {
         </div>
       </div>
 
-      <div className="grid grid-cols-1 gap-6 lg:h-[calc(100dvh-8rem)] lg:min-h-0 lg:grid-cols-[minmax(0,1fr)_minmax(300px,360px)] lg:items-stretch">
+      <div className="grid grid-cols-1 gap-6 lg:h-[calc(100dvh-10rem)] lg:min-h-0 lg:grid-cols-[minmax(0,1fr)_minmax(300px,360px)] lg:items-stretch">
       {/* Room Occupancy Table */}
       <div className="flex min-h-0 flex-col overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-sm lg:h-full">
         <div className="p-4 sm:p-5 lg:p-6 border-b border-gray-200">
