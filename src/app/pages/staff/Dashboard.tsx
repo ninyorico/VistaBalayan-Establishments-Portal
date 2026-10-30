@@ -118,8 +118,10 @@ export default function StaffDashboard() {
   const mode = getEstablishmentReportingMode(establishment);
 
   const demographicTotal = dashboardMetrics.totalMale + dashboardMetrics.totalFemale;
+  const demographicLabelLength = `${dashboardMetrics.totalMale.toLocaleString()} Male / ${dashboardMetrics.totalFemale.toLocaleString()} Female`.length;
+  const useCompactDemographicLabels = demographicLabelLength > 20;
   const demographicValue: ReactNode = demographicTotal > 0
-    ? <span className="block whitespace-nowrap"><span className="sm:hidden">{dashboardMetrics.totalMale.toLocaleString()} M / {dashboardMetrics.totalFemale.toLocaleString()} F</span><span className="hidden whitespace-nowrap sm:inline">{dashboardMetrics.totalMale.toLocaleString()} Male / {dashboardMetrics.totalFemale.toLocaleString()} Female</span></span>
+    ? <span className="block whitespace-nowrap">{dashboardMetrics.totalMale.toLocaleString()} {useCompactDemographicLabels ? "M" : "Male"} / {dashboardMetrics.totalFemale.toLocaleString()} {useCompactDemographicLabels ? "F" : "Female"}</span>
     : "No data";
   const demographicSubtitle = `${dashboardMetrics.totalMale.toLocaleString()} male · ${dashboardMetrics.totalFemale.toLocaleString()} female`;
 
@@ -167,7 +169,7 @@ export default function StaffDashboard() {
       </section>
 
       <PanelCard title={metricsTitle} description="Overall totals calculated from all official reports submitted for this establishment." className="p-0">
-        <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-4 sm:gap-4">{metrics.map((stat) => <MetricCard key={stat.title} label={stat.title} value={stat.value} helper={stat.subtitle} icon={stat.icon} tone={stat.tone} compact compactValue={mode === "visitor" && stat.title !== "Demographics"} valueFullWidth={stat.title === "Demographics"} className="bg-[#f8fbf8] shadow-none" />)}</div>
+        <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-4 sm:gap-4">{metrics.map((stat) => <MetricCard key={stat.title} label={stat.title} value={stat.value} helper={stat.subtitle} icon={stat.icon} tone={stat.tone} compact compactValue={mode === "visitor"} valueFullWidth={stat.title === "Demographics"} className="bg-[#f8fbf8] shadow-none" />)}</div>
       </PanelCard>
 
       <section className="grid grid-cols-1 gap-6">
