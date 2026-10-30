@@ -735,7 +735,7 @@ export default function ManageListing() {
             </Card>
           </div>
 
-          <aside className="space-y-5">
+          <aside className="space-y-5 lg:sticky lg:top-5 lg:self-start">
             <Card className="tourism-card overflow-hidden rounded-[1.5rem] border-0 bg-[#E0E5EC] shadow-sm">
               <CardHeader className="border-0 bg-[#E0E5EC] px-4 py-4 sm:px-5">
                 <div className="flex items-center justify-between gap-3">

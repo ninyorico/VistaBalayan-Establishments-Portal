@@ -44,7 +44,7 @@ const statusStyles = {
 };
 
 const getReportTypeLabel = (type: string) =>
-  type === "Visitor Report" ? "Day-tour" : type === "Accommodation Report" ? "Accommodation" : type;
+  type === "Visitor Report" ? "Day-tour Report" : type === "Accommodation Report" ? "Accommodation" : type;
 
 const monthNames = Array.from({ length: 12 }, (_, index) =>
   new Date(2000, index, 1).toLocaleString("default", { month: "long" })
