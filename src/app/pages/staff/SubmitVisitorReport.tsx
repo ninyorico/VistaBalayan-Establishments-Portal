@@ -451,7 +451,7 @@ const loadProfile = async () => {
                 {residenceTypes.filter((type) => (visibleResidenceTypes[entry.id] || ["THIS_PROVINCE"]).includes(type.key)).map((type) => {
                   const residence = entry.breakdown[type.key];
                   return (
-                    <div key={type.key} className="rounded-lg border border-white bg-white p-3 shadow-sm">
+                    <div key={type.key} className="flex h-full flex-col rounded-lg border border-white bg-white p-3 shadow-sm">
                       <div className="flex items-start justify-between gap-2">
                         <h4 className="text-sm font-semibold text-[#0F4C75]">{type.label}</h4>
 
@@ -479,7 +479,7 @@ const loadProfile = async () => {
                         <label className="text-xs text-gray-600">Male<input type="text" inputMode="numeric" pattern="[0-9]*" value={numericInputValue(residence.male)} onChange={(e) => updateResidence(entry.id, type.key, "male", parseNonNegativeInteger(e.target.value))} className="mt-1 w-full rounded-md border border-gray-300 px-2 py-2 text-center text-sm" placeholder="0" /></label>
                         <label className="text-xs text-gray-600">Female<input type="text" inputMode="numeric" pattern="[0-9]*" value={numericInputValue(residence.female)} onChange={(e) => updateResidence(entry.id, type.key, "female", parseNonNegativeInteger(e.target.value))} className="mt-1 w-full rounded-md border border-gray-300 px-2 py-2 text-center text-sm" placeholder="0" /></label>
                       </div>
-                      <div className="mt-3 flex items-center justify-between border-t border-gray-100 pt-2 text-sm"><span className="text-gray-600">Category total</span><strong className="text-[#0F4C75]">{residenceTotal(entry, type.key)}</strong></div>
+                      <div className="mt-auto flex items-center justify-between border-t border-gray-100 pt-2 text-sm"><span className="text-gray-600">Category total</span><strong className="text-[#0F4C75]">{residenceTotal(entry, type.key)}</strong></div>
                     </div>
                   );
                 })}
