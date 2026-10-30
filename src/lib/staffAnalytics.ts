@@ -189,7 +189,19 @@ export const average = (values: number[]) =>
 export const residenceTotals = (reports: VisitorReport[]) => {
   const totals = new Map<string, number>();
   reports.forEach((report) => {
-    const residence = report.residence_type || "Unspecified";
+    const normalizedResidence = String(report.residence_type || "")
+      .trim()
+      .toUpperCase()
+      .replace(/[^A-Z]+/g, "_")
+      .replace(/^_+|_+$/g, "");
+    const residence = normalizedResidence.startsWith("THIS_PROVINCE")
+      ? "This Province / Batangas"
+      : normalizedResidence.startsWith("OTHER_PROVINCE")
+        ? "Other Province / Domestic"
+        : normalizedResidence.startsWith("FOREIGN")
+          ? "Foreign Residence"
+          : null;
+    if (!residence) return;
     totals.set(residence, (totals.get(residence) || 0) + toNumber(report.total_guests));
   });
   return Array.from(totals.entries())
