@@ -735,7 +735,7 @@ export default function ManageListing() {
             </Card>
           </div>
 
-          <aside className="space-y-5 lg:sticky lg:top-5 lg:self-start">
+          <aside className="space-y-5 lg:sticky lg:top-20 lg:self-start">
             <Card className="tourism-card overflow-hidden rounded-[1.5rem] border-0 bg-[#E0E5EC] shadow-sm">
               <CardHeader className="border-0 bg-[#E0E5EC] px-4 py-4 sm:px-5">
                 <div className="flex items-center justify-between gap-3">
@@ -747,7 +747,7 @@ export default function ManageListing() {
                 <div className="grid grid-cols-2 gap-3">
                   {images.map((img, index) => (
                     <div key={index} className="group relative overflow-hidden rounded-2xl border-0 bg-[#E0E5EC] shadow-[5px_5px_10px_rgba(163,177,198,0.45),-5px_-5px_10px_rgba(255,255,255,0.55)]">
-                      <img src={img} alt={`Public listing photo ${index + 1}`} className="h-28 w-full object-cover transition-transform duration-700 ease-out group-hover:scale-105" />
+                      <img src={img} alt={`Public listing photo ${index + 1}`} className="h-20 w-full object-cover transition-transform duration-700 ease-out group-hover:scale-105" />
                       <button
                         type="button"
                         onClick={() => removeImage(index)}
@@ -758,7 +758,7 @@ export default function ManageListing() {
                       </button>
                     </div>
                   ))}
-                  <label className="flex h-28 cursor-pointer flex-col items-center justify-center rounded-2xl border border-dashed border-[#6C9772]/55 bg-[#E5E8E1] text-center transition hover:border-[#6C9772] hover:bg-[#FBE7BA]">
+                  <label className="flex h-20 cursor-pointer flex-col items-center justify-center rounded-2xl border border-dashed border-[#6C9772]/55 bg-[#E5E8E1] text-center transition hover:border-[#6C9772] hover:bg-[#FBE7BA]">
                     <input type="file" accept="image/*" multiple onChange={handleImageUpload} className="hidden" disabled={uploading} />
                     <ImagePlus className="size-6 text-[#6C9772]" />
                     <span className="mt-2 text-xs font-semibold text-slate-600">{uploading ? 'Uploading' : 'Add photos'}</span>
