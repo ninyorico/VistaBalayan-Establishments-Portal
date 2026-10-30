@@ -552,7 +552,7 @@ export default function ManageListing() {
   }
 
   return (
-    <main className="w-full max-w-full overflow-x-hidden" data-manage-listing-redesign="shadcn-taste-editorial">
+    <main className="w-full max-w-full overflow-x-clip" data-manage-listing-redesign="shadcn-taste-editorial">
       <div className="space-y-5 sm:space-y-7" data-manage-listing-hero="dashboard-style">
         <PageHero
           eyebrow="Public profile"
