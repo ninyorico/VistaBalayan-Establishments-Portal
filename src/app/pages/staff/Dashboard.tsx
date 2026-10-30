@@ -119,7 +119,7 @@ export default function StaffDashboard() {
 
   const demographicTotal = dashboardMetrics.totalMale + dashboardMetrics.totalFemale;
   const demographicValue: ReactNode = demographicTotal > 0
-    ? <span className="whitespace-nowrap"><span className="sm:hidden">{dashboardMetrics.totalMale.toLocaleString()} M / {dashboardMetrics.totalFemale.toLocaleString()} F</span><span className="hidden sm:inline">{dashboardMetrics.totalMale.toLocaleString()} Male / {dashboardMetrics.totalFemale.toLocaleString()} Female</span></span>
+    ? <span className="block whitespace-normal break-words"><span className="sm:hidden">{dashboardMetrics.totalMale.toLocaleString()} M / {dashboardMetrics.totalFemale.toLocaleString()} F</span><span className="hidden whitespace-normal break-words sm:inline">{dashboardMetrics.totalMale.toLocaleString()} Male / {dashboardMetrics.totalFemale.toLocaleString()} Female</span></span>
     : "No data";
   const demographicSubtitle = `${dashboardMetrics.totalMale.toLocaleString()} male · ${dashboardMetrics.totalFemale.toLocaleString()} female`;
 
