@@ -848,43 +848,48 @@ export default function Reports() {
 
       {/* Review Modal */}
       {showDetailModal && selectedSubmission && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-lg shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
-            <div className="p-6 border-b border-gray-200 flex items-center justify-between">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-[#193364]/35 p-4 backdrop-blur-[3px]" role="presentation" onMouseDown={(event) => { if (event.target === event.currentTarget) setShowDetailModal(false); }}>
+          <div className="max-h-[90vh] w-full max-w-2xl overflow-y-auto rounded-[2rem] border border-white/50 bg-[#E0E5EC] text-[#193364] shadow-[18px_18px_36px_rgba(163,177,198,0.62),-12px_-12px_30px_rgba(255,255,255,0.76)]" role="dialog" aria-modal="true" aria-labelledby="review-submission-title">
+            <div className="flex items-start justify-between gap-4 border-b border-[#c7ced8]/70 px-5 py-5 sm:px-7 sm:py-6">
               <div>
-                <h2 className="text-xl font-bold text-gray-900">Review Submission</h2>
-                <p className="text-sm text-gray-600">{selectedSubmission.establishment} - {getReportTypeLabel(selectedSubmission)}</p>
+                <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-[#0E5A72]">Submission details</p>
+                <h2 id="review-submission-title" className="mt-1 text-xl font-bold text-[#193364] sm:text-2xl">Review Submission</h2>
+                <p className="mt-1 text-sm font-medium text-[#64748b]">{selectedSubmission.establishment} <span className="text-[#94a3b8]">•</span> {getReportTypeLabel(selectedSubmission)}</p>
               </div>
-              <button onClick={() => setShowDetailModal(false)} className="p-1 hover:bg-gray-100 rounded">
-                <X className="w-5 h-5" />
+              <button type="button" onClick={() => setShowDetailModal(false)} className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[#E0E5EC] text-[#193364] shadow-[inset_4px_4px_8px_rgba(163,177,198,0.42),inset_-4px_-4px_8px_rgba(255,255,255,0.78)] transition hover:text-[#0E5A72] focus:outline-none focus:ring-2 focus:ring-[#0E5A72]/30" aria-label="Close review submission">
+                <X className="h-5 w-5" />
               </button>
             </div>
-            <div className="p-6 space-y-4">
-              <div className="grid grid-cols-2 gap-4">
-                <div><label className="text-sm font-medium text-gray-700">Report Date</label><p className="text-gray-900">{selectedSubmission.reportDate}</p></div>
-                <div><label className="text-sm font-medium text-gray-700">Visitors</label><p className="text-gray-900">{selectedSubmission.visitors}</p></div>
-                <div><label className="text-sm font-medium text-gray-700">Submitted</label><p className="text-gray-900">{selectedSubmission.submitted}</p></div>
-                <div><label className="text-sm font-medium text-gray-700">Status</label>
-                  <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${statusStyles[normalizeStatus(selectedSubmission.status)] || statusStyles.pending}`}>{formatStatus(selectedSubmission.status)}</span>
+            <div className="space-y-5 px-5 py-5 sm:px-7 sm:py-6">
+              <div className="grid gap-3 sm:grid-cols-2">
+                <div className="rounded-2xl bg-[#E0E5EC] p-4 shadow-[inset_5px_5px_10px_rgba(163,177,198,0.42),inset_-5px_-5px_10px_rgba(255,255,255,0.76)]">
+                  <p className="text-xs font-semibold uppercase tracking-wide text-[#64748b]">Report date</p>
+                  <p className="mt-2 text-base font-bold text-[#193364]">{selectedSubmission.reportDate}</p>
+                </div>
+                <div className="rounded-2xl bg-[#E0E5EC] p-4 shadow-[inset_5px_5px_10px_rgba(163,177,198,0.42),inset_-5px_-5px_10px_rgba(255,255,255,0.76)]">
+                  <p className="text-xs font-semibold uppercase tracking-wide text-[#64748b]">Visitors / check-ins</p>
+                  <p className="mt-2 text-2xl font-bold text-[#0E5A72]">{selectedSubmission.visitors.toLocaleString()}</p>
+                </div>
+                <div className="rounded-2xl bg-[#E0E5EC] p-4 shadow-[inset_5px_5px_10px_rgba(163,177,198,0.42),inset_-5px_-5px_10px_rgba(255,255,255,0.76)]">
+                  <p className="text-xs font-semibold uppercase tracking-wide text-[#64748b]">Submitted</p>
+                  <p className="mt-2 text-base font-bold text-[#193364]">{selectedSubmission.submitted}</p>
+                </div>
+                <div className="rounded-2xl bg-[#E0E5EC] p-4 shadow-[inset_5px_5px_10px_rgba(163,177,198,0.42),inset_-5px_-5px_10px_rgba(255,255,255,0.76)]">
+                  <p className="text-xs font-semibold uppercase tracking-wide text-[#64748b]">Status</p>
+                  <span className={`mt-2 inline-flex rounded-full px-3 py-1 text-xs font-bold shadow-[3px_3px_6px_rgba(163,177,198,0.38),-3px_-3px_6px_rgba(255,255,255,0.7)] ${statusStyles[normalizeStatus(selectedSubmission.status)] || statusStyles.pending}`}>{formatStatus(selectedSubmission.status)}</span>
                 </div>
               </div>
               {selectedSubmission.notes && (
-                <div className="rounded-lg border border-orange-200 bg-orange-50 p-3 text-sm text-orange-800">
-                  <div className="flex items-start gap-2">
-                    <AlertTriangle className="mt-0.5 h-4 w-4 flex-shrink-0" />
-                    <div>
-                      <p className="font-semibold">Review note</p>
-                      <p>{selectedSubmission.notes}</p>
-                    </div>
+                <div className="rounded-2xl bg-[#E0E5EC] p-4 text-sm text-[#9a5a18] shadow-[inset_5px_5px_10px_rgba(163,177,198,0.38),inset_-5px_-5px_10px_rgba(255,255,255,0.72)]">
+                  <div className="flex items-start gap-3">
+                    <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[#E0E5EC] shadow-[inset_3px_3px_6px_rgba(163,177,198,0.38),inset_-3px_-3px_6px_rgba(255,255,255,0.72)]"><AlertTriangle className="h-4 w-4" /></span>
+                    <div><p className="font-bold text-[#8a5318]">Review note</p><p className="mt-1 leading-6">{selectedSubmission.notes}</p></div>
                   </div>
                 </div>
               )}
-              
             </div>
-            <div className="p-6 border-t border-gray-200 flex justify-end">
-              <button onClick={() => setShowDetailModal(false)} className="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 text-sm">
-                Close
-              </button>
+            <div className="flex justify-end border-t border-[#c7ced8]/70 px-5 py-5 sm:px-7 sm:py-6">
+              <button type="button" onClick={() => setShowDetailModal(false)} className="rounded-xl bg-[#E0E5EC] px-5 py-2.5 text-sm font-bold text-[#193364] shadow-[6px_6px_12px_rgba(163,177,198,0.55),-6px_-6px_12px_rgba(255,255,255,0.78)] transition hover:text-[#0E5A72] active:shadow-[inset_4px_4px_8px_rgba(163,177,198,0.45),inset_-4px_-4px_8px_rgba(255,255,255,0.76)] focus:outline-none focus:ring-2 focus:ring-[#0E5A72]/30">Close</button>
             </div>
           </div>
         </div>
