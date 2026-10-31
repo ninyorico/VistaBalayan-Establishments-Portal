@@ -156,6 +156,133 @@ The repository is **not fully audit-clean**. The highest-priority work is author
 - **Impact:** Accessibility, keyboard, responsive, and authenticated interaction behavior were not verified in this audit.
 - **Recommended remediation:** Run the suite in a networked environment or CI runner with `npx playwright install --with-deps chromium webkit`, then verify authenticated test secrets by presence only. Do not treat the current 15 failures as application failures.
 
+## Additional independent-review findings
+
+### AUD-013 — Visitor report submission is not idempotent
+
+- **Severity:** High
+- **Evidence:** `src/app/pages/staff/SubmitVisitorReport.tsx:292-327`; accommodation idempotency exists in `supabase/migrations/20260915_ai_cache_and_atomic_accommodation.sql:57-62`, but visitor submission has no equivalent key or uniqueness rule.
+- **Impact:** A timeout, double-click, or retry can insert duplicate visitor rows, inflating monitoring, analytics, and exports.
+- **Recommended remediation:** Add a client-generated submission key with a database uniqueness constraint or transactional RPC. Retries should return the original result.
+
+### AUD-014 — Staff onboarding can leave orphaned Auth users
+
+- **Severity:** High
+- **Evidence:** `src/app/pages/officer/Establishments.tsx:540-587` creates/updates the Auth user before all establishment/profile steps finish; the failure path removes the establishment but does not remove or disable the newly created Auth user.
+- **Impact:** Failed onboarding can leave an active login without a matching profile or establishment and can block retry with the same email.
+- **Recommended remediation:** Use a server-side compensating transaction or explicitly delete/disable the newly created Auth user on every downstream failure, then verify rollback state.
+
+### AUD-015 — Visitor report default date uses UTC instead of the local Philippine date
+
+- **Severity:** Medium
+- **Evidence:** `src/app/pages/staff/SubmitVisitorReport.tsx:50-51` and `:335` use `new Date().toISOString().slice(0, 10)`.
+- **Impact:** Between local midnight and 08:00 Philippine time, the form defaults to the previous calendar day.
+- **Recommended remediation:** Use a local-calendar formatter based on `getFullYear()`, `getMonth() + 1`, and `getDate()`.
+
+### AUD-016 — Weekly range implementations disagree
+
+- **Severity:** High
+- **Evidence:** `src/app/pages/officer/Reports.tsx:34-49` serializes local dates with `toISOString()`, while `src/lib/reportPeriod.ts:17-21` uses a separate UTC-based implementation. Reports uses its local helper; monitoring/export paths use the shared helper.
+- **Impact:** The same displayed week can query different seven-day date sets across Reports, monitoring, and exports, especially around New Year.
+- **Recommended remediation:** Use one shared week-range helper and add timezone boundary tests.
+
+### AUD-017 — Public review-photo storage permits anonymous unrestricted uploads
+
+- **Severity:** High
+- **Evidence:** `supabase/migrations/20260918_moderate_review_photos.sql:19-37` creates a public bucket and permits anonymous/authenticated inserts based primarily on a filename pattern.
+- **Impact:** Attackers can repeatedly upload arbitrary files under valid-looking paths, causing storage abuse and hosting unmoderated content. The policy does not enforce object size, MIME type, review linkage, or quota.
+- **Recommended remediation:** Use signed/server-owned upload paths, enforce MIME/size limits, link uploads to pending reviews, scan/validate content, and rate-limit anonymous uploads.
+
+### AUD-018 — Authenticated staff can write AI recommendation/anomaly/cache records
+
+- **Severity:** High
+- **Evidence:** `supabase/migrations/20261024_inactive_read_only_access.sql:202-228` permits active establishment staff to insert AI recommendations, anomalies, and insight-cache rows. The server endpoint is not the only write path.
+- **Impact:** Staff can inject arbitrary AI text, severity, status, timestamps, and cache payloads for their establishment, poisoning operational insights.
+- **Recommended remediation:** Remove client INSERT privileges/policies from AI tables. Allow writes only through the validated server endpoint or officer-controlled RPC.
+
+### AUD-019 — Direct staff report INSERTs leave important business values client-controlled
+
+- **Severity:** Medium
+- **Evidence:** `supabase/migrations/20261024_inactive_read_only_access.sql:115-152` permits direct staff inserts; the validation trigger in `supabase/migrations/20260914_authorization_report_update_hardening.sql:196-224` does not fully constrain report dates, duplicate daily submissions, or all numeric invariants.
+- **Impact:** A staff client can submit backdated/future-dated, duplicate, or numerically manipulated reports while satisfying ownership RLS.
+- **Recommended remediation:** Use validated transactional RPCs or database constraints/triggers for dates, duplicates, reporting mode, numeric invariants, and immutable submitter/establishment fields.
+
+### AUD-020 — SECURITY DEFINER RPCs should explicitly revoke PUBLIC execution
+
+- **Severity:** Medium
+- **Evidence:** Officer onboarding/removal/deletion RPC migrations grant execution to `authenticated` but do not explicitly revoke execution from `PUBLIC` first, including `20260821_officer_onboarding_staff_profile_rpc.sql`, `20260821_officer_onboarding_establishment_rpc.sql`, `20260821_delete_establishment_with_staff_rpc.sql`, and `20260821_remove_officer_user_rpc.sql`.
+- **Impact:** Current function-body officer checks may block anonymous changes, but unnecessary public exposure increases risk if a future guard is weakened.
+- **Recommended remediation:** `REVOKE ALL ON FUNCTION ... FROM PUBLIC, anon, authenticated` before granting only the intended role. Retain in-function authorization checks.
+
+### AUD-021 — Credential-named QA artifact exists in the workspace
+
+- **Severity:** High
+- **Evidence:** Independent static review identified `.hermes/qa/dummy-account-credentials-20261007.json`. Its contents were intentionally not opened or printed.
+- **Impact:** Credential artifacts can be accidentally committed, backed up, or consumed by tooling. If any value was valid, it may require rotation.
+- **Recommended remediation:** Remove credential material from the workspace, rotate any potentially valid credentials, add a specific ignore rule, and use environment-managed test secrets. Scan history and CI artifacts without exposing values.
+
+### AUD-022 — Several custom modals lack complete dialog accessibility
+
+- **Severity:** High
+- **Evidence:** `src/app/pages/officer/Establishments.tsx:1251-1500` and `src/app/pages/Login.tsx:313-421` contain overlays without consistent `role="dialog"`, `aria-modal`, Escape dismissal, focus trapping, or focus restoration. `src/app/components/vista/EstablishmentPerformanceDashboard.tsx:110` has dialog semantics but no focus-management hook.
+- **Impact:** Keyboard and screen-reader users can tab behind dialogs and may not be able to dismiss or return focus reliably.
+- **Recommended remediation:** Standardize on the existing Radix dialog primitives or `useDialogFocus` hook, with labelled dialogs, Escape, focus trap, and focus restoration.
+
+### AUD-023 — Performance ranking rows and sort control are pointer-only
+
+- **Severity:** High
+- **Evidence:** `src/app/components/vista/EstablishmentPerformanceDashboard.tsx:105` uses row/header `onClick` handlers without native buttons/links, keyboard handlers, tabindex, or sort semantics.
+- **Impact:** Keyboard users cannot open establishment details or change visitor sorting.
+- **Recommended remediation:** Use a button/link inside each row or add complete keyboard semantics; expose sort state with a real button and `aria-sort`.
+
+### AUD-024 — Several visible form labels are not programmatically associated
+
+- **Severity:** High
+- **Evidence:** `src/app/pages/staff/SubmitVisitorReport.tsx:398-403`, `src/app/pages/staff/SubmitAccommodationReport.tsx:918-923`, and multiple `Establishments.tsx` modal fields place labels beside inputs without matching `htmlFor`/`id` associations.
+- **Impact:** Assistive technology may announce controls without their intended labels once placeholders disappear.
+- **Recommended remediation:** Add stable IDs and `htmlFor`, or wrap each control in its label. Add automated accessible-name assertions.
+
+### AUD-025 — Accommodation entry blocks copy, paste, selection, and context menus
+
+- **Severity:** Medium
+- **Evidence:** `src/app/pages/staff/SubmitAccommodationReport.tsx:1006-1024` calls `preventDefault()` for copy/cut/select/context-menu/drag and applies `user-select: none`.
+- **Impact:** Users cannot copy or correct values using standard keyboard and touch workflows; this provides no meaningful security benefit.
+- **Recommended remediation:** Remove broad interaction blocking. Restrict prevention to the specifically required gesture, if any, while retaining normal text editing and accessibility.
+
+### AUD-026 — Reports trend chart uses a different accommodation metric than the table/export
+
+- **Severity:** High
+- **Evidence:** `src/app/pages/officer/Reports.tsx:225-231` maps table rows to `total_check_ins`, but `:336-340` prefers `guest_check_ins` when both fields exist. Shared reporting logic and official export use the combined metric.
+- **Impact:** The Reports chart can understate accommodation activity compared with its table, monitoring cards, Analytics, and official workbook.
+- **Recommended remediation:** Select one canonical metric and use it consistently, with labels distinguishing check-ins, guest nights, and room usage.
+
+### AUD-027 — Reports aggregates establishments by display name instead of ID
+
+- **Severity:** Medium
+- **Evidence:** `src/app/pages/officer/Reports.tsx:211-237` drops `establishment_id`; `:551-560` counts and aggregates by establishment name. Analytics keys by ID at `src/app/pages/officer/Analytics.tsx:275-291`.
+- **Impact:** Two establishments with the same name are merged in Reports but kept separate in Analytics.
+- **Recommended remediation:** Preserve and aggregate by canonical establishment ID, using name only for display.
+
+### AUD-028 — Reports export directory query is not paginated
+
+- **Severity:** Medium
+- **Evidence:** `src/app/pages/officer/Reports.tsx:426-433` performs a separate establishments query without pagination, unlike the page-state query and monitoring export helper.
+- **Impact:** At provider response limits, establishments—especially no-report establishments expected in the workbook—can be omitted.
+- **Recommended remediation:** Reuse a paginated directory helper and verify exports with a directory over 1,000 rows.
+
+### AUD-029 — Mobile tables and custom scroll owners are difficult to operate
+
+- **Severity:** Medium
+- **Evidence:** `src/app/components/EstablishmentSubmissionRecords.tsx:217-225`, `src/app/pages/officer/VisitorMonitoring.tsx:291-293,385-398`, and `src/app/components/vista/EstablishmentPerformanceDashboard.tsx:105` use large minimum widths, nested overflow, and `touch-none`.
+- **Impact:** Phone users must perform two-axis scrolling in constrained regions, and nested scroll owners can make swipe direction unpredictable.
+- **Recommended remediation:** Apply one dominant-axis scroll controller per table, reduce mobile minimum widths, and verify on real Android/iOS devices.
+
+### AUD-030 — Production bundle is oversized
+
+- **Severity:** Low
+- **Evidence:** `npm run build` emitted a minified JavaScript chunk of approximately 2.5 MB and warned that chunks exceed the 500 KB threshold.
+- **Impact:** Slow mobile networks may delay first interaction and make the portal appear unresponsive.
+- **Recommended remediation:** Split route-level code with dynamic imports and separate heavy export/chart dependencies.
 ## Positive verification
 
 - `npm test`: **5 test files passed; 23 tests passed**.
