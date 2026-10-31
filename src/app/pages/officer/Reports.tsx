@@ -815,7 +815,7 @@ export default function Reports() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-200">
-                {filteredReports.slice(0, 50).map((report) => (
+                {filteredReports.map((report) => (
                   <tr key={report.id} className="group hover:bg-gray-50">
                     <td className="sticky left-0 z-10 bg-white px-2 py-2 text-[11px] font-medium text-gray-900 shadow-[2px_0_4px_rgba(148,163,184,0.18)] group-hover:bg-gray-50 sm:px-4 sm:py-3 sm:text-sm">{report.establishment}</td>
                     <td className="px-2 py-2 text-[11px] text-gray-600 sm:px-4 sm:py-3 sm:text-sm">{getReportTypeLabel(report)}</td>
