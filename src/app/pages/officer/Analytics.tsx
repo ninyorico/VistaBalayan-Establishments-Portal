@@ -145,7 +145,7 @@ export default function Analytics() {
         const { data, error } = await supabase
           .from(table)
           .select(select)
-          .eq("status", "submitted")
+          .in("status", ["pending", "submitted", "validated", "approved"])
           .gte("report_date", selectedRange.start)
           .lte("report_date", selectedRange.end)
           .order("report_date", { ascending: true })
