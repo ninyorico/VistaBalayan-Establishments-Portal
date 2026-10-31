@@ -22,7 +22,7 @@ import { useDominantAxisTableScroll } from "../../../hooks/useDominantAxisTableS
 
 interface AnalyticsData {
   seasonalData: { month: string; visitors: number; guestCheckIns: number; guestNights: number }[];
-  visitorOrigins: { location: string; visitors: number; growth: number }[];
+  visitorOrigins: { location: string; visitors: number; growth: number | null }[];
   performancePeriods: Record<string, PerformanceInputWithMode[]>;
   peakSeason: { month: string; visitors: number; growth: number };
   topOrigin: { location: string; percentage: number };
@@ -93,7 +93,7 @@ const performanceColors = ["#193364", "#0E5A72", "#D69A3A", "#E9C98A", "#6C63FF"
 const monthKey = (date: string) => date.slice(0, 7);
 
 const percentChange = (current: number, previous: number) =>
-  previous > 0 ? ((current - previous) / previous) * 100 : current > 0 ? 100 : null;
+  previous > 0 ? ((current - previous) / previous) * 100 : null;
 
 const getAnalyticsYearRange = (year: string) => ({
   label: year,
@@ -331,7 +331,7 @@ export default function Analytics() {
         growth: percentChange(
           originByMonth[location]?.[latestMonth] || 0,
           originByMonth[location]?.[previousMonth] || 0
-        ) ?? 0,
+        ),
       }))
       .sort((a, b) => b.visitors - a.visitors)
       .slice(0, 8);
@@ -495,14 +495,14 @@ export default function Analytics() {
                     <td className="sticky left-0 z-10 bg-white px-2 py-1.5 text-[10px] font-medium text-gray-900 shadow-[2px_0_4px_rgba(148,163,184,0.18)] group-hover:bg-gray-50 sm:px-6 sm:py-4 sm:text-sm">{origin.location}</td>
                     <td className="px-2 py-1.5 text-[10px] text-gray-900 sm:px-6 sm:py-4 sm:text-sm">{origin.visitors.toLocaleString()}</td>
                     <td className="px-2 py-1.5 sm:px-6 sm:py-4">
-                      <span className={`text-[10px] font-medium sm:text-sm ${origin.growth >= 0 ? "text-green-600" : "text-red-600"}`}>
-                        {origin.growth >= 0 ? "+" : ""}{origin.growth.toFixed(1)}%
+                      <span className={`text-[10px] font-medium sm:text-sm ${origin.growth === null ? "text-gray-500" : origin.growth >= 0 ? "text-green-600" : "text-red-600"}`}>
+                        {origin.growth === null ? "N/A" : `${origin.growth >= 0 ? "+" : ""}${origin.growth.toFixed(1)}%`}
                       </span>
                     </td>
                     <td className="px-2 py-1.5 text-[10px] sm:px-6 sm:py-4 sm:text-sm">
-                      <div className={`flex items-center gap-1 ${origin.growth >= 0 ? "text-green-600" : "text-red-600"}`}>
-                        {origin.growth >= 0 ? <TrendingUp className="h-3.5 w-3.5 sm:h-4 sm:w-4" /> : <TrendingDown className="h-3.5 w-3.5 sm:h-4 sm:w-4" />}
-                        <span className="text-[10px] font-medium sm:text-sm">{origin.growth >= 0 ? "Growing" : "Declining"}</span>
+                      <div className={`flex items-center gap-1 ${origin.growth === null ? "text-gray-500" : origin.growth >= 0 ? "text-green-600" : "text-red-600"}`}>
+                        {origin.growth === null ? null : origin.growth >= 0 ? <TrendingUp className="h-3.5 w-3.5 sm:h-4 sm:w-4" /> : <TrendingDown className="h-3.5 w-3.5 sm:h-4 sm:w-4" />}
+                        <span className="text-[10px] font-medium sm:text-sm">{origin.growth === null ? "No prior-period data" : origin.growth >= 0 ? "Growing" : "Declining"}</span>
                       </div>
                     </td>
                   </tr>
