@@ -15,6 +15,7 @@ import {
 import { TrendingUp, TrendingDown, MapPin } from "lucide-react";
 import { supabase } from "../../../lib/supabase";
 import { getEstablishmentReportingMode, type ReportingMode } from "../../../lib/establishmentReportForms";
+import { formatResidencePlace } from "../../../lib/reporting";
 import DataState from "../../components/DataState";
 import { PageHero } from "../../components/vista/PolishedShell";
 import EstablishmentPerformanceDashboard, { type PerformanceInputWithMode } from "../../components/vista/EstablishmentPerformanceDashboard";
@@ -76,7 +77,7 @@ const normalizeResidenceCategory = (record: VisitorReport): ResidenceCategory | 
 
 const getSpecificOriginLabel = (record: VisitorReport, category: ResidenceCategory): string | null => {
   if (category === "THIS_PROVINCE") return "Batangas";
-  const specificOrigin = record.place_of_residence?.trim();
+  const specificOrigin = formatResidencePlace(record.place_of_residence);
   return specificOrigin || null;
 };
 

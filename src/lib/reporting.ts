@@ -37,6 +37,11 @@ export const DAE_TYPE_CLASS: Record<string, string> = {
 export const PROVINCE = "Batangas";
 export const MUNICIPALITY = "Balayan";
 
+export const formatResidencePlace = (value: unknown) => {
+  const normalized = String(value || "").trim().replace(/\s+/g, " ").toLowerCase();
+  return normalized.replace(/(^|[\s-])(\p{L})/gu, (_match, prefix: string, letter: string) => `${prefix}${letter.toUpperCase()}`);
+};
+
 export interface EstablishmentReportingRow {
   id: string;
   name: string;
@@ -126,13 +131,13 @@ export const getVisitorResidenceLocation = (record: VisitorResidenceFields) => {
   const legacyIsCategory = ["THIS_PROVINCE", "OTHER_PROVINCE", "FOREIGN", "THIS PROVINCE", "OTHER PROVINCE"].includes(legacyValue.toUpperCase());
   if (!explicitCategory && legacyValue && !legacyIsCategory) {
     const code = category === "THIS_PROVINCE" ? "B" : category === "FOREIGN" ? "F" : "O";
-    return `(${code}) ${legacyValue}`;
+    return `(${code}) ${formatResidencePlace(legacyValue)}`;
   }
   const location = category === "FOREIGN"
-    ? String(record.country || record.place_of_residence || "").trim()
+    ? formatResidencePlace(record.country || record.place_of_residence)
     : category === "THIS_PROVINCE"
       ? "Batangas Province"
-      : String(record.municipality || record.place_of_residence || record.province || "").trim();
+      : formatResidencePlace(record.municipality || record.place_of_residence || record.province);
   if (!location) return "—";
   const code = category === "THIS_PROVINCE" ? "B" : category === "FOREIGN" ? "F" : "O";
   return `(${code}) ${location}`;

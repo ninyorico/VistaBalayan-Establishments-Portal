@@ -4,6 +4,7 @@ import { Save, Send, Plus, Trash2, AlertTriangle} from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "../../../lib/supabase";
 import { canSubmitVisitorReport } from "../../../lib/establishmentReportForms";
+import { formatResidencePlace } from "../../../lib/reporting";
 import { LoadingState, PageHero } from "../../components/vista/PolishedShell";
 
 interface VisitorEntry {
@@ -203,9 +204,12 @@ const loadProfile = async () => {
   };
 
   const updateResidence = (id: number, residenceType: keyof VisitorEntry["breakdown"], field: "male" | "female" | "placeOfResidence", value: string | number) => {
+    const nextValue = field === "placeOfResidence" && residenceType !== "THIS_PROVINCE"
+      ? formatResidencePlace(value)
+      : value;
     setEntries(entries.map(entry => entry.id === id ? {
       ...entry,
-      breakdown: { ...entry.breakdown, [residenceType]: { ...entry.breakdown[residenceType], [field]: value } },
+      breakdown: { ...entry.breakdown, [residenceType]: { ...entry.breakdown[residenceType], [field]: nextValue } },
     } : entry));
   };
 
@@ -289,6 +293,7 @@ const loadProfile = async () => {
       .filter(type => residenceTotal(entry, type.key) > 0)
       .map(type => {
         const residence = entry.breakdown[type.key];
+        const formattedPlace = type.key === "THIS_PROVINCE" ? "" : formatResidencePlace(residence.placeOfResidence);
         return {
         establishment_id: profile.establishment_id,
         submitted_by: profile.id,
@@ -303,10 +308,10 @@ const loadProfile = async () => {
         total_visitors: residenceTotal(entry, type.key),
         residence_type: type.key,
         residence_category: type.key,
-        place_of_residence: residence.placeOfResidence || null,
+        place_of_residence: formattedPlace || null,
         municipality: type.key === "THIS_PROVINCE" ? "Balayan" : null,
-        province: type.key === "OTHER_PROVINCE" ? residence.placeOfResidence || null : type.key === "THIS_PROVINCE" ? "Batangas" : null,
-        country: type.key === "FOREIGN" ? residence.placeOfResidence || null : null,
+        province: type.key === "OTHER_PROVINCE" ? formattedPlace || null : type.key === "THIS_PROVINCE" ? "Batangas" : null,
+        country: type.key === "FOREIGN" ? formattedPlace || null : null,
         status: "submitted"
         };
       })
