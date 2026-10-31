@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Bar, BarChart, CartesianGrid, Cell, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 import { BarChart3, ChevronRight, Search, X } from "lucide-react";
 import { classifyPerformance, type PerformanceClassification, type PerformanceInput } from "../../../lib/performanceClassification";
@@ -39,7 +39,10 @@ export default function EstablishmentPerformanceDashboard({ periods, year }: Pro
   const monthlyPeriods = Object.keys(periods).filter((period) => period.startsWith(`${year}-`) && !period.endsWith("-FULL_YEAR")).sort();
   const periodOptions = [...monthlyPeriods, fullYearKey(year)];
   const [category, setCategory] = useState<Category>("daytour");
-  const [period, setPeriod] = useState(monthlyPeriods[monthlyPeriods.length - 1] || fullYearKey(year));
+  const [period, setPeriod] = useState(fullYearKey(year));
+  useEffect(() => {
+    setPeriod(fullYearKey(year));
+  }, [year]);
   const [query, setQuery] = useState("");
   const [filter, setFilter] = useState<PerformanceClassification | "ALL">("ALL");
   const [sortDescending, setSortDescending] = useState(true);
