@@ -188,8 +188,7 @@ export default function Analytics() {
 
     if (accError) console.error("Error fetching accommodation data:", accError);
 
-    const establishments = (establishmentData || [])
-      .filter((establishment) => !["inactive", "deleted"].includes(String(establishment.status || "").toLowerCase())) as Establishment[];
+    const establishments = (establishmentData || []) as Establishment[];
     const visitors = (visitorData || []) as unknown as VisitorReport[];
     const accommodations = (accommodationData || []) as unknown as AccommodationReport[];
 
