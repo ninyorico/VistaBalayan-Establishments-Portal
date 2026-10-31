@@ -95,16 +95,11 @@ const monthKey = (date: string) => date.slice(0, 7);
 const percentChange = (current: number, previous: number) =>
   previous > 0 ? ((current - previous) / previous) * 100 : current > 0 ? 100 : null;
 
-const getAnalyticsYearRange = (year: string) => {
-  const now = new Date();
-  const currentYear = String(now.getFullYear());
-  const currentDate = `${currentYear}-${String(now.getMonth() + 1).padStart(2, "0")}-${String(now.getDate()).padStart(2, "0")}`;
-  return {
-    label: year,
-    start: `${year}-01-01`,
-    end: year === currentYear ? currentDate : `${year}-12-31`,
-  };
-};
+const getAnalyticsYearRange = (year: string) => ({
+  label: year,
+  start: `${year}-01-01`,
+  end: `${year}-12-31`,
+});
 
 export default function Analytics() {
   const { horizontalRef: originsTableRef } = useDominantAxisTableScroll();
