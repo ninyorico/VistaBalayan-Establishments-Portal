@@ -314,12 +314,13 @@ A second read-only browser pass tested every email variable currently present in
 | `VISTABALAYAN_OFFICER_EMAIL` | Authenticated at `/officer` | Officer routes `/officer`, `/officer/reports`, `/officer/report-monitoring`, `/officer/analytics`, `/officer/ai-insights`, `/officer/establishments`, and `/officer/review-moderation` loaded without console errors or uncaught page errors. Axe found serious color contrast issues on `/officer/reports`. One dashboard establishments request was aborted during navigation; no page error or persistent failed request was observed. |
 | `VISTABALAYAN_daytour_EMAIL` | Authenticated at `/staff/submit-visitor-report` | Staff routes loaded without console errors or uncaught page errors. Direct `/staff/submit-accommodation-report` access redirected to `/staff`, which matches the visitor-only capability. Axe found serious contrast and critical label issues on the Day-tour form. |
 | `VISTABALAYAN_both_form_charisort_EMAIL` | Authenticated at `/staff` | Combined Day-tour/Accommodation staff account; covered by the main audit and live-verified. |
-| `VISTABALAYAN_overnight_EMAIL` | Login rejected | Portal displayed invalid login credentials; no protected workflow could be audited. |
-| `VISTABALAYAN_daytour & overnight_EMAIL` | Login rejected | Portal displayed invalid login credentials; this appears to be a stale or outdated combined-account entry. |
+| `VISTABALAYAN_overnight_EMAIL` | Authenticated at `/staff` | Login now succeeds, but both `/staff/submit-visitor-report` and `/staff/submit-accommodation-report` redirect to `/staff`; no report form is available to this account. This account capability mapping should be reviewed because the variable name suggests overnight access. The tested routes had no console errors or failed requests. Axe on the accommodation route found serious color contrast issues. |
+| `VISTABALAYAN_daytour & overnight_EMAIL` | Authenticated at `/staff` | Login now succeeds. Both Day-tour and Accommodation forms, history, analytics, AI Insights, listing management, and profile routes loaded without console errors or failed requests. Axe on the accommodation route found serious contrast and critical label issues. |
 
 ### Additional account conclusions
 
 - The officer account is reachable and its role boundary is functioning in the tested routes.
 - The visitor-only Day-tour account is not exposed to the Accommodation form; the redirect is expected behavior, not a defect.
-- The overnight and older combined-account entries cannot be audited until valid credentials are placed in `.env`.
+- The overnight account authenticates but currently has no accessible reporting form. Confirm whether its linked establishment reporting mode and staff capability are configured as intended; do not change them without approval.
+- The previously stale combined-account entry now authenticates and exposes both reporting forms.
 - No account audit performed a state-changing action.
