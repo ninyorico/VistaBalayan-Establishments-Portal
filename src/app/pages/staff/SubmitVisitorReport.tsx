@@ -166,11 +166,28 @@ export default function SubmitVisitorReport() {
     if (!data || data.length === 0) return null;
 
     const grouped = new Map<string, VisitorEntry>();
-    (data as VisitorReportRow[]).forEach((row, index) => {
+    const unnamedGroupResidenceTypes = new Map<string, Set<ResidenceTypeKey>>();
+    (data as VisitorReportRow[]).forEach((row) => {
       const residenceType = (row.residence_category || row.residence_type) as ResidenceTypeKey;
       if (!residenceTypes.some((type) => type.key === residenceType)) return;
       const groupName = String(row.guest_group_name || row.guest_name || "").trim();
-      const groupKey = groupName || `submission-${row.created_at?.slice(0, 19) || date}`;
+      let groupKey = groupName;
+
+      if (!groupName) {
+        // Legacy rows do not have a submission/batch ID. A single bulk insert
+        // gives every residence row the same timestamp, so split an unnamed
+        // batch when a residence category repeats for the next group.
+        const submissionKey = `submission-${row.created_at?.slice(0, 19) || date}`;
+        let groupIndex = 0;
+        while (unnamedGroupResidenceTypes.get(`${submissionKey}-${groupIndex}`)?.has(residenceType)) {
+          groupIndex += 1;
+        }
+        groupKey = `${submissionKey}-${groupIndex}`;
+        const residenceTypesForGroup = unnamedGroupResidenceTypes.get(groupKey) || new Set<ResidenceTypeKey>();
+        residenceTypesForGroup.add(residenceType);
+        unnamedGroupResidenceTypes.set(groupKey, residenceTypesForGroup);
+      }
+
       const entry = grouped.get(groupKey) || createEmptyEntry(grouped.size + 1);
       entry.groupName = groupName;
       const male = Math.max(0, Number(row.total_male ?? row.male_visitors) || 0);
