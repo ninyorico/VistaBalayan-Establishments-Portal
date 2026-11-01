@@ -304,3 +304,22 @@ The audit did not stage, delete, or modify these pre-existing untracked paths:
 The current deployed staff experience is operationally reachable and the tested core reporting/AI flows function for the Charisort account. It is **not accessibility-clean** and should not be treated as fully production-audited until the critical label defects, serious contrast issues, keyboard scroll access, SVG alternatives, and dependency vulnerabilities are addressed and re-tested.
 
 **No credentials, tokens, private keys, or private report contents are included in this report.**
+
+## Addendum: other `.env` accounts audited
+
+A second read-only browser pass tested every email variable currently present in the local `.env`, using a fresh browser context per account. Credential values were not printed or included.
+
+| `.env` variable | Live result | Notes |
+|---|---|---|
+| `VISTABALAYAN_OFFICER_EMAIL` | Authenticated at `/officer` | Officer routes `/officer`, `/officer/reports`, `/officer/report-monitoring`, `/officer/analytics`, `/officer/ai-insights`, `/officer/establishments`, and `/officer/review-moderation` loaded without console errors or uncaught page errors. Axe found serious color contrast issues on `/officer/reports`. One dashboard establishments request was aborted during navigation; no page error or persistent failed request was observed. |
+| `VISTABALAYAN_daytour_EMAIL` | Authenticated at `/staff/submit-visitor-report` | Staff routes loaded without console errors or uncaught page errors. Direct `/staff/submit-accommodation-report` access redirected to `/staff`, which matches the visitor-only capability. Axe found serious contrast and critical label issues on the Day-tour form. |
+| `VISTABALAYAN_both_form_charisort_EMAIL` | Authenticated at `/staff` | Combined Day-tour/Accommodation staff account; covered by the main audit and live-verified. |
+| `VISTABALAYAN_overnight_EMAIL` | Login rejected | Portal displayed invalid login credentials; no protected workflow could be audited. |
+| `VISTABALAYAN_daytour & overnight_EMAIL` | Login rejected | Portal displayed invalid login credentials; this appears to be a stale or outdated combined-account entry. |
+
+### Additional account conclusions
+
+- The officer account is reachable and its role boundary is functioning in the tested routes.
+- The visitor-only Day-tour account is not exposed to the Accommodation form; the redirect is expected behavior, not a defect.
+- The overnight and older combined-account entries cannot be audited until valid credentials are placed in `.env`.
+- No account audit performed a state-changing action.
