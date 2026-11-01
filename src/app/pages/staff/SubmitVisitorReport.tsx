@@ -17,6 +17,24 @@ interface VisitorEntry {
   };
 }
 
+interface VisitorReportRow {
+  id: string;
+  report_date: string;
+  created_at?: string | null;
+  guest_name?: string | null;
+  guest_group_name?: string | null;
+  total_male?: number | null;
+  total_female?: number | null;
+  male_visitors?: number | null;
+  female_visitors?: number | null;
+  residence_type?: string | null;
+  residence_category?: string | null;
+  place_of_residence?: string | null;
+  municipality?: string | null;
+  province?: string | null;
+  country?: string | null;
+}
+
 const residenceTypes = [
   { key: "THIS_PROVINCE", label: "This Province / Batangas", placeLabel: "" },
   { key: "OTHER_PROVINCE", label: "Other Province / Domestic", placeLabel: "Province or municipality" },
@@ -63,16 +81,23 @@ export default function SubmitVisitorReport() {
   const draftStorageKey = (userId?: string, establishmentId?: string) =>
     userId && establishmentId ? `visitorReportDraft:${userId}:${establishmentId}` : null;
 
-  const loadDraft = (userId: string, establishmentId: string) => {
+  const applyEntries = (nextEntries: VisitorEntry[]) => {
+    setEntries(nextEntries);
+    setVisibleResidenceTypes(Object.fromEntries(nextEntries.map((entry) => [entry.id, residenceTypes.map((type) => type.key)])));
+    setNextId(Math.max(...nextEntries.map((entry) => entry.id), 0) + 1);
+  };
+
+  const loadDraft = (userId: string, establishmentId: string, expectedReportDate?: string): string | null => {
     const key = draftStorageKey(userId, establishmentId);
-    if (!key) return;
+    if (!key) return null;
 
     const saved = localStorage.getItem(key);
-    if (!saved) return;
+    if (!saved) return null;
 
     try {
       const draft = JSON.parse(saved) as { reportDate?: string; draftedDate?: string; entries?: VisitorEntry[] };
-      if (!Array.isArray(draft.entries)) return;
+      if (!Array.isArray(draft.entries)) return null;
+      if (expectedReportDate && draft.reportDate !== expectedReportDate) return null;
 
       const validEntries = draft.entries.flatMap((entry) => {
         if (!entry || typeof entry.id !== "number" || typeof entry.groupName !== "string") return [];
@@ -88,9 +113,9 @@ export default function SubmitVisitorReport() {
         };
         return [{ id: entry.id, groupName: entry.groupName, breakdown }];
       });
-      if (validEntries.length === 0) return;
+      if (validEntries.length === 0) return null;
 
-      setEntries(validEntries.map((entry) => ({
+      applyEntries(validEntries.map((entry) => ({
         id: entry.id,
         groupName: entry.groupName,
         breakdown: residenceTypes.reduce((result, type) => ({
@@ -102,13 +127,62 @@ export default function SubmitVisitorReport() {
           },
         }), createEmptyBreakdown()),
       })));
-      setVisibleResidenceTypes(Object.fromEntries(validEntries.map((entry) => [entry.id, residenceTypes.map((type) => type.key)])));
-      setNextId(Math.max(...validEntries.map((entry) => entry.id), 0) + 1);
       if (draft.reportDate) setReportDate(draft.reportDate);
       toast.success("Saved draft restored");
+      return draft.reportDate || null;
     } catch {
       localStorage.removeItem(key);
+      return null;
     }
+  };
+
+  const getStoredDraftDate = (userId: string, establishmentId: string): string | null => {
+    const key = draftStorageKey(userId, establishmentId);
+    if (!key) return null;
+    const saved = localStorage.getItem(key);
+    if (!saved) return null;
+    try {
+      const draft = JSON.parse(saved) as { reportDate?: string; entries?: VisitorEntry[] };
+      return draft.reportDate && Array.isArray(draft.entries) ? draft.reportDate : null;
+    } catch {
+      localStorage.removeItem(key);
+      return null;
+    }
+  };
+
+  const loadSubmittedReportForDate = async (establishmentId: string, date: string): Promise<VisitorEntry[] | null> => {
+    const { data, error: reportError } = await supabase
+      .from("visitor_reports")
+      .select("id, report_date, created_at, guest_name, guest_group_name, total_male, total_female, male_visitors, female_visitors, residence_type, residence_category, place_of_residence, municipality, province, country")
+      .eq("establishment_id", establishmentId)
+      .eq("report_date", date)
+      .eq("status", "submitted")
+      .order("created_at", { ascending: true });
+
+    if (reportError) {
+      console.error("Could not load submitted visitor report:", reportError);
+      return null;
+    }
+    if (!data || data.length === 0) return null;
+
+    const grouped = new Map<string, VisitorEntry>();
+    (data as VisitorReportRow[]).forEach((row, index) => {
+      const residenceType = (row.residence_category || row.residence_type) as ResidenceTypeKey;
+      if (!residenceTypes.some((type) => type.key === residenceType)) return;
+      const groupName = String(row.guest_group_name || row.guest_name || "").trim();
+      const groupKey = groupName || `report-${row.id || index}`;
+      const entry = grouped.get(groupKey) || createEmptyEntry(grouped.size + 1);
+      entry.groupName = groupName;
+      const male = Math.max(0, Number(row.total_male ?? row.male_visitors) || 0);
+      const female = Math.max(0, Number(row.total_female ?? row.female_visitors) || 0);
+      const placeOfResidence = residenceType === "THIS_PROVINCE"
+        ? ""
+        : formatResidencePlace(row.place_of_residence || row.province || row.country || row.municipality || "");
+      entry.breakdown[residenceType] = { male, female, placeOfResidence };
+      grouped.set(groupKey, entry);
+    });
+
+    return grouped.size > 0 ? Array.from(grouped.values()) : null;
   };
 
   useEffect(() => {
@@ -194,8 +268,15 @@ const loadProfile = async () => {
     }
     
     setProfile(profile);
-    loadDraft(profile.id, profile.establishment_id);
-    
+    const draftReportDate = getStoredDraftDate(profile.id, profile.establishment_id);
+    const retrievalDate = draftReportDate || reportDate;
+    const submittedEntries = await loadSubmittedReportForDate(profile.establishment_id, retrievalDate);
+    if (submittedEntries) {
+      applyEntries(submittedEntries);
+    } else if (draftReportDate) {
+      loadDraft(profile.id, profile.establishment_id, retrievalDate);
+    }
+
   } catch (err) {
     console.error('Unexpected error:', err);
     setError('Failed to load your information');
@@ -203,6 +284,22 @@ const loadProfile = async () => {
     setLoadingProfile(false);
   }
 };
+
+  const handleReportDateChange = async (date: string) => {
+    setReportDate(date);
+    if (!profile?.establishment_id || !date) return;
+
+    const submittedEntries = await loadSubmittedReportForDate(profile.establishment_id, date);
+    if (submittedEntries) {
+      applyEntries(submittedEntries);
+      return;
+    }
+
+    const restoredDraftDate = loadDraft(profile.id, profile.establishment_id, date);
+    if (!restoredDraftDate) {
+      applyEntries([createEmptyEntry(1)]);
+    }
+  };
 
   const updateEntry = (id: number, field: string, value: any) => {
     setEntries(entries.map(entry => entry.id === id ? { ...entry, groupName: value } : entry));
@@ -406,7 +503,7 @@ const loadProfile = async () => {
           </div>
           <div className="min-w-0">
             <label className="mb-2 block text-xs font-medium text-gray-700 sm:text-sm">Report Date</label>
-            <input type="date" value={reportDate} onChange={(e) => setReportDate(e.target.value)} className="block w-full min-w-0 max-w-full appearance-none rounded-lg border border-gray-300 px-2 py-2 text-sm sm:px-4" />
+            <input type="date" value={reportDate} onChange={(e) => void handleReportDateChange(e.target.value)} className="block w-full min-w-0 max-w-full appearance-none rounded-lg border border-gray-300 px-2 py-2 text-sm sm:px-4" />
           </div>
         </div>
       </div>
