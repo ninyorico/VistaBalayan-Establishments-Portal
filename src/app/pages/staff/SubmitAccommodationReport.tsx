@@ -63,24 +63,23 @@ export default function SubmitAccommodationReport() {
   const formModeStorageKey = (userId: string, establishmentId: string) =>
     `accommodationReportFormMode:${userId}:${establishmentId}`;
 
-  const loadDraft = (userId: string, establishmentId: string, rooms: EstablishmentRoomConfig[], currentReportDate: string) => {
+  const loadDraft = (userId: string, establishmentId: string, rooms: EstablishmentRoomConfig[]): string | null => {
     const key = draftStorageKey(userId, establishmentId);
-    if (!key) return;
+    if (!key) return null;
 
     const saved = localStorage.getItem(key);
-    if (!saved) return;
+    if (!saved) return null;
 
     try {
-      const draft = JSON.parse(saved) as { reportDate?: string; roomData?: RoomOccupancy[] };
-      if (!Array.isArray(draft.roomData) || draft.roomData.length === 0) return;
-      if (draft.reportDate && draft.reportDate !== currentReportDate) return;
+      const draft = JSON.parse(saved) as { reportDate?: string; draftedDate?: string; roomData?: RoomOccupancy[] };
+      if (!Array.isArray(draft.roomData) || draft.roomData.length === 0) return null;
 
       const validRooms = draft.roomData.filter((room) =>
         room && typeof room.roomType === "string" && typeof room.roomCode === "string" &&
         [room.numberOfRooms, room.occupied, room.checkIns, room.guestNights, room.continuingGuests ?? 0]
           .every((value) => Number.isFinite(Number(value)) && Number(value) >= 0)
       );
-      if (validRooms.length === 0) return;
+      if (validRooms.length === 0) return null;
 
       const savedByCode = new Map(validRooms.map((room) => [room.roomCode, room]));
       const authoritativeRoomData = buildRoomData(rooms).map((room) => {
@@ -107,8 +106,10 @@ export default function SubmitAccommodationReport() {
       setRoomData(authoritativeRoomData);
       if (draft.reportDate) setReportDate(draft.reportDate);
       toast.success("Saved accommodation draft restored");
+      return draft.reportDate || null;
     } catch {
       localStorage.removeItem(key);
+      return null;
     }
   };
 
@@ -198,25 +199,27 @@ export default function SubmitAccommodationReport() {
     const effectiveRoomConfig = expandRoomConfig(normalizeRoomConfig(officerRoomConfig));
     setRoomTypes(effectiveRoomConfig);
     setTempRoomConfig(effectiveRoomConfig);
+    const draftReportDate = loadDraft(profileData.id, profileData.establishment_id, effectiveRoomConfig);
+    const retrievalDate = draftReportDate || reportDate;
     setRetrievingPreviousData(true);
     let submittedRoomData: RoomOccupancy[] | null = null;
     try {
       submittedRoomData = await loadSubmittedReportForDate(
         profileData.establishment_id,
-        reportDate,
+        retrievalDate,
         effectiveRoomConfig,
       );
-      const initialRoomData = submittedRoomData || await loadPreviousNightGuests(
-        profileData.establishment_id,
-        getPreviousDate(reportDate),
-        effectiveRoomConfig
-      );
-      setRoomData(initialRoomData);
+      if (submittedRoomData) {
+        setRoomData(submittedRoomData);
+      } else if (!draftReportDate) {
+        setRoomData(await loadPreviousNightGuests(
+          profileData.establishment_id,
+          getPreviousDate(retrievalDate),
+          effectiveRoomConfig
+        ));
+      }
     } finally {
       setRetrievingPreviousData(false);
-    }
-    if (!submittedRoomData) {
-      loadDraft(profileData.id, profileData.establishment_id, effectiveRoomConfig, reportDate);
     }
 
     setLoadingProfile(false);
@@ -331,6 +334,7 @@ export default function SubmitAccommodationReport() {
       .select("id")
       .eq("establishment_id", establishmentId)
       .eq("report_date", date)
+      .eq("status", "submitted")
       .order("created_at", { ascending: false })
       .limit(1)
       .maybeSingle();
@@ -355,14 +359,14 @@ export default function SubmitAccommodationReport() {
       const normalizedCode = String(detail.room_code || "").trim().toUpperCase();
       if (!normalizedCode) return;
       byCode.set(normalizedCode, detail);
-      const roomNumber = normalizedCode.match(/-(\\d+)$/)?.[1];
+      const roomNumber = normalizedCode.match(/-(\d+)$/)?.[1];
       if (roomNumber) byCode.set(`__room-number:${roomNumber}`, detail);
     });
 
     return buildRoomData(rooms).map((room) => {
       const normalizedRoomCode = room.roomCode.trim().toUpperCase();
-      const baseCode = normalizedRoomCode.replace(/-\\d+$/, "");
-      const roomNumber = normalizedRoomCode.match(/-(\\d+)$/)?.[1];
+      const baseCode = normalizedRoomCode.replace(/-\d+$/, "");
+      const roomNumber = normalizedRoomCode.match(/-(\d+)$/)?.[1];
       const detail = byCode.get(normalizedRoomCode)
         || byCode.get(`__room-number:${roomNumber || ""}`)
         || (normalizedRoomCode.endsWith("-1") ? byCode.get(baseCode) : undefined);
@@ -669,6 +673,7 @@ export default function SubmitAccommodationReport() {
       version: 1,
       reportDate,
       roomData,
+      draftedDate: getTodayDate(),
       savedAt: new Date().toISOString(),
     };
     localStorage.setItem(key, JSON.stringify(draft));
@@ -966,7 +971,7 @@ export default function SubmitAccommodationReport() {
                 <th className="sticky left-0 top-0 z-30 w-1/4 border-r border-gray-200 bg-gray-50 px-1.5 py-2 text-center text-[10px] font-semibold uppercase leading-tight text-gray-700 sm:px-3 sm:py-3 sm:text-xs">Room / Code</th>
                 <th className="w-1/4 border-r border-gray-200 px-1.5 py-2 text-center text-[10px] font-semibold uppercase leading-tight text-gray-700 sm:px-3 sm:py-3 sm:text-xs">Previous Date<div className="mt-1 text-[9px] font-normal normal-case text-gray-500 sm:text-[10px]">{getPreviousDate(reportDate)}</div></th>
                 <th className="w-1/4 border-r border-gray-200 px-1.5 py-2 text-center text-[10px] font-semibold uppercase leading-tight text-[#0F4C75] sm:px-3 sm:py-3 sm:text-xs">Short-stay<div className="mt-1 text-[9px] font-normal normal-case text-gray-500 sm:text-[10px]">Check-ins</div></th>
-                <th className="w-1/4 px-1.5 py-2 text-center text-[10px] font-semibold uppercase leading-tight text-[#0F4C75] sm:px-3 sm:py-3 sm:text-xs">Accommodation<div className="mt-1 text-[9px] font-normal normal-case text-gray-500 sm:text-[10px]">{reportDate}</div></th>
+                <th className="w-1/4 px-1.5 py-2 text-center text-[10px] font-semibold uppercase leading-tight text-[#0F4C75] sm:px-3 sm:py-3 sm:text-xs">Overnight<div className="mt-1 text-[9px] font-normal normal-case text-gray-500 sm:text-[10px]">{reportDate}</div></th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-200" onPointerDownCapture={handleGuestFieldPointerDownCapture} onTouchStartCapture={handleGuestFieldTouchStartCapture}>

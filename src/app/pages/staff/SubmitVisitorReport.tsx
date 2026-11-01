@@ -48,7 +48,12 @@ export default function SubmitVisitorReport() {
   const [profile, setProfile] = useState<any>(null);
   const [loadingProfile, setLoadingProfile] = useState(true);
   const [submitting, setSubmitting] = useState(false);
-  const [reportDate, setReportDate] = useState(new Date().toISOString().slice(0, 10));
+  const getTodayDate = () => {
+    const today = new Date();
+    return `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, "0")}-${String(today.getDate()).padStart(2, "0")}`;
+  };
+
+  const [reportDate, setReportDate] = useState(getTodayDate());
   const [entries, setEntries] = useState<VisitorEntry[]>([createEmptyEntry(1)]);
   const [nextId, setNextId] = useState(2);
   const [visibleResidenceTypes, setVisibleResidenceTypes] = useState<Record<number, ResidenceTypeKey[]>>({ 1: residenceTypes.map((type) => type.key) });
@@ -66,7 +71,7 @@ export default function SubmitVisitorReport() {
     if (!saved) return;
 
     try {
-      const draft = JSON.parse(saved) as { reportDate?: string; entries?: VisitorEntry[] };
+      const draft = JSON.parse(saved) as { reportDate?: string; draftedDate?: string; entries?: VisitorEntry[] };
       if (!Array.isArray(draft.entries)) return;
 
       const validEntries = draft.entries.flatMap((entry) => {
@@ -337,7 +342,7 @@ const loadProfile = async () => {
       setEntries([createEmptyEntry(1)]);
       setVisibleResidenceTypes({ 1: residenceTypes.map((type) => type.key) });
       setNextId(2);
-      setReportDate(new Date().toISOString().slice(0, 10));
+      setReportDate(getTodayDate());
     }
     setSubmitting(false);
   };
@@ -353,6 +358,7 @@ const loadProfile = async () => {
       version: 1,
       reportDate,
       entries: entries.filter((entry) => entryTotal(entry) > 0 || entry.groupName),
+      draftedDate: getTodayDate(),
       savedAt: new Date().toISOString(),
     };
     localStorage.setItem(key, JSON.stringify(draft));
