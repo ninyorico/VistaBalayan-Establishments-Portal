@@ -484,13 +484,13 @@ export default function AccommodationMonitoring({ embedded = false }: { embedded
           <table className="w-full min-w-[640px]">
             <thead className="sticky top-0 z-10 border-b border-gray-200 bg-gray-50">
               <tr>
-                <th className="sticky left-0 z-20 bg-gray-50 px-2 py-1.5 text-left text-[9px] font-semibold uppercase tracking-wider text-gray-700 shadow-[2px_0_4px_rgba(148,163,184,0.24)]">Establishment</th>
-                <th className="px-2 py-1.5 text-left text-[9px] font-semibold uppercase tracking-wider text-gray-700">Records</th>
-                <th className="px-2 py-1.5 text-left text-[9px] font-semibold uppercase tracking-wider text-gray-700">Rooms</th>
-                <th className="px-2 py-1.5 text-left text-[9px] font-semibold uppercase tracking-wider text-gray-700">Occupancy</th>
-                <th className="px-2 py-1.5 text-left text-[9px] font-semibold uppercase tracking-wider text-gray-700">Check-ins</th>
-                <th className="px-2 py-1.5 text-left text-[9px] font-semibold uppercase tracking-wider text-gray-700">Guest Nights</th>
-                <th className="px-2 py-1.5 text-left text-[9px] font-semibold uppercase tracking-wider text-gray-700">Avg Guest/Room</th>
+                <th className="sticky left-0 z-20 bg-gray-50 px-2 py-1.5 text-left text-[9px] font-semibold uppercase tracking-wider text-gray-700 shadow-[2px_0_4px_rgba(148,163,184,0.24)] lg:px-4 lg:py-3 lg:text-xs">Establishment</th>
+                <th className="px-2 py-1.5 text-left text-[9px] font-semibold uppercase tracking-wider text-gray-700 lg:px-4 lg:py-3 lg:text-xs">Records</th>
+                <th className="px-2 py-1.5 text-left text-[9px] font-semibold uppercase tracking-wider text-gray-700 lg:px-4 lg:py-3 lg:text-xs">Rooms</th>
+                <th className="px-2 py-1.5 text-left text-[9px] font-semibold uppercase tracking-wider text-gray-700 lg:px-4 lg:py-3 lg:text-xs">Occupancy</th>
+                <th className="px-2 py-1.5 text-left text-[9px] font-semibold uppercase tracking-wider text-gray-700 lg:px-4 lg:py-3 lg:text-xs">Check-ins</th>
+                <th className="px-2 py-1.5 text-left text-[9px] font-semibold uppercase tracking-wider text-gray-700 lg:px-4 lg:py-3 lg:text-xs">Guest Nights</th>
+                <th className="px-2 py-1.5 text-left text-[9px] font-semibold uppercase tracking-wider text-gray-700 lg:px-4 lg:py-3 lg:text-xs">Avg Guest/Room</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-200">
@@ -510,22 +510,22 @@ export default function AccommodationMonitoring({ embedded = false }: { embedded
                       }
                     }}
                   >
-                    <td className="sticky left-0 z-10 bg-white px-2 py-1.5 text-[10px] font-medium text-gray-900 shadow-[2px_0_4px_rgba(148,163,184,0.18)] group-hover:bg-gray-50">
+                    <td className="sticky left-0 z-10 bg-white px-2 py-1.5 text-[10px] font-medium text-gray-900 shadow-[2px_0_4px_rgba(148,163,184,0.18)] group-hover:bg-gray-50 lg:px-4 lg:py-2.5 lg:text-sm">
                       <div className="flex items-center gap-1.5">
                         {group.establishment}
                       </div>
                     </td>
-                    <td className="px-2 py-1.5 text-[10px] text-gray-600">{group.records.length}</td>
-                    <td className="px-2 py-1.5 text-[10px] text-gray-900">{group.totalRooms}</td>
-                    <td className="px-2 py-1.5 text-[10px] font-medium text-green-700">{group.avgOccupancy.toFixed(1)}%</td>
-                    <td className="px-2 py-1.5 text-[10px] font-medium text-blue-600">{group.totalGuests}</td>
-                    <td className="px-2 py-1.5 text-[10px] text-gray-900">{group.guestNights}</td>
-                    <td className="px-2 py-1.5 text-[10px] font-medium text-teal-600">{group.avgGuestsPerRoom.toFixed(2)}</td>
+                    <td className="px-2 py-1.5 text-[10px] text-gray-600 lg:px-4 lg:py-2.5 lg:text-sm">{group.records.length}</td>
+                    <td className="px-2 py-1.5 text-[10px] text-gray-900 lg:px-4 lg:py-2.5 lg:text-sm">{group.totalRooms}</td>
+                    <td className="px-2 py-1.5 text-[10px] font-medium text-green-700 lg:px-4 lg:py-2.5 lg:text-sm">{group.avgOccupancy.toFixed(1)}%</td>
+                    <td className="px-2 py-1.5 text-[10px] font-medium text-blue-600 lg:px-4 lg:py-2.5 lg:text-sm">{group.totalGuests}</td>
+                    <td className="px-2 py-1.5 text-[10px] text-gray-900 lg:px-4 lg:py-2.5 lg:text-sm">{group.guestNights}</td>
+                    <td className="px-2 py-1.5 text-[10px] font-medium text-teal-600 lg:px-4 lg:py-2.5 lg:text-sm">{group.avgGuestsPerRoom.toFixed(2)}</td>
                   </tr>
                 ))
               ) : (
                 <tr>
-                  <td colSpan={7} className="px-4 py-6 text-center text-xs text-gray-500">
+                  <td colSpan={7} className="px-4 py-6 text-center text-xs text-gray-500 lg:text-sm">
                     No accommodation records found.
                   </td>
                 </tr>
