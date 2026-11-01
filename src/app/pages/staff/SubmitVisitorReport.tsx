@@ -170,7 +170,7 @@ export default function SubmitVisitorReport() {
       const residenceType = (row.residence_category || row.residence_type) as ResidenceTypeKey;
       if (!residenceTypes.some((type) => type.key === residenceType)) return;
       const groupName = String(row.guest_group_name || row.guest_name || "").trim();
-      const groupKey = groupName || `submission-${date}`;
+      const groupKey = groupName || `submission-${row.created_at?.slice(0, 19) || date}`;
       const entry = grouped.get(groupKey) || createEmptyEntry(grouped.size + 1);
       entry.groupName = groupName;
       const male = Math.max(0, Number(row.total_male ?? row.male_visitors) || 0);
