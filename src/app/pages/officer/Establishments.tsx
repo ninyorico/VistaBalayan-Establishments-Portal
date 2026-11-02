@@ -82,6 +82,7 @@ export default function Establishments() {
   const [pendingOnboarding, setPendingOnboarding] = useState<{ userId: string | null; email: string; fullName: string } | null>(null);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [editingEstablishment, setEditingEstablishment] = useState<Establishment | null>(null);
+  const [permitDetailsEstablishment, setPermitDetailsEstablishment] = useState<Establishment | null>(null);
   const [permitUploading, setPermitUploading] = useState(false);
   const [onboardingPermitFiles, setOnboardingPermitFiles] = useState<BusinessPermitAsset[]>([]);
   const [editingUser, setEditingUser] = useState<Profile | null>(null);
@@ -249,6 +250,10 @@ export default function Establishments() {
       });
       setShowEstablishmentModal(true);
     }
+  };
+
+  const openPermitDetails = (establishment: Establishment) => {
+    setPermitDetailsEstablishment(establishment);
   };
 
   const updateRoomConfig = (index: number, field: keyof EstablishmentRoomConfig, value: string | number) => {
@@ -1055,9 +1060,9 @@ export default function Establishments() {
                         <td className="px-2 py-2 sm:px-4 sm:py-3 text-[10px] text-gray-900 sm:text-sm">{establishment.total_rooms || "N/A"}</td>
                         <td className="px-2 py-2 sm:px-4 sm:py-3">
                           {Boolean(establishment.business_permit_number?.trim()) || getBusinessPermitAssets(establishment).length > 0 ? (
-                            <span className="inline-flex items-center rounded-full border border-[#B8D2C4] bg-[#E7F0EA] px-2.5 py-1 text-xs font-semibold text-[#4E765F] shadow-[inset_2px_2px_4px_rgba(163,177,198,0.22),inset_-2px_-2px_4px_rgba(255,255,255,0.6)]">
+                            <button type="button" onClick={() => openPermitDetails(establishment)} className="inline-flex items-center rounded-full border border-[#B8D2C4] bg-[#E7F0EA] px-2.5 py-1 text-xs font-semibold text-[#4E765F] shadow-[inset_2px_2px_4px_rgba(163,177,198,0.22),inset_-2px_-2px_4px_rgba(255,255,255,0.6)] hover:bg-[#DCEBE1] focus:outline-none focus:ring-2 focus:ring-[#1CA7C9] focus:ring-offset-1">
                               Has permit
-                            </span>
+                            </button>
                           ) : (
                             <span className="inline-flex items-center rounded-full border border-slate-200 bg-slate-50 px-2.5 py-1 text-xs font-medium text-slate-500">
                               No permit
@@ -1387,14 +1392,11 @@ export default function Establishments() {
                   <div className="mt-3">
                     <label className="block text-sm font-medium text-gray-700 mb-2">Permit Files</label>
                     <div className="flex items-stretch gap-2">
-                      <input
-                        type="text"
-                        value=""
-                        readOnly
-                        placeholder="No permit file selected"
-                        className="min-w-0 flex-1 px-4 py-2.5 border border-gray-300 rounded-lg bg-gray-50 text-sm text-gray-500 outline-none"
-                        aria-label="Selected business permit file"
-                      />
+                      <div className="min-w-0 flex-1 rounded-lg border border-gray-300 bg-gray-50 px-4 py-2.5 text-sm text-gray-600" aria-live="polite">
+                        {getBusinessPermitAssets(editingEstablishment).length > 0
+                          ? `${getBusinessPermitAssets(editingEstablishment).length} permit file(s) saved`
+                          : "No permit file uploaded"}
+                      </div>
                       <label className="inline-flex shrink-0 cursor-pointer items-center justify-center gap-2 rounded-lg bg-[#0F4C75] px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-[#0E5A72]">
                         <FileImage className="h-4 w-4" />
                         Files / photos
@@ -1408,6 +1410,18 @@ export default function Establishments() {
                         />
                       </label>
                     </div>
+                    {getBusinessPermitAssets(editingEstablishment).length > 0 && (
+                      <div className="mt-2 space-y-1 rounded-lg border border-emerald-100 bg-emerald-50/60 p-2">
+                        <p className="text-xs font-semibold text-emerald-800">Saved permit files</p>
+                        {getBusinessPermitAssets(editingEstablishment).map((asset, index) => (
+                          <a key={`${asset.name}-${index}`} href={asset.url} target="_blank" rel="noreferrer" className="flex items-center gap-2 text-xs text-[#0F4C75] hover:underline">
+                            {asset.kind === "image" ? <img src={asset.url} alt="" className="h-8 w-8 rounded object-cover" /> : <FileImage className="h-4 w-4 shrink-0" />}
+                            <span className="min-w-0 truncate">{asset.name}</span>
+                            <ExternalLink className="ml-auto h-3.5 w-3.5 shrink-0" />
+                          </a>
+                        ))}
+                      </div>
+                    )}
                     <p className="mt-1 text-xs text-gray-500">Upload clear permit photos or a PDF/DOC/DOCX file for municipal review.</p>
                   </div>
                 )}
@@ -1455,6 +1469,24 @@ export default function Establishments() {
             <div className="p-6 border-t border-gray-100 flex justify-end gap-3 sticky bottom-0 bg-white rounded-b-2xl">
               <button onClick={() => setShowEstablishmentModal(false)} className="px-5 py-2.5 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors font-medium text-gray-700">Cancel</button>
               <button onClick={handleSaveEstablishment} className="px-5 py-2.5 bg-gradient-to-r from-[#0F4C75] to-[#0E5A72] text-white rounded-lg hover:shadow-lg hover:shadow-[#1CA7C9]/30 transition-all font-medium">{editingEstablishment ? "Update" : "Add"} Establishment</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {permitDetailsEstablishment && (
+        <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/45 p-4 backdrop-blur-sm" role="presentation" onMouseDown={(event) => { if (event.target === event.currentTarget) setPermitDetailsEstablishment(null); }}>
+          <div className="max-h-[90vh] w-full max-w-2xl overflow-y-auto rounded-2xl bg-white shadow-2xl" role="dialog" aria-modal="true" aria-labelledby="permit-details-title">
+            <div className="sticky top-0 flex items-start justify-between border-b border-gray-100 bg-white p-5">
+              <div><p className="text-xs font-semibold uppercase tracking-[0.14em] text-[#0F4C75]">Business permit</p><h2 id="permit-details-title" className="mt-1 text-xl font-bold text-gray-900">{permitDetailsEstablishment.name}</h2></div>
+              <button type="button" onClick={() => setPermitDetailsEstablishment(null)} className="rounded-lg p-2 hover:bg-gray-100" aria-label="Close permit details"><X className="h-5 w-5 text-gray-500" /></button>
+            </div>
+            <div className="space-y-5 p-5">
+              <div className="rounded-xl border border-gray-200 bg-gray-50 p-4"><p className="text-xs font-semibold uppercase tracking-wide text-gray-500">Permit number</p><p className="mt-1 break-all text-base font-semibold text-gray-900">{permitDetailsEstablishment.business_permit_number?.trim() || "Not recorded"}</p></div>
+              <div>
+                <div className="mb-2 flex items-center justify-between gap-3"><p className="text-sm font-semibold text-gray-900">Available permit files</p><span className="text-xs text-gray-500">{getBusinessPermitAssets(permitDetailsEstablishment).length} file(s)</span></div>
+                {getBusinessPermitAssets(permitDetailsEstablishment).length > 0 ? <div className="grid gap-3 sm:grid-cols-2">{getBusinessPermitAssets(permitDetailsEstablishment).map((asset, index) => <a key={`${asset.name}-${index}`} href={asset.url} target="_blank" rel="noreferrer" className="group rounded-xl border border-gray-200 bg-white p-3 shadow-sm hover:border-[#1CA7C9]">{asset.kind === "image" ? <img src={asset.url} alt={`Permit ${index + 1}`} className="h-36 w-full rounded-lg bg-gray-100 object-contain" /> : <div className="flex h-36 items-center justify-center rounded-lg bg-gray-100"><FileImage className="h-10 w-10 text-[#0F4C75]" /></div>}<div className="mt-2 flex items-center gap-2 text-sm font-medium text-[#0F4C75]"><span className="min-w-0 truncate">{asset.name}</span><ExternalLink className="ml-auto h-4 w-4 shrink-0" /></div></a>)}</div> : <p className="rounded-xl border border-dashed border-gray-300 p-5 text-sm text-gray-500">No permit photos or files have been uploaded.</p>}
+              </div>
             </div>
           </div>
         </div>
