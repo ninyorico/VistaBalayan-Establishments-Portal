@@ -170,14 +170,16 @@ export default function Establishments() {
     return counts;
   }, {});
 
-  const filteredEstablishments = establishments.filter((est) => {
-    const matchesSearch = est.name.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesType = filterType === "all" || est.type === filterType;
-    const matchesStatus = filterStatus === "all" || est.status === filterStatus;
-    const hasPermit = Boolean(est.business_permit_number?.trim()) || getBusinessPermitAssets(est).length > 0;
-    const matchesPermit = filterPermit === "all" || (filterPermit === "has_permit" ? hasPermit : !hasPermit);
-    return matchesSearch && matchesType && matchesStatus && matchesPermit;
-  });
+  const filteredEstablishments = establishments
+    .filter((est) => {
+      const matchesSearch = est.name.toLowerCase().includes(searchTerm.toLowerCase());
+      const matchesType = filterType === "all" || est.type === filterType;
+      const matchesStatus = filterStatus === "all" || est.status === filterStatus;
+      const hasPermit = Boolean(est.business_permit_number?.trim()) || getBusinessPermitAssets(est).length > 0;
+      const matchesPermit = filterPermit === "all" || (filterPermit === "has_permit" ? hasPermit : !hasPermit);
+      return matchesSearch && matchesType && matchesStatus && matchesPermit;
+    })
+    .sort((a, b) => a.name.localeCompare(b.name, undefined, { sensitivity: "base", numeric: true }));
 
   const filteredUsers = users.filter((user) => {
     const matchesSearch =
