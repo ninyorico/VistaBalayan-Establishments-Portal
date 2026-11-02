@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useDominantAxisTableScroll } from "../../../hooks/useDominantAxisTableScroll";
-import { Plus, Search, Edit, Trash2, Building2, MapPin, Phone, UserCog, Mail, Shield, X, Loader2, FileImage, ExternalLink } from "lucide-react";
+import { Plus, Search, Edit, Trash2, Building2, MapPin, Phone, UserCog, Mail, Shield, X, Loader2, FileImage } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "../../../lib/supabase";
 import { datestampedFilename, downloadCsv } from "../../../lib/exportCsv";
@@ -83,6 +83,7 @@ export default function Establishments() {
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [editingEstablishment, setEditingEstablishment] = useState<Establishment | null>(null);
   const [permitDetailsEstablishment, setPermitDetailsEstablishment] = useState<Establishment | null>(null);
+  const [permitPreviewAsset, setPermitPreviewAsset] = useState<BusinessPermitAsset | null>(null);
   const [permitUploading, setPermitUploading] = useState(false);
   const [onboardingPermitFiles, setOnboardingPermitFiles] = useState<BusinessPermitAsset[]>([]);
   const [editingUser, setEditingUser] = useState<Profile | null>(null);
@@ -836,6 +837,23 @@ export default function Establishments() {
     }
   };
 
+  const handleDeleteBusinessPermitAsset = async (asset: BusinessPermitAsset) => {
+    if (!editingEstablishment || !window.confirm(`Delete the permit file "${asset.name}"?`)) return;
+    const currentAssets = getBusinessPermitAssets(editingEstablishment);
+    const nextAssets = currentAssets.filter((candidate) => !(candidate.name === asset.name && candidate.url === asset.url));
+    const amenities = setBusinessPermitAssetsInAmenities(editingEstablishment.amenities, nextAssets);
+    const { error } = await supabase.from("establishments").update({ amenities, updated_at: new Date().toISOString() }).eq("id", editingEstablishment.id);
+    if (error) {
+      toast.error(`Failed to delete permit file: ${error.message}`);
+      return;
+    }
+    const updated = { ...editingEstablishment, amenities };
+    setEditingEstablishment(updated);
+    setEstablishments((current) => current.map((item) => item.id === updated.id ? updated : item));
+    setPermitPreviewAsset(null);
+    toast.success(`Deleted ${asset.name}`);
+  };
+
   const handleExportEstablishments = () => {
     const exportableEstablishments = filteredEstablishments.filter((establishment) => Boolean(establishment.business_permit_number?.trim()));
     downloadCsv(
@@ -1414,11 +1432,13 @@ export default function Establishments() {
                       <div className="mt-2 space-y-1 rounded-lg border border-emerald-100 bg-emerald-50/60 p-2">
                         <p className="text-xs font-semibold text-emerald-800">Saved permit files</p>
                         {getBusinessPermitAssets(editingEstablishment).map((asset, index) => (
-                          <a key={`${asset.name}-${index}`} href={asset.url} target="_blank" rel="noreferrer" className="flex items-center gap-2 text-xs text-[#0F4C75] hover:underline">
-                            {asset.kind === "image" ? <img src={asset.url} alt="" className="h-8 w-8 rounded object-cover" /> : <FileImage className="h-4 w-4 shrink-0" />}
-                            <span className="min-w-0 truncate">{asset.name}</span>
-                            <ExternalLink className="ml-auto h-3.5 w-3.5 shrink-0" />
-                          </a>
+                          <div key={`${asset.name}-${index}`} className="flex items-center gap-2 text-xs text-[#0F4C75]">
+                            <button type="button" onClick={() => setPermitPreviewAsset(asset)} className="flex min-w-0 flex-1 items-center gap-2 text-left hover:underline">
+                              {asset.kind === "image" ? <img src={asset.url} alt="" className="h-8 w-8 rounded object-cover" /> : <FileImage className="h-4 w-4 shrink-0" />}
+                              <span className="min-w-0 truncate">{asset.name}</span>
+                            </button>
+                            <button type="button" onClick={() => handleDeleteBusinessPermitAsset(asset)} className="shrink-0 rounded px-1.5 py-1 font-medium text-red-600 hover:bg-red-50 hover:underline" aria-label={`Delete ${asset.name}`}>Delete</button>
+                          </div>
                         ))}
                       </div>
                     )}
@@ -1485,8 +1505,19 @@ export default function Establishments() {
               <div className="rounded-xl border border-gray-200 bg-gray-50 p-4"><p className="text-xs font-semibold uppercase tracking-wide text-gray-500">Permit number</p><p className="mt-1 break-all text-base font-semibold text-gray-900">{permitDetailsEstablishment.business_permit_number?.trim() || "Not recorded"}</p></div>
               <div>
                 <div className="mb-2 flex items-center justify-between gap-3"><p className="text-sm font-semibold text-gray-900">Available permit files</p><span className="text-xs text-gray-500">{getBusinessPermitAssets(permitDetailsEstablishment).length} file(s)</span></div>
-                {getBusinessPermitAssets(permitDetailsEstablishment).length > 0 ? <div className="grid gap-3 sm:grid-cols-2">{getBusinessPermitAssets(permitDetailsEstablishment).map((asset, index) => <a key={`${asset.name}-${index}`} href={asset.url} target="_blank" rel="noreferrer" className="group rounded-xl border border-gray-200 bg-white p-3 shadow-sm hover:border-[#1CA7C9]">{asset.kind === "image" ? <img src={asset.url} alt={`Permit ${index + 1}`} className="h-36 w-full rounded-lg bg-gray-100 object-contain" /> : <div className="flex h-36 items-center justify-center rounded-lg bg-gray-100"><FileImage className="h-10 w-10 text-[#0F4C75]" /></div>}<div className="mt-2 flex items-center gap-2 text-sm font-medium text-[#0F4C75]"><span className="min-w-0 truncate">{asset.name}</span><ExternalLink className="ml-auto h-4 w-4 shrink-0" /></div></a>)}</div> : <p className="rounded-xl border border-dashed border-gray-300 p-5 text-sm text-gray-500">No permit photos or files have been uploaded.</p>}
+                {getBusinessPermitAssets(permitDetailsEstablishment).length > 0 ? <div className="grid gap-3 sm:grid-cols-2">{getBusinessPermitAssets(permitDetailsEstablishment).map((asset, index) => <button type="button" key={`${asset.name}-${index}`} onClick={() => setPermitPreviewAsset(asset)} className="group rounded-xl border border-gray-200 bg-white p-3 text-left shadow-sm hover:border-[#1CA7C9]">{asset.kind === "image" ? <img src={asset.url} alt={`Permit ${index + 1}`} className="h-36 w-full rounded-lg bg-gray-100 object-contain" /> : <div className="flex h-36 items-center justify-center rounded-lg bg-gray-100"><FileImage className="h-10 w-10 text-[#0F4C75]" /></div>}<div className="mt-2 flex items-center gap-2 text-sm font-medium text-[#0F4C75]"><span className="min-w-0 truncate">{asset.name}</span><span className="ml-auto text-xs font-semibold">Preview</span></div></button>)}</div> : <p className="rounded-xl border border-dashed border-gray-300 p-5 text-sm text-gray-500">No permit photos or files have been uploaded.</p>}
               </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {permitPreviewAsset && (
+        <div className="fixed inset-0 z-[70] flex items-center justify-center bg-black/65 p-4 backdrop-blur-sm" role="presentation" onMouseDown={(event) => { if (event.target === event.currentTarget) setPermitPreviewAsset(null); }}>
+          <div className="max-h-[92vh] w-full max-w-4xl overflow-hidden rounded-2xl bg-white shadow-2xl" role="dialog" aria-modal="true" aria-labelledby="permit-preview-title">
+            <div className="flex items-center justify-between border-b border-gray-100 bg-white px-5 py-4"><h2 id="permit-preview-title" className="min-w-0 truncate text-lg font-semibold text-gray-900">{permitPreviewAsset.name}</h2><button type="button" onClick={() => setPermitPreviewAsset(null)} className="rounded-lg p-2 hover:bg-gray-100" aria-label="Close permit preview"><X className="h-5 w-5 text-gray-500" /></button></div>
+            <div className="flex max-h-[calc(92vh-4.5rem)] min-h-[18rem] items-center justify-center overflow-auto bg-slate-100 p-4">
+              {permitPreviewAsset.kind === "image" ? <img src={permitPreviewAsset.url} alt={permitPreviewAsset.name} className="max-h-[calc(92vh-7rem)] max-w-full rounded-lg object-contain shadow-sm" /> : permitPreviewAsset.type === "application/pdf" ? <iframe title={`Preview of ${permitPreviewAsset.name}`} src={permitPreviewAsset.url} className="h-[70vh] w-full rounded-lg bg-white" /> : <div className="max-w-md rounded-xl bg-white p-8 text-center shadow-sm"><FileImage className="mx-auto h-12 w-12 text-[#0F4C75]" /><p className="mt-3 font-semibold text-gray-900">Document preview is not available for this file type.</p><p className="mt-1 text-sm text-gray-500">The file is being shown inside the portal. You can close this preview and keep managing the permit files here.</p></div>}
             </div>
           </div>
         </div>
