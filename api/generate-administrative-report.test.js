@@ -13,21 +13,21 @@ test('server aggregation preserves weekly, monthly, quarterly, and yearly totals
   ]);
 
   assert.deepEqual(result.weekly.slice(0, 3), [
-    { period: '2026-W01', visitorTotal: 30, reportCount: 2, establishmentCount: 2 },
-    { period: '2026-W02', visitorTotal: 1029, reportCount: 2, establishmentCount: 2 },
-    { period: '2026-W14', visitorTotal: 40, reportCount: 1, establishmentCount: 1 },
+    { period: '2026-W01', visitorTotal: 30, recordCount: 2, submissionCount: 2, establishmentCount: 2 },
+        { period: '2026-W02', visitorTotal: 1029, recordCount: 2, submissionCount: 2, establishmentCount: 2 },
+        { period: '2026-W14', visitorTotal: 40, recordCount: 1, submissionCount: 1, establishmentCount: 1 },
   ]);
   assert.deepEqual(result.monthly, [
-    { period: '2026-01', visitorTotal: 1059, reportCount: 4, establishmentCount: 3 },
-    { period: '2026-04', visitorTotal: 40, reportCount: 1, establishmentCount: 1 },
-    { period: '2026-12', visitorTotal: 50, reportCount: 1, establishmentCount: 1 },
+    { period: '2026-01', visitorTotal: 1059, recordCount: 4, submissionCount: 4, establishmentCount: 3 },
+        { period: '2026-04', visitorTotal: 40, recordCount: 1, submissionCount: 1, establishmentCount: 1 },
+        { period: '2026-12', visitorTotal: 50, recordCount: 1, submissionCount: 1, establishmentCount: 1 },
   ]);
   assert.deepEqual(result.quarterly, [
-    { period: '2026-Q1', visitorTotal: 1059, reportCount: 4, establishmentCount: 3 },
-    { period: '2026-Q2', visitorTotal: 40, reportCount: 1, establishmentCount: 1 },
-    { period: '2026-Q4', visitorTotal: 50, reportCount: 1, establishmentCount: 1 },
+    { period: '2026-Q1', visitorTotal: 1059, recordCount: 4, submissionCount: 4, establishmentCount: 3 },
+        { period: '2026-Q2', visitorTotal: 40, recordCount: 1, submissionCount: 1, establishmentCount: 1 },
+        { period: '2026-Q4', visitorTotal: 50, recordCount: 1, submissionCount: 1, establishmentCount: 1 },
   ]);
   assert.deepEqual(result.yearly, [
-    { period: '2026', visitorTotal: 1149, reportCount: 6, establishmentCount: 4 },
+    { period: '2026', visitorTotal: 1149, recordCount: 6, submissionCount: 6, establishmentCount: 4 },
   ]);
 });

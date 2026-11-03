@@ -60,7 +60,8 @@ const formatStatus = reportStatusLabel;
 type VisitorAggregate = {
   period: string;
   visitorTotal: number;
-  reportCount: number;
+  recordCount: number;
+  submissionCount: number;
   establishmentCount: number;
 };
 
@@ -73,7 +74,8 @@ type AiAdministrativeReport = {
   followUp: string;
   source: {
     dateRange: { startDate: string; endDate: string };
-    submittedReportCount: number;
+    visitorRecordCount: number;
+    submissionCount: number;
     visitorTotal: number;
     establishmentCount: number;
     aggregates: Record<string, VisitorAggregate[]>;
@@ -89,49 +91,6 @@ const getIsoWeekKey = (reportDate: string) => {
   const firstDay = new Date(Date.UTC(year, 0, 1));
   const week = Math.ceil((((date.getTime() - firstDay.getTime()) / 86400000) + 1) / 7);
   return `${year}-W${String(week).padStart(2, "0")}`;
-};
-
-const aggregateVisitorData = (reports: any[]) => {
-  const groups = {
-    weekly: new Map<string, { visitorTotal: number; reportCount: number; establishments: Set<string> }>(),
-    monthly: new Map<string, { visitorTotal: number; reportCount: number; establishments: Set<string> }>(),
-    quarterly: new Map<string, { visitorTotal: number; reportCount: number; establishments: Set<string> }>(),
-    yearly: new Map<string, { visitorTotal: number; reportCount: number; establishments: Set<string> }>(),
-  };
-
-  reports
-    .filter((report) => normalizeStatus(report.status) === "submitted" && report.report_date)
-    .forEach((report) => {
-      const date = String(report.report_date);
-      const year = date.slice(0, 4);
-      const month = date.slice(0, 7);
-      const quarter = `${year}-Q${Math.floor((Number(date.slice(5, 7)) - 1) / 3) + 1}`;
-      const keys = {
-        weekly: getIsoWeekKey(date),
-        monthly: month,
-        quarterly: quarter,
-        yearly: year,
-      } as const;
-      (Object.keys(keys) as Array<keyof typeof keys>).forEach((periodType) => {
-        const key = keys[periodType];
-        const current = groups[periodType].get(key) || { visitorTotal: 0, reportCount: 0, establishments: new Set<string>() };
-        current.visitorTotal += Number(report.total_guests || 0);
-        current.reportCount += 1;
-        if (report.establishment_id) current.establishments.add(String(report.establishment_id));
-        groups[periodType].set(key, current);
-      });
-    });
-
-  const serialize = (group: Map<string, { visitorTotal: number; reportCount: number; establishments: Set<string> }>): VisitorAggregate[] => [...group.entries()]
-    .sort(([a], [b]) => a.localeCompare(b))
-    .map(([period, value]) => ({ period, visitorTotal: value.visitorTotal, reportCount: value.reportCount, establishmentCount: value.establishments.size }));
-
-  return {
-    weekly: serialize(groups.weekly),
-    monthly: serialize(groups.monthly),
-    quarterly: serialize(groups.quarterly),
-    yearly: serialize(groups.yearly),
-  };
 };
 
 interface Submission {
@@ -1070,7 +1029,7 @@ export default function Reports() {
               <button type="button" onClick={() => setShowAiReportModal(false)} className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[#E0E5EC] text-[#193364] shadow-[inset_4px_4px_8px_rgba(163,177,198,0.42),inset_-4px_-4px_8px_rgba(255,255,255,0.78)]" aria-label="Close AI administrative report"><X className="h-5 w-5" /></button>
             </div>
             <div className="min-h-0 flex-1 space-y-4 overflow-y-auto overscroll-contain px-5 py-5 [-webkit-overflow-scrolling:touch] sm:px-7 sm:py-6">
-              <section className="rounded-2xl border border-[#0E5A72]/20 bg-[#d7eef2]/60 p-4"><h3 className="text-sm font-bold text-[#193364]">System-verified source totals</h3><p className="mt-1 text-xs leading-5 text-[#475569]">Recalculated by the server from submitted visitor records. The AI did not calculate these values.</p><div className="mt-3 grid grid-cols-2 gap-2 sm:grid-cols-4"><div><p className="text-[10px] font-semibold uppercase text-[#64748b]">Reports</p><p className="text-lg font-bold text-[#193364]">{aiReport.source.submittedReportCount.toLocaleString()}</p></div><div><p className="text-[10px] font-semibold uppercase text-[#64748b]">Visitors</p><p className="text-lg font-bold text-[#193364]">{aiReport.source.visitorTotal.toLocaleString()}</p></div><div><p className="text-[10px] font-semibold uppercase text-[#64748b]">Establishments</p><p className="text-lg font-bold text-[#193364]">{aiReport.source.establishmentCount.toLocaleString()}</p></div><div><p className="text-[10px] font-semibold uppercase text-[#64748b]">Date range</p><p className="text-xs font-bold text-[#193364]">{aiReport.source.dateRange.startDate} to {aiReport.source.dateRange.endDate}</p></div></div><div className="mt-4 space-y-2">{Object.entries(aiReport.source.aggregates).map(([periodType, rows]) => <div key={periodType} className="rounded-xl bg-white/45 p-2.5"><p className="text-xs font-bold capitalize text-[#193364]">{periodType}</p>{(rows as VisitorAggregate[]).map((row) => <p key={row.period} className="mt-1 text-xs text-[#475569]"><span className="font-semibold">{row.period}</span>: {row.visitorTotal.toLocaleString()} visitors · {row.reportCount.toLocaleString()} reports · {row.establishmentCount.toLocaleString()} establishments</p>)}</div>)}</div></section>
+              <section className="rounded-2xl border border-[#0E5A72]/20 bg-[#d7eef2]/60 p-4"><h3 className="text-sm font-bold text-[#193364]">System-verified source totals</h3><p className="mt-1 text-xs leading-5 text-[#475569]">Recalculated by the server from submitted visitor records. A visitor submission can contain multiple residence-category rows, so both counts are shown.</p><div className="mt-3 grid grid-cols-2 gap-2 sm:grid-cols-5"><div><p className="text-[10px] font-semibold uppercase text-[#64748b]">Source records</p><p className="text-lg font-bold text-[#193364]">{aiReport.source.visitorRecordCount.toLocaleString()}</p></div><div><p className="text-[10px] font-semibold uppercase text-[#64748b]">Submission groups</p><p className="text-lg font-bold text-[#193364]">{aiReport.source.submissionCount.toLocaleString()}</p></div><div><p className="text-[10px] font-semibold uppercase text-[#64748b]">Visitors</p><p className="text-lg font-bold text-[#193364]">{aiReport.source.visitorTotal.toLocaleString()}</p></div><div><p className="text-[10px] font-semibold uppercase text-[#64748b]">Establishments</p><p className="text-lg font-bold text-[#193364]">{aiReport.source.establishmentCount.toLocaleString()}</p></div><div><p className="text-[10px] font-semibold uppercase text-[#64748b]">Date range</p><p className="text-xs font-bold text-[#193364]">{aiReport.source.dateRange.startDate} to {aiReport.source.dateRange.endDate}</p></div></div><div className="mt-4 space-y-2">{Object.entries(aiReport.source.aggregates).map(([periodType, rows]) => <div key={periodType} className="rounded-xl bg-white/45 p-2.5"><p className="text-xs font-bold capitalize text-[#193364]">{periodType}</p>{(rows as VisitorAggregate[]).map((row) => <p key={row.period} className="mt-1 text-xs text-[#475569]"><span className="font-semibold">{row.period}</span>: {row.visitorTotal.toLocaleString()} visitors · {row.recordCount.toLocaleString()} source records · {row.submissionCount.toLocaleString()} submission groups · {row.establishmentCount.toLocaleString()} establishments</p>)}</div>)}</div></section>
               {([
                 ["Overview", aiReport.overview],
                 ["Weekly aggregation", aiReport.weekly],
@@ -1102,8 +1061,8 @@ export default function Reports() {
                         ) : (
                           <div className="overflow-x-auto rounded-xl border border-[#c7ced8]/70">
                             <table className="min-w-full text-left text-xs">
-                              <thead className="bg-[#F5F8FF] text-[#64748b]"><tr><th className="px-3 py-2 font-semibold">Period</th><th className="px-3 py-2 font-semibold">Visitors</th><th className="px-3 py-2 font-semibold">Reports</th><th className="px-3 py-2 font-semibold">Establishments</th></tr></thead>
-                              <tbody>{rows.map((row) => <tr key={row.period} className="border-t border-[#c7ced8]/60"><td className="whitespace-nowrap px-3 py-2 font-medium text-[#193364]">{row.period}</td><td className="px-3 py-2 text-[#334155]">{row.visitorTotal.toLocaleString()}</td><td className="px-3 py-2 text-[#334155]">{row.reportCount.toLocaleString()}</td><td className="px-3 py-2 text-[#334155]">{row.establishmentCount.toLocaleString()}</td></tr>)}</tbody>
+                              <thead className="bg-[#F5F8FF] text-[#64748b]"><tr><th className="px-3 py-2 font-semibold">Period</th><th className="px-3 py-2 font-semibold">Visitors</th><th className="px-3 py-2 font-semibold">Source records</th><th className="px-3 py-2 font-semibold">Submission groups</th><th className="px-3 py-2 font-semibold">Establishments</th></tr></thead>
+                                                            <tbody>{rows.map((row) => <tr key={row.period} className="border-t border-[#c7ced8]/60"><td className="whitespace-nowrap px-3 py-2 font-medium text-[#193364]">{row.period}</td><td className="px-3 py-2 text-[#334155]">{row.visitorTotal.toLocaleString()}</td><td className="px-3 py-2 text-[#334155]">{row.recordCount.toLocaleString()}</td><td className="px-3 py-2 text-[#334155]">{row.submissionCount.toLocaleString()}</td><td className="px-3 py-2 text-[#334155]">{row.establishmentCount.toLocaleString()}</td></tr>)}</tbody>
                             </table>
                           </div>
                         )}
