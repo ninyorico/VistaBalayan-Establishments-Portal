@@ -74,36 +74,40 @@ const getSubmissionKey = (row) => {
   return `${establishment}|${date}|${group || batch || String(row?.id || 'record')}`;
 };
 
-const aggregateRows = (rows) => {
+const aggregateRows = (visitorRows, accommodationRows = []) => {
   const groups = Object.fromEntries(PERIOD_TYPES.map((periodType) => [periodType, new Map()]));
-  rows.forEach((row) => {
+  const addRow = (row, kind) => {
     if (!row?.report_date) return;
     const date = String(row.report_date).slice(0, 10);
     const year = date.slice(0, 4);
     const monthNumber = Number(date.slice(5, 7));
-    const keys = {
-      weekly: getIsoWeekKey(date),
-      monthly: date.slice(0, 7),
-      quarterly: `${year}-Q${Math.floor((monthNumber - 1) / 3) + 1}`,
-      yearly: year,
-    };
-    const submissionKey = getSubmissionKey(row);
+    const keys = { weekly: getIsoWeekKey(date), monthly: date.slice(0, 7), quarterly: `${year}-Q${Math.floor((monthNumber - 1) / 3) + 1}`, yearly: year };
+    const submissionKey = kind === 'visitor' ? getSubmissionKey(row) : null;
     PERIOD_TYPES.forEach((periodType) => {
       const key = keys[periodType];
-      const current = groups[periodType].get(key) || { visitorTotal: 0, recordCount: 0, submissions: new Set(), establishments: new Set() };
-      current.visitorTotal += Number(row.total_guests || 0);
-      current.recordCount += 1;
-      current.submissions.add(submissionKey);
+      const current = groups[periodType].get(key) || { visitorTotal: 0, guestCheckInTotal: 0, visitorRecordCount: 0, accommodationRecordCount: 0, submissions: new Set(), establishments: new Set() };
+      if (kind === 'visitor') {
+        current.visitorTotal += Number(row.total_guests || 0);
+        current.visitorRecordCount += 1;
+        current.submissions.add(submissionKey);
+      } else {
+        current.guestCheckInTotal += Number(row.total_check_ins || 0);
+        current.accommodationRecordCount += 1;
+      }
       if (row.establishment_id) current.establishments.add(String(row.establishment_id));
       groups[periodType].set(key, current);
     });
-  });
+  };
+  visitorRows.forEach((row) => addRow(row, 'visitor'));
+  accommodationRows.forEach((row) => addRow(row, 'accommodation'));
   return Object.fromEntries(PERIOD_TYPES.map((periodType) => [
     periodType,
     [...groups[periodType].entries()].sort(([a], [b]) => a.localeCompare(b)).map(([period, value]) => ({
       period,
       visitorTotal: value.visitorTotal,
-      recordCount: value.recordCount,
+      guestCheckInTotal: value.guestCheckInTotal,
+      visitorRecordCount: value.visitorRecordCount,
+      accommodationRecordCount: value.accommodationRecordCount,
       submissionCount: value.submissions.size,
       establishmentCount: value.establishments.size,
     })),
@@ -111,30 +115,50 @@ const aggregateRows = (rows) => {
 };
 
 const loadSourceData = async (supabaseAdmin, startDate, endDate) => {
-  const rows = [];
-  const pageSize = 1000;
-  for (let offset = 0; ; offset += pageSize) {
-    const { data, error } = await supabaseAdmin
-      .from('visitor_reports')
-      .select('id,report_date,total_guests,establishment_id,guest_group_name,guest_name,created_at')
-      .eq('status', 'submitted')
-      .gte('report_date', startDate)
-      .lte('report_date', endDate)
-      .order('report_date', { ascending: true })
-      .range(offset, offset + pageSize - 1);
-    if (error) throw new Error('Unable to load submitted visitor data from the system');
-    rows.push(...(data || []));
-    if (!data || data.length < pageSize) break;
-  }
-  const aggregates = aggregateRows(rows);
-  const submissionCount = new Set(rows.map(getSubmissionKey)).size;
+  const fetchRows = async (table, select) => {
+    const rows = [];
+    const pageSize = 1000;
+    for (let offset = 0; ; offset += pageSize) {
+      const { data, error } = await supabaseAdmin.from(table).select(select).eq('status', 'submitted').gte('report_date', startDate).lte('report_date', endDate).order('report_date', { ascending: true }).range(offset, offset + pageSize - 1);
+      if (error) throw new Error(`Unable to load submitted ${table.replace('_', ' ')} data from the system`);
+      rows.push(...(data || []));
+      if (!data || data.length < pageSize) break;
+    }
+    return rows;
+  };
+  const [visitorRows, accommodationRows] = await Promise.all([
+    fetchRows('visitor_reports', 'id,report_date,total_guests,establishment_id,guest_group_name,guest_name,created_at'),
+    fetchRows('accommodation_reports', 'id,report_date,total_check_ins,establishment_id,created_at'),
+  ]);
+  const aggregates = aggregateRows(visitorRows, accommodationRows);
   return {
     dateRange: { startDate, endDate },
-    visitorRecordCount: rows.length,
-    submissionCount,
-    visitorTotal: rows.reduce((sum, row) => sum + Number(row.total_guests || 0), 0),
-    establishmentCount: new Set(rows.map((row) => row.establishment_id).filter(Boolean).map(String)).size,
+    visitorRecordCount: visitorRows.length,
+    accommodationRecordCount: accommodationRows.length,
+    submissionCount: new Set(visitorRows.map(getSubmissionKey)).size,
+    visitorTotal: visitorRows.reduce((sum, row) => sum + Number(row.total_guests || 0), 0),
+    guestCheckInTotal: accommodationRows.reduce((sum, row) => sum + Number(row.total_check_ins || 0), 0),
+    establishmentCount: new Set([...visitorRows, ...accommodationRows].map((row) => row.establishment_id).filter(Boolean).map(String)).size,
     aggregates,
+  };
+};
+
+const buildDeterministicReport = (periodLabel, source) => {
+  const summarize = (periodType) => {
+    const rows = source.aggregates[periodType] || [];
+    const visitorTotal = rows.reduce((sum, row) => sum + row.visitorTotal, 0);
+    const guestCheckInTotal = rows.reduce((sum, row) => sum + row.guestCheckInTotal, 0);
+    const visitorRecords = rows.reduce((sum, row) => sum + row.visitorRecordCount, 0);
+    const accommodationRecords = rows.reduce((sum, row) => sum + row.accommodationRecordCount, 0);
+    return `${periodType[0].toUpperCase()}${periodType.slice(1)} source data contains ${rows.length} period rows, ${visitorTotal.toLocaleString()} visitors, ${guestCheckInTotal.toLocaleString()} guest check-ins, ${visitorRecords.toLocaleString()} visitor records, and ${accommodationRecords.toLocaleString()} accommodation records.`;
+  };
+  return {
+    overview: `${periodLabel} covers ${source.dateRange.startDate} to ${source.dateRange.endDate}. The system verified ${source.visitorTotal.toLocaleString()} visitors from ${source.visitorRecordCount.toLocaleString()} visitor records and ${source.guestCheckInTotal.toLocaleString()} guest check-ins from ${source.accommodationRecordCount.toLocaleString()} accommodation records across ${source.establishmentCount.toLocaleString()} establishments.`,
+    weekly: summarize('weekly'),
+    monthly: summarize('monthly'),
+    quarterly: summarize('quarterly'),
+    yearly: summarize('yearly'),
+    followUp: 'Use the displayed source rows for official totals. Submission groups are reconstructed from existing visitor-row fields because legacy visitor rows do not contain a shared submission ID.',
   };
 };
 
@@ -152,7 +176,7 @@ const readCachedReport = async (supabaseAdmin, periodKey) => {
     .maybeSingle();
   if (error) throw error;
   const report = data?.data?.report;
-  if (!report || typeof report !== 'object' || !report.source || !Number.isFinite(Number(report.source.visitorRecordCount)) || !Number.isFinite(Number(report.source.submissionCount))) return null;
+  if (!report || typeof report !== 'object' || !report.source || !Number.isFinite(Number(report.source.visitorRecordCount)) || !Number.isFinite(Number(report.source.accommodationRecordCount)) || !Number.isFinite(Number(report.source.guestCheckInTotal)) || !Number.isFinite(Number(report.source.submissionCount))) return null;
   return { report, generatedAt: data.generated_at, periodKey: data.period };
 };
 
@@ -217,29 +241,15 @@ export default async function handler(req, res) {
 
     if (!allowRequest(userData.user.id)) return sendJson(res, 429, { error: 'Too many AI requests. Please try again later.' });
 
-    const apiKey = process.env.GEMINI_API_KEY;
-    if (!apiKey) return sendJson(res, 503, { error: 'AI service is not configured' });
     const periodLabel = clean(body?.periodLabel, 160) || 'the selected period';
     const startDate = clean(body?.startDate, 10);
     const endDate = clean(body?.endDate, 10);
     if (!isDate(startDate) || !isDate(endDate) || startDate > endDate) return sendJson(res, 400, { error: 'A valid report date range is required.' });
     const source = await loadSourceData(supabaseAdmin, startDate, endDate);
-    if (source.visitorRecordCount === 0) return sendJson(res, 400, { error: 'No submitted visitor data is available for this period.' });
-
-const prompt = `You are an administrative tourism reporting assistant. Create a detailed report for ${periodLabel} using ONLY the server-verified source data below. Return ONLY valid JSON with exactly these string fields: overview, weekly, monthly, quarterly, yearly, followUp. Each aggregation field must be 2 to 5 sentences and explicitly summarize only available period rows, visitor totals, source record counts, submission-group counts reconstructed from existing row fields, and establishment counts. You may repeat only numbers and period labels present in the source data. Do not calculate new totals or invent values, trends, causes, comparisons, or recommendations. If a period has no rows, say that no submitted visitor data was available for that aggregation. Do not approve, reject, or evaluate individual establishments. Do not mention AI, prompts, hidden data, or report IDs.\n\nServer-verified source data:\n${JSON.stringify(source)}`;
-    const result = await generateWithFallback(apiKey, prompt);
-    const generated = parseJsonObject(await result.text);
-    const report = {
-      overview: normalizeSection(generated.overview, `The system verified ${source.visitorRecordCount} source visitor records grouped into ${source.submissionCount} logical submission groups containing ${source.visitorTotal} visitors.`),
-      weekly: normalizeSection(generated.weekly, 'No weekly summary was returned.'),
-      monthly: normalizeSection(generated.monthly, 'No monthly summary was returned.'),
-      quarterly: normalizeSection(generated.quarterly, 'No quarterly summary was returned.'),
-      yearly: normalizeSection(generated.yearly, 'No yearly summary was returned.'),
-      followUp: normalizeSection(generated.followUp, 'Verify the source totals before official use.'),
-      source,
-    };
-    await saveCachedReport(supabaseAdmin, { periodKey, periodLabel, report, modelName: result.modelName, source });
-    return sendJson(res, 200, { report, model: result.modelName, cached: false, saved: true, generatedAt: new Date().toISOString() });
+    if (source.visitorRecordCount === 0 && source.accommodationRecordCount === 0) return sendJson(res, 400, { error: 'No submitted visitor or accommodation data is available for this period.' });
+    const report = { ...buildDeterministicReport(periodLabel, source), source };
+    await saveCachedReport(supabaseAdmin, { periodKey, periodLabel, report, modelName: 'deterministic-source-report', source });
+    return sendJson(res, 200, { report, model: 'deterministic-source-report', cached: false, saved: true, generatedAt: new Date().toISOString() });
   } catch (error) {
     console.error('Administrative AI report failed:', error instanceof Error ? error.message : 'unknown error');
     return sendJson(res, error?.statusCode || 500, { error: error?.statusCode === 503 ? 'The AI service is temporarily busy. Please try again later.' : 'AI report generation failed. Please try again.' });
