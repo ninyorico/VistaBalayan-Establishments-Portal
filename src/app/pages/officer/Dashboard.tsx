@@ -203,7 +203,7 @@ setOccupancyRate(occupancyRate);
       // 3. Fetch establishments count
       const { count: establishmentsCount, error: estError } = await supabase
         .from('establishments')
-        .select('*', { count: 'exact', head: true });
+        .select('id', { count: 'exact', head: true });
 
       if (!estError) {
         setTotalEstablishments(establishmentsCount || 0);
@@ -251,17 +251,18 @@ setOccupancyRate(occupancyRate);
       }
 
       // 6. Fetch recent submissions
-      const { data: visitorRecent } = await supabase
-        .from('visitor_reports')
-        .select(`id, report_date, status, created_at, reviewed_at, establishments(name)`)
-        .order('created_at', { ascending: false })
-        .limit(25);
-
-      const { data: accommodationRecent } = await supabase
-        .from('accommodation_reports')
-        .select(`id, report_date, status, created_at, reviewed_at, establishments(name)`)
-        .order('created_at', { ascending: false })
-        .limit(25);
+      const [{ data: visitorRecent }, { data: accommodationRecent }] = await Promise.all([
+        supabase
+          .from('visitor_reports')
+          .select(`id, report_date, status, created_at, reviewed_at, establishments(name)`)
+          .order('created_at', { ascending: false })
+          .limit(25),
+        supabase
+          .from('accommodation_reports')
+          .select(`id, report_date, status, created_at, reviewed_at, establishments(name)`)
+          .order('created_at', { ascending: false })
+          .limit(25),
+      ]);
 
       const combined = [
         ...(visitorRecent || []).map((v: any) => ({

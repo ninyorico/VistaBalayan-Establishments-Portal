@@ -178,7 +178,7 @@ export default function ManageListing() {
     if (profile?.establishment_id) {
       const { data: est } = await supabase
         .from('establishments')
-        .select('*')
+        .select('id,name,type,address,contact_number,description,opening_hours,website_url,email,amenities,latitude,longitude,images,status,total_rooms,reporting_mode')
         .eq('id', profile.establishment_id)
         .single()
       

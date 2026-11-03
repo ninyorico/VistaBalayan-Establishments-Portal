@@ -48,7 +48,7 @@ export default function StaffDashboard() {
       return;
     }
 
-    const { data: profileData, error: profileError } = await supabase.from("profiles").select("*").eq("id", user.id).maybeSingle();
+    const { data: profileData, error: profileError } = await supabase.from("profiles").select("id,establishment_id,status").eq("id", user.id).maybeSingle();
     if (profileError) {
       console.error("Error fetching staff profile:", profileError);
       setLoadError({ kind: "error", message: "The dashboard service returned an error. Please retry." });

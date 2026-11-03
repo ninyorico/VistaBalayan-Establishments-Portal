@@ -1,4 +1,4 @@
-import * as ExcelJS from "exceljs";
+import type * as ExcelJS from "exceljs";
 
 import {
   summarizeAccommodation,
@@ -292,6 +292,7 @@ export const downloadOfficialArrivalsWorkbook = async ({
   accommodation: AccommodationSourceRecord[];
   visitors: VisitorSourceRecord[];
 }) => {
+  const ExcelJS = await import("exceljs");
   const template = await fetch("/templates/Balayan_Official_Arrivals_Template.xlsx");
   if (!template.ok) throw new Error(`Official arrivals template could not be loaded (${template.status})`);
   const workbook = new ExcelJS.Workbook();

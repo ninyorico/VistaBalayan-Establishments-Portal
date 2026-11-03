@@ -124,12 +124,6 @@ export default function Analytics() {
     setLoading(true);
     const selectedRange = getAnalyticsYearRange(selectedYear);
 
-    const { data: establishmentData, error: establishmentError } = await supabase
-      .from("establishments")
-      .select("id,name,type,total_rooms,reporting_mode,status");
-
-    if (establishmentError) console.error("Error fetching establishments:", establishmentError);
-
     const fetchAllReports = async (
       table: "visitor_reports" | "accommodation_reports",
       select: string,
@@ -155,33 +149,44 @@ export default function Analytics() {
       return { data: allRows, error: null };
     };
 
-    const { data: visitorData, error: visitorError } = await fetchAllReports(
-      "visitor_reports",
-      `
-        establishment_id,
-        report_date,
-        total_guests,
-        residence_type,
-        place_of_residence,
-        establishments (name)
-      `,
-    );
+    const [
+      { data: establishmentData, error: establishmentError },
+      visitorResult,
+      accommodationResult,
+    ] = await Promise.all([
+      supabase
+        .from("establishments")
+        .select("id,name,type,total_rooms,reporting_mode,status"),
+      fetchAllReports(
+        "visitor_reports",
+        `
+          establishment_id,
+          report_date,
+          total_guests,
+          residence_type,
+          place_of_residence,
+          establishments (name)
+        `,
+      ),
+      fetchAllReports(
+        "accommodation_reports",
+        `
+          establishment_id,
+          report_date,
+          total_rooms,
+          total_occupied_rooms,
+          total_check_ins,
+          total_guest_nights,
+          establishments (name)
+        `,
+      ),
+    ]);
 
+    const { data: visitorData, error: visitorError } = visitorResult;
+    const { data: accommodationData, error: accError } = accommodationResult;
+
+    if (establishmentError) console.error("Error fetching establishments:", establishmentError);
     if (visitorError) console.error("Error fetching visitor data:", visitorError);
-
-    const { data: accommodationData, error: accError } = await fetchAllReports(
-      "accommodation_reports",
-      `
-        establishment_id,
-        report_date,
-        total_rooms,
-        total_occupied_rooms,
-        total_check_ins,
-        total_guest_nights,
-        establishments (name)
-      `,
-    );
-
     if (accError) console.error("Error fetching accommodation data:", accError);
 
     const establishments = (establishmentData || []) as Establishment[];

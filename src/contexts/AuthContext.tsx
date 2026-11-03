@@ -29,7 +29,7 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined)
 const loadProfile = async (userId: string): Promise<Profile | null> => {
   const { data, error } = await supabase
     .from('profiles')
-    .select('*')
+    .select('id,email,full_name,role,establishment_id,status')
     .eq('id', userId)
     .maybeSingle()
 

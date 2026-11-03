@@ -56,7 +56,7 @@ export default function Profile() {
     // Get profile data
     const { data: profileData, error: profileError } = await supabase
       .from("profiles")
-      .select("*")
+      .select("id,email,full_name,contact_number,position,establishment_id,status")
       .eq("id", user.id)
       .single();
     
@@ -76,7 +76,7 @@ export default function Profile() {
     if (profileData.establishment_id) {
       const { data: estData } = await supabase
         .from("establishments")
-        .select("*")
+        .select("name,address,type,status")
         .eq("id", profileData.establishment_id)
         .single();
       

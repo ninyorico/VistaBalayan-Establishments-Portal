@@ -1,4 +1,4 @@
-import * as ExcelJS from "exceljs";
+import type * as ExcelJS from "exceljs";
 import { canSubmitAccommodationReport } from "./establishmentReportForms";
 import { getVisitorResidenceLocation, normalizeResidenceCategory } from "./reporting";
 
@@ -390,6 +390,7 @@ const addHotelSheet = (
 };
 
 export async function downloadTourismReportsWorkbook(filename: string, reports: TourismReportExportRow[]) {
+  const ExcelJS = await import("exceljs");
   const workbook = new ExcelJS.Workbook();
   workbook.creator = "VistaBalayan";
   workbook.created = new Date();

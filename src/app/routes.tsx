@@ -4,23 +4,7 @@ import LegalPage from "./pages/LegalPages";
 import OfficerLayout from "./layouts/OfficerLayout";
 import StaffLayout from "./layouts/StaffLayout";
 import { ProtectedRoute } from "./components/ProtectedRoute";
-import OfficerDashboard from "./pages/officer/Dashboard";
-import Establishments from "./pages/officer/Establishments";
-import ReviewModeration from "./pages/officer/ReviewModeration";
-import ReportMonitoring from "./pages/officer/ReportMonitoring";
-import Reports from "./pages/officer/Reports";
-import Analytics from "./pages/officer/Analytics";
-import AIInsights from "./pages/officer/AIInsights";
-import Settings from "./pages/officer/Settings";
-import StaffDashboard from "./pages/staff/Dashboard";
-import SubmitVisitorReport from "./pages/staff/SubmitVisitorReport";
-import SubmitAccommodationReport from "./pages/staff/SubmitAccommodationReport";
-import SubmissionHistory from "./pages/staff/SubmissionHistory";
-import StaffAnalytics from "./pages/staff/Analytics";
-import StaffAIInsights from "./pages/staff/AIInsights";
-import Profile from "./pages/staff/Profile";
 import NotFound from "./pages/NotFound";
-import ManageListing from "./pages/staff/ManageListing";
 
 export const router = createBrowserRouter([
   { path: "/", element: <Navigate to="/admin/login" replace /> },
@@ -37,16 +21,16 @@ export const router = createBrowserRouter([
       </ProtectedRoute>
     ),
     children: [
-      { index: true, Component: OfficerDashboard },
-      { path: "establishments", Component: Establishments },
-      { path: "review-moderation", Component: ReviewModeration },
-      { path: "report-monitoring", Component: ReportMonitoring },
+      { index: true, lazy: async () => ({ Component: (await import("./pages/officer/Dashboard")).default }) },
+      { path: "establishments", lazy: async () => ({ Component: (await import("./pages/officer/Establishments")).default }) },
+      { path: "review-moderation", lazy: async () => ({ Component: (await import("./pages/officer/ReviewModeration")).default }) },
+      { path: "report-monitoring", lazy: async () => ({ Component: (await import("./pages/officer/ReportMonitoring")).default }) },
       { path: "visitor-monitoring", element: <Navigate to="/officer/report-monitoring" replace /> },
       { path: "accommodation-monitoring", element: <Navigate to="/officer/report-monitoring" replace /> },
-      { path: "reports", Component: Reports },
-      { path: "analytics", Component: Analytics },
-      { path: "ai-insights", Component: AIInsights },
-      { path: "settings", Component: Settings },
+      { path: "reports", lazy: async () => ({ Component: (await import("./pages/officer/Reports")).default }) },
+      { path: "analytics", lazy: async () => ({ Component: (await import("./pages/officer/Analytics")).default }) },
+      { path: "ai-insights", lazy: async () => ({ Component: (await import("./pages/officer/AIInsights")).default }) },
+      { path: "settings", lazy: async () => ({ Component: (await import("./pages/officer/Settings")).default }) },
     ],
   },
   {
@@ -57,14 +41,32 @@ export const router = createBrowserRouter([
       </ProtectedRoute>
     ),
     children: [
-      { index: true, Component: StaffDashboard },
-      { path: "submit-visitor-report", element: <ProtectedRoute requireActiveStaff><SubmitVisitorReport /></ProtectedRoute> },
-      { path: "submit-accommodation-report", element: <ProtectedRoute requireActiveStaff><SubmitAccommodationReport /></ProtectedRoute> },
-      { path: "submission-history", Component: SubmissionHistory },
-      { path: "analytics", Component: StaffAnalytics },
-      { path: "ai-insights", Component: StaffAIInsights },
-      { path: "profile", Component: Profile },
-      { path: "manage-listing", element: <ProtectedRoute requireActiveStaff><ManageListing /></ProtectedRoute> },
+      { index: true, lazy: async () => ({ Component: (await import("./pages/staff/Dashboard")).default }) },
+      {
+        path: "submit-visitor-report",
+        lazy: async () => {
+          const Page = (await import("./pages/staff/SubmitVisitorReport")).default;
+          return { Component: () => <ProtectedRoute requireActiveStaff><Page /></ProtectedRoute> };
+        },
+      },
+      {
+        path: "submit-accommodation-report",
+        lazy: async () => {
+          const Page = (await import("./pages/staff/SubmitAccommodationReport")).default;
+          return { Component: () => <ProtectedRoute requireActiveStaff><Page /></ProtectedRoute> };
+        },
+      },
+      { path: "submission-history", lazy: async () => ({ Component: (await import("./pages/staff/SubmissionHistory")).default }) },
+      { path: "analytics", lazy: async () => ({ Component: (await import("./pages/staff/Analytics")).default }) },
+      { path: "ai-insights", lazy: async () => ({ Component: (await import("./pages/staff/AIInsights")).default }) },
+      { path: "profile", lazy: async () => ({ Component: (await import("./pages/staff/Profile")).default }) },
+      {
+        path: "manage-listing",
+        lazy: async () => {
+          const Page = (await import("./pages/staff/ManageListing")).default;
+          return { Component: () => <ProtectedRoute requireActiveStaff><Page /></ProtectedRoute> };
+        },
+      },
     ],
   },
   { path: "*", Component: NotFound },

@@ -8,7 +8,6 @@ import { compressBusinessPermitImage, BusinessPermitAsset, getBusinessPermitAsse
 import { DEFAULT_ROOM_CONFIG, EstablishmentRoomConfig, getRoomConfigFromAmenities, setRoomConfigInAmenities } from "../../../lib/establishmentRoomConfig";
 import { CONTACT_NUMBER_ERROR, isValidContactNumber, sanitizeContactNumber } from "../../../lib/contactNumber";
 import { LoadingState } from "../../components/vista/PolishedShell";
-import { renderAsync } from "docx-preview";
 
 type ReportingMode = "accommodation" | "visitor" | "both";
 
@@ -146,18 +145,19 @@ export default function Establishments() {
     let cancelled = false;
     const container = docxPreviewRef.current;
     container.innerHTML = "";
-    fetch(permitPreviewAsset.url)
-      .then((response) => {
+    (async () => {
+      try {
+        const [{ renderAsync }, response] = await Promise.all([
+          import("docx-preview"),
+          fetch(permitPreviewAsset.url),
+        ]);
         if (!response.ok) throw new Error("Unable to load the DOCX file");
-        return response.arrayBuffer();
-      })
-      .then((buffer) => {
-        if (!cancelled) return renderAsync(buffer, container);
-        return undefined;
-      })
-      .catch((error) => {
+        const buffer = await response.arrayBuffer();
+        if (!cancelled) await renderAsync(buffer, container);
+      } catch (error) {
         if (!cancelled) container.innerHTML = `<p class="p-6 text-sm text-red-700">${error instanceof Error ? error.message : "Unable to render this DOCX file."}</p>`;
-      });
+      }
+    })();
     return () => {
       cancelled = true;
       container.innerHTML = "";
@@ -168,7 +168,7 @@ export default function Establishments() {
     setLoading(true);
     const { data, error } = await supabase
       .from('establishments')
-      .select('*')
+      .select('id,name,type,dot_classification,address,reporting_mode,ae_id,attraction_code,contact_number,total_rooms,status,business_permit_number,amenities')
       .order('name');
     
     if (error) {
@@ -183,7 +183,7 @@ export default function Establishments() {
   async function fetchUsers() {
     const { data, error } = await supabase
       .from('profiles')
-      .select('*')
+      .select('id,email,full_name,role,establishment_id,status,created_at')
       .order('full_name', { ascending: true });
     
     if (error) {
