@@ -2,11 +2,8 @@ import { useState, useEffect } from "react";
 import { useDominantAxisTableScroll } from "../../../hooks/useDominantAxisTableScroll";
 import {
   FileSpreadsheet,
-  Eye,
   X,
   AlertTriangle,
-  Loader2,
-  Sparkles,
 } from "lucide-react";
 import {
   AreaChart,
@@ -56,64 +53,6 @@ const getReportTypeLabel = (report: Submission) => report.type === "Visitor Repo
 const statusStyles = reportStatusClasses;
 const normalizeStatus = normalizeReportStatus;
 const formatStatus = reportStatusLabel;
-
-type VisitorAggregate = {
-  period: string;
-  visitorTotal: number;
-  submissionCount: number;
-  guestCheckInTotal: number;
-  visitorRecordCount: number;
-  accommodationRecordCount: number;
-  establishmentCount: number;
-};
-
-type AiAdministrativeReport = {
-  overview: string;
-  weekly: string;
-  monthly: string;
-  quarterly: string;
-  yearly: string;
-  followUp: string;
-  narrative?: {
-    status: "generated" | "fallback";
-    executiveSummary: string;
-    dayTourAnalysis: string;
-    accommodationAnalysis: string;
-    recommendations: string[];
-    model: string;
-  };
-  source: {
-    dateRange: { startDate: string; endDate: string };
-    visitorRecordCount: number;
-    submissionCount: number;
-    visitorTotal: number;
-    guestCheckInTotal: number;
-    accommodationRecordCount: number;
-    establishmentCount: number;
-    aggregates: Record<string, VisitorAggregate[]>;
-    comparison?: {
-      available: boolean;
-      reason?: string;
-      dateRange?: { startDate: string; endDate: string };
-      visitorTotal?: number;
-      guestCheckInTotal?: number;
-      visitorChange?: { absolute: number; percentage: number | null; label: string };
-      guestCheckInChange?: { absolute: number; percentage: number | null; label: string };
-    };
-    dataQuality?: { isPartialPeriod: boolean; periodCompleteThrough: string; notes: string[] };
-  };
-};
-
-const getIsoWeekKey = (reportDate: string) => {
-  const date = new Date(`${reportDate}T00:00:00Z`);
-  if (Number.isNaN(date.getTime())) return reportDate;
-  const day = date.getUTCDay() || 7;
-  date.setUTCDate(date.getUTCDate() + 4 - day);
-  const year = date.getUTCFullYear();
-  const firstDay = new Date(Date.UTC(year, 0, 1));
-  const week = Math.ceil((((date.getTime() - firstDay.getTime()) / 86400000) + 1) / 7);
-  return `${year}-W${String(week).padStart(2, "0")}`;
-};
 
 interface Submission {
   id: string;
@@ -167,28 +106,12 @@ export default function Reports() {
   const [selectedWeek, setSelectedWeek] = useState("1");
   const [searchTerm, setSearchTerm] = useState("");
 
-  const [establishmentDirectory, setEstablishmentDirectory] = useState<any[]>([]);
   const [submissions, setSubmissions] = useState<Submission[]>([]);
-  const [visitorReports, setVisitorReports] = useState<any[]>([]);
-  const [accommodationReports, setAccommodationReports] = useState<any[]>([]);
   const [selectedSubmission, setSelectedSubmission] = useState<Submission | null>(null);
   const [showDetailModal, setShowDetailModal] = useState(false);
-  const [showAiReportModal, setShowAiReportModal] = useState(false);
-  const [aiReport, setAiReport] = useState<AiAdministrativeReport | null>(null);
-  const [aiReportSaved, setAiReportSaved] = useState(false);
-  const [aiReportLoading, setAiReportLoading] = useState(false);
-  const [aiReportError, setAiReportError] = useState("");
   const [loading, setLoading] = useState(true);
-  const aiReportPeriodKey = [filterType, selectedYear, selectedQuarter, selectedMonth, selectedWeek].join(":");
-  
+
   const [chartData, setChartData] = useState<any[]>([]);
-  const [visitorStats, setVisitorStats] = useState({
-    currentTotal: 0,
-    previousTotal: 0,
-    difference: 0,
-    percentageChange: "0",
-    isIncrease: true,
-  });
 
   const months = [
     "Jan", "Feb", "Mar", "Apr", "May", "Jun",
@@ -226,39 +149,16 @@ export default function Reports() {
       return rows;
     };
 
-    const fetchAllEstablishments = async () => {
-      const rows: any[] = [];
-      const pageSize = 1000;
-      for (let offset = 0; ; offset += pageSize) {
-        const { data, error } = await supabase
-          .from("establishments")
-          .select("id,name,type,dot_classification,reporting_mode,ae_id,attraction_code,total_rooms,status,business_permit_number")
-          .order("name", { ascending: true })
-          .range(offset, offset + pageSize - 1);
-        if (error) throw error;
-        rows.push(...(data || []));
-        if (!data || data.length < pageSize) break;
-      }
-      return rows;
-    };
-
     let visitorData: any[] = [];
     let accommodationData: any[] = [];
     try {
-      const [directory, visitorRows, accommodationRows] = await Promise.all([
-        fetchAllEstablishments(),
+      const [visitorRows, accommodationRows] = await Promise.all([
         fetchAllReports("visitor_reports"),
         fetchAllReports("accommodation_reports"),
       ]);
-      setEstablishmentDirectory(directory);
       visitorData = visitorRows;
       accommodationData = accommodationRows;
-      setVisitorReports(visitorRows);
-      setAccommodationReports(accommodationRows);
     } catch (error) {
-      setEstablishmentDirectory([]);
-      setVisitorReports([]);
-      setAccommodationReports([]);
       console.error("Reports loading error:", error);
       toast.error(`Failed to load reports: ${error instanceof Error ? error.message : "Unknown error"}`);
     }
@@ -436,23 +336,8 @@ export default function Reports() {
         guestCheckIns: grouped[period]?.guestCheckIns || 0,
       }));
       setChartData(chartDataArray);
-      const currentTotal = chartDataArray.reduce((sum, item) => sum + item.dayTourVisitors, 0);
-      setVisitorStats({
-        currentTotal,
-        previousTotal: 0,
-        difference: 0,
-        percentageChange: "N/A",
-        isIncrease: true,
-      });
     } else {
       setChartData([]);
-      setVisitorStats({
-        currentTotal: 0,
-        previousTotal: 0,
-        difference: 0,
-        percentageChange: "0",
-        isIncrease: true,
-      });
     }
   };
 
@@ -464,35 +349,6 @@ export default function Reports() {
     fetchChartData();
   }, [filterType, selectedYear, selectedQuarter, selectedMonth, selectedWeek]);
 
-  useEffect(() => {
-    let cancelled = false;
-    const loadSavedAiReport = async () => {
-      if (loading) return;
-      setAiReport(null);
-      setAiReportSaved(false);
-      setAiReportError("");
-      try {
-        const { data: { session } } = await supabase.auth.getSession();
-        if (!session?.access_token) return;
-        const response = await fetch("/api/generate-administrative-report", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${session.access_token}`,
-          },
-          body: JSON.stringify({ action: "get", periodKey: aiReportPeriodKey }),
-        });
-        const result = await response.json().catch(() => ({}));
-        if (!response.ok || cancelled || !result.cached?.report) return;
-        setAiReport(result.cached.report);
-        setAiReportSaved(true);
-      } catch (error) {
-        if (!cancelled) console.error("Unable to load saved AI report:", error);
-      }
-    };
-    void loadSavedAiReport();
-    return () => { cancelled = true; };
-  }, [loading, aiReportPeriodKey]);
 
   const handleExport = async () => {
     try {
@@ -604,41 +460,6 @@ export default function Reports() {
     setSelectedSubmission(submission);
     setShowDetailModal(true);
   };
-
-  const handleGenerateAiReport = async (forceRegenerate = false) => {
-    if (aiReportLoading) return;
-    setAiReportLoading(true);
-    setAiReportError("");
-    try {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session?.access_token) throw new Error("Your officer session has expired. Please sign in again.");
-      const { startDate, endDate } = getReportRange();
-      const response = await fetch("/api/generate-administrative-report", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${session.access_token}`,
-        },
-        body: JSON.stringify({
-          periodKey: aiReportPeriodKey,
-          periodLabel: getFilterLabel(),
-          forceRegenerate,
-          startDate,
-          endDate,
-        }),
-      });
-      const result = await response.json().catch(() => ({}));
-      if (!response.ok || !result.report) throw new Error(result.error || "Unable to create the AI report.");
-      setAiReport(result.report);
-      setAiReportSaved(Boolean(result.cached || result.saved));
-      setShowAiReportModal(true);
-    } catch (error) {
-      setAiReportError(error instanceof Error ? error.message : "Unable to create the AI report.");
-    } finally {
-      setAiReportLoading(false);
-    }
-  };
-
 
   // Get filter label for display
   const getFilterLabel = () => {
@@ -805,21 +626,6 @@ export default function Reports() {
             className="col-span-1 flex w-full items-center justify-center gap-2 rounded-xl bg-green-600 px-3 py-2 text-sm text-white hover:bg-green-700 sm:col-span-1 sm:w-auto sm:px-4"
           >
             <FileSpreadsheet className="h-4 w-4" /> Export
-          </button>
-          <button
-            type="button"
-            onClick={() => {
-              if (aiReportSaved && aiReport) {
-                setShowAiReportModal(true);
-              } else {
-                void handleGenerateAiReport();
-              }
-            }}
-            disabled={aiReportLoading || loading || visitorReports.length === 0}
-            className="col-span-1 flex w-full items-center justify-center gap-2 rounded-xl bg-[#193364] px-3 py-2 text-sm text-white hover:bg-[#27477D] disabled:cursor-not-allowed disabled:opacity-60 sm:col-span-1 sm:w-auto sm:px-4"
-          >
-            {aiReportLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Sparkles className="h-4 w-4" />}
-            {aiReportLoading ? "Generating..." : aiReportSaved ? "View saved AI report" : "Generate AI report"}
           </button>
         </div>
       </div>
@@ -1038,73 +844,6 @@ export default function Reports() {
           </div>
         </div>
       )}
-      {showAiReportModal && aiReport && (
-        <div className="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto bg-[#193364]/35 p-3 backdrop-blur-[3px] sm:items-center sm:p-4" role="presentation" onMouseDown={(event) => { if (event.target === event.currentTarget) setShowAiReportModal(false); }}>
-          <div className="my-0 flex max-h-[calc(100dvh-1.5rem)] min-h-0 w-full max-w-3xl flex-col overflow-hidden rounded-[1.5rem] border border-white/50 bg-[#E0E5EC] text-[#193364] shadow-[18px_18px_36px_rgba(163,177,198,0.62),-12px_-12px_30px_rgba(255,255,255,0.76)] sm:my-4 sm:max-h-[90vh] sm:rounded-[2rem]" role="dialog" aria-modal="true" aria-labelledby="ai-administrative-report-title">
-            <div className="flex items-start justify-between gap-4 border-b border-[#c7ced8]/70 px-5 py-5 sm:px-7 sm:py-6">
-              <div className="min-w-0">
-                <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-[#0E5A72]">Decision support</p>
-                <h2 id="ai-administrative-report-title" className="mt-1 text-xl font-bold text-[#193364] sm:text-2xl">AI Administrative Report</h2>
-                <p className="mt-1 text-sm font-medium text-[#64748b]">Aggregated submitted visitor and accommodation data for {getFilterLabel()}</p>
-              </div>
-              <button type="button" onClick={() => setShowAiReportModal(false)} className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[#E0E5EC] text-[#193364] shadow-[inset_4px_4px_8px_rgba(163,177,198,0.42),inset_-4px_-4px_8px_rgba(255,255,255,0.78)]" aria-label="Close AI administrative report"><X className="h-5 w-5" /></button>
-            </div>
-            <div className="min-h-0 flex-1 space-y-4 overflow-y-auto overscroll-contain px-5 py-5 [-webkit-overflow-scrolling:touch] sm:px-7 sm:py-6">
-              <section className="rounded-2xl border border-[#0E5A72]/20 bg-[#d7eef2]/60 p-4"><h3 className="text-sm font-bold text-[#193364]">System-verified source totals</h3><p className="mt-1 text-xs leading-5 text-[#475569]">Recalculated by the server from submitted visitor and accommodation records. A visitor submission can contain multiple residence-category rows. Groups are reconstructed from establishment, date, group/name, and batch timestamp because legacy rows do not contain a shared submission ID.</p><div className="mt-3 grid grid-cols-2 gap-2 sm:grid-cols-6"><div><p className="text-[10px] font-semibold uppercase text-[#64748b]">Source records</p><p className="text-lg font-bold text-[#193364]">{aiReport.source.visitorRecordCount.toLocaleString()}</p></div><div><p className="text-[10px] font-semibold uppercase text-[#64748b]">Submission groups</p><p className="text-lg font-bold text-[#193364]">{aiReport.source.submissionCount.toLocaleString()}</p></div><div><p className="text-[10px] font-semibold uppercase text-[#64748b]">Visitors</p><p className="text-lg font-bold text-[#193364]">{aiReport.source.visitorTotal.toLocaleString()}</p></div><div><p className="text-[10px] font-semibold uppercase text-[#64748b]">Guest check-ins</p><p className="text-lg font-bold text-[#193364]">{aiReport.source.guestCheckInTotal.toLocaleString()}</p></div><div><p className="text-[10px] font-semibold uppercase text-[#64748b]">Establishments</p><p className="text-lg font-bold text-[#193364]">{aiReport.source.establishmentCount.toLocaleString()}</p></div><div><p className="text-[10px] font-semibold uppercase text-[#64748b]">Date range</p><p className="text-xs font-bold text-[#193364]">{aiReport.source.dateRange.startDate} to {aiReport.source.dateRange.endDate}</p></div></div><div className="mt-4 space-y-2">{Object.entries(aiReport.source.aggregates).map(([periodType, rows]) => <div key={periodType} className="rounded-xl bg-white/45 p-2.5"><p className="text-xs font-bold capitalize text-[#193364]">{periodType}</p>{(rows as VisitorAggregate[]).map((row) => <p key={row.period} className="mt-1 text-xs text-[#475569]"><span className="font-semibold">{row.period}</span>: {row.visitorTotal.toLocaleString()} visitors · {row.guestCheckInTotal.toLocaleString()} guest check-ins · {row.visitorRecordCount.toLocaleString()} visitor records · {row.accommodationRecordCount.toLocaleString()} accommodation records · {row.submissionCount.toLocaleString()} submission groups · {row.establishmentCount.toLocaleString()} establishments</p>)}</div>)}</div></section>
-              {aiReport.source.dataQuality?.isPartialPeriod && <section className="rounded-2xl border border-amber-300/70 bg-amber-50 p-4 text-amber-900"><h3 className="text-sm font-bold">Data-quality warning</h3><p className="mt-1 text-sm leading-5">This period extends beyond the current Asia/Manila date and is not complete. Source data is verified only through {aiReport.source.dataQuality.periodCompleteThrough}.</p></section>}
-              {aiReport.source.comparison && <section className="rounded-2xl border border-[#c7ced8]/70 bg-[#F5F8FF] p-4"><h3 className="text-sm font-bold text-[#193364]">Comparable previous period</h3>{aiReport.source.comparison.available ? <p className="mt-1 text-sm leading-5 text-[#475569]">Day-tour visits: {aiReport.source.comparison.visitorChange?.label || "N/A"}; accommodation guest arrivals: {aiReport.source.comparison.guestCheckInChange?.label || "N/A"}. Previous period: {aiReport.source.comparison.dateRange?.startDate} to {aiReport.source.comparison.dateRange?.endDate}.</p> : <p className="mt-1 text-sm leading-5 text-[#475569]">{aiReport.source.comparison.reason}</p>}</section>}
-              {aiReport.narrative && <section className="rounded-2xl border border-violet-300/50 bg-violet-50/70 p-4"><div className="flex items-center justify-between gap-3"><h3 className="text-sm font-bold text-[#193364]">AI Executive Insights</h3><span className="text-[10px] font-semibold uppercase tracking-[0.12em] text-violet-700">{aiReport.narrative.status === "generated" ? "AI-assisted" : "Deterministic fallback"}</span></div><p className="mt-2 text-sm leading-6 text-[#334155]">{aiReport.narrative.executiveSummary}</p><div className="mt-3 grid gap-3 sm:grid-cols-2"><div><p className="text-xs font-bold uppercase tracking-[0.1em] text-violet-700">Day-tour activity</p><p className="mt-1 text-sm leading-5 text-[#475569]">{aiReport.narrative.dayTourAnalysis}</p></div><div><p className="text-xs font-bold uppercase tracking-[0.1em] text-violet-700">Accommodation activity</p><p className="mt-1 text-sm leading-5 text-[#475569]">{aiReport.narrative.accommodationAnalysis}</p></div></div><div className="mt-3"><p className="text-xs font-bold uppercase tracking-[0.1em] text-violet-700">Recommendations</p><ul className="mt-1 list-disc space-y-1 pl-5 text-sm leading-5 text-[#475569]">{aiReport.narrative.recommendations.map((recommendation) => <li key={recommendation}>{recommendation}</li>)}</ul></div></section>}
-              {([
-                ["Overview", aiReport.overview],
-                ["Weekly aggregation", aiReport.weekly],
-                ["Monthly aggregation", aiReport.monthly],
-                ["Quarterly aggregation", aiReport.quarterly],
-                ["Yearly aggregation", aiReport.yearly],
-                ["Suggested follow-up", aiReport.followUp],
-              ] as const).map(([title, text]) => (
-                <section key={title} className="rounded-2xl bg-[#E0E5EC] p-4 shadow-[inset_5px_5px_10px_rgba(163,177,198,0.35),inset_-5px_-5px_10px_rgba(255,255,255,0.72)]">
-                  <h3 className="flex items-center gap-2 text-sm font-bold text-[#193364]"><Sparkles className="h-4 w-4 text-[#0E5A72]" />{title}</h3>
-                  <p className="mt-2 whitespace-pre-line text-sm leading-6 text-[#334155]">{text}</p>
-                </section>
-              ))}
-              {aiReport.source.aggregates && (
-                <section className="rounded-2xl bg-[#E0E5EC] p-4 shadow-[inset_5px_5px_10px_rgba(163,177,198,0.35),inset_-5px_-5px_10px_rgba(255,255,255,0.72)]">
-                  <h3 className="flex items-center gap-2 text-sm font-bold text-[#193364]"><FileSpreadsheet className="h-4 w-4 text-[#0E5A72]" />Deterministic visitor aggregation</h3>
-                  <p className="mt-2 text-xs leading-5 text-[#64748b]">These totals are calculated from submitted visitor reports and are shown alongside the AI narrative for verification.</p>
-                  <div className="mt-3 space-y-4">
-                    {([
-                      ["Weekly", aiReport.source.aggregates.weekly],
-                      ["Monthly", aiReport.source.aggregates.monthly],
-                      ["Quarterly", aiReport.source.aggregates.quarterly],
-                      ["Yearly", aiReport.source.aggregates.yearly],
-                    ] as const).map(([title, rows]) => (
-                      <div key={title}>
-                        <h4 className="mb-2 text-xs font-bold uppercase tracking-[0.12em] text-[#0E5A72]">{title}</h4>
-                        {rows.length === 0 ? (
-                          <p className="text-sm text-[#64748b]">No submitted visitor data.</p>
-                        ) : (
-                          <div className="overflow-x-auto rounded-xl border border-[#c7ced8]/70">
-                            <table className="min-w-full text-left text-xs">
-                              <thead className="bg-[#F5F8FF] text-[#64748b]"><tr><th className="px-3 py-2 font-semibold">Period</th><th className="px-3 py-2 font-semibold">Visitors</th><th className="px-3 py-2 font-semibold">Guest check-ins</th><th className="px-3 py-2 font-semibold">Visitor records</th><th className="px-3 py-2 font-semibold">Accommodation records</th><th className="px-3 py-2 font-semibold">Groups</th><th className="px-3 py-2 font-semibold">Establishments</th></tr></thead>
-                                                            <tbody>{rows.map((row) => <tr key={row.period} className="border-t border-[#c7ced8]/60"><td className="whitespace-nowrap px-3 py-2 font-medium text-[#193364]">{row.period}</td><td className="px-3 py-2 text-[#334155]">{row.visitorTotal.toLocaleString()}</td><td className="px-3 py-2 text-[#334155]">{row.guestCheckInTotal.toLocaleString()}</td><td className="px-3 py-2 text-[#334155]">{row.visitorRecordCount.toLocaleString()}</td><td className="px-3 py-2 text-[#334155]">{row.accommodationRecordCount.toLocaleString()}</td><td className="px-3 py-2 text-[#334155]">{row.submissionCount.toLocaleString()}</td><td className="px-3 py-2 text-[#334155]">{row.establishmentCount.toLocaleString()}</td></tr>)}</tbody>
-                            </table>
-                          </div>
-                        )}
-                      </div>
-                    ))}
-                  </div>
-                </section>
-              )}
-              <p className="text-[11px] leading-4 text-[#64748b]">System-generated decision support based on submitted visitor and accommodation records. AI is not the source of truth; verify the displayed source totals before official use.</p>
-            </div>
-            <div className="flex flex-col-reverse gap-3 border-t border-[#c7ced8]/70 px-5 py-5 sm:flex-row sm:items-center sm:justify-end sm:px-7 sm:py-6">
-              <button type="button" onClick={() => { setShowAiReportModal(false); void handleGenerateAiReport(true); }} disabled={aiReportLoading} className="rounded-xl bg-[#E0E5EC] px-5 py-2.5 text-sm font-bold text-[#0E5A72] shadow-[6px_6px_12px_rgba(163,177,198,0.55),-6px_-6px_12px_rgba(255,255,255,0.78)] disabled:cursor-not-allowed disabled:opacity-60">Regenerate</button>
-              <button type="button" onClick={() => setShowAiReportModal(false)} className="rounded-xl bg-[#E0E5EC] px-5 py-2.5 text-sm font-bold text-[#193364] shadow-[6px_6px_12px_rgba(163,177,198,0.55),-6px_-6px_12px_rgba(255,255,255,0.78)]">Close</button>
-            </div>
-          </div>
-        </div>
-      )}
-      {aiReportError && <p className="fixed bottom-5 right-5 z-[70] max-w-sm rounded-xl bg-[#E0E5EC] px-4 py-3 text-sm font-semibold text-[#9a5a18] shadow-lg">{aiReportError}</p>}
     </div>
   );
 }
