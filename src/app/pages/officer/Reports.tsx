@@ -530,6 +530,7 @@ export default function Reports() {
   const totalSubmissions = submittedFilteredReports.length;
   const totalDayTourVisitors = submittedFilteredReports.filter((report) => report.type === "Visitor Report").reduce((sum, report) => sum + report.visitors, 0);
   const totalGuestCheckIns = submittedFilteredReports.filter((report) => report.type === "Accommodation Report").reduce((sum, report) => sum + report.visitors, 0);
+  const totalVisitorsCheckIns = totalDayTourVisitors + totalGuestCheckIns;
   const establishmentsCovered = new Set(submittedFilteredReports.map((report) => report.establishment)).size;
   const topEstablishment = Object.entries(
     submittedFilteredReports.reduce<Record<string, number>>((acc, report) => {
@@ -742,12 +743,8 @@ export default function Reports() {
         </div>
         <div className="mt-4 grid grid-cols-2 gap-3 lg:grid-cols-4">
           <div className="min-w-0 rounded-xl bg-[#E0E5EC] p-4 shadow-[inset_4px_4px_8px_rgba(163,177,198,0.42),inset_-4px_-4px_8px_rgba(255,255,255,0.62)]">
-            <p className="text-[10px] font-bold uppercase tracking-[0.08em] text-slate-500 sm:text-xs">Day-tour visits</p>
-            <p className="mt-2 text-2xl font-black tabular-nums text-[#193364]">{totalDayTourVisitors.toLocaleString()}</p>
-          </div>
-          <div className="min-w-0 rounded-xl bg-[#E0E5EC] p-4 shadow-[inset_4px_4px_8px_rgba(163,177,198,0.42),inset_-4px_-4px_8px_rgba(255,255,255,0.62)]">
-            <p className="text-[10px] font-bold uppercase tracking-[0.08em] text-slate-500 sm:text-xs">Accommodation guest arrivals</p>
-            <p className="mt-2 text-2xl font-black tabular-nums text-[#193364]">{totalGuestCheckIns.toLocaleString()}</p>
+            <p className="text-[10px] font-bold uppercase tracking-[0.08em] text-slate-500 sm:text-xs">Total Visitors / Check-ins</p>
+            <p className="mt-2 text-2xl font-black tabular-nums text-[#193364]">{totalVisitorsCheckIns.toLocaleString()}</p>
           </div>
           <div className="min-w-0 rounded-xl bg-[#E0E5EC] p-4 shadow-[inset_4px_4px_8px_rgba(163,177,198,0.42),inset_-4px_-4px_8px_rgba(255,255,255,0.62)]">
             <p className="text-[10px] font-bold uppercase tracking-[0.08em] text-slate-500 sm:text-xs">Reports Included</p>
@@ -764,7 +761,7 @@ export default function Reports() {
           </div>
         </div>
         <p className="mt-4 rounded-xl bg-[#F5F8FF] px-4 py-3 text-sm leading-6 text-slate-600">
-          {totalSubmissions} submitted reports are included in this selected period. Day-tour visits and accommodation guest arrivals are displayed separately and are not added together as unique tourists.
+          {totalSubmissions} submitted reports are included in this selected period. Total visitors and check-ins combines the verified day-tour visitor and accommodation guest-arrival counts; the underlying report categories remain distinct.
         </p>
       </div>
 
