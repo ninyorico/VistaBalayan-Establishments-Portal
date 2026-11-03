@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
-import { aggregateRows } from './generate-administrative-report.js';
+import { aggregateRows, calculateChange, getDateRangeForPreviousPeriod } from './generate-administrative-report.js';
 
 test('server aggregation preserves visitors and guest check-ins across all periods', () => {
   const result = aggregateRows([
@@ -34,4 +34,12 @@ test('server aggregation preserves visitors and guest check-ins across all perio
   assert.deepEqual(result.yearly, [
     { period: '2026', visitorTotal: 1149, guestCheckInTotal: 18, visitorRecordCount: 6, accommodationRecordCount: 3, submissionCount: 6, establishmentCount: 4 },
   ]);
+});
+
+test('previous period ranges and zero-denominator changes are explicit', () => {
+  assert.deepEqual(getDateRangeForPreviousPeriod('month:2026:11', '2026-11-01', '2026-11-30'), { startDate: '2026-10-01', endDate: '2026-10-31' });
+  assert.deepEqual(getDateRangeForPreviousPeriod('quarter:2026:4', '2026-10-01', '2026-12-31'), { startDate: '2026-07-01', endDate: '2026-09-30' });
+  assert.deepEqual(getDateRangeForPreviousPeriod('year:2026', '2026-01-01', '2026-12-31'), { startDate: '2025-01-01', endDate: '2025-12-31' });
+  assert.deepEqual(calculateChange(61, 0), { absolute: 61, percentage: null, label: 'New activity' });
+  assert.deepEqual(calculateChange(86, 100), { absolute: -14, percentage: -14, label: '-14.0%' });
 });

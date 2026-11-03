@@ -74,6 +74,14 @@ type AiAdministrativeReport = {
   quarterly: string;
   yearly: string;
   followUp: string;
+  narrative?: {
+    status: "generated" | "fallback";
+    executiveSummary: string;
+    dayTourAnalysis: string;
+    accommodationAnalysis: string;
+    recommendations: string[];
+    model: string;
+  };
   source: {
     dateRange: { startDate: string; endDate: string };
     visitorRecordCount: number;
@@ -83,6 +91,16 @@ type AiAdministrativeReport = {
     accommodationRecordCount: number;
     establishmentCount: number;
     aggregates: Record<string, VisitorAggregate[]>;
+    comparison?: {
+      available: boolean;
+      reason?: string;
+      dateRange?: { startDate: string; endDate: string };
+      visitorTotal?: number;
+      guestCheckInTotal?: number;
+      visitorChange?: { absolute: number; percentage: number | null; label: string };
+      guestCheckInChange?: { absolute: number; percentage: number | null; label: string };
+    };
+    dataQuality?: { isPartialPeriod: boolean; periodCompleteThrough: string; notes: string[] };
   };
 };
 
@@ -414,22 +432,17 @@ export default function Reports() {
 
       const chartDataArray = periodOrder.map((period) => ({
         period,
-        visitors: (grouped[period]?.visitors || 0) + (grouped[period]?.guestCheckIns || 0),
         dayTourVisitors: grouped[period]?.visitors || 0,
         guestCheckIns: grouped[period]?.guestCheckIns || 0,
       }));
       setChartData(chartDataArray);
-      
-      const currentTotal = chartDataArray[chartDataArray.length - 1]?.visitors || 0;
-      const previousTotal = chartDataArray[chartDataArray.length - 2]?.visitors || 0;
-      const difference = currentTotal - previousTotal;
-      const percentageChange = previousTotal > 0 ? ((difference / previousTotal) * 100).toFixed(1) : "0";
+      const currentTotal = chartDataArray.reduce((sum, item) => sum + item.dayTourVisitors, 0);
       setVisitorStats({
         currentTotal,
-        previousTotal,
-        difference,
-        percentageChange,
-        isIncrease: difference >= 0,
+        previousTotal: 0,
+        difference: 0,
+        percentageChange: "N/A",
+        isIncrease: true,
       });
     } else {
       setChartData([]);
@@ -662,7 +675,8 @@ export default function Reports() {
 
   const submittedFilteredReports = filteredReports.filter((report) => normalizeStatus(report.status) === "submitted");
   const totalSubmissions = submittedFilteredReports.length;
-  const totalVisitors = submittedFilteredReports.reduce((sum, report) => sum + report.visitors, 0);
+  const totalDayTourVisitors = submittedFilteredReports.filter((report) => report.type === "Visitor Report").reduce((sum, report) => sum + report.visitors, 0);
+  const totalGuestCheckIns = submittedFilteredReports.filter((report) => report.type === "Accommodation Report").reduce((sum, report) => sum + report.visitors, 0);
   const establishmentsCovered = new Set(submittedFilteredReports.map((report) => report.establishment)).size;
   const topEstablishment = Object.entries(
     submittedFilteredReports.reduce<Record<string, number>>((acc, report) => {
@@ -881,8 +895,12 @@ export default function Reports() {
         </div>
         <div className="mt-4 grid grid-cols-2 gap-3 lg:grid-cols-4">
           <div className="min-w-0 rounded-xl bg-[#E0E5EC] p-4 shadow-[inset_4px_4px_8px_rgba(163,177,198,0.42),inset_-4px_-4px_8px_rgba(255,255,255,0.62)]">
-            <p className="text-[10px] font-bold uppercase tracking-[0.08em] text-slate-500 sm:text-xs">Total Visitors / Check-ins</p>
-            <p className="mt-2 text-2xl font-black tabular-nums text-[#193364]">{totalVisitors.toLocaleString()}</p>
+            <p className="text-[10px] font-bold uppercase tracking-[0.08em] text-slate-500 sm:text-xs">Day-tour visits</p>
+            <p className="mt-2 text-2xl font-black tabular-nums text-[#193364]">{totalDayTourVisitors.toLocaleString()}</p>
+          </div>
+          <div className="min-w-0 rounded-xl bg-[#E0E5EC] p-4 shadow-[inset_4px_4px_8px_rgba(163,177,198,0.42),inset_-4px_-4px_8px_rgba(255,255,255,0.62)]">
+            <p className="text-[10px] font-bold uppercase tracking-[0.08em] text-slate-500 sm:text-xs">Accommodation guest arrivals</p>
+            <p className="mt-2 text-2xl font-black tabular-nums text-[#193364]">{totalGuestCheckIns.toLocaleString()}</p>
           </div>
           <div className="min-w-0 rounded-xl bg-[#E0E5EC] p-4 shadow-[inset_4px_4px_8px_rgba(163,177,198,0.42),inset_-4px_-4px_8px_rgba(255,255,255,0.62)]">
             <p className="text-[10px] font-bold uppercase tracking-[0.08em] text-slate-500 sm:text-xs">Reports Included</p>
@@ -895,12 +913,11 @@ export default function Reports() {
           <div className="min-w-0 rounded-xl bg-[#E0E5EC] p-4 shadow-[inset_4px_4px_8px_rgba(163,177,198,0.42),inset_-4px_-4px_8px_rgba(255,255,255,0.62)]">
             <p className="text-[10px] font-bold uppercase tracking-[0.08em] text-slate-500 sm:text-xs">Top Establishment</p>
             <p className="mt-2 truncate text-base font-black text-[#193364] sm:text-lg">{topEstablishment ? topEstablishment[0] : "N/A"}</p>
-            {topEstablishment && <p className="mt-1 text-xs text-slate-500 sm:text-sm">{topEstablishment[1].toLocaleString()} visitors/check-ins</p>}
+            {topEstablishment && <p className="mt-1 text-xs text-slate-500 sm:text-sm">{topEstablishment[1].toLocaleString()} reported activity units</p>}
           </div>
         </div>
-        <p className="mt-4 rounded-xl bg-[#F5F8FF] px-4 py-3 text-sm leading-6 text-slate-600 shadow-sm">
-          {totalSubmissions} submitted reports are included in this selected period.
-          {visitorStats.difference !== 0 && ` The latest chart bucket changed by ${visitorStats.difference.toLocaleString()} visitors/check-ins (${visitorStats.percentageChange}%).`}
+        <p className="mt-4 rounded-xl bg-[#F5F8FF] px-4 py-3 text-sm leading-6 text-slate-600">
+          {totalSubmissions} submitted reports are included in this selected period. Day-tour visits and accommodation guest arrivals are displayed separately and are not added together as unique tourists.
         </p>
       </div>
 
@@ -1028,12 +1045,15 @@ export default function Reports() {
               <div className="min-w-0">
                 <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-[#0E5A72]">Decision support</p>
                 <h2 id="ai-administrative-report-title" className="mt-1 text-xl font-bold text-[#193364] sm:text-2xl">AI Administrative Report</h2>
-                <p className="mt-1 text-sm font-medium text-[#64748b]">Aggregated submitted visitor data for {getFilterLabel()}</p>
+                <p className="mt-1 text-sm font-medium text-[#64748b]">Aggregated submitted visitor and accommodation data for {getFilterLabel()}</p>
               </div>
               <button type="button" onClick={() => setShowAiReportModal(false)} className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[#E0E5EC] text-[#193364] shadow-[inset_4px_4px_8px_rgba(163,177,198,0.42),inset_-4px_-4px_8px_rgba(255,255,255,0.78)]" aria-label="Close AI administrative report"><X className="h-5 w-5" /></button>
             </div>
             <div className="min-h-0 flex-1 space-y-4 overflow-y-auto overscroll-contain px-5 py-5 [-webkit-overflow-scrolling:touch] sm:px-7 sm:py-6">
-              <section className="rounded-2xl border border-[#0E5A72]/20 bg-[#d7eef2]/60 p-4"><h3 className="text-sm font-bold text-[#193364]">System-verified source totals</h3><p className="mt-1 text-xs leading-5 text-[#475569]">Recalculated by the server from submitted visitor records. A visitor submission can contain multiple residence-category rows. Groups are reconstructed from establishment, date, group/name, and batch timestamp because legacy rows do not contain a shared submission ID.</p><div className="mt-3 grid grid-cols-2 gap-2 sm:grid-cols-6"><div><p className="text-[10px] font-semibold uppercase text-[#64748b]">Source records</p><p className="text-lg font-bold text-[#193364]">{aiReport.source.visitorRecordCount.toLocaleString()}</p></div><div><p className="text-[10px] font-semibold uppercase text-[#64748b]">Submission groups</p><p className="text-lg font-bold text-[#193364]">{aiReport.source.submissionCount.toLocaleString()}</p></div><div><p className="text-[10px] font-semibold uppercase text-[#64748b]">Visitors</p><p className="text-lg font-bold text-[#193364]">{aiReport.source.visitorTotal.toLocaleString()}</p></div><div><p className="text-[10px] font-semibold uppercase text-[#64748b]">Guest check-ins</p><p className="text-lg font-bold text-[#193364]">{aiReport.source.guestCheckInTotal.toLocaleString()}</p></div><div><p className="text-[10px] font-semibold uppercase text-[#64748b]">Establishments</p><p className="text-lg font-bold text-[#193364]">{aiReport.source.establishmentCount.toLocaleString()}</p></div><div><p className="text-[10px] font-semibold uppercase text-[#64748b]">Date range</p><p className="text-xs font-bold text-[#193364]">{aiReport.source.dateRange.startDate} to {aiReport.source.dateRange.endDate}</p></div></div><div className="mt-4 space-y-2">{Object.entries(aiReport.source.aggregates).map(([periodType, rows]) => <div key={periodType} className="rounded-xl bg-white/45 p-2.5"><p className="text-xs font-bold capitalize text-[#193364]">{periodType}</p>{(rows as VisitorAggregate[]).map((row) => <p key={row.period} className="mt-1 text-xs text-[#475569]"><span className="font-semibold">{row.period}</span>: {row.visitorTotal.toLocaleString()} visitors · {row.guestCheckInTotal.toLocaleString()} guest check-ins · {row.visitorRecordCount.toLocaleString()} visitor records · {row.accommodationRecordCount.toLocaleString()} accommodation records · {row.submissionCount.toLocaleString()} submission groups · {row.establishmentCount.toLocaleString()} establishments</p>)}</div>)}</div></section>
+              <section className="rounded-2xl border border-[#0E5A72]/20 bg-[#d7eef2]/60 p-4"><h3 className="text-sm font-bold text-[#193364]">System-verified source totals</h3><p className="mt-1 text-xs leading-5 text-[#475569]">Recalculated by the server from submitted visitor and accommodation records. A visitor submission can contain multiple residence-category rows. Groups are reconstructed from establishment, date, group/name, and batch timestamp because legacy rows do not contain a shared submission ID.</p><div className="mt-3 grid grid-cols-2 gap-2 sm:grid-cols-6"><div><p className="text-[10px] font-semibold uppercase text-[#64748b]">Source records</p><p className="text-lg font-bold text-[#193364]">{aiReport.source.visitorRecordCount.toLocaleString()}</p></div><div><p className="text-[10px] font-semibold uppercase text-[#64748b]">Submission groups</p><p className="text-lg font-bold text-[#193364]">{aiReport.source.submissionCount.toLocaleString()}</p></div><div><p className="text-[10px] font-semibold uppercase text-[#64748b]">Visitors</p><p className="text-lg font-bold text-[#193364]">{aiReport.source.visitorTotal.toLocaleString()}</p></div><div><p className="text-[10px] font-semibold uppercase text-[#64748b]">Guest check-ins</p><p className="text-lg font-bold text-[#193364]">{aiReport.source.guestCheckInTotal.toLocaleString()}</p></div><div><p className="text-[10px] font-semibold uppercase text-[#64748b]">Establishments</p><p className="text-lg font-bold text-[#193364]">{aiReport.source.establishmentCount.toLocaleString()}</p></div><div><p className="text-[10px] font-semibold uppercase text-[#64748b]">Date range</p><p className="text-xs font-bold text-[#193364]">{aiReport.source.dateRange.startDate} to {aiReport.source.dateRange.endDate}</p></div></div><div className="mt-4 space-y-2">{Object.entries(aiReport.source.aggregates).map(([periodType, rows]) => <div key={periodType} className="rounded-xl bg-white/45 p-2.5"><p className="text-xs font-bold capitalize text-[#193364]">{periodType}</p>{(rows as VisitorAggregate[]).map((row) => <p key={row.period} className="mt-1 text-xs text-[#475569]"><span className="font-semibold">{row.period}</span>: {row.visitorTotal.toLocaleString()} visitors · {row.guestCheckInTotal.toLocaleString()} guest check-ins · {row.visitorRecordCount.toLocaleString()} visitor records · {row.accommodationRecordCount.toLocaleString()} accommodation records · {row.submissionCount.toLocaleString()} submission groups · {row.establishmentCount.toLocaleString()} establishments</p>)}</div>)}</div></section>
+              {aiReport.source.dataQuality?.isPartialPeriod && <section className="rounded-2xl border border-amber-300/70 bg-amber-50 p-4 text-amber-900"><h3 className="text-sm font-bold">Data-quality warning</h3><p className="mt-1 text-sm leading-5">This period extends beyond the current Asia/Manila date and is not complete. Source data is verified only through {aiReport.source.dataQuality.periodCompleteThrough}.</p></section>}
+              {aiReport.source.comparison && <section className="rounded-2xl border border-[#c7ced8]/70 bg-[#F5F8FF] p-4"><h3 className="text-sm font-bold text-[#193364]">Comparable previous period</h3>{aiReport.source.comparison.available ? <p className="mt-1 text-sm leading-5 text-[#475569]">Day-tour visits: {aiReport.source.comparison.visitorChange?.label || "N/A"}; accommodation guest arrivals: {aiReport.source.comparison.guestCheckInChange?.label || "N/A"}. Previous period: {aiReport.source.comparison.dateRange?.startDate} to {aiReport.source.comparison.dateRange?.endDate}.</p> : <p className="mt-1 text-sm leading-5 text-[#475569]">{aiReport.source.comparison.reason}</p>}</section>}
+              {aiReport.narrative && <section className="rounded-2xl border border-violet-300/50 bg-violet-50/70 p-4"><div className="flex items-center justify-between gap-3"><h3 className="text-sm font-bold text-[#193364]">AI Executive Insights</h3><span className="text-[10px] font-semibold uppercase tracking-[0.12em] text-violet-700">{aiReport.narrative.status === "generated" ? "AI-assisted" : "Deterministic fallback"}</span></div><p className="mt-2 text-sm leading-6 text-[#334155]">{aiReport.narrative.executiveSummary}</p><div className="mt-3 grid gap-3 sm:grid-cols-2"><div><p className="text-xs font-bold uppercase tracking-[0.1em] text-violet-700">Day-tour activity</p><p className="mt-1 text-sm leading-5 text-[#475569]">{aiReport.narrative.dayTourAnalysis}</p></div><div><p className="text-xs font-bold uppercase tracking-[0.1em] text-violet-700">Accommodation activity</p><p className="mt-1 text-sm leading-5 text-[#475569]">{aiReport.narrative.accommodationAnalysis}</p></div></div><div className="mt-3"><p className="text-xs font-bold uppercase tracking-[0.1em] text-violet-700">Recommendations</p><ul className="mt-1 list-disc space-y-1 pl-5 text-sm leading-5 text-[#475569]">{aiReport.narrative.recommendations.map((recommendation) => <li key={recommendation}>{recommendation}</li>)}</ul></div></section>}
               {([
                 ["Overview", aiReport.overview],
                 ["Weekly aggregation", aiReport.weekly],
@@ -1075,7 +1095,7 @@ export default function Reports() {
                   </div>
                 </section>
               )}
-              <p className="text-[11px] leading-4 text-[#64748b]">AI-generated decision support based on the selected period’s submitted visitor records. Verify source totals before official use.</p>
+              <p className="text-[11px] leading-4 text-[#64748b]">System-generated decision support based on submitted visitor and accommodation records. AI is not the source of truth; verify the displayed source totals before official use.</p>
             </div>
             <div className="flex flex-col-reverse gap-3 border-t border-[#c7ced8]/70 px-5 py-5 sm:flex-row sm:items-center sm:justify-end sm:px-7 sm:py-6">
               <button type="button" onClick={() => { setShowAiReportModal(false); void handleGenerateAiReport(true); }} disabled={aiReportLoading} className="rounded-xl bg-[#E0E5EC] px-5 py-2.5 text-sm font-bold text-[#0E5A72] shadow-[6px_6px_12px_rgba(163,177,198,0.55),-6px_-6px_12px_rgba(255,255,255,0.78)] disabled:cursor-not-allowed disabled:opacity-60">Regenerate</button>
