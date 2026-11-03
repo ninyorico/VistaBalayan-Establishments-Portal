@@ -111,13 +111,13 @@ function AdministrativeReportExportPreview({ report }: { report: any }) {
   const formatChange = (value: unknown) => value === null || value === undefined ? "Unavailable" : `${Number(value) >= 0 ? "+" : ""}${Number(value).toFixed(1)}%`;
   return (
     <div className="space-y-5 text-sm leading-6">
-      <div className="rounded-2xl bg-[#F5F8FF] p-4">
+      <div className="rounded-2xl bg-[#F5F8FF] p-3">
         <p className="text-xs font-bold uppercase tracking-wide text-[#64748b]">Report metadata</p>
-        <dl className="mt-3 grid gap-2 sm:grid-cols-2">
-          <div><dt className="text-xs text-[#64748b]">Title</dt><dd className="font-bold">{report.title}</dd></div>
-          <div><dt className="text-xs text-[#64748b]">Reporting period</dt><dd className="font-bold">{report.periodLabel}</dd></div>
-          <div><dt className="text-xs text-[#64748b]">Status</dt><dd className="font-bold">{report.status}</dd></div>
-          <div><dt className="text-xs text-[#64748b]">Date generated</dt><dd className="font-bold">{report.generatedAt ? new Date(report.generatedAt).toLocaleDateString("en-PH") : "Unavailable"}</dd></div>
+        <dl className="mt-2 grid grid-cols-2 gap-x-4 gap-y-2">
+          <div className="col-span-2 min-w-0"><dt className="text-[11px] text-[#64748b]">Title</dt><dd className="truncate font-bold" title={report.title}>{report.title}</dd></div>
+          <div className="min-w-0"><dt className="text-[11px] text-[#64748b]">Reporting period</dt><dd className="truncate font-bold" title={report.periodLabel}>{report.periodLabel}</dd></div>
+          <div><dt className="text-[11px] text-[#64748b]">Status</dt><dd className="font-bold">{report.status}</dd></div>
+          <div><dt className="text-[11px] text-[#64748b]">Date generated</dt><dd className="font-bold">{report.generatedAt ? new Date(report.generatedAt).toLocaleDateString("en-PH") : "Unavailable"}</dd></div>
         </dl>
       </div>
       <section className="rounded-2xl bg-[#F5F8FF] p-4"><h4 className="font-bold text-[#193364]">I. Executive Summary</h4><p className="mt-2 whitespace-pre-wrap">{summary}</p></section>
@@ -864,9 +864,9 @@ export default function Reports() {
 
       {showAdministrativeReport && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-[#193364]/35 p-4 backdrop-blur-[3px]" role="presentation" onMouseDown={(event) => { if (event.target === event.currentTarget) setShowAdministrativeReport(false); }}>
-          <div className="max-h-[92vh] w-full max-w-4xl overflow-y-auto rounded-[2rem] border border-white/50 bg-[#E0E5EC] text-[#193364] shadow-[18px_18px_36px_rgba(163,177,198,0.62),-12px_-12px_30px_rgba(255,255,255,0.76)]" role="dialog" aria-modal="true" aria-labelledby="administrative-report-title">
-            <div className="flex items-start justify-between gap-4 border-b border-[#c7ced8]/70 px-5 py-5 sm:px-7 sm:py-6">
-              <div><p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-[#0E5A72]">AI Administrative Reports</p><h2 id="administrative-report-title" className="mt-1 text-xl font-bold sm:text-2xl">Generated tourism report</h2><p className="mt-1 text-sm text-[#64748b]">Showing the report for the active Reports filter. Saved reports remain unchanged until you regenerate them.</p></div>
+          <div className="max-h-[92vh] w-full max-w-4xl overflow-y-auto overscroll-contain rounded-[2rem] border border-white/50 bg-[#E0E5EC] text-[#193364] shadow-[18px_18px_36px_rgba(163,177,198,0.62),-12px_-12px_30px_rgba(255,255,255,0.76)]" role="dialog" aria-modal="true" aria-labelledby="administrative-report-title">
+            <div className="sticky top-0 z-30 flex items-start justify-between gap-4 border-b border-[#c7ced8]/70 bg-[#E0E5EC]/95 px-5 py-4 backdrop-blur-sm sm:px-7 sm:py-5">
+              <div><p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-[#0E5A72]">AI Administrative Reports</p><h2 id="administrative-report-title" className="mt-1 text-xl font-bold sm:text-2xl">Generated tourism report</h2></div>
               <button type="button" onClick={() => setShowAdministrativeReport(false)} className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[#E0E5EC] shadow-[inset_4px_4px_8px_rgba(163,177,198,0.42),inset_-4px_-4px_8px_rgba(255,255,255,0.78)]" aria-label="Close administrative reports"><X className="h-5 w-5" /></button>
             </div>
             <div className="space-y-5 px-5 py-5 sm:px-7 sm:py-6">
