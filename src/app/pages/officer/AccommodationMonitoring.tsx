@@ -302,7 +302,11 @@ export default function AccommodationMonitoring({ embedded = false }: { embedded
         ),
         avgGuestsPerRoom: group.occupiedRooms > 0 ? group.guestNights / group.occupiedRooms : 0,
       }))
-      .sort((a, b) => a.establishment.localeCompare(b.establishment));
+      .sort((a, b) => {
+        const left = a.establishment.normalize("NFKC").replace(/[\u200B-\u200D\uFEFF]/g, "").trim().toLocaleLowerCase("en-US");
+        const right = b.establishment.normalize("NFKC").replace(/[\u200B-\u200D\uFEFF]/g, "").trim().toLocaleLowerCase("en-US");
+        return left < right ? -1 : left > right ? 1 : 0;
+      });
   }, [filteredRecords]);
 
   const toggleEstablishment = (key: string) => {

@@ -149,7 +149,11 @@ export default function VisitorMonitoring({ embedded = false }: { embedded?: boo
         ...group,
         records: [...group.records].sort((a, b) => b.date.localeCompare(a.date)),
       }))
-      .sort((a, b) => a.establishment.localeCompare(b.establishment));
+      .sort((a, b) => {
+        const left = a.establishment.normalize("NFKC").replace(/[\u200B-\u200D\uFEFF]/g, "").trim().toLocaleLowerCase("en-US");
+        const right = b.establishment.normalize("NFKC").replace(/[\u200B-\u200D\uFEFF]/g, "").trim().toLocaleLowerCase("en-US");
+        return left < right ? -1 : left > right ? 1 : 0;
+      });
   }, [filteredRecords]);
 
   const selectedGroup = useMemo(
