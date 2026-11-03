@@ -5,6 +5,8 @@ import {
   Eye,
   X,
   AlertTriangle,
+  Loader2,
+  Sparkles,
 } from "lucide-react";
 import {
   AreaChart,
@@ -54,6 +56,27 @@ const getReportTypeLabel = (report: Submission) => report.type === "Visitor Repo
 const statusStyles = reportStatusClasses;
 const normalizeStatus = normalizeReportStatus;
 const formatStatus = reportStatusLabel;
+
+const AI_REPORT_DETAIL_KEYS = [
+  "total_guests",
+  "total_male",
+  "total_female",
+  "total_rooms",
+  "total_occupied_rooms",
+  "total_check_ins",
+  "total_guest_nights",
+  "guest_check_ins",
+  "foreign_guest_check_ins",
+  "foreign_guest_nights",
+  "residence_type",
+] as const;
+
+const getAiReportMetrics = (details: any) => Object.fromEntries(
+  AI_REPORT_DETAIL_KEYS
+    .filter((key) => details?.[key] !== undefined && details?.[key] !== null)
+    .map((key) => [key, typeof details[key] === "number" || typeof details[key] === "string" ? details[key] : undefined])
+    .filter((entry): entry is [string, string | number] => entry[1] !== undefined)
+);
 
 interface Submission {
   id: string;
@@ -113,6 +136,9 @@ export default function Reports() {
   const [accommodationReports, setAccommodationReports] = useState<any[]>([]);
   const [selectedSubmission, setSelectedSubmission] = useState<Submission | null>(null);
   const [showDetailModal, setShowDetailModal] = useState(false);
+  const [reportAssessment, setReportAssessment] = useState("");
+  const [reportAssessmentLoading, setReportAssessmentLoading] = useState(false);
+  const [reportAssessmentError, setReportAssessmentError] = useState("");
   const [loading, setLoading] = useState(true);
   
   const [chartData, setChartData] = useState<any[]>([]);
@@ -511,7 +537,46 @@ export default function Reports() {
 
   const handleViewDetails = (submission: Submission) => {
     setSelectedSubmission(submission);
+    setReportAssessment("");
+    setReportAssessmentError("");
     setShowDetailModal(true);
+  };
+
+  const handleGenerateReportAssessment = async () => {
+    if (!selectedSubmission || reportAssessmentLoading) return;
+    setReportAssessmentLoading(true);
+    setReportAssessmentError("");
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session?.access_token) throw new Error("Your officer session has expired. Please sign in again.");
+      const response = await fetch("/api/explain-report", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${session.access_token}`,
+        },
+        body: JSON.stringify({
+          report: {
+            id: selectedSubmission.id,
+            establishment: selectedSubmission.establishment,
+            type: selectedSubmission.type,
+            reportDate: selectedSubmission.reportDate,
+            submitted: selectedSubmission.submitted,
+            visitors: selectedSubmission.visitors,
+            status: selectedSubmission.status,
+            notes: selectedSubmission.notes,
+            metrics: getAiReportMetrics(selectedSubmission.details),
+          },
+        }),
+      });
+      const result = await response.json().catch(() => ({}));
+      if (!response.ok || typeof result.assessment !== "string") throw new Error(result.error || "Unable to create an AI assessment.");
+      setReportAssessment(result.assessment);
+    } catch (error) {
+      setReportAssessmentError(error instanceof Error ? error.message : "Unable to create an AI assessment.");
+    } finally {
+      setReportAssessmentLoading(false);
+    }
   };
 
 
@@ -878,6 +943,24 @@ export default function Reports() {
                   <p className="text-xs font-semibold uppercase tracking-wide text-[#64748b]">Status</p>
                   <span className={`mt-2 inline-flex rounded-full px-3 py-1 text-xs font-bold shadow-[3px_3px_6px_rgba(163,177,198,0.38),-3px_-3px_6px_rgba(255,255,255,0.7)] ${statusStyles[normalizeStatus(selectedSubmission.status)] || statusStyles.pending}`}>{formatStatus(selectedSubmission.status)}</span>
                 </div>
+              </div>
+              <div className="rounded-2xl border border-[#b9c4d2]/70 bg-[#E0E5EC] p-4 shadow-[inset_5px_5px_10px_rgba(163,177,198,0.35),inset_-5px_-5px_10px_rgba(255,255,255,0.72)]">
+                <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                  <div className="flex items-start gap-3">
+                    <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[#E0E5EC] text-[#0E5A72] shadow-[inset_3px_3px_6px_rgba(163,177,198,0.38),inset_-3px_-3px_6px_rgba(255,255,255,0.72)]"><Sparkles className="h-4 w-4" /></span>
+                    <div>
+                      <p className="font-bold text-[#193364]">AI report assessment</p>
+                      <p className="mt-1 text-xs leading-5 text-[#64748b]">Summarize this report using only its displayed facts. It does not approve or reject the submission.</p>
+                    </div>
+                  </div>
+                  <button type="button" onClick={() => void handleGenerateReportAssessment()} disabled={reportAssessmentLoading} className="inline-flex min-h-10 shrink-0 items-center justify-center gap-2 rounded-xl bg-[#193364] px-4 py-2 text-sm font-bold text-white shadow-[5px_5px_10px_rgba(163,177,198,0.48),-5px_-5px_10px_rgba(255,255,255,0.7)] transition hover:bg-[#27477D] disabled:cursor-wait disabled:opacity-60">
+                    {reportAssessmentLoading && <Loader2 className="h-4 w-4 animate-spin" />}
+                    {reportAssessmentLoading ? "Assessing..." : reportAssessment ? "Refresh assessment" : "Generate assessment"}
+                  </button>
+                </div>
+                {reportAssessment && <p className="mt-4 rounded-xl bg-[#F5F8FF] p-4 text-sm leading-6 text-[#334155]">{reportAssessment}</p>}
+                {reportAssessmentError && <p className="mt-3 text-xs font-medium text-[#9a5a18]">{reportAssessmentError}</p>}
+                <p className="mt-3 text-[11px] leading-4 text-[#64748b]">AI-generated decision support. Verify the source report before taking administrative action.</p>
               </div>
               {selectedSubmission.notes && (
                 <div className="rounded-2xl bg-[#E0E5EC] p-4 text-sm text-[#9a5a18] shadow-[inset_5px_5px_10px_rgba(163,177,198,0.38),inset_-5px_-5px_10px_rgba(255,255,255,0.72)]">
