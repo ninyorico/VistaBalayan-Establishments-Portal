@@ -149,7 +149,6 @@ export default function Reports() {
   const [administrativeReports, setAdministrativeReports] = useState<Record<string, any>>({});
   const [showAdministrativeReport, setShowAdministrativeReport] = useState(false);
   const [administrativeReportLoading, setAdministrativeReportLoading] = useState(false);
-  const [administrativeReportTab, setAdministrativeReportTab] = useState<"week" | "month" | "quarter" | "year">(filterType);
 
   const months = [
     "Jan", "Feb", "Mar", "Apr", "May", "Jun",
@@ -402,7 +401,6 @@ export default function Reports() {
       const result = await response.json().catch(() => ({}));
       if (!response.ok) throw new Error(result.error || "Unable to generate administrative reports.");
       setAdministrativeReports(result.reports || {});
-      setAdministrativeReportTab(filterType);
       setShowAdministrativeReport(true);
       toast.success(forceRegenerate ? "Weekly, monthly, quarterly, and yearly reports regenerated." : "Administrative reports loaded from the saved report bundle.");
     } catch (error) {
@@ -584,7 +582,7 @@ export default function Reports() {
     "July", "August", "September", "October", "November", "December"
   ];
   const reportYears = ["2024", "2025", "2026"];
-  const activeAdministrativeReport = administrativeReports[administrativeReportTab];
+  const activeAdministrativeReport = administrativeReports[filterType];
 
   return (
     <div className="space-y-6">
@@ -872,9 +870,8 @@ export default function Reports() {
               <button type="button" onClick={() => setShowAdministrativeReport(false)} className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[#E0E5EC] shadow-[inset_4px_4px_8px_rgba(163,177,198,0.42),inset_-4px_-4px_8px_rgba(255,255,255,0.78)]" aria-label="Close administrative reports"><X className="h-5 w-5" /></button>
             </div>
             <div className="space-y-5 px-5 py-5 sm:px-7 sm:py-6">
-              <div className="grid grid-cols-4 gap-1 rounded-xl bg-[#cfd6df] p-1">{(["week", "month", "quarter", "year"] as const).map((type) => <button type="button" key={type} onClick={() => setAdministrativeReportTab(type)} className={`rounded-lg px-2 py-2 text-xs font-bold capitalize ${administrativeReportTab === type ? "bg-white text-[#193364] shadow-sm" : "text-[#64748b]"}`}>{type === "year" ? "Yearly" : `${type}ly`}</button>)}</div>
               {activeAdministrativeReport && <div className="flex flex-wrap items-center justify-between gap-3"><div><p className="text-xs font-bold uppercase tracking-wide text-[#64748b]">{activeAdministrativeReport.status}</p><h3 className="mt-1 text-lg font-bold">{activeAdministrativeReport.periodLabel}</h3></div><div className="flex flex-wrap gap-2"><button type="button" onClick={() => exportAdministrativeReportPdf(activeAdministrativeReport)} className="inline-flex items-center gap-2 rounded-xl bg-[#0E5A72] px-3 py-2 text-xs font-bold text-white"><Download className="h-4 w-4" />Export PDF</button><button type="button" disabled={administrativeReportLoading} onClick={() => void handleAdministrativeReports(true)} className="inline-flex items-center gap-2 rounded-xl bg-[#193364] px-3 py-2 text-xs font-bold text-white disabled:opacity-60"><Sparkles className="h-4 w-4" />Regenerate all four</button></div></div>}
-              {activeAdministrativeReport ? <AdministrativeReportExportPreview report={activeAdministrativeReport} /> : <p className="rounded-2xl bg-[#F5F8FF] p-5 text-sm text-[#64748b]">No saved {administrativeReportTab} report exists for this filter yet. Click the button again after selecting the desired filter to generate the four-report bundle.</p>}
+              {activeAdministrativeReport ? <AdministrativeReportExportPreview report={activeAdministrativeReport} /> : <p className="rounded-2xl bg-[#F5F8FF] p-5 text-sm text-[#64748b]">No saved report exists for the current {filterType} filter yet. Click the AI Administrative Reports button again to generate the report bundle.</p>}
             </div>
           </div>
         </div>
