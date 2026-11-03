@@ -4,6 +4,7 @@ import LegalPage from "./pages/LegalPages";
 import OfficerLayout from "./layouts/OfficerLayout";
 import StaffLayout from "./layouts/StaffLayout";
 import { ProtectedRoute } from "./components/ProtectedRoute";
+import { LoadingState } from "./components/vista/PolishedShell";
 import NotFound from "./pages/NotFound";
 
 export const router = createBrowserRouter([
@@ -20,6 +21,7 @@ export const router = createBrowserRouter([
         <OfficerLayout />
       </ProtectedRoute>
     ),
+    HydrateFallback: () => <LoadingState label="Loading officer portal" />,
     children: [
       { index: true, lazy: async () => ({ Component: (await import("./pages/officer/Dashboard")).default }) },
       { path: "establishments", lazy: async () => ({ Component: (await import("./pages/officer/Establishments")).default }) },
@@ -41,6 +43,7 @@ export const router = createBrowserRouter([
         <StaffLayout />
       </ProtectedRoute>
     ),
+    HydrateFallback: () => <LoadingState label="Loading staff portal" />,
     children: [
       { index: true, lazy: async () => ({ Component: (await import("./pages/staff/Dashboard")).default }) },
       {

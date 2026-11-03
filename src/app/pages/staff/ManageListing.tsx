@@ -178,7 +178,7 @@ export default function ManageListing() {
     if (profile?.establishment_id) {
       const { data: est } = await supabase
         .from('establishments')
-        .select('id,name,type,address,contact_number,description,opening_hours,website_url,email,amenities,latitude,longitude,images,status,total_rooms,reporting_mode')
+        .select('id,name,type,address,contact_number,description,opening_hours,website_url,email,amenities,images,status,total_rooms,reporting_mode')
         .eq('id', profile.establishment_id)
         .single()
       
@@ -195,8 +195,8 @@ export default function ManageListing() {
           website_url: est.website_url || '',
           email: est.email || '',
           amenities: stripLocationPin(est.amenities || ''),
-          latitude: toCoordinateInput(est.latitude ?? storedPin?.latitude),
-          longitude: toCoordinateInput(est.longitude ?? storedPin?.longitude),
+          latitude: toCoordinateInput(storedPin?.latitude),
+          longitude: toCoordinateInput(storedPin?.longitude),
         })
         setImages(est.images || [])
       }

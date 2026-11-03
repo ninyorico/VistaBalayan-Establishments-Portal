@@ -227,9 +227,9 @@ const loadProfile = async () => {
       return;
     }
     
-    console.log('=== SUBMIT REPORT DEBUG ===');
-    console.log('Current user ID:', user.id);
-    console.log('Current user email:', user.email);
+
+
+
     
     // Get user profile
     const { data: profileData, error: profileError } = await supabase
@@ -252,8 +252,8 @@ const loadProfile = async () => {
     
     const profile = profileData[0];
     
-    console.log('Profile:', profile);
-    console.log('Establishment ID:', profile?.establishment_id);
+
+
     
     // Also check if establishment exists
     if (profile?.establishment_id) {
@@ -265,7 +265,7 @@ const loadProfile = async () => {
       if (estError) {
         console.error('Establishment fetch error:', estError);
       } else if (establishment && establishment.length > 0) {
-        console.log('Establishment:', establishment[0]);
+
         setEstablishmentName(establishment[0]?.name || 'Your Establishment');
 
         if (!canSubmitVisitorReport(establishment[0])) {
