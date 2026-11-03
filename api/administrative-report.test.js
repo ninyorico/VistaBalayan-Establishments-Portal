@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { aggregateRows, change, previousRange, safeNarrative } from './administrative-report.js';
+import { aggregateRows, bundleRanges, change, previousRange, safeNarrative } from './administrative-report.js';
 
 test('aggregateRows keeps day-tour visits and accommodation check-ins separate', () => {
   const source = aggregateRows(
@@ -24,6 +24,14 @@ test('aggregateRows keeps day-tour visits and accommodation check-ins separate',
   assert.equal(source.daily.find((row) => row.period === '2026-11-03').guestCheckIns, 5);
 });
 
+test('bundleRanges derives the containing week, month, quarter, and year', () => {
+  assert.deepEqual(bundleRanges('2026-11-01'), {
+    week: { start: '2026-10-26', end: '2026-11-01' },
+    month: { start: '2026-11-01', end: '2026-11-30' },
+    quarter: { start: '2026-10-01', end: '2026-12-31' },
+    year: { start: '2026-01-01', end: '2026-12-31' },
+  });
+});
 test('previousRange handles monthly and yearly comparisons', () => {
   assert.deepEqual(previousRange('month', '2026-03-01', '2026-03-31'), { start: '2026-02-01', end: '2026-02-28' });
   assert.deepEqual(previousRange('year', '2026-01-01', '2026-12-31'), { start: '2025-01-01', end: '2025-12-31' });

@@ -7,7 +7,6 @@ import {
   FileText,
   BarChart3,
   Brain,
-  Sparkles,
   Settings,
   LogOut,
   Menu,
@@ -23,7 +22,7 @@ const menuItems = [
   { path: "/officer/review-moderation", icon: MessageSquareWarning, label: "Review Moderation" },
   { path: "/officer/report-monitoring", icon: ClipboardCheck, label: "Report Monitoring" },
   { path: "/officer/reports", icon: FileText, label: "Reports" },
-  { path: "/officer/administrative-reports", icon: Sparkles, label: "AI Administrative Reports" },
+
   { path: "/officer/analytics", icon: BarChart3, label: "Analytics" },
   { path: "/officer/ai-insights", icon: Brain, label: "AI Insights" },
 ];

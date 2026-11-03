@@ -198,6 +198,34 @@ const buildSnapshot = async (supabaseAdmin, range, periodType) => {
   };
 };
 
+const bundleRanges = (anchor) => {
+  const date = dateObject(anchor);
+  const monday = new Date(date);
+  const day = monday.getUTCDay() || 7;
+  monday.setUTCDate(monday.getUTCDate() - day + 1);
+  const sunday = new Date(monday);
+  sunday.setUTCDate(monday.getUTCDate() + 6);
+  const monthStart = new Date(Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), 1));
+  const monthEnd = new Date(Date.UTC(date.getUTCFullYear(), date.getUTCMonth() + 1, 0));
+  const quarterStartMonth = Math.floor(date.getUTCMonth() / 3) * 3;
+  const quarterStart = new Date(Date.UTC(date.getUTCFullYear(), quarterStartMonth, 1));
+  const quarterEnd = new Date(Date.UTC(date.getUTCFullYear(), quarterStartMonth + 3, 0));
+  return {
+    week: { start: isoDate(monday), end: isoDate(sunday) },
+    month: { start: isoDate(monthStart), end: isoDate(monthEnd) },
+    quarter: { start: isoDate(quarterStart), end: isoDate(quarterEnd) },
+    year: { start: `${date.getUTCFullYear()}-01-01`, end: `${date.getUTCFullYear()}-12-31` },
+  };
+};
+const bundlePeriodKey = (type, range) => `bundle:${type}:${range.start}:${range.end}`;
+const bundlePeriodLabel = (type, range) => {
+  const year = range.start.slice(0, 4);
+  if (type === 'week') return `Weekly Report · ${range.start} to ${range.end}`;
+  if (type === 'month') return `Monthly Report · ${range.start.slice(0, 7)}`;
+  if (type === 'quarter') return `Quarterly Report · Q${Math.floor((Number(range.start.slice(5, 7)) - 1) / 3) + 1} ${year}`;
+  return `Annual Report · ${year}`;
+};
+
 const fallbackNarrative = (source) => ({
   status: 'fallback',
   model: 'deterministic-fallback',
@@ -292,7 +320,30 @@ const saveReport = async (supabaseAdmin, periodKey, report, existingId = null) =
   return data.id;
 };
 
-export { aggregateRows, change, getRange, previousRange, safeNarrative };
+const buildAdministrativeBundle = async (supabaseAdmin, profile, body) => {
+  const anchorRange = getRange(body);
+  const ranges = bundleRanges(anchorRange.start);
+  const reports = {};
+  let generatedAny = false;
+  for (const type of ['week', 'month', 'quarter', 'year']) {
+    const range = ranges[type];
+    const periodKey = bundlePeriodKey(type, range);
+    const cached = await readSaved(supabaseAdmin, periodKey);
+    if (cached && body.forceRegenerate !== true) {
+      reports[type] = cached.report;
+      continue;
+    }
+    const source = await buildSnapshot(supabaseAdmin, range, type);
+    const narrative = await generateNarrative(source);
+    generatedAny = true;
+    const report = { title: `${type === 'year' ? 'Annual' : type[0].toUpperCase() + type.slice(1)} Tourism Performance and Administrative Report`, periodLabel: bundlePeriodLabel(type, range), status: 'Draft', generatedBy: profile.full_name || 'Municipal Tourism Officer', source, narrative, recommendations: narrative.recommendations, edits: null, approvalHistory: [] };
+    await saveReport(supabaseAdmin, periodKey, report, cached?.id || null);
+    reports[type] = report;
+  }
+  return { reports, generatedAt: new Date().toISOString(), cached: !generatedAny };
+};
+
+export { aggregateRows, bundleRanges, change, getRange, previousRange, safeNarrative };
 
 export default async function handler(req, res) {
   if (req.method !== 'POST') return sendJson(res, 405, { error: 'Method not allowed' });
@@ -302,6 +353,7 @@ export default async function handler(req, res) {
     if (!rateLimit(auth.userId)) return sendJson(res, 429, { error: 'Too many report requests. Please try again later.' });
     const body = await readBody(req);
     const action = clean(body.action, 'data');
+    if (action === 'bundle') return sendJson(res, 200, await buildAdministrativeBundle(auth.supabaseAdmin, auth.profile, body));
     if (action === 'history') return sendJson(res, 200, { history: await readHistory(auth.supabaseAdmin) });
     const periodKey = clean(body.periodKey);
     if (action === 'get') return sendJson(res, 200, { saved: periodKey ? await readSaved(auth.supabaseAdmin, periodKey) : null });

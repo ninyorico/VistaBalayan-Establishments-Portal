@@ -2,6 +2,9 @@ import { useState, useEffect } from "react";
 import { useDominantAxisTableScroll } from "../../../hooks/useDominantAxisTableScroll";
 import {
   FileSpreadsheet,
+  FileText,
+  Download,
+  Sparkles,
   X,
   AlertTriangle,
 } from "lucide-react";
@@ -18,6 +21,7 @@ import {
 import { toast } from "sonner";
 import { supabase } from "../../../lib/supabase";
 import { downloadOfficialArrivalsWorkbook } from "../../../lib/officialArrivalsExport";
+import { exportAdministrativeReportPdf } from "../../../lib/administrativeReportExport";
 import {
   normalizeReportStatus,
   reportStatusClasses,
@@ -112,6 +116,10 @@ export default function Reports() {
   const [loading, setLoading] = useState(true);
 
   const [chartData, setChartData] = useState<any[]>([]);
+  const [administrativeReports, setAdministrativeReports] = useState<Record<string, any>>({});
+  const [showAdministrativeReport, setShowAdministrativeReport] = useState(false);
+  const [administrativeReportLoading, setAdministrativeReportLoading] = useState(false);
+  const [administrativeReportTab, setAdministrativeReportTab] = useState<"week" | "month" | "quarter" | "year">(filterType);
 
   const months = [
     "Jan", "Feb", "Mar", "Apr", "May", "Jun",
@@ -350,6 +358,30 @@ export default function Reports() {
   }, [filterType, selectedYear, selectedQuarter, selectedMonth, selectedWeek]);
 
 
+  const handleAdministrativeReports = async (forceRegenerate = false) => {
+    setAdministrativeReportLoading(true);
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session?.access_token) throw new Error("Your officer session has expired. Please sign in again.");
+      const { startDate, endDate } = getReportRange();
+      const response = await fetch("/api/administrative-report", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${session.access_token}` },
+        body: JSON.stringify({ action: "bundle", periodType: filterType, startDate, endDate, forceRegenerate }),
+      });
+      const result = await response.json().catch(() => ({}));
+      if (!response.ok) throw new Error(result.error || "Unable to generate administrative reports.");
+      setAdministrativeReports(result.reports || {});
+      setAdministrativeReportTab(filterType);
+      setShowAdministrativeReport(true);
+      toast.success(forceRegenerate ? "Weekly, monthly, quarterly, and yearly reports regenerated." : "Administrative reports loaded from the saved report bundle.");
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Unable to generate administrative reports.");
+    } finally {
+      setAdministrativeReportLoading(false);
+    }
+  };
+
   const handleExport = async () => {
     try {
       const { startDate, endDate } = getReportRange();
@@ -521,6 +553,7 @@ export default function Reports() {
     "July", "August", "September", "October", "November", "December"
   ];
   const reportYears = ["2024", "2025", "2026"];
+  const activeAdministrativeReport = administrativeReports[administrativeReportTab];
 
   return (
     <div className="space-y-6">
@@ -620,6 +653,14 @@ export default function Reports() {
             className={`min-w-0 rounded-xl border border-gray-300 px-3 py-2 text-sm ${filterType === "quarter" || filterType === "week" ? "col-span-1 sm:col-span-1" : "col-span-2 sm:col-span-2"} sm:min-w-[180px] sm:flex-1`}
           />
 
+          <button
+            type="button"
+            onClick={() => void handleAdministrativeReports(false)}
+            disabled={administrativeReportLoading}
+            className="col-span-1 flex w-full items-center justify-center gap-2 rounded-xl bg-[#193364] px-3 py-2 text-sm text-white hover:bg-[#10264c] disabled:cursor-wait disabled:opacity-60 sm:col-span-1 sm:w-auto sm:px-4"
+          >
+            <Sparkles className="h-4 w-4" /> {administrativeReportLoading ? "Loading AI reports…" : "AI Administrative Reports"}
+          </button>
           <button
             type="button"
             onClick={handleExport}
@@ -795,6 +836,21 @@ export default function Reports() {
           )}
         </div>
       </div>
+
+      {showAdministrativeReport && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-[#193364]/35 p-4 backdrop-blur-[3px]" role="presentation" onMouseDown={(event) => { if (event.target === event.currentTarget) setShowAdministrativeReport(false); }}>
+          <div className="max-h-[92vh] w-full max-w-4xl overflow-y-auto rounded-[2rem] border border-white/50 bg-[#E0E5EC] text-[#193364] shadow-[18px_18px_36px_rgba(163,177,198,0.62),-12px_-12px_30px_rgba(255,255,255,0.76)]" role="dialog" aria-modal="true" aria-labelledby="administrative-report-title">
+            <div className="flex items-start justify-between gap-4 border-b border-[#c7ced8]/70 px-5 py-5 sm:px-7 sm:py-6">
+              <div><p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-[#0E5A72]">AI Administrative Reports</p><h2 id="administrative-report-title" className="mt-1 text-xl font-bold sm:text-2xl">Generated tourism reports</h2><p className="mt-1 text-sm text-[#64748b]">The active Reports filter determines the containing week, month, quarter, and year. Saved reports remain unchanged until regeneration.</p></div>
+              <button type="button" onClick={() => setShowAdministrativeReport(false)} className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[#E0E5EC] shadow-[inset_4px_4px_8px_rgba(163,177,198,0.42),inset_-4px_-4px_8px_rgba(255,255,255,0.78)]" aria-label="Close administrative reports"><X className="h-5 w-5" /></button>
+            </div>
+            <div className="space-y-5 px-5 py-5 sm:px-7 sm:py-6">
+              <div className="grid grid-cols-4 gap-1 rounded-xl bg-[#cfd6df] p-1">{(["week", "month", "quarter", "year"] as const).map((type) => <button type="button" key={type} onClick={() => setAdministrativeReportTab(type)} className={`rounded-lg px-2 py-2 text-xs font-bold capitalize ${administrativeReportTab === type ? "bg-white text-[#193364] shadow-sm" : "text-[#64748b]"}`}>{type === "year" ? "Yearly" : `${type}ly`}</button>)}</div>
+              {activeAdministrativeReport ? <div className="space-y-5"><div className="flex flex-wrap items-center justify-between gap-3"><div><p className="text-xs font-bold uppercase tracking-wide text-[#64748b]">{activeAdministrativeReport.status}</p><h3 className="mt-1 text-lg font-bold">{activeAdministrativeReport.periodLabel}</h3></div><div className="flex flex-wrap gap-2"><button type="button" onClick={() => exportAdministrativeReportPdf(activeAdministrativeReport)} className="inline-flex items-center gap-2 rounded-xl bg-[#0E5A72] px-3 py-2 text-xs font-bold text-white"><Download className="h-4 w-4" />Export PDF</button><button type="button" disabled={administrativeReportLoading} onClick={() => void handleAdministrativeReports(true)} className="inline-flex items-center gap-2 rounded-xl bg-[#193364] px-3 py-2 text-xs font-bold text-white disabled:opacity-60"><Sparkles className="h-4 w-4" />Regenerate all four</button></div></div><div className="grid gap-3 sm:grid-cols-2"><div className="rounded-2xl bg-[#F5F8FF] p-4"><p className="text-xs font-bold text-[#64748b]">Day-tour visits</p><p className="mt-1 text-2xl font-black">{Number(activeAdministrativeReport.source.visitorTotal || 0).toLocaleString()}</p><p className="mt-1 text-xs text-[#64748b]">{activeAdministrativeReport.source.comparison.dayTourVisits.label} vs previous comparable period</p></div><div className="rounded-2xl bg-[#F5F8FF] p-4"><p className="text-xs font-bold text-[#64748b]">Accommodation guest arrivals</p><p className="mt-1 text-2xl font-black">{Number(activeAdministrativeReport.source.guestCheckInTotal || 0).toLocaleString()}</p><p className="mt-1 text-xs text-[#64748b]">{activeAdministrativeReport.source.comparison.guestCheckIns.label} vs previous comparable period</p></div></div><div className="rounded-2xl bg-[#F5F8FF] p-4 text-sm leading-6"><p className="font-bold">Executive summary</p><p className="mt-2">{activeAdministrativeReport.edits?.executiveSummary || activeAdministrativeReport.narrative.executiveSummary}</p><p className="mt-4 font-bold">Reporting limitations</p><p className="mt-2 text-[#64748b]">{activeAdministrativeReport.source.completeness.basis}</p>{activeAdministrativeReport.source.dataQuality.notes?.map((note: string) => <p key={note} className="mt-2 text-amber-800">{note}</p>)}</div><div className="rounded-2xl bg-[#F5F8FF] p-4"><p className="font-bold">Administrative recommendations</p><ul className="mt-2 list-disc space-y-2 pl-5 text-sm leading-6">{(activeAdministrativeReport.recommendations || []).map((recommendation: string) => <li key={recommendation}>{recommendation}</li>)}</ul></div></div> : <p className="rounded-2xl bg-[#F5F8FF] p-5 text-sm text-[#64748b]">No saved {administrativeReportTab} report exists for this filter yet. Click the button again after selecting the desired filter to generate the four-report bundle.</p>}
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Review Modal */}
       {showDetailModal && selectedSubmission && (

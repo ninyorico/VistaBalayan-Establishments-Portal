@@ -28,7 +28,7 @@ export const router = createBrowserRouter([
       { path: "visitor-monitoring", element: <Navigate to="/officer/report-monitoring" replace /> },
       { path: "accommodation-monitoring", element: <Navigate to="/officer/report-monitoring" replace /> },
       { path: "reports", lazy: async () => ({ Component: (await import("./pages/officer/Reports")).default }) },
-      { path: "administrative-reports", lazy: async () => ({ Component: (await import("./pages/officer/AdministrativeReports")).default }) },
+
       { path: "analytics", lazy: async () => ({ Component: (await import("./pages/officer/Analytics")).default }) },
       { path: "ai-insights", lazy: async () => ({ Component: (await import("./pages/officer/AIInsights")).default }) },
       { path: "settings", lazy: async () => ({ Component: (await import("./pages/officer/Settings")).default }) },
