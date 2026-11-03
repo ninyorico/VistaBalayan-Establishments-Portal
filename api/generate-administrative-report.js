@@ -54,15 +54,78 @@ const parseJsonObject = (text) => {
   return JSON.parse(match[0]);
 };
 
-const normalizeAggregates = (input) => Object.fromEntries(PERIOD_TYPES.map((periodType) => [
-  periodType,
-  (Array.isArray(input?.[periodType]) ? input[periodType] : []).slice(0, 200).map((row) => ({
-    period: clean(row?.period, 30),
-    visitorTotal: Number.isFinite(Number(row?.visitorTotal)) ? Math.max(0, Number(row.visitorTotal)) : 0,
-    reportCount: Number.isFinite(Number(row?.reportCount)) ? Math.max(0, Number(row.reportCount)) : 0,
-    establishmentCount: Number.isFinite(Number(row?.establishmentCount)) ? Math.max(0, Number(row.establishmentCount)) : 0,
-  })).filter((row) => row.period),
-]));
+const isDate = (value) => /^\d{4}-\d{2}-\d{2}$/.test(value) && !Number.isNaN(Date.parse(`${value}T00:00:00Z`));
+
+const getIsoWeekKey = (reportDate) => {
+  const date = new Date(`${reportDate}T00:00:00Z`);
+  const day = date.getUTCDay() || 7;
+  date.setUTCDate(date.getUTCDate() + 4 - day);
+  const year = date.getUTCFullYear();
+  const firstDay = new Date(Date.UTC(year, 0, 1));
+  const week = Math.ceil((((date.getTime() - firstDay.getTime()) / 86400000) + 1) / 7);
+  return `${year}-W${String(week).padStart(2, '0')}`;
+};
+
+const aggregateRows = (rows) => {
+  const groups = Object.fromEntries(PERIOD_TYPES.map((periodType) => [periodType, new Map()]));
+  rows.forEach((row) => {
+    if (!row?.report_date) return;
+    const date = String(row.report_date).slice(0, 10);
+    const year = date.slice(0, 4);
+    const monthNumber = Number(date.slice(5, 7));
+    const keys = {
+      weekly: getIsoWeekKey(date),
+      monthly: date.slice(0, 7),
+      quarterly: `${year}-Q${Math.floor((monthNumber - 1) / 3) + 1}`,
+      yearly: year,
+    };
+    PERIOD_TYPES.forEach((periodType) => {
+      const key = keys[periodType];
+      const current = groups[periodType].get(key) || { visitorTotal: 0, reportCount: 0, establishments: new Set() };
+      current.visitorTotal += Number(row.total_guests || 0);
+      current.reportCount += 1;
+      if (row.establishment_id) current.establishments.add(String(row.establishment_id));
+      groups[periodType].set(key, current);
+    });
+  });
+  return Object.fromEntries(PERIOD_TYPES.map((periodType) => [
+    periodType,
+    [...groups[periodType].entries()].sort(([a], [b]) => a.localeCompare(b)).map(([period, value]) => ({
+      period,
+      visitorTotal: value.visitorTotal,
+      reportCount: value.reportCount,
+      establishmentCount: value.establishments.size,
+    })),
+  ]));
+};
+
+const loadSourceData = async (supabaseAdmin, startDate, endDate) => {
+  const rows = [];
+  const pageSize = 1000;
+  for (let offset = 0; ; offset += pageSize) {
+    const { data, error } = await supabaseAdmin
+      .from('visitor_reports')
+      .select('report_date,total_guests,establishment_id')
+      .eq('status', 'submitted')
+      .gte('report_date', startDate)
+      .lte('report_date', endDate)
+      .order('report_date', { ascending: true })
+      .range(offset, offset + pageSize - 1);
+    if (error) throw new Error('Unable to load submitted visitor data from the system');
+    rows.push(...(data || []));
+    if (!data || data.length < pageSize) break;
+  }
+  const aggregates = aggregateRows(rows);
+  return {
+    dateRange: { startDate, endDate },
+    submittedReportCount: rows.length,
+    visitorTotal: rows.reduce((sum, row) => sum + Number(row.total_guests || 0), 0),
+    establishmentCount: new Set(rows.map((row) => row.establishment_id).filter(Boolean).map(String)).size,
+    aggregates,
+  };
+};
+
+export { aggregateRows };
 
 const readCachedReport = async (supabaseAdmin, periodKey) => {
   const { data, error } = await supabaseAdmin
@@ -76,16 +139,16 @@ const readCachedReport = async (supabaseAdmin, periodKey) => {
     .maybeSingle();
   if (error) throw error;
   const report = data?.data?.report;
-  if (!report || typeof report !== 'object') return null;
+  if (!report || typeof report !== 'object' || !report.source) return null;
   return { report, generatedAt: data.generated_at, periodKey: data.period };
 };
 
-const saveCachedReport = async (supabaseAdmin, { periodKey, periodLabel, report, modelName, aggregates }) => {
+const saveCachedReport = async (supabaseAdmin, { periodKey, periodLabel, report, modelName, source }) => {
   const payload = {
     report,
     periodLabel,
     modelName,
-    aggregates,
+    source,
   };
   const existing = await readCachedReport(supabaseAdmin, periodKey);
   if (existing) {
@@ -144,23 +207,25 @@ export default async function handler(req, res) {
     const apiKey = process.env.GEMINI_API_KEY;
     if (!apiKey) return sendJson(res, 503, { error: 'AI service is not configured' });
     const periodLabel = clean(body?.periodLabel, 160) || 'the selected period';
-    const aggregates = normalizeAggregates(body?.aggregates);
-    if (!PERIOD_TYPES.some((periodType) => aggregates[periodType].length > 0)) return sendJson(res, 400, { error: 'No submitted visitor data is available for this period.' });
+    const startDate = clean(body?.startDate, 10);
+    const endDate = clean(body?.endDate, 10);
+    if (!isDate(startDate) || !isDate(endDate) || startDate > endDate) return sendJson(res, 400, { error: 'A valid report date range is required.' });
+    const source = await loadSourceData(supabaseAdmin, startDate, endDate);
+    if (source.submittedReportCount === 0) return sendJson(res, 400, { error: 'No submitted visitor data is available for this period.' });
 
-    const prompt = `You are an administrative tourism reporting assistant. Create a detailed report for ${periodLabel} from the supplied deterministic visitor aggregates. Return ONLY valid JSON with exactly these string fields: overview, weekly, monthly, quarterly, yearly, followUp. Each aggregation field must be 2 to 5 sentences and explicitly summarize the available period rows, visitor totals, report counts, and establishment counts. The overview must identify the covered period and total submitted records. Include the supplied totals and period labels when useful. Do not invent values, trends, causes, comparisons, or recommendations unsupported by the aggregates. If a period has no rows, say that no submitted visitor data was available for that aggregation. Do not approve, reject, or evaluate individual establishments. Do not mention AI, prompts, hidden data, or report IDs.\n\nAggregates:\n${JSON.stringify(aggregates)}`;
+const prompt = `You are an administrative tourism reporting assistant. Create a detailed report for ${periodLabel} using ONLY the server-verified source data below. Return ONLY valid JSON with exactly these string fields: overview, weekly, monthly, quarterly, yearly, followUp. Each aggregation field must be 2 to 5 sentences and explicitly summarize only available period rows, visitor totals, report counts, and establishment counts. You may repeat only numbers and period labels present in the source data. Do not calculate new totals or invent values, trends, causes, comparisons, or recommendations. If a period has no rows, say that no submitted visitor data was available for that aggregation. Do not approve, reject, or evaluate individual establishments. Do not mention AI, prompts, hidden data, or report IDs.\n\nServer-verified source data:\n${JSON.stringify(source)}`;
     const result = await generateWithFallback(apiKey, prompt);
     const generated = parseJsonObject(await result.text);
     const report = {
-      overview: normalizeSection(generated.overview, `Aggregated submitted visitor data for ${periodLabel}.`),
+      overview: normalizeSection(generated.overview, `The system verified ${source.submittedReportCount} submitted visitor reports containing ${source.visitorTotal} visitors.`),
       weekly: normalizeSection(generated.weekly, 'No weekly summary was returned.'),
       monthly: normalizeSection(generated.monthly, 'No monthly summary was returned.'),
       quarterly: normalizeSection(generated.quarterly, 'No quarterly summary was returned.'),
       yearly: normalizeSection(generated.yearly, 'No yearly summary was returned.'),
-      followUp: normalizeSection(generated.followUp, 'Verify the displayed totals before official use.'),
-      aggregates,
+      followUp: normalizeSection(generated.followUp, 'Verify the source totals before official use.'),
+      source,
     };
-
-    await saveCachedReport(supabaseAdmin, { periodKey, periodLabel, report, modelName: result.modelName, aggregates });
+    await saveCachedReport(supabaseAdmin, { periodKey, periodLabel, report, modelName: result.modelName, source });
     return sendJson(res, 200, { report, model: result.modelName, cached: false, saved: true, generatedAt: new Date().toISOString() });
   } catch (error) {
     console.error('Administrative AI report failed:', error instanceof Error ? error.message : 'unknown error');

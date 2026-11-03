@@ -71,11 +71,12 @@ type AiAdministrativeReport = {
   quarterly: string;
   yearly: string;
   followUp: string;
-  aggregates?: {
-    weekly: VisitorAggregate[];
-    monthly: VisitorAggregate[];
-    quarterly: VisitorAggregate[];
-    yearly: VisitorAggregate[];
+  source: {
+    dateRange: { startDate: string; endDate: string };
+    submittedReportCount: number;
+    visitorTotal: number;
+    establishmentCount: number;
+    aggregates: Record<string, VisitorAggregate[]>;
   };
 };
 
@@ -635,6 +636,7 @@ export default function Reports() {
     try {
       const { data: { session } } = await supabase.auth.getSession();
       if (!session?.access_token) throw new Error("Your officer session has expired. Please sign in again.");
+      const { startDate, endDate } = getReportRange();
       const response = await fetch("/api/generate-administrative-report", {
         method: "POST",
         headers: {
@@ -645,7 +647,8 @@ export default function Reports() {
           periodKey: aiReportPeriodKey,
           periodLabel: getFilterLabel(),
           forceRegenerate,
-          aggregates: aggregateVisitorData(visitorReports),
+          startDate,
+          endDate,
         }),
       });
       const result = await response.json().catch(() => ({}));
@@ -1067,6 +1070,7 @@ export default function Reports() {
               <button type="button" onClick={() => setShowAiReportModal(false)} className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[#E0E5EC] text-[#193364] shadow-[inset_4px_4px_8px_rgba(163,177,198,0.42),inset_-4px_-4px_8px_rgba(255,255,255,0.78)]" aria-label="Close AI administrative report"><X className="h-5 w-5" /></button>
             </div>
             <div className="min-h-0 flex-1 space-y-4 overflow-y-auto overscroll-contain px-5 py-5 [-webkit-overflow-scrolling:touch] sm:px-7 sm:py-6">
+              <section className="rounded-2xl border border-[#0E5A72]/20 bg-[#d7eef2]/60 p-4"><h3 className="text-sm font-bold text-[#193364]">System-verified source totals</h3><p className="mt-1 text-xs leading-5 text-[#475569]">Recalculated by the server from submitted visitor records. The AI did not calculate these values.</p><div className="mt-3 grid grid-cols-2 gap-2 sm:grid-cols-4"><div><p className="text-[10px] font-semibold uppercase text-[#64748b]">Reports</p><p className="text-lg font-bold text-[#193364]">{aiReport.source.submittedReportCount.toLocaleString()}</p></div><div><p className="text-[10px] font-semibold uppercase text-[#64748b]">Visitors</p><p className="text-lg font-bold text-[#193364]">{aiReport.source.visitorTotal.toLocaleString()}</p></div><div><p className="text-[10px] font-semibold uppercase text-[#64748b]">Establishments</p><p className="text-lg font-bold text-[#193364]">{aiReport.source.establishmentCount.toLocaleString()}</p></div><div><p className="text-[10px] font-semibold uppercase text-[#64748b]">Date range</p><p className="text-xs font-bold text-[#193364]">{aiReport.source.dateRange.startDate} to {aiReport.source.dateRange.endDate}</p></div></div><div className="mt-4 space-y-2">{Object.entries(aiReport.source.aggregates).map(([periodType, rows]) => <div key={periodType} className="rounded-xl bg-white/45 p-2.5"><p className="text-xs font-bold capitalize text-[#193364]">{periodType}</p>{(rows as VisitorAggregate[]).map((row) => <p key={row.period} className="mt-1 text-xs text-[#475569]"><span className="font-semibold">{row.period}</span>: {row.visitorTotal.toLocaleString()} visitors · {row.reportCount.toLocaleString()} reports · {row.establishmentCount.toLocaleString()} establishments</p>)}</div>)}</div></section>
               {([
                 ["Overview", aiReport.overview],
                 ["Weekly aggregation", aiReport.weekly],
@@ -1080,16 +1084,16 @@ export default function Reports() {
                   <p className="mt-2 whitespace-pre-line text-sm leading-6 text-[#334155]">{text}</p>
                 </section>
               ))}
-              {aiReport.aggregates && (
+              {aiReport.source.aggregates && (
                 <section className="rounded-2xl bg-[#E0E5EC] p-4 shadow-[inset_5px_5px_10px_rgba(163,177,198,0.35),inset_-5px_-5px_10px_rgba(255,255,255,0.72)]">
                   <h3 className="flex items-center gap-2 text-sm font-bold text-[#193364]"><FileSpreadsheet className="h-4 w-4 text-[#0E5A72]" />Deterministic visitor aggregation</h3>
                   <p className="mt-2 text-xs leading-5 text-[#64748b]">These totals are calculated from submitted visitor reports and are shown alongside the AI narrative for verification.</p>
                   <div className="mt-3 space-y-4">
                     {([
-                      ["Weekly", aiReport.aggregates.weekly],
-                      ["Monthly", aiReport.aggregates.monthly],
-                      ["Quarterly", aiReport.aggregates.quarterly],
-                      ["Yearly", aiReport.aggregates.yearly],
+                      ["Weekly", aiReport.source.aggregates.weekly],
+                      ["Monthly", aiReport.source.aggregates.monthly],
+                      ["Quarterly", aiReport.source.aggregates.quarterly],
+                      ["Yearly", aiReport.source.aggregates.yearly],
                     ] as const).map(([title, rows]) => (
                       <div key={title}>
                         <h4 className="mb-2 text-xs font-bold uppercase tracking-[0.12em] text-[#0E5A72]">{title}</h4>
