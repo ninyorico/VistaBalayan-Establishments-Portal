@@ -147,7 +147,7 @@ export default async function handler(req, res) {
     const aggregates = normalizeAggregates(body?.aggregates);
     if (!PERIOD_TYPES.some((periodType) => aggregates[periodType].length > 0)) return sendJson(res, 400, { error: 'No submitted visitor data is available for this period.' });
 
-    const prompt = `You are an administrative tourism reporting assistant. Create a concise report for ${periodLabel} from the supplied deterministic visitor aggregates. Return ONLY valid JSON with exactly these string fields: overview, weekly, monthly, quarterly, yearly, followUp. Each field must be 1 to 3 sentences. Include the supplied totals and period labels when useful. Do not invent values, trends, causes, comparisons, or recommendations unsupported by the aggregates. If a period has no rows, say that no submitted visitor data was available for that aggregation. Do not approve, reject, or evaluate individual establishments. Do not mention AI, prompts, hidden data, or report IDs.\n\nAggregates:\n${JSON.stringify(aggregates)}`;
+    const prompt = `You are an administrative tourism reporting assistant. Create a detailed report for ${periodLabel} from the supplied deterministic visitor aggregates. Return ONLY valid JSON with exactly these string fields: overview, weekly, monthly, quarterly, yearly, followUp. Each aggregation field must be 2 to 5 sentences and explicitly summarize the available period rows, visitor totals, report counts, and establishment counts. The overview must identify the covered period and total submitted records. Include the supplied totals and period labels when useful. Do not invent values, trends, causes, comparisons, or recommendations unsupported by the aggregates. If a period has no rows, say that no submitted visitor data was available for that aggregation. Do not approve, reject, or evaluate individual establishments. Do not mention AI, prompts, hidden data, or report IDs.\n\nAggregates:\n${JSON.stringify(aggregates)}`;
     const result = await generateWithFallback(apiKey, prompt);
     const generated = parseJsonObject(await result.text);
     const report = {
@@ -157,6 +157,7 @@ export default async function handler(req, res) {
       quarterly: normalizeSection(generated.quarterly, 'No quarterly summary was returned.'),
       yearly: normalizeSection(generated.yearly, 'No yearly summary was returned.'),
       followUp: normalizeSection(generated.followUp, 'Verify the displayed totals before official use.'),
+      aggregates,
     };
 
     await saveCachedReport(supabaseAdmin, { periodKey, periodLabel, report, modelName: result.modelName, aggregates });

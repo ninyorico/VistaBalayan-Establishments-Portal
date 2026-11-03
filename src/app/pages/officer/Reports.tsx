@@ -71,6 +71,12 @@ type AiAdministrativeReport = {
   quarterly: string;
   yearly: string;
   followUp: string;
+  aggregates?: {
+    weekly: VisitorAggregate[];
+    monthly: VisitorAggregate[];
+    quarterly: VisitorAggregate[];
+    yearly: VisitorAggregate[];
+  };
 };
 
 const getIsoWeekKey = (reportDate: string) => {
@@ -1074,6 +1080,34 @@ export default function Reports() {
                   <p className="mt-2 whitespace-pre-line text-sm leading-6 text-[#334155]">{text}</p>
                 </section>
               ))}
+              {aiReport.aggregates && (
+                <section className="rounded-2xl bg-[#E0E5EC] p-4 shadow-[inset_5px_5px_10px_rgba(163,177,198,0.35),inset_-5px_-5px_10px_rgba(255,255,255,0.72)]">
+                  <h3 className="flex items-center gap-2 text-sm font-bold text-[#193364]"><FileSpreadsheet className="h-4 w-4 text-[#0E5A72]" />Deterministic visitor aggregation</h3>
+                  <p className="mt-2 text-xs leading-5 text-[#64748b]">These totals are calculated from submitted visitor reports and are shown alongside the AI narrative for verification.</p>
+                  <div className="mt-3 space-y-4">
+                    {([
+                      ["Weekly", aiReport.aggregates.weekly],
+                      ["Monthly", aiReport.aggregates.monthly],
+                      ["Quarterly", aiReport.aggregates.quarterly],
+                      ["Yearly", aiReport.aggregates.yearly],
+                    ] as const).map(([title, rows]) => (
+                      <div key={title}>
+                        <h4 className="mb-2 text-xs font-bold uppercase tracking-[0.12em] text-[#0E5A72]">{title}</h4>
+                        {rows.length === 0 ? (
+                          <p className="text-sm text-[#64748b]">No submitted visitor data.</p>
+                        ) : (
+                          <div className="overflow-x-auto rounded-xl border border-[#c7ced8]/70">
+                            <table className="min-w-full text-left text-xs">
+                              <thead className="bg-[#F5F8FF] text-[#64748b]"><tr><th className="px-3 py-2 font-semibold">Period</th><th className="px-3 py-2 font-semibold">Visitors</th><th className="px-3 py-2 font-semibold">Reports</th><th className="px-3 py-2 font-semibold">Establishments</th></tr></thead>
+                              <tbody>{rows.map((row) => <tr key={row.period} className="border-t border-[#c7ced8]/60"><td className="whitespace-nowrap px-3 py-2 font-medium text-[#193364]">{row.period}</td><td className="px-3 py-2 text-[#334155]">{row.visitorTotal.toLocaleString()}</td><td className="px-3 py-2 text-[#334155]">{row.reportCount.toLocaleString()}</td><td className="px-3 py-2 text-[#334155]">{row.establishmentCount.toLocaleString()}</td></tr>)}</tbody>
+                            </table>
+                          </div>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                </section>
+              )}
               <p className="text-[11px] leading-4 text-[#64748b]">AI-generated decision support based on the selected period’s submitted visitor records. Verify source totals before official use.</p>
             </div>
             <div className="flex flex-col-reverse gap-3 border-t border-[#c7ced8]/70 px-5 py-5 sm:flex-row sm:items-center sm:justify-end sm:px-7 sm:py-6">

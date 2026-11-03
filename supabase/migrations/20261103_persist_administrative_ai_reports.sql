@@ -3,7 +3,6 @@
 
 alter table public.ai_insights_cache enable row level security;
 
-drop policy if exists "AI insights cache scoped by role" on public.ai_insights_cache;
 drop policy if exists "Authenticated users read AI insights cache" on public.ai_insights_cache;
 drop policy if exists "Authenticated users write AI insights cache" on public.ai_insights_cache;
 
