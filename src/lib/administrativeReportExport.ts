@@ -40,49 +40,122 @@ const percentFormat = (value: number | null) => value === null ? "Unavailable" :
 const safeFilename = (value: string) => value.replace(/[^a-z0-9]+/gi, "-").replace(/^-|-$/g, "").toLowerCase();
 const summary = (report: AdministrativeReportExport) => report.edits?.executiveSummary || report.narrative.executiveSummary;
 
-const downloadBlob = (blob: Blob, filename: string) => {
-  const url = URL.createObjectURL(blob);
-  const anchor = document.createElement("a");
-  anchor.href = url;
-  anchor.download = filename;
-  anchor.click();
-  window.setTimeout(() => URL.revokeObjectURL(url), 1000);
-};
-
 export const exportAdministrativeReportPdf = (report: AdministrativeReportExport) => {
   const doc = new jsPDF({ unit: "mm", format: "a4" });
   const margin = 15;
-  const title = report.title.toUpperCase();
+  const pageWidth = 210;
+  const pageHeight = 297;
+  const contentWidth = pageWidth - margin * 2;
+  const bottomMargin = 16;
+  const lineHeight = 4.5;
+  let y = 18;
+
+  const addPage = () => {
+    doc.addPage();
+    y = 18;
+    doc.setTextColor(0);
+    doc.setFont("helvetica", "normal");
+    doc.setFontSize(9);
+  };
+
+  const ensureSpace = (height: number) => {
+    if (y + height > pageHeight - bottomMargin) addPage();
+  };
+
+  const heading = (text: string) => {
+    ensureSpace(16);
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(11);
+    doc.setTextColor(25, 51, 100);
+    doc.text(text, margin, y);
+    y += 7;
+    doc.setFont("helvetica", "normal");
+    doc.setFontSize(9);
+    doc.setTextColor(0);
+  };
+
+  const paragraph = (text: string) => {
+    const lines = doc.splitTextToSize(String(text || ""), contentWidth) as string[];
+    for (const line of lines) {
+      ensureSpace(lineHeight);
+      doc.text(line, margin, y);
+      y += lineHeight;
+    }
+    y += 5;
+  };
+
+  const table = (head: string[][], body: string[][]) => {
+    ensureSpace(28);
+    autoTable(doc, {
+      startY: y,
+      margin: { left: margin, right: margin, top: 16, bottom: bottomMargin },
+      head,
+      body,
+      theme: "grid",
+      pageBreak: "auto",
+      rowPageBreak: "auto",
+      styles: { fontSize: 8, cellPadding: 2.2, overflow: "linebreak", valign: "top" },
+      headStyles: { fillColor: [25, 51, 100], textColor: [255, 255, 255], fontStyle: "bold" },
+      didDrawPage: () => {
+        doc.setTextColor(0);
+      },
+    });
+    const finalY = (doc as jsPDF & { lastAutoTable?: { finalY: number } }).lastAutoTable?.finalY;
+    y = (finalY || y + 25) + 10;
+  };
+
   doc.setFont("helvetica", "bold");
   doc.setFontSize(10);
-  doc.text("REPUBLIC OF THE PHILIPPINES", 105, 18, { align: "center" });
-  doc.text("PROVINCE OF BATANGAS", 105, 24, { align: "center" });
-  doc.text("MUNICIPALITY OF BALAYAN", 105, 30, { align: "center" });
-  doc.text("MUNICIPAL TOURISM OFFICE", 105, 36, { align: "center" });
+  doc.setTextColor(25, 51, 100);
+  ["REPUBLIC OF THE PHILIPPINES", "PROVINCE OF BATANGAS", "MUNICIPALITY OF BALAYAN", "MUNICIPAL TOURISM OFFICE"].forEach((line) => {
+    doc.text(line, pageWidth / 2, y, { align: "center" });
+    y += 6;
+  });
+
+  const titleLines = doc.splitTextToSize(report.title.toUpperCase(), contentWidth) as string[];
   doc.setFontSize(13);
-  doc.text(title, 105, 47, { align: "center", maxWidth: 175 });
+  doc.text(titleLines, pageWidth / 2, y + 3, { align: "center" });
+  y += titleLines.length * 6 + 10;
+
   doc.setFont("helvetica", "normal");
   doc.setFontSize(9);
-  doc.text(`Reporting period: ${report.periodLabel}`, margin, 58);
-  doc.text(`Report status: ${report.status}`, margin, 64);
-  doc.text(`Date generated: ${report.generatedAt ? new Date(report.generatedAt).toLocaleDateString("en-PH") : new Date().toLocaleDateString("en-PH")}`, margin, 70);
-  doc.text("Prepared through: VistaBalayan Tourism Data Analytics and Decision Support System", margin, 76);
+  doc.setTextColor(0);
+  paragraph(`Reporting period: ${report.periodLabel}`);
+  paragraph(`Report status: ${report.status}`);
+  paragraph(`Date generated: ${report.generatedAt ? new Date(report.generatedAt).toLocaleDateString("en-PH") : new Date().toLocaleDateString("en-PH")}`);
+  paragraph("Prepared through: VistaBalayan Tourism Data Analytics and Decision Support System");
 
-  let y = 88;
-  const heading = (text: string) => { doc.setFont("helvetica", "bold"); doc.setFontSize(11); doc.text(text, margin, y); y += 7; doc.setFont("helvetica", "normal"); doc.setFontSize(9); };
-  const paragraph = (text: string) => { const lines = doc.splitTextToSize(text, 180); doc.text(lines, margin, y); y += lines.length * 4.5 + 5; };
-  heading("I. Executive Summary"); paragraph(summary(report));
+  heading("I. Executive Summary");
+  paragraph(summary(report));
+
   heading("II. Tourism Statistical Overview");
-  autoTable(doc, { startY: y, margin: { left: margin, right: margin }, head: [["Metric", "Current period", "Previous period", "Change"]], body: [["Day-tour visits", numberFormat(report.source.visitorTotal), numberFormat(report.source.comparison.dayTourVisits.previous), `${numberFormat(report.source.comparison.dayTourVisits.absolute)} (${percentFormat(report.source.comparison.dayTourVisits.percentage)})`], ["Accommodation guest arrivals", numberFormat(report.source.guestCheckInTotal), numberFormat(report.source.comparison.guestCheckIns.previous), `${numberFormat(report.source.comparison.guestCheckIns.absolute)} (${percentFormat(report.source.comparison.guestCheckIns.percentage)})`]], theme: "grid", styles: { fontSize: 8 }, headStyles: { fillColor: [25, 51, 100] } });
-  y = (doc as jsPDF & { lastAutoTable?: { finalY: number } }).lastAutoTable?.finalY ? ((doc as jsPDF & { lastAutoTable: { finalY: number } }).lastAutoTable.finalY + 10) : y + 25;
-  heading("III. Comparative Tourism Performance"); paragraph(report.narrative.dayTourAnalysis); paragraph(report.narrative.accommodationAnalysis);
+  table(
+    [["Metric", "Current period", "Previous period", "Change"]],
+    [
+      ["Day-tour visits", numberFormat(report.source.visitorTotal), numberFormat(report.source.comparison.dayTourVisits.previous), `${numberFormat(report.source.comparison.dayTourVisits.absolute)} (${percentFormat(report.source.comparison.dayTourVisits.percentage)})`],
+      ["Accommodation guest arrivals", numberFormat(report.source.guestCheckInTotal), numberFormat(report.source.comparison.guestCheckIns.previous), `${numberFormat(report.source.comparison.guestCheckIns.absolute)} (${percentFormat(report.source.comparison.guestCheckIns.percentage)})`],
+    ],
+  );
+
+  heading("III. Comparative Tourism Performance");
+  paragraph(report.narrative.dayTourAnalysis);
+  paragraph(report.narrative.accommodationAnalysis);
+
   heading("IV. Establishment Performance Assessment");
-  autoTable(doc, { startY: y, margin: { left: margin, right: margin }, head: [["Establishment", "Report type", "Current activity"]], body: report.source.performance.slice(0, 30).map((row) => [row.establishmentName, row.type === "daytour" ? "Day-tour" : "Accommodation", numberFormat(row.currentActivity)]), theme: "grid", styles: { fontSize: 8 }, headStyles: { fillColor: [25, 51, 100] } });
-  y = (doc as jsPDF & { lastAutoTable?: { finalY: number } }).lastAutoTable?.finalY ? ((doc as jsPDF & { lastAutoTable: { finalY: number } }).lastAutoTable.finalY + 10) : y + 25;
-  heading("V. Reporting Compliance and Data Quality"); paragraph(`Overall estimated reporting completeness: ${Number(report.source.completeness.percentage || 0).toFixed(1)}%. Day-tour submissions: ${report.source.completeness.submittedDayTour} of ${report.source.completeness.expectedDayTour}. Accommodation submissions: ${report.source.completeness.submittedAccommodation} of ${report.source.completeness.expectedAccommodation}. ${report.source.completeness.basis}`); report.source.dataQuality.notes.forEach(paragraph);
-  heading("VI. Administrative Recommendations"); report.recommendations.forEach((item, index) => paragraph(`${index + 1}. ${item}`));
-  heading("VII. Methodology and Limitations"); paragraph("Statistics are calculated server-side from submitted visitor and accommodation records within the selected Asia/Manila reporting period. Day-tour visits and accommodation guest arrivals are separate measures and must not be interpreted as unique municipal visitors. Missing submissions are not treated as zero activity.");
-  const pages = doc.getNumberOfPages();
-  for (let page = 1; page <= pages; page += 1) { doc.setPage(page); doc.setFontSize(8); doc.setTextColor(100); doc.text(`VistaBalayan · Administrative Report · Page ${page} of ${pages}`, 105, 290, { align: "center" }); doc.setTextColor(0); }
+  table(
+    [["Establishment", "Report type", "Current activity"]],
+    report.source.performance.map((row) => [row.establishmentName, row.type === "daytour" ? "Day-tour" : "Accommodation", numberFormat(row.currentActivity)]),
+  );
+
+  heading("V. Reporting Compliance and Data Quality");
+  paragraph(`Overall estimated reporting completeness: ${report.source.completeness.percentage === null ? "Unavailable" : `${Number(report.source.completeness.percentage).toFixed(1)}%`}. Day-tour submissions: ${report.source.completeness.submittedDayTour} of ${report.source.completeness.expectedDayTour}. Accommodation submissions: ${report.source.completeness.submittedAccommodation} of ${report.source.completeness.expectedAccommodation}. ${report.source.completeness.basis}`);
+  report.source.dataQuality.notes.forEach(paragraph);
+
+  heading("VI. Administrative Recommendations");
+  report.recommendations.forEach((item, index) => paragraph(`${index + 1}. ${item}`));
+
+  heading("VII. Methodology and Limitations");
+  paragraph("Statistics are calculated server-side from submitted visitor and accommodation records within the selected Asia/Manila reporting period. Day-tour visits and accommodation guest arrivals are separate measures and must not be interpreted as unique municipal visitors. Missing submissions are not treated as zero activity.");
+
   doc.save(`${safeFilename(report.title)}.pdf`);
 };
