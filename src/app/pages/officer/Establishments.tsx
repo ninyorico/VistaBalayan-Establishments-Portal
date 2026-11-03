@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useDominantAxisTableScroll } from "../../../hooks/useDominantAxisTableScroll";
 import { Plus, Search, Edit, Trash2, Building2, MapPin, Phone, UserCog, Mail, Shield, X, Loader2, FileImage } from "lucide-react";
 import { toast } from "sonner";
@@ -8,6 +8,7 @@ import { compressBusinessPermitImage, BusinessPermitAsset, getBusinessPermitAsse
 import { DEFAULT_ROOM_CONFIG, EstablishmentRoomConfig, getRoomConfigFromAmenities, setRoomConfigInAmenities } from "../../../lib/establishmentRoomConfig";
 import { CONTACT_NUMBER_ERROR, isValidContactNumber, sanitizeContactNumber } from "../../../lib/contactNumber";
 import { LoadingState } from "../../components/vista/PolishedShell";
+import { renderAsync } from "docx-preview";
 
 type ReportingMode = "accommodation" | "visitor" | "both";
 
@@ -85,6 +86,7 @@ export default function Establishments() {
   const [permitDetailsEstablishment, setPermitDetailsEstablishment] = useState<Establishment | null>(null);
   const [permitPreviewAsset, setPermitPreviewAsset] = useState<BusinessPermitAsset | null>(null);
   const [permitDeleteAsset, setPermitDeleteAsset] = useState<BusinessPermitAsset | null>(null);
+  const docxPreviewRef = useRef<HTMLDivElement | null>(null);
   const [permitUploading, setPermitUploading] = useState(false);
   const [onboardingPermitFiles, setOnboardingPermitFiles] = useState<BusinessPermitAsset[]>([]);
   const [editingUser, setEditingUser] = useState<Profile | null>(null);
@@ -127,6 +129,29 @@ export default function Establishments() {
     fetchEstablishments();
     fetchUsers();
   }, []);
+
+  useEffect(() => {
+    if (!permitPreviewAsset || !permitPreviewAsset.name.toLowerCase().endsWith(".docx") || !docxPreviewRef.current) return;
+    let cancelled = false;
+    const container = docxPreviewRef.current;
+    container.innerHTML = "";
+    fetch(permitPreviewAsset.url)
+      .then((response) => {
+        if (!response.ok) throw new Error("Unable to load the DOCX file");
+        return response.arrayBuffer();
+      })
+      .then((buffer) => {
+        if (!cancelled) return renderAsync(buffer, container);
+        return undefined;
+      })
+      .catch((error) => {
+        if (!cancelled) container.innerHTML = `<p class="p-6 text-sm text-red-700">${error instanceof Error ? error.message : "Unable to render this DOCX file."}</p>`;
+      });
+    return () => {
+      cancelled = true;
+      container.innerHTML = "";
+    };
+  }, [permitPreviewAsset]);
 
   async function fetchEstablishments() {
     setLoading(true);
@@ -1526,7 +1551,7 @@ export default function Establishments() {
           <div className="max-h-[92vh] w-full max-w-4xl overflow-hidden rounded-2xl bg-white shadow-2xl" role="dialog" aria-modal="true" aria-labelledby="permit-preview-title">
             <div className="flex items-center justify-between border-b border-gray-100 bg-white px-5 py-4"><h2 id="permit-preview-title" className="min-w-0 truncate text-lg font-semibold text-gray-900">{permitPreviewAsset.name}</h2><button type="button" onClick={() => setPermitPreviewAsset(null)} className="rounded-lg p-2 hover:bg-gray-100" aria-label="Close permit preview"><X className="h-5 w-5 text-gray-500" /></button></div>
             <div className="flex max-h-[calc(92vh-4.5rem)] min-h-[18rem] items-center justify-center overflow-auto bg-slate-100 p-4">
-              {permitPreviewAsset.kind === "image" ? <img src={permitPreviewAsset.url} alt={permitPreviewAsset.name} className="max-h-[calc(92vh-7rem)] max-w-full rounded-lg object-contain shadow-sm" /> : permitPreviewAsset.type === "application/pdf" ? <iframe title={`Preview of ${permitPreviewAsset.name}`} src={permitPreviewAsset.url} className="h-[70vh] w-full rounded-lg bg-white" /> : <div className="max-w-md rounded-xl bg-white p-8 text-center shadow-sm"><FileImage className="mx-auto h-12 w-12 text-[#0F4C75]" /><p className="mt-3 font-semibold text-gray-900">Document preview is not available for this file type.</p><p className="mt-1 text-sm text-gray-500">The file is being shown inside the portal. You can close this preview and keep managing the permit files here.</p></div>}
+              {permitPreviewAsset.kind === "image" ? <img src={permitPreviewAsset.url} alt={permitPreviewAsset.name} className="max-h-[calc(92vh-7rem)] max-w-full rounded-lg object-contain shadow-sm" /> : permitPreviewAsset.type === "application/pdf" ? <iframe title={`Preview of ${permitPreviewAsset.name}`} src={permitPreviewAsset.url} className="h-[70vh] w-full rounded-lg bg-white" /> : permitPreviewAsset.name.toLowerCase().endsWith(".docx") ? <div ref={docxPreviewRef} className="docx-preview max-h-[70vh] w-full overflow-auto rounded-lg bg-white p-4 text-left" aria-label={`Preview of ${permitPreviewAsset.name}`}><p className="p-6 text-sm text-gray-500">Loading DOCX preview…</p></div> : <div className="max-w-md rounded-xl bg-white p-8 text-center shadow-sm"><FileImage className="mx-auto h-12 w-12 text-[#0F4C75]" /><p className="mt-3 font-semibold text-gray-900">Preview is not available for this file type.</p><p className="mt-1 text-sm text-gray-500">Legacy DOC files cannot be rendered in the browser. This file remains safely stored in the portal.</p></div>}
             </div>
           </div>
         </div>
