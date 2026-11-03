@@ -187,9 +187,11 @@ export default function Reports() {
   const [showDetailModal, setShowDetailModal] = useState(false);
   const [showAiReportModal, setShowAiReportModal] = useState(false);
   const [aiReport, setAiReport] = useState<AiAdministrativeReport | null>(null);
+  const [aiReportSaved, setAiReportSaved] = useState(false);
   const [aiReportLoading, setAiReportLoading] = useState(false);
   const [aiReportError, setAiReportError] = useState("");
   const [loading, setLoading] = useState(true);
+  const aiReportPeriodKey = [filterType, selectedYear, selectedQuarter, selectedMonth, selectedWeek].join(":");
   
   const [chartData, setChartData] = useState<any[]>([]);
   const [visitorStats, setVisitorStats] = useState({
@@ -479,6 +481,36 @@ export default function Reports() {
     fetchChartData();
   }, [filterType, selectedYear, selectedQuarter, selectedMonth, selectedWeek]);
 
+  useEffect(() => {
+    let cancelled = false;
+    const loadSavedAiReport = async () => {
+      if (loading) return;
+      setAiReport(null);
+      setAiReportSaved(false);
+      setAiReportError("");
+      try {
+        const { data: { session } } = await supabase.auth.getSession();
+        if (!session?.access_token) return;
+        const response = await fetch("/api/generate-administrative-report", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${session.access_token}`,
+          },
+          body: JSON.stringify({ action: "get", periodKey: aiReportPeriodKey }),
+        });
+        const result = await response.json().catch(() => ({}));
+        if (!response.ok || cancelled || !result.cached?.report) return;
+        setAiReport(result.cached.report);
+        setAiReportSaved(true);
+      } catch (error) {
+        if (!cancelled) console.error("Unable to load saved AI report:", error);
+      }
+    };
+    void loadSavedAiReport();
+    return () => { cancelled = true; };
+  }, [loading, aiReportPeriodKey]);
+
   const handleExport = async () => {
     try {
       const { startDate, endDate } = getReportRange();
@@ -590,7 +622,7 @@ export default function Reports() {
     setShowDetailModal(true);
   };
 
-  const handleGenerateAiReport = async () => {
+  const handleGenerateAiReport = async (forceRegenerate = false) => {
     if (aiReportLoading) return;
     setAiReportLoading(true);
     setAiReportError("");
@@ -604,13 +636,16 @@ export default function Reports() {
           Authorization: `Bearer ${session.access_token}`,
         },
         body: JSON.stringify({
+          periodKey: aiReportPeriodKey,
           periodLabel: getFilterLabel(),
+          forceRegenerate,
           aggregates: aggregateVisitorData(visitorReports),
         }),
       });
       const result = await response.json().catch(() => ({}));
       if (!response.ok || !result.report) throw new Error(result.error || "Unable to create the AI report.");
       setAiReport(result.report);
+      setAiReportSaved(Boolean(result.cached || result.saved));
       setShowAiReportModal(true);
     } catch (error) {
       setAiReportError(error instanceof Error ? error.message : "Unable to create the AI report.");
@@ -787,12 +822,18 @@ export default function Reports() {
           </button>
           <button
             type="button"
-            onClick={() => void handleGenerateAiReport()}
+            onClick={() => {
+              if (aiReportSaved && aiReport) {
+                setShowAiReportModal(true);
+              } else {
+                void handleGenerateAiReport();
+              }
+            }}
             disabled={aiReportLoading || loading || visitorReports.length === 0}
             className="col-span-1 flex w-full items-center justify-center gap-2 rounded-xl bg-[#193364] px-3 py-2 text-sm text-white hover:bg-[#27477D] disabled:cursor-not-allowed disabled:opacity-60 sm:col-span-1 sm:w-auto sm:px-4"
           >
             {aiReportLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Sparkles className="h-4 w-4" />}
-            {aiReportLoading ? "Generating..." : "Generate AI report"}
+            {aiReportLoading ? "Generating..." : aiReportSaved ? "View saved AI report" : "Generate AI report"}
           </button>
         </div>
       </div>
@@ -1035,7 +1076,8 @@ export default function Reports() {
               ))}
               <p className="text-[11px] leading-4 text-[#64748b]">AI-generated decision support based on the selected period’s submitted visitor records. Verify source totals before official use.</p>
             </div>
-            <div className="flex justify-end border-t border-[#c7ced8]/70 px-5 py-5 sm:px-7 sm:py-6">
+            <div className="flex flex-col-reverse gap-3 border-t border-[#c7ced8]/70 px-5 py-5 sm:flex-row sm:items-center sm:justify-end sm:px-7 sm:py-6">
+              <button type="button" onClick={() => { setShowAiReportModal(false); void handleGenerateAiReport(true); }} disabled={aiReportLoading} className="rounded-xl bg-[#E0E5EC] px-5 py-2.5 text-sm font-bold text-[#0E5A72] shadow-[6px_6px_12px_rgba(163,177,198,0.55),-6px_-6px_12px_rgba(255,255,255,0.78)] disabled:cursor-not-allowed disabled:opacity-60">Regenerate</button>
               <button type="button" onClick={() => setShowAiReportModal(false)} className="rounded-xl bg-[#E0E5EC] px-5 py-2.5 text-sm font-bold text-[#193364] shadow-[6px_6px_12px_rgba(163,177,198,0.55),-6px_-6px_12px_rgba(255,255,255,0.78)]">Close</button>
             </div>
           </div>
