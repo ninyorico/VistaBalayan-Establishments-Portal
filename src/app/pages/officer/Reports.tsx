@@ -57,26 +57,75 @@ const statusStyles = reportStatusClasses;
 const normalizeStatus = normalizeReportStatus;
 const formatStatus = reportStatusLabel;
 
-const AI_REPORT_DETAIL_KEYS = [
-  "total_guests",
-  "total_male",
-  "total_female",
-  "total_rooms",
-  "total_occupied_rooms",
-  "total_check_ins",
-  "total_guest_nights",
-  "guest_check_ins",
-  "foreign_guest_check_ins",
-  "foreign_guest_nights",
-  "residence_type",
-] as const;
+type VisitorAggregate = {
+  period: string;
+  visitorTotal: number;
+  reportCount: number;
+  establishmentCount: number;
+};
 
-const getAiReportMetrics = (details: any) => Object.fromEntries(
-  AI_REPORT_DETAIL_KEYS
-    .filter((key) => details?.[key] !== undefined && details?.[key] !== null)
-    .map((key) => [key, typeof details[key] === "number" || typeof details[key] === "string" ? details[key] : undefined])
-    .filter((entry): entry is [string, string | number] => entry[1] !== undefined)
-);
+type AiAdministrativeReport = {
+  overview: string;
+  weekly: string;
+  monthly: string;
+  quarterly: string;
+  yearly: string;
+  followUp: string;
+};
+
+const getIsoWeekKey = (reportDate: string) => {
+  const date = new Date(`${reportDate}T00:00:00Z`);
+  if (Number.isNaN(date.getTime())) return reportDate;
+  const day = date.getUTCDay() || 7;
+  date.setUTCDate(date.getUTCDate() + 4 - day);
+  const year = date.getUTCFullYear();
+  const firstDay = new Date(Date.UTC(year, 0, 1));
+  const week = Math.ceil((((date.getTime() - firstDay.getTime()) / 86400000) + 1) / 7);
+  return `${year}-W${String(week).padStart(2, "0")}`;
+};
+
+const aggregateVisitorData = (reports: any[]) => {
+  const groups = {
+    weekly: new Map<string, { visitorTotal: number; reportCount: number; establishments: Set<string> }>(),
+    monthly: new Map<string, { visitorTotal: number; reportCount: number; establishments: Set<string> }>(),
+    quarterly: new Map<string, { visitorTotal: number; reportCount: number; establishments: Set<string> }>(),
+    yearly: new Map<string, { visitorTotal: number; reportCount: number; establishments: Set<string> }>(),
+  };
+
+  reports
+    .filter((report) => normalizeStatus(report.status) === "submitted" && report.report_date)
+    .forEach((report) => {
+      const date = String(report.report_date);
+      const year = date.slice(0, 4);
+      const month = date.slice(0, 7);
+      const quarter = `${year}-Q${Math.floor((Number(date.slice(5, 7)) - 1) / 3) + 1}`;
+      const keys = {
+        weekly: getIsoWeekKey(date),
+        monthly: month,
+        quarterly: quarter,
+        yearly: year,
+      } as const;
+      (Object.keys(keys) as Array<keyof typeof keys>).forEach((periodType) => {
+        const key = keys[periodType];
+        const current = groups[periodType].get(key) || { visitorTotal: 0, reportCount: 0, establishments: new Set<string>() };
+        current.visitorTotal += Number(report.total_guests || 0);
+        current.reportCount += 1;
+        if (report.establishment_id) current.establishments.add(String(report.establishment_id));
+        groups[periodType].set(key, current);
+      });
+    });
+
+  const serialize = (group: Map<string, { visitorTotal: number; reportCount: number; establishments: Set<string> }>): VisitorAggregate[] => [...group.entries()]
+    .sort(([a], [b]) => a.localeCompare(b))
+    .map(([period, value]) => ({ period, visitorTotal: value.visitorTotal, reportCount: value.reportCount, establishmentCount: value.establishments.size }));
+
+  return {
+    weekly: serialize(groups.weekly),
+    monthly: serialize(groups.monthly),
+    quarterly: serialize(groups.quarterly),
+    yearly: serialize(groups.yearly),
+  };
+};
 
 interface Submission {
   id: string;
@@ -136,9 +185,10 @@ export default function Reports() {
   const [accommodationReports, setAccommodationReports] = useState<any[]>([]);
   const [selectedSubmission, setSelectedSubmission] = useState<Submission | null>(null);
   const [showDetailModal, setShowDetailModal] = useState(false);
-  const [reportAssessment, setReportAssessment] = useState("");
-  const [reportAssessmentLoading, setReportAssessmentLoading] = useState(false);
-  const [reportAssessmentError, setReportAssessmentError] = useState("");
+  const [showAiReportModal, setShowAiReportModal] = useState(false);
+  const [aiReport, setAiReport] = useState<AiAdministrativeReport | null>(null);
+  const [aiReportLoading, setAiReportLoading] = useState(false);
+  const [aiReportError, setAiReportError] = useState("");
   const [loading, setLoading] = useState(true);
   
   const [chartData, setChartData] = useState<any[]>([]);
@@ -537,45 +587,35 @@ export default function Reports() {
 
   const handleViewDetails = (submission: Submission) => {
     setSelectedSubmission(submission);
-    setReportAssessment("");
-    setReportAssessmentError("");
     setShowDetailModal(true);
   };
 
-  const handleGenerateReportAssessment = async () => {
-    if (!selectedSubmission || reportAssessmentLoading) return;
-    setReportAssessmentLoading(true);
-    setReportAssessmentError("");
+  const handleGenerateAiReport = async () => {
+    if (aiReportLoading) return;
+    setAiReportLoading(true);
+    setAiReportError("");
     try {
       const { data: { session } } = await supabase.auth.getSession();
       if (!session?.access_token) throw new Error("Your officer session has expired. Please sign in again.");
-      const response = await fetch("/api/explain-report", {
+      const response = await fetch("/api/generate-administrative-report", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
           Authorization: `Bearer ${session.access_token}`,
         },
         body: JSON.stringify({
-          report: {
-            id: selectedSubmission.id,
-            establishment: selectedSubmission.establishment,
-            type: selectedSubmission.type,
-            reportDate: selectedSubmission.reportDate,
-            submitted: selectedSubmission.submitted,
-            visitors: selectedSubmission.visitors,
-            status: selectedSubmission.status,
-            notes: selectedSubmission.notes,
-            metrics: getAiReportMetrics(selectedSubmission.details),
-          },
+          periodLabel: getFilterLabel(),
+          aggregates: aggregateVisitorData(visitorReports),
         }),
       });
       const result = await response.json().catch(() => ({}));
-      if (!response.ok || typeof result.assessment !== "string") throw new Error(result.error || "Unable to create an AI assessment.");
-      setReportAssessment(result.assessment);
+      if (!response.ok || !result.report) throw new Error(result.error || "Unable to create the AI report.");
+      setAiReport(result.report);
+      setShowAiReportModal(true);
     } catch (error) {
-      setReportAssessmentError(error instanceof Error ? error.message : "Unable to create an AI assessment.");
+      setAiReportError(error instanceof Error ? error.message : "Unable to create the AI report.");
     } finally {
-      setReportAssessmentLoading(false);
+      setAiReportLoading(false);
     }
   };
 
@@ -741,9 +781,18 @@ export default function Reports() {
           <button
             type="button"
             onClick={handleExport}
-            className="col-span-2 flex w-full items-center justify-center gap-2 rounded-xl bg-green-600 px-4 py-2 text-sm text-white hover:bg-green-700 sm:col-span-2 sm:w-auto"
+            className="col-span-1 flex w-full items-center justify-center gap-2 rounded-xl bg-green-600 px-3 py-2 text-sm text-white hover:bg-green-700 sm:col-span-1 sm:w-auto sm:px-4"
           >
             <FileSpreadsheet className="h-4 w-4" /> Export
+          </button>
+          <button
+            type="button"
+            onClick={() => void handleGenerateAiReport()}
+            disabled={aiReportLoading || loading || visitorReports.length === 0}
+            className="col-span-1 flex w-full items-center justify-center gap-2 rounded-xl bg-[#193364] px-3 py-2 text-sm text-white hover:bg-[#27477D] disabled:cursor-not-allowed disabled:opacity-60 sm:col-span-1 sm:w-auto sm:px-4"
+          >
+            {aiReportLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Sparkles className="h-4 w-4" />}
+            {aiReportLoading ? "Generating..." : "Generate AI report"}
           </button>
         </div>
       </div>
@@ -944,24 +993,6 @@ export default function Reports() {
                   <span className={`mt-2 inline-flex rounded-full px-3 py-1 text-xs font-bold shadow-[3px_3px_6px_rgba(163,177,198,0.38),-3px_-3px_6px_rgba(255,255,255,0.7)] ${statusStyles[normalizeStatus(selectedSubmission.status)] || statusStyles.pending}`}>{formatStatus(selectedSubmission.status)}</span>
                 </div>
               </div>
-              <div className="rounded-2xl border border-[#b9c4d2]/70 bg-[#E0E5EC] p-4 shadow-[inset_5px_5px_10px_rgba(163,177,198,0.35),inset_-5px_-5px_10px_rgba(255,255,255,0.72)]">
-                <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-                  <div className="flex items-start gap-3">
-                    <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[#E0E5EC] text-[#0E5A72] shadow-[inset_3px_3px_6px_rgba(163,177,198,0.38),inset_-3px_-3px_6px_rgba(255,255,255,0.72)]"><Sparkles className="h-4 w-4" /></span>
-                    <div>
-                      <p className="font-bold text-[#193364]">AI report assessment</p>
-                      <p className="mt-1 text-xs leading-5 text-[#64748b]">Summarize this report using only its displayed facts. It does not approve or reject the submission.</p>
-                    </div>
-                  </div>
-                  <button type="button" onClick={() => void handleGenerateReportAssessment()} disabled={reportAssessmentLoading} className="inline-flex min-h-10 shrink-0 items-center justify-center gap-2 rounded-xl bg-[#193364] px-4 py-2 text-sm font-bold text-white shadow-[5px_5px_10px_rgba(163,177,198,0.48),-5px_-5px_10px_rgba(255,255,255,0.7)] transition hover:bg-[#27477D] disabled:cursor-wait disabled:opacity-60">
-                    {reportAssessmentLoading && <Loader2 className="h-4 w-4 animate-spin" />}
-                    {reportAssessmentLoading ? "Assessing..." : reportAssessment ? "Refresh assessment" : "Generate assessment"}
-                  </button>
-                </div>
-                {reportAssessment && <p className="mt-4 rounded-xl bg-[#F5F8FF] p-4 text-sm leading-6 text-[#334155]">{reportAssessment}</p>}
-                {reportAssessmentError && <p className="mt-3 text-xs font-medium text-[#9a5a18]">{reportAssessmentError}</p>}
-                <p className="mt-3 text-[11px] leading-4 text-[#64748b]">AI-generated decision support. Verify the source report before taking administrative action.</p>
-              </div>
               {selectedSubmission.notes && (
                 <div className="rounded-2xl bg-[#E0E5EC] p-4 text-sm text-[#9a5a18] shadow-[inset_5px_5px_10px_rgba(163,177,198,0.38),inset_-5px_-5px_10px_rgba(255,255,255,0.72)]">
                   <div className="flex items-start gap-3">
@@ -977,6 +1008,40 @@ export default function Reports() {
           </div>
         </div>
       )}
+      {showAiReportModal && aiReport && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-[#193364]/35 p-4 backdrop-blur-[3px]" role="presentation" onMouseDown={(event) => { if (event.target === event.currentTarget) setShowAiReportModal(false); }}>
+          <div className="max-h-[90vh] w-full max-w-3xl overflow-y-auto rounded-[2rem] border border-white/50 bg-[#E0E5EC] text-[#193364] shadow-[18px_18px_36px_rgba(163,177,198,0.62),-12px_-12px_30px_rgba(255,255,255,0.76)]" role="dialog" aria-modal="true" aria-labelledby="ai-administrative-report-title">
+            <div className="flex items-start justify-between gap-4 border-b border-[#c7ced8]/70 px-5 py-5 sm:px-7 sm:py-6">
+              <div>
+                <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-[#0E5A72]">Decision support</p>
+                <h2 id="ai-administrative-report-title" className="mt-1 text-xl font-bold text-[#193364] sm:text-2xl">AI Administrative Report</h2>
+                <p className="mt-1 text-sm font-medium text-[#64748b]">Aggregated submitted visitor data for {getFilterLabel()}</p>
+              </div>
+              <button type="button" onClick={() => setShowAiReportModal(false)} className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[#E0E5EC] text-[#193364] shadow-[inset_4px_4px_8px_rgba(163,177,198,0.42),inset_-4px_-4px_8px_rgba(255,255,255,0.78)]" aria-label="Close AI administrative report"><X className="h-5 w-5" /></button>
+            </div>
+            <div className="space-y-4 px-5 py-5 sm:px-7 sm:py-6">
+              {([
+                ["Overview", aiReport.overview],
+                ["Weekly aggregation", aiReport.weekly],
+                ["Monthly aggregation", aiReport.monthly],
+                ["Quarterly aggregation", aiReport.quarterly],
+                ["Yearly aggregation", aiReport.yearly],
+                ["Suggested follow-up", aiReport.followUp],
+              ] as const).map(([title, text]) => (
+                <section key={title} className="rounded-2xl bg-[#E0E5EC] p-4 shadow-[inset_5px_5px_10px_rgba(163,177,198,0.35),inset_-5px_-5px_10px_rgba(255,255,255,0.72)]">
+                  <h3 className="flex items-center gap-2 text-sm font-bold text-[#193364]"><Sparkles className="h-4 w-4 text-[#0E5A72]" />{title}</h3>
+                  <p className="mt-2 whitespace-pre-line text-sm leading-6 text-[#334155]">{text}</p>
+                </section>
+              ))}
+              <p className="text-[11px] leading-4 text-[#64748b]">AI-generated decision support based on the selected period’s submitted visitor records. Verify source totals before official use.</p>
+            </div>
+            <div className="flex justify-end border-t border-[#c7ced8]/70 px-5 py-5 sm:px-7 sm:py-6">
+              <button type="button" onClick={() => setShowAiReportModal(false)} className="rounded-xl bg-[#E0E5EC] px-5 py-2.5 text-sm font-bold text-[#193364] shadow-[6px_6px_12px_rgba(163,177,198,0.55),-6px_-6px_12px_rgba(255,255,255,0.78)]">Close</button>
+            </div>
+          </div>
+        </div>
+      )}
+      {aiReportError && <p className="fixed bottom-5 right-5 z-[70] max-w-sm rounded-xl bg-[#E0E5EC] px-4 py-3 text-sm font-semibold text-[#9a5a18] shadow-lg">{aiReportError}</p>}
     </div>
   );
 }
