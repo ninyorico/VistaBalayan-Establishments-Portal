@@ -322,7 +322,9 @@ const saveReport = async (supabaseAdmin, periodKey, report, existingId = null) =
 
 const buildAdministrativeBundle = async (supabaseAdmin, profile, body) => {
   const anchorRange = getRange(body);
-  const ranges = bundleRanges(anchorRange.start);
+  const requestedType = clean(body.periodType, 'month');
+  const derivedRanges = bundleRanges(anchorRange.start);
+  const ranges = { ...derivedRanges, [requestedType]: anchorRange };
   const reports = {};
   let generatedAny = false;
   for (const type of ['week', 'month', 'quarter', 'year']) {

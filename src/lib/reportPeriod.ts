@@ -15,7 +15,10 @@ export const monthNames = Array.from({ length: 12 }, (_, index) =>
 const formatDate = (date: Date) => date.toISOString().slice(0, 10);
 
 export const getReportWeekRange = (year: number, week: number) => {
-  const start = new Date(Date.UTC(year, 0, 1 + (week - 1) * 7 - 1));
+  const jan4 = new Date(Date.UTC(year, 0, 4));
+  const jan4Day = jan4.getUTCDay() || 7;
+  const start = new Date(jan4);
+  start.setUTCDate(jan4.getUTCDate() - jan4Day + 1 + (week - 1) * 7);
   const end = new Date(start);
   end.setUTCDate(start.getUTCDate() + 6);
   return { startDate: formatDate(start), endDate: formatDate(end) };

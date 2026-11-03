@@ -37,12 +37,12 @@ const getCurrentMonth = () => new Date().toLocaleString("default", { month: "sho
 const getWeekRange = (year: string, week: string) => {
   const yearNumber = parseInt(year, 10) || new Date().getFullYear();
   const weekNumber = parseInt(week, 10) || 1;
-  const start = new Date(yearNumber, 0, 1 + (weekNumber - 1) * 7);
+  const jan4 = new Date(Date.UTC(yearNumber, 0, 4));
+  const jan4Day = jan4.getUTCDay() || 7;
+  const start = new Date(jan4);
+  start.setUTCDate(jan4.getUTCDate() - jan4Day + 1 + (weekNumber - 1) * 7);
   const end = new Date(start);
-  end.setDate(start.getDate() + 6);
-
-  const yearEnd = new Date(yearNumber, 11, 31);
-  if (end > yearEnd) end.setTime(yearEnd.getTime());
+  end.setUTCDate(start.getUTCDate() + 6);
 
   const toDateString = (date: Date) => date.toISOString().slice(0, 10);
 
@@ -216,7 +216,7 @@ export default function Reports() {
       establishment: getEstablishmentName(item),
       type: "Visitor Report",
       reportDate: item.report_date,
-      visitors: item.total_guests || 0,
+      visitors: item.total_visitors ?? item.total_guests ?? 0,
       submitted: new Date(item.created_at).toISOString().slice(0, 10),
       status: item.status,
       reviewedBy: item.reviewed_by ? "Municipal Tourism Officer" : undefined,
@@ -318,7 +318,7 @@ export default function Reports() {
     };
 
     const [visitorResult, accommodationResult] = await Promise.all([
-      fetchTrendReports("visitor_reports", "report_date, total_guests"),
+      fetchTrendReports("visitor_reports", "report_date, total_visitors, total_guests"),
       fetchTrendReports("accommodation_reports", "report_date, total_check_ins, guest_check_ins"),
     ]);
     const visitorData = visitorResult.data;
@@ -333,7 +333,7 @@ export default function Reports() {
     const trendRows = [
       ...(visitorData || []).map((item: any) => ({
         report_date: item.report_date,
-        visitors: Number(item.total_guests || 0),
+        visitors: Number(item.total_visitors ?? item.total_guests ?? 0),
         guestCheckIns: 0,
       })),
       ...(accommodationData || []).map((item: any) => ({
