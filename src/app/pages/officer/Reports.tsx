@@ -230,7 +230,7 @@ export default function Reports() {
       establishment: getEstablishmentName(item),
       type: "Accommodation Report",
       reportDate: item.report_date,
-      visitors: item.total_check_ins || 0,
+      visitors: item.total_check_ins ?? item.guest_check_ins ?? 0,
       submitted: new Date(item.created_at).toISOString().slice(0, 10),
       status: item.status,
       reviewedBy: item.reviewed_by ? "Municipal Tourism Officer" : undefined,
@@ -339,7 +339,7 @@ export default function Reports() {
       ...(accommodationData || []).map((item: any) => ({
         report_date: item.report_date,
         visitors: 0,
-        guestCheckIns: Number(item.guest_check_ins ?? item.total_check_ins ?? 0),
+        guestCheckIns: Number(item.total_check_ins ?? item.guest_check_ins ?? 0),
       })),
     ].sort((a, b) => a.report_date.localeCompare(b.report_date));
 
@@ -866,7 +866,7 @@ export default function Reports() {
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-[#193364]/35 p-4 backdrop-blur-[3px]" role="presentation" onMouseDown={(event) => { if (event.target === event.currentTarget) setShowAdministrativeReport(false); }}>
           <div className="max-h-[92vh] w-full max-w-4xl overflow-y-auto rounded-[2rem] border border-white/50 bg-[#E0E5EC] text-[#193364] shadow-[18px_18px_36px_rgba(163,177,198,0.62),-12px_-12px_30px_rgba(255,255,255,0.76)]" role="dialog" aria-modal="true" aria-labelledby="administrative-report-title">
             <div className="flex items-start justify-between gap-4 border-b border-[#c7ced8]/70 px-5 py-5 sm:px-7 sm:py-6">
-              <div><p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-[#0E5A72]">AI Administrative Reports</p><h2 id="administrative-report-title" className="mt-1 text-xl font-bold sm:text-2xl">Generated tourism reports</h2><p className="mt-1 text-sm text-[#64748b]">The active Reports filter determines the containing week, month, quarter, and year. Saved reports remain unchanged until regeneration.</p></div>
+              <div><p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-[#0E5A72]">AI Administrative Reports</p><h2 id="administrative-report-title" className="mt-1 text-xl font-bold sm:text-2xl">Generated tourism report</h2><p className="mt-1 text-sm text-[#64748b]">Showing the report for the active Reports filter. Saved reports remain unchanged until you regenerate them.</p></div>
               <button type="button" onClick={() => setShowAdministrativeReport(false)} className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[#E0E5EC] shadow-[inset_4px_4px_8px_rgba(163,177,198,0.42),inset_-4px_-4px_8px_rgba(255,255,255,0.78)]" aria-label="Close administrative reports"><X className="h-5 w-5" /></button>
             </div>
             <div className="space-y-5 px-5 py-5 sm:px-7 sm:py-6">
