@@ -1050,17 +1050,17 @@ export default function Reports() {
         </div>
       )}
       {showAiReportModal && aiReport && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-[#193364]/35 p-4 backdrop-blur-[3px]" role="presentation" onMouseDown={(event) => { if (event.target === event.currentTarget) setShowAiReportModal(false); }}>
-          <div className="max-h-[90vh] w-full max-w-3xl overflow-y-auto rounded-[2rem] border border-white/50 bg-[#E0E5EC] text-[#193364] shadow-[18px_18px_36px_rgba(163,177,198,0.62),-12px_-12px_30px_rgba(255,255,255,0.76)]" role="dialog" aria-modal="true" aria-labelledby="ai-administrative-report-title">
+        <div className="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto bg-[#193364]/35 p-3 backdrop-blur-[3px] sm:items-center sm:p-4" role="presentation" onMouseDown={(event) => { if (event.target === event.currentTarget) setShowAiReportModal(false); }}>
+          <div className="my-0 flex max-h-[calc(100dvh-1.5rem)] min-h-0 w-full max-w-3xl flex-col overflow-hidden rounded-[1.5rem] border border-white/50 bg-[#E0E5EC] text-[#193364] shadow-[18px_18px_36px_rgba(163,177,198,0.62),-12px_-12px_30px_rgba(255,255,255,0.76)] sm:my-4 sm:max-h-[90vh] sm:rounded-[2rem]" role="dialog" aria-modal="true" aria-labelledby="ai-administrative-report-title">
             <div className="flex items-start justify-between gap-4 border-b border-[#c7ced8]/70 px-5 py-5 sm:px-7 sm:py-6">
-              <div>
+              <div className="min-w-0">
                 <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-[#0E5A72]">Decision support</p>
                 <h2 id="ai-administrative-report-title" className="mt-1 text-xl font-bold text-[#193364] sm:text-2xl">AI Administrative Report</h2>
                 <p className="mt-1 text-sm font-medium text-[#64748b]">Aggregated submitted visitor data for {getFilterLabel()}</p>
               </div>
               <button type="button" onClick={() => setShowAiReportModal(false)} className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[#E0E5EC] text-[#193364] shadow-[inset_4px_4px_8px_rgba(163,177,198,0.42),inset_-4px_-4px_8px_rgba(255,255,255,0.78)]" aria-label="Close AI administrative report"><X className="h-5 w-5" /></button>
             </div>
-            <div className="space-y-4 px-5 py-5 sm:px-7 sm:py-6">
+            <div className="min-h-0 flex-1 space-y-4 overflow-y-auto overscroll-contain px-5 py-5 [-webkit-overflow-scrolling:touch] sm:px-7 sm:py-6">
               {([
                 ["Overview", aiReport.overview],
                 ["Weekly aggregation", aiReport.weekly],
