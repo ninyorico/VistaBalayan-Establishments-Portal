@@ -84,6 +84,7 @@ export default function Establishments() {
   const [editingEstablishment, setEditingEstablishment] = useState<Establishment | null>(null);
   const [permitDetailsEstablishment, setPermitDetailsEstablishment] = useState<Establishment | null>(null);
   const [permitPreviewAsset, setPermitPreviewAsset] = useState<BusinessPermitAsset | null>(null);
+  const [permitDeleteAsset, setPermitDeleteAsset] = useState<BusinessPermitAsset | null>(null);
   const [permitUploading, setPermitUploading] = useState(false);
   const [onboardingPermitFiles, setOnboardingPermitFiles] = useState<BusinessPermitAsset[]>([]);
   const [editingUser, setEditingUser] = useState<Profile | null>(null);
@@ -839,8 +840,13 @@ export default function Establishments() {
     }
   };
 
-  const handleDeleteBusinessPermitAsset = async (asset: BusinessPermitAsset) => {
-    if (!editingEstablishment || !window.confirm(`Delete the permit file "${asset.name}"?`)) return;
+  const requestDeleteBusinessPermitAsset = (asset: BusinessPermitAsset) => {
+    setPermitDeleteAsset(asset);
+  };
+
+  const confirmDeleteBusinessPermitAsset = async () => {
+    const asset = permitDeleteAsset;
+    if (!editingEstablishment || !asset) return;
     const currentAssets = getBusinessPermitAssets(editingEstablishment);
     const nextAssets = currentAssets.filter((candidate) => !(candidate.name === asset.name && candidate.url === asset.url));
     const amenities = setBusinessPermitAssetsInAmenities(editingEstablishment.amenities, nextAssets);
@@ -853,6 +859,7 @@ export default function Establishments() {
     setEditingEstablishment(updated);
     setEstablishments((current) => current.map((item) => item.id === updated.id ? updated : item));
     setPermitPreviewAsset(null);
+    setPermitDeleteAsset(null);
     toast.success(`Deleted ${asset.name}`);
   };
 
@@ -1439,7 +1446,7 @@ export default function Establishments() {
                               {asset.kind === "image" ? <img src={asset.url} alt="" className="h-8 w-8 rounded object-cover" /> : <FileImage className="h-4 w-4 shrink-0" />}
                               <span className="min-w-0 truncate">{asset.name}</span>
                             </button>
-                            <button type="button" onClick={() => handleDeleteBusinessPermitAsset(asset)} className="shrink-0 rounded px-1.5 py-1 font-medium text-red-600 hover:bg-red-50 hover:underline" aria-label={`Delete ${asset.name}`}>Delete</button>
+                            <button type="button" onClick={() => requestDeleteBusinessPermitAsset(asset)} className="shrink-0 rounded px-1.5 py-1 font-medium text-red-600 hover:bg-red-50 hover:underline" aria-label={`Delete ${asset.name}`}>Delete</button>
                           </div>
                         ))}
                       </div>
@@ -1520,6 +1527,21 @@ export default function Establishments() {
             <div className="flex items-center justify-between border-b border-gray-100 bg-white px-5 py-4"><h2 id="permit-preview-title" className="min-w-0 truncate text-lg font-semibold text-gray-900">{permitPreviewAsset.name}</h2><button type="button" onClick={() => setPermitPreviewAsset(null)} className="rounded-lg p-2 hover:bg-gray-100" aria-label="Close permit preview"><X className="h-5 w-5 text-gray-500" /></button></div>
             <div className="flex max-h-[calc(92vh-4.5rem)] min-h-[18rem] items-center justify-center overflow-auto bg-slate-100 p-4">
               {permitPreviewAsset.kind === "image" ? <img src={permitPreviewAsset.url} alt={permitPreviewAsset.name} className="max-h-[calc(92vh-7rem)] max-w-full rounded-lg object-contain shadow-sm" /> : permitPreviewAsset.type === "application/pdf" ? <iframe title={`Preview of ${permitPreviewAsset.name}`} src={permitPreviewAsset.url} className="h-[70vh] w-full rounded-lg bg-white" /> : <div className="max-w-md rounded-xl bg-white p-8 text-center shadow-sm"><FileImage className="mx-auto h-12 w-12 text-[#0F4C75]" /><p className="mt-3 font-semibold text-gray-900">Document preview is not available for this file type.</p><p className="mt-1 text-sm text-gray-500">The file is being shown inside the portal. You can close this preview and keep managing the permit files here.</p></div>}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {permitDeleteAsset && (
+        <div className="fixed inset-0 z-[80] flex items-center justify-center bg-[#14213d]/45 p-4 backdrop-blur-sm" role="presentation" onMouseDown={(event) => { if (event.target === event.currentTarget) setPermitDeleteAsset(null); }}>
+          <div className="w-full max-w-md rounded-[1.5rem] bg-[#E0E5EC] p-6 shadow-[12px_12px_28px_rgba(15,76,117,0.24),-10px_-10px_24px_rgba(255,255,255,0.8)]" role="dialog" aria-modal="true" aria-labelledby="permit-delete-title">
+            <div className="flex items-start gap-4">
+              <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-[#E0E5EC] text-red-600 shadow-[inset_3px_3px_7px_rgba(163,177,198,0.55),inset_-3px_-3px_7px_rgba(255,255,255,0.8)]"><FileImage className="h-5 w-5" /></div>
+              <div className="min-w-0"><h2 id="permit-delete-title" className="text-lg font-bold text-[#26364A]">Delete permit file?</h2><p className="mt-1 break-words text-sm text-[#5C6B7A]">This will permanently remove <span className="font-semibold text-[#26364A]">{permitDeleteAsset.name}</span> from this establishment.</p></div>
+            </div>
+            <div className="mt-6 flex justify-end gap-3">
+              <button type="button" onClick={() => setPermitDeleteAsset(null)} className="rounded-xl bg-[#E0E5EC] px-4 py-2.5 text-sm font-semibold text-[#526173] shadow-[4px_4px_9px_rgba(163,177,198,0.55),-4px_-4px_9px_rgba(255,255,255,0.8)] transition hover:text-[#26364A] active:shadow-[inset_3px_3px_7px_rgba(163,177,198,0.55),inset_-3px_-3px_7px_rgba(255,255,255,0.8)]">Cancel</button>
+              <button type="button" onClick={confirmDeleteBusinessPermitAsset} className="rounded-xl bg-[#B84C5A] px-4 py-2.5 text-sm font-semibold text-white shadow-[4px_4px_9px_rgba(163,177,198,0.55),-4px_-4px_9px_rgba(255,255,255,0.8)] transition hover:bg-[#A84250] active:shadow-[inset_3px_3px_7px_rgba(100,30,40,0.35),inset_-3px_-3px_7px_rgba(255,255,255,0.25)]">Delete file</button>
             </div>
           </div>
         </div>
