@@ -152,7 +152,7 @@ const readCachedReport = async (supabaseAdmin, periodKey) => {
     .maybeSingle();
   if (error) throw error;
   const report = data?.data?.report;
-  if (!report || typeof report !== 'object' || !report.source) return null;
+  if (!report || typeof report !== 'object' || !report.source || !Number.isFinite(Number(report.source.visitorRecordCount)) || !Number.isFinite(Number(report.source.submissionCount))) return null;
   return { report, generatedAt: data.generated_at, periodKey: data.period };
 };
 
