@@ -86,8 +86,8 @@ const fetchAll = async (supabaseAdmin, table, select, start, end) => {
   return rows;
 };
 
-const aggregateRows = (visitorRows, accommodationRows, establishments, start, end) => {
-  const establishmentMap = new Map(establishments.map((item) => [String(item.id), item]));
+const aggregateRows = (visitorRows, accommodationRows, establishments, start, end, establishmentDirectory = establishments) => {
+  const establishmentMap = new Map(establishmentDirectory.map((item) => [String(item.id), item]));
   const daily = new Map();
   const monthly = new Map();
   const performance = new Map();
@@ -164,18 +164,19 @@ const aggregateRows = (visitorRows, accommodationRows, establishments, start, en
 };
 
 const buildSnapshot = async (supabaseAdmin, range, periodType) => {
-  const [establishments, visitorRows, accommodationRows] = await Promise.all([
-    supabaseAdmin.from('establishments').select('id,name,reporting_mode,status').eq('status', 'active').order('name', { ascending: true }).then(({ data, error }) => { if (error) throw new Error('Unable to load active establishments.'); return data || []; }),
+  const [establishmentDirectory, visitorRows, accommodationRows] = await Promise.all([
+    supabaseAdmin.from('establishments').select('id,name,reporting_mode,status').order('name', { ascending: true }).then(({ data, error }) => { if (error) throw new Error('Unable to load establishments.'); return data || []; }),
     fetchAll(supabaseAdmin, 'visitor_reports', 'id,establishment_id,report_date,total_guests,total_visitors,total_male,total_female', range.start, range.end),
     fetchAll(supabaseAdmin, 'accommodation_reports', 'id,establishment_id,report_date,total_check_ins,guest_check_ins', range.start, range.end),
   ]);
-  const current = aggregateRows(visitorRows, accommodationRows, establishments, range.start, range.end);
+  const establishments = establishmentDirectory.filter((row) => row.status === 'active');
+  const current = aggregateRows(visitorRows, accommodationRows, establishments, range.start, range.end, establishmentDirectory);
   const previous = previousRange(periodType, range.start, range.end);
   const [previousVisitors, previousAccommodation] = await Promise.all([
     fetchAll(supabaseAdmin, 'visitor_reports', 'id,establishment_id,report_date,total_guests,total_visitors,total_male,total_female', previous.start, previous.end),
     fetchAll(supabaseAdmin, 'accommodation_reports', 'id,establishment_id,report_date,total_check_ins,guest_check_ins', previous.start, previous.end),
   ]);
-  const previousTotals = aggregateRows(previousVisitors, previousAccommodation, establishments, previous.start, previous.end);
+  const previousTotals = aggregateRows(previousVisitors, previousAccommodation, establishments, previous.start, previous.end, establishmentDirectory);
   let yearAgo = null;
   const yearAgoRange = compareYearAgoRange(periodType, range.start, range.end);
   if (yearAgoRange) {
@@ -183,7 +184,7 @@ const buildSnapshot = async (supabaseAdmin, range, periodType) => {
       fetchAll(supabaseAdmin, 'visitor_reports', 'id,establishment_id,report_date,total_guests,total_visitors,total_male,total_female', yearAgoRange.start, yearAgoRange.end),
       fetchAll(supabaseAdmin, 'accommodation_reports', 'id,establishment_id,report_date,total_check_ins,guest_check_ins', yearAgoRange.start, yearAgoRange.end),
     ]);
-    const totals = aggregateRows(yearVisitors, yearAccommodation, establishments, yearAgoRange.start, yearAgoRange.end);
+    const totals = aggregateRows(yearVisitors, yearAccommodation, establishments, yearAgoRange.start, yearAgoRange.end, establishmentDirectory);
     yearAgo = { dateRange: yearAgoRange, visitorTotal: totals.visitorTotal, guestCheckInTotal: totals.guestCheckInTotal };
   }
   const today = new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Manila', year: 'numeric', month: '2-digit', day: '2-digit' }).format(new Date());

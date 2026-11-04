@@ -24,6 +24,18 @@ test('aggregateRows keeps day-tour visits and accommodation check-ins separate',
   assert.equal(source.daily.find((row) => row.period === '2026-11-03').guestCheckIns, 5);
 });
 
+test('aggregateRows resolves names for inactive establishments without counting them as active', () => {
+  const source = aggregateRows(
+    [{ establishment_id: 'inactive', report_date: '2026-11-02', total_visitors: 12 }],
+    [],
+    [],
+    '2026-11-01',
+    '2026-11-02',
+    [{ id: 'inactive', name: 'Closed Heritage Site', reporting_mode: 'visitor', status: 'inactive' }],
+  );
+  assert.equal(source.performance[0].establishmentName, 'Closed Heritage Site');
+  assert.equal(source.completeness.expectedDayTour, 0);
+});
 test('aggregateRows prefers canonical total_visitors over legacy total_guests', () => {
   const source = aggregateRows(
     [{ establishment_id: 'a', report_date: '2026-11-02', total_visitors: 15, total_guests: 99 }],

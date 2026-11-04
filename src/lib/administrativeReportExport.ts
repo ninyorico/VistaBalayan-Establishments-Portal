@@ -147,15 +147,8 @@ export const exportAdministrativeReportPdf = (report: AdministrativeReportExport
     report.source.performance.map((row) => [row.establishmentName, row.type === "daytour" ? "Day-tour" : "Accommodation", numberFormat(row.currentActivity)]),
   );
 
-  heading("V. Reporting Compliance and Data Quality");
-  paragraph(`Overall estimated reporting completeness: ${report.source.completeness.percentage === null ? "Unavailable" : `${Number(report.source.completeness.percentage).toFixed(1)}%`}. Day-tour submissions: ${report.source.completeness.submittedDayTour} of ${report.source.completeness.expectedDayTour}. Accommodation submissions: ${report.source.completeness.submittedAccommodation} of ${report.source.completeness.expectedAccommodation}. ${report.source.completeness.basis}`);
-  report.source.dataQuality.notes.forEach(paragraph);
-
-  heading("VI. Administrative Recommendations");
+  heading("V. Administrative Recommendations");
   report.recommendations.forEach((item, index) => paragraph(`${index + 1}. ${item}`));
-
-  heading("VII. Methodology and Limitations");
-  paragraph("Statistics are calculated server-side from submitted visitor and accommodation records within the selected Asia/Manila reporting period. Day-tour visits and accommodation guest arrivals are separate measures and must not be interpreted as unique municipal visitors. Missing submissions are not treated as zero activity.");
 
   doc.save(`${safeFilename(report.title)}.pdf`);
 };
