@@ -14,6 +14,7 @@ interface VisitorRecord {
   created_at?: string | null;
   status?: string | null;
   guest_name?: string | null;
+  guest_group_name?: string | null;
   total_male?: number | null;
   total_female?: number | null;
   total_guests?: number | null;
@@ -105,7 +106,7 @@ export default function EstablishmentSubmissionRecords({
       record,
       searchTerm,
       period,
-      [record.residence_category, record.residence_type, record.place_of_residence, record.municipality, record.province, record.country].join(" ")
+      [record.guest_group_name, record.residence_category, record.residence_type, record.place_of_residence, record.municipality, record.province, record.country].join(" ")
     )
   );
   const filteredAccommodation = accommodationReports.filter((record) =>
