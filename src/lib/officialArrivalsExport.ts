@@ -19,6 +19,13 @@ const months = Array.from({ length: 12 }, (_, index) => new Date(2000, index, 1)
 export const EXPORTABLE_REPORT_STATUSES = new Set<string>([OFFICIAL_REPORT_STATUS]);
 export const isExportableReportStatus = (status?: string | null) => EXPORTABLE_REPORT_STATUSES.has(String(status || "").trim().toLowerCase());
 
+export const shouldIncludeGrandTotal = ({
+  selectedMonth,
+  selectedMonths,
+  weeklyLabel,
+}: { selectedMonth?: number; selectedMonths?: number[]; weeklyLabel?: string }) =>
+  selectedMonth === undefined && selectedMonths === undefined && !weeklyLabel;
+
 const downloadBuffer = (filename: string, buffer: ArrayBuffer | Uint8Array) => {
   const url = URL.createObjectURL(new Blob([buffer], { type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" }));
   const link = document.createElement("a");
@@ -297,9 +304,8 @@ export const downloadOfficialArrivalsWorkbook = async ({
   if (!template.ok) throw new Error(`Official arrivals template could not be loaded (${template.status})`);
   const workbook = new ExcelJS.Workbook();
   await workbook.xlsx.load(await template.arrayBuffer());
-  const annual = !selectedMonth && !selectedMonths && !weeklyLabel;
-  const includeGrandTotal = exportSection === "daytour" || annual;
-  if (exportSection === "overnight") workbook.removeWorksheet("GRAND TOTAL");
+  const annual = shouldIncludeGrandTotal({ selectedMonth, selectedMonths, weeklyLabel });
+  const includeGrandTotal = annual;
   const allMonthSheets = workbook.worksheets.filter((sheet) => sheet.name !== "GRAND TOTAL");
   allMonthSheets.forEach((sheet, index) => {
     if (months[index]) sheet.name = `${months[index].toUpperCase()} ${year}`;
@@ -513,6 +519,17 @@ export const downloadOfficialArrivalsWorkbook = async ({
       grandTotal.getCell(rowNumber, 2).value = "";
       grandTotal.getCell(rowNumber, 3).value = "";
     }
+    const grandTotalLabels: Record<string, string> = {
+      E3: "Daytour",
+      E6: "Overnight",
+      E9: "All Total",
+      E12: "MALE",
+      E15: "FEMALE",
+      E18: "TOTAL M AND F",
+    };
+    Object.entries(grandTotalLabels).forEach(([cell, value]) => {
+      grandTotal.getCell(cell).value = value;
+    });
     setFormula(grandTotal.getCell("E4"), `SUM(${grandTotalMonthSheets.map((sheet) => `'${sheet.name}'!P${exportedDaytourTotalRow}`).join(",")})`);
     setFormula(grandTotal.getCell("E7"), "0");
     setFormula(grandTotal.getCell("E10"), "SUM(E4,E7)");
