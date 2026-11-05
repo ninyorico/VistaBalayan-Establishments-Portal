@@ -5,6 +5,7 @@ import { toast } from "sonner";
 import { supabase } from "../../../lib/supabase";
 import { canSubmitVisitorReport } from "../../../lib/establishmentReportForms";
 import { formatResidencePlace } from "../../../lib/reporting";
+import { buildVisitorReportReconciliation } from "../../../lib/visitorReportSubmission";
 import { LoadingState, PageHero } from "../../components/vista/PolishedShell";
 
 interface VisitorEntry {
@@ -442,23 +443,52 @@ const loadProfile = async () => {
       return;
     }
 
-    const { error: submitError } = await supabase
+    const { data: existingRows, error: existingError } = await supabase
       .from("visitor_reports")
-      .insert(submissions);
+      .select("id, guest_group_name, residence_category")
+      .eq("establishment_id", profile.establishment_id)
+      .eq("report_date", reportDate)
+      .eq("status", "submitted");
 
-    if (submitError) {
-      console.error('Submit error:', submitError);
-      toast.error("Failed to submit: " + submitError.message);
-    } else {
-      toast.success(`${submissions.length} visitor record(s) submitted successfully`);
-      const draftKey = draftStorageKey(profile.id, profile.establishment_id);
-      if (draftKey) localStorage.removeItem(draftKey);
-      // Reset form
-      setEntries([createEmptyEntry(1)]);
-      setVisibleResidenceTypes({ 1: residenceTypes.map((type) => type.key) });
-      setNextId(2);
-      setReportDate(getTodayDate());
+    if (existingError) {
+      console.error("Could not load existing visitor report rows:", existingError);
+      toast.error("Could not prepare this report for editing");
+      setSubmitting(false);
+      return;
     }
+
+    const reconciliation = buildVisitorReportReconciliation<any>({
+      existing: existingRows || [],
+      desired: submissions,
+    });
+    const updateResults = await Promise.all(reconciliation.updates.map(({ id, values }) =>
+      supabase.from("visitor_reports").update(values).eq("id", id)
+    ));
+    const updateError = updateResults.find((result) => result.error)?.error;
+    if (updateError) {
+      console.error("Visitor report update error:", updateError);
+      toast.error("Failed to update the visitor report: " + updateError.message);
+      setSubmitting(false);
+      return;
+    }
+
+    const { error: insertError } = reconciliation.inserts.length > 0
+      ? await supabase.from("visitor_reports").insert(reconciliation.inserts)
+      : { error: null };
+    if (insertError) {
+      console.error("Visitor report insert error:", insertError);
+      toast.error("Failed to add the new visitor group: " + insertError.message);
+      setSubmitting(false);
+      return;
+    }
+
+    toast.success("Visitor report changes saved successfully");
+    const draftKey = draftStorageKey(profile.id, profile.establishment_id);
+    if (draftKey) localStorage.removeItem(draftKey);
+    setEntries([createEmptyEntry(1)]);
+    setVisibleResidenceTypes({ 1: residenceTypes.map((type) => type.key) });
+    setNextId(2);
+    setReportDate(getTodayDate());
     setSubmitting(false);
   };
 
