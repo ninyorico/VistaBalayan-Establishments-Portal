@@ -297,18 +297,19 @@ export const downloadOfficialArrivalsWorkbook = async ({
   if (!template.ok) throw new Error(`Official arrivals template could not be loaded (${template.status})`);
   const workbook = new ExcelJS.Workbook();
   await workbook.xlsx.load(await template.arrayBuffer());
-  if (exportSection !== "both") workbook.removeWorksheet("GRAND TOTAL");
+  const annual = !selectedMonth && !selectedMonths && !weeklyLabel;
+  const includeGrandTotal = exportSection === "daytour" || annual;
+  if (exportSection === "overnight") workbook.removeWorksheet("GRAND TOTAL");
   const allMonthSheets = workbook.worksheets.filter((sheet) => sheet.name !== "GRAND TOTAL");
   allMonthSheets.forEach((sheet, index) => {
     if (months[index]) sheet.name = `${months[index].toUpperCase()} ${year}`;
 
   });
-  const annual = !selectedMonth && !selectedMonths && !weeklyLabel;
   const activeMonths = selectedMonths || (selectedMonth ? [selectedMonth] : months.map((_, index) => index + 1));
   const firstActiveSheet = allMonthSheets.find((sheet) => sheet.name.startsWith(months[(activeMonths[0] || 1) - 1].toUpperCase()));
   const monthsToWrite = weeklyLabel && firstActiveSheet ? [firstActiveSheet] : allMonthSheets.filter((sheet) => activeMonths.some((monthNumber) => sheet.name.startsWith(months[monthNumber - 1].toUpperCase())));
   workbook.worksheets.slice().forEach((sheet) => {
-    if (sheet.name === "GRAND TOTAL" ? !annual : !monthsToWrite.includes(sheet)) workbook.removeWorksheet(sheet.id);
+    if (sheet.name === "GRAND TOTAL" ? !includeGrandTotal : !monthsToWrite.includes(sheet)) workbook.removeWorksheet(sheet.id);
   });
   // The establishment directory is authoritative for export membership. An active
   // establishment must remain visible even when it has not submitted a report.
@@ -476,24 +477,25 @@ export const downloadOfficialArrivalsWorkbook = async ({
     }
   }
   const grandTotal = workbook.getWorksheet("GRAND TOTAL");
+  const grandTotalMonthSheets = monthsToWrite;
   const exportedDaytourTotalRow = 38 + daytourExtraRows;
   const exportedOvernightTotalRow = 54 + daytourExtraRows + overnightExtraRows;
   const grandTotalExtraRows = Math.max(0, daytourEstablishments.length - 25);
   const grandTotalTotalRow = 4 + daytourEstablishments.length;
   const grandTotalUnusedTemplateRows = Math.max(0, 29 - grandTotalTotalRow);
   const totalLabel = grandTotal ? String(grandTotal.getCell("A29").value || "Total of this Month ****") : "Total of this Month ****";
-  if (grandTotal && annual && grandTotalExtraRows) {
+  if (grandTotal && includeGrandTotal && grandTotalExtraRows) {
     grandTotal.insertRows(29, Array.from({ length: grandTotalExtraRows }, () => Array(5).fill(null)), "i");
     shiftMergedRanges(grandTotal, 29, grandTotalExtraRows);
   }
-  if (grandTotal && annual && grandTotalUnusedTemplateRows) {
+  if (grandTotal && includeGrandTotal && grandTotalUnusedTemplateRows) {
     grandTotal.unMergeCells("A29:B29");
     grandTotal.spliceRows(grandTotalTotalRow, grandTotalUnusedTemplateRows);
     // ExcelJS keeps styled trailing template rows in its internal row array after spliceRows.
     // Trim those rows so the exported Grand Total sheet ends at the actual total row.
     (grandTotal as ExcelJS.Worksheet & { _rows: unknown[] })._rows.length = grandTotalTotalRow;
   }
-  if (grandTotal && annual) {
+  if (grandTotal && includeGrandTotal) {
     if (!grandTotalExtraRows) {
       [...grandTotal.model.merges].forEach((range) => grandTotal.unMergeCells(range));
       grandTotal.mergeCells(`A${grandTotalTotalRow}:B${grandTotalTotalRow}`);
@@ -502,7 +504,7 @@ export const downloadOfficialArrivalsWorkbook = async ({
       const rowNumber = 4 + index;
       grandTotal.getCell(rowNumber, 1).value = index + 1;
       grandTotal.getCell(rowNumber, 2).value = normalizeExportText(establishment.name);
-      const monthlyRows = months.map((_, monthIndex) => `'${months[monthIndex].toUpperCase()} ${year}'!P${15 + index}`);
+      const monthlyRows = grandTotalMonthSheets.map((sheet) => `'${sheet.name}'!P${15 + index}`);
       setFormula(grandTotal.getCell(rowNumber, 3), `SUM(${monthlyRows.join(",")})`);
     });
     grandTotal.getCell(`A${grandTotalTotalRow}`).value = normalizeExportText(totalLabel);
@@ -511,11 +513,11 @@ export const downloadOfficialArrivalsWorkbook = async ({
       grandTotal.getCell(rowNumber, 2).value = "";
       grandTotal.getCell(rowNumber, 3).value = "";
     }
-    setFormula(grandTotal.getCell("E4"), `SUM(${months.map((_, index) => `'${months[index].toUpperCase()} ${year}'!P${exportedDaytourTotalRow}`).join(",")})`);
-    setFormula(grandTotal.getCell("E7"), `SUM(${months.map((_, index) => `'${months[index].toUpperCase()} ${year}'!F${exportedOvernightTotalRow}`).join(",")})`);
+    setFormula(grandTotal.getCell("E4"), `SUM(${grandTotalMonthSheets.map((sheet) => `'${sheet.name}'!P${exportedDaytourTotalRow}`).join(",")})`);
+    setFormula(grandTotal.getCell("E7"), "0");
     setFormula(grandTotal.getCell("E10"), "SUM(E4,E7)");
-    setFormula(grandTotal.getCell("E13"), `SUM(${months.map((_, index) => `'${months[index].toUpperCase()} ${year}'!N${exportedDaytourTotalRow}`).join(",")})`);
-    setFormula(grandTotal.getCell("E16"), `SUM(${months.map((_, index) => `'${months[index].toUpperCase()} ${year}'!O${exportedDaytourTotalRow}`).join(",")})`);
+    setFormula(grandTotal.getCell("E13"), `SUM(${grandTotalMonthSheets.map((sheet) => `'${sheet.name}'!N${exportedDaytourTotalRow}`).join(",")})`);
+    setFormula(grandTotal.getCell("E16"), `SUM(${grandTotalMonthSheets.map((sheet) => `'${sheet.name}'!O${exportedDaytourTotalRow}`).join(",")})`);
     setFormula(grandTotal.getCell("E19"), "SUM(E13,E16)");
     setFormula(grandTotal.getCell(`C${grandTotalTotalRow}`), `SUM(C4:C${3 + daytourEstablishments.length})`);
     // Keep the template's E summary block, but clear shifted legacy attraction cells.
@@ -530,7 +532,7 @@ export const downloadOfficialArrivalsWorkbook = async ({
     monthsToWrite[0].getCell("B1").value = "Tourism Attraction Visitor Record — WEEKLY";
   }
   if (grandTotal && annual) grandTotal.getCell("A1").value = `BALAYAN TOURISM ARRIVALS — ${year}`;
-  if (grandTotal && annual) {
+  if (grandTotal && includeGrandTotal) {
     // Final pass prevents template or row-insertion styles from overriding names.
     formatGrandTotalSheet(grandTotal, grandTotalTotalRow - 1, grandTotalTotalRow);
   }

@@ -146,7 +146,7 @@ export default function Analytics() {
     { label: "Monthly Day-tour Count", value: currentMonthVisitorTotal.toLocaleString(), helper: "current month visitors", icon: UsersRound, tone: "bg-emerald-50 text-emerald-700 ring-emerald-100" },
     { label: "Monthly Male Visitors", value: currentMonthMale.toLocaleString(), helper: `current month · ${year}`, icon: UsersRound, tone: "bg-sky-50 text-sky-700 ring-sky-100" },
     { label: "Monthly Female Visitors", value: currentMonthFemale.toLocaleString(), helper: `current month · ${year}`, icon: UsersRound, tone: "bg-rose-50 text-rose-700 ring-rose-100" },
-    { label: "Monthly Demographics", value: demographicValue, helper: demographicHelper, icon: PieChart, tone: "bg-violet-50 text-violet-700 ring-violet-100" },
+    { label: "Best Performing Month", value: visitorBestMonth?.month || "No data", helper: `${(visitorBestMonth?.visitors || 0).toLocaleString()} visitors · ${year}`, icon: TrendingUp, tone: "bg-violet-50 text-violet-700 ring-violet-100" },
   ];
   const accommodationMetrics: AnalyticsMetric[] = [
     { label: "Monthly Average Occupied Rooms", value: (currentAccommodationMonth?.averageOccupiedRooms || 0).toFixed(2), helper: "occupied rooms per report", icon: BedDouble, tone: "bg-violet-50 text-violet-700 ring-violet-100" },
@@ -185,7 +185,6 @@ export default function Analytics() {
         <MetricGrid metrics={visitorMetrics} />
         <div className={chartClass}><ChartTitle icon={LineChartIcon}>Visitor Count Trends ({year})</ChartTitle><ResponsiveContainer width="100%" height={340}><AreaChart data={visitorMonths}><CartesianGrid strokeDasharray="3 3" vertical={true} horizontal={true} /><XAxis dataKey="month" /><YAxis allowDecimals={false} /><Tooltip /><Legend /><Area type="monotone" dataKey="visitors" stroke="#193364" fill="#193364" fillOpacity={0.28} dot={{ r: 3, strokeWidth: 1, fill: "#193364" }} activeDot={{ r: 5 }} strokeWidth={2} name="Visitors" /><Area type="monotone" dataKey="male" stroke="#193364" fill="#193364" fillOpacity={0.2} dot={{ r: 3, strokeWidth: 1, fill: "#193364" }} activeDot={{ r: 5 }} strokeWidth={2} name="Male" /><Area type="monotone" dataKey="female" stroke="#D69A3A" fill="#D69A3A" fillOpacity={0.18} dot={{ r: 3, strokeWidth: 1, fill: "#D69A3A" }} activeDot={{ r: 5 }} strokeWidth={2} name="Female" /></AreaChart></ResponsiveContainer></div>
         <div className={chartClass}><ChartTitle icon={BarChart3}>Visitor Demographics by Residence ({year})</ChartTitle><ResidencePieChart data={currentResidenceData} /></div>
-        <div className={panelClass}><h3 className="font-semibold text-[#0B2530]">Best Performing Month</h3><p className="mt-2 text-3xl font-bold text-[#0B2530]">{visitorBestMonth.month}</p><p className="mt-1 text-sm text-[#193364]">{visitorBestMonth.visitors.toLocaleString()} visitors · {visitorBestMonth.male.toLocaleString()} male · {visitorBestMonth.female.toLocaleString()} female</p></div>
       </>}
 
       {mode === "accommodation" && showAccommodationAnalytics && <>

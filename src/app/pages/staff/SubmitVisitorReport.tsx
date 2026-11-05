@@ -384,7 +384,8 @@ const loadProfile = async () => {
       return;
     }
 
-    const hasValidEntry = entries.some(entry => entryTotal(entry) > 0);
+    const completeEntries = entries.filter((entry) => entryTotal(entry) > 0);
+    const hasValidEntry = completeEntries.length > 0;
     if (!hasValidEntry) {
       toast.error("Please enter visitor counts for at least one entry");
       return;
@@ -408,7 +409,7 @@ const loadProfile = async () => {
       return;
     }
 
-    const submissions = entries.flatMap(entry => residenceTypes
+    const submissions = completeEntries.flatMap(entry => residenceTypes
       .filter(type => residenceTotal(entry, type.key) > 0)
       .map(type => {
         const residence = entry.breakdown[type.key];

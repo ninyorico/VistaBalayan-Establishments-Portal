@@ -1,12 +1,12 @@
 import { useState, useEffect } from "react";
 import { Search, Eye, CheckCircle, Clock, XCircle, ChevronDown, CalendarDays, CalendarRange } from "lucide-react";
 import { supabase } from "../../../lib/supabase";
-import { formatDate, formatMonthYear, groupStaffSubmissions, StaffSubmissionSummary } from "../../../lib/reportMetrics";
+import { formatDate, groupStaffSubmissions, StaffSubmissionSummary } from "../../../lib/reportMetrics";
 import { canSubmitAccommodationReport, canSubmitVisitorReport } from "../../../lib/establishmentReportForms";
 import { downloadOfficialArrivalsWorkbook } from "../../../lib/officialArrivalsExport";
-import type { EstablishmentReportingRow } from "../../../lib/reporting";
+import type { EstablishmentReportingRow, ResidenceCategory } from "../../../lib/reporting";
 import type { ReportPeriodSelection } from "../../../lib/reportPeriod";
-import { getReportWeekRange } from "../../../lib/reportPeriod";
+import { getReportWeekRange, periodMatchesDate } from "../../../lib/reportPeriod";
 import DataState from "../../components/DataState";
 import EstablishmentSubmissionRecords from "../../components/EstablishmentSubmissionRecords";
 import { LoadingState } from "../../components/vista/PolishedShell";
@@ -21,8 +21,12 @@ interface VisitorReportExportRecord {
   total_male?: number | null;
   total_female?: number | null;
   total_guests?: number | null;
+  residence_category?: ResidenceCategory | null;
   residence_type?: string | null;
   place_of_residence?: string | null;
+  municipality?: string | null;
+  province?: string | null;
+  country?: string | null;
 }
 
 interface AccommodationReportExportRecord {
@@ -72,7 +76,8 @@ const getWeekDateRange = (year: number, month: number, weekNumber: number) => {
   return `${monthNames[month]} ${startDay}-${endDay}`;
 };
 
-const formatSelectedMonth = (year: number, month: number) => `${month === -1 ? "ALL months" : monthNames[month]} ${year}`;
+const matchesSelectedPeriod = (dateValue: string | null | undefined, selection: ReportPeriodSelection) =>
+  periodMatchesDate(dateValue, selection);
 
 export default function SubmissionHistory() {
   const [submissions, setSubmissions] = useState<StaffSubmissionSummary[]>([]);
@@ -194,36 +199,31 @@ export default function SubmissionHistory() {
   ).sort((a, b) => b - a);
 
   const filteredSubmissions = submissions.filter((sub) => {
-    const dateParts = getDateParts(sub.reportDate);
-    const reportMonth = formatMonthYear(sub.reportDate).toLowerCase();
-    const searchText = [reportMonth, sub.dataSummary, getReportTypeLabel(sub.type), sub.status, sub.submittedDate]
+    const searchText = [sub.dataSummary, getReportTypeLabel(sub.type), sub.status, sub.submittedDate]
       .join(" ")
       .toLowerCase();
     const matchesSearch = searchText.includes(searchTerm.toLowerCase());
-    const matchesDate = dateParts?.year === selectedYear && (selectedMonth === -1 || dateParts.month === selectedMonth);
+    const matchesDate = matchesSelectedPeriod(sub.reportDate, period);
     return matchesSearch && matchesDate;
   });
 
   const filterReportRecord = (
     record: VisitorReportExportRecord | AccommodationReportExportRecord,
-    type: "Visitor Report" | "Accommodation Report"
+    _type: "Visitor Report" | "Accommodation Report"
   ) => {
-    const dateParts = getDateParts(record.report_date);
-    const typeLabel = getReportTypeLabel(type);
     const searchText = [
-      formatMonthYear(record.report_date),
-      typeLabel,
-      record.status,
-      formatDate(record.created_at),
-      "total_guests" in record ? record.guest_name : "",
       "total_guests" in record ? record.residence_type : "",
+      "total_guests" in record ? record.residence_category : "",
       "total_guests" in record ? record.place_of_residence : "",
+      "total_guests" in record ? record.municipality : "",
+      "total_guests" in record ? record.province : "",
+      "total_guests" in record ? record.country : "",
     ]
       .join(" ")
       .toLowerCase();
 
     const matchesSearch = searchText.includes(searchTerm.toLowerCase());
-    const matchesDate = dateParts?.year === selectedYear && (selectedMonth === -1 || dateParts.month === selectedMonth);
+    const matchesDate = matchesSelectedPeriod(record.report_date, period);
     return matchesSearch && matchesDate;
   };
 
@@ -261,12 +261,14 @@ export default function SubmissionHistory() {
 
   const exportOfficialWorkbook = async (section: "daytour" | "overnight") => {
     if (!establishment) throw new Error("Establishment information is unavailable. Please retry.");
+    const weekRange = period.type === "week" ? getReportWeekRange(period.year, period.week) : undefined;
     const selectedMonths = period.type === "month"
       ? [period.month + 1]
       : period.type === "quarter"
         ? [period.quarter * 3 - 2, period.quarter * 3 - 1, period.quarter * 3]
-        : undefined;
-    const weekRange = period.type === "week" ? getReportWeekRange(period.year, period.week) : undefined;
+        : period.type === "week" && weekRange
+          ? [Number(weekRange.startDate.slice(5, 7))]
+          : undefined;
     const periodLabel = period.type === "month"
       ? `${period.year}-${String(period.month + 1).padStart(2, "0")}`
       : period.type === "quarter" ? `${period.year}-Q${period.quarter}` : `Week${period.week}-${period.year}`;

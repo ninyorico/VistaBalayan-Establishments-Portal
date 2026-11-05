@@ -3,6 +3,7 @@ import { Download, Search } from "lucide-react";
 import { formatDate } from "../../lib/reportMetrics";
 import { getVisitorResidenceLabel, getVisitorResidenceLocation } from "../../lib/reporting";
 import ReportPeriodFilter from "./ReportPeriodFilter";
+import { periodMatchesDate } from "../../lib/reportPeriod";
 import type { ReportPeriodSelection } from "../../lib/reportPeriod";
 import { PageHero } from "./vista/PolishedShell";
 import { useDominantAxisTableScroll } from "../../hooks/useDominantAxisTableScroll";
@@ -74,11 +75,8 @@ const matchesCommonFilters = (
   extraText: string
 ) => {
   const parts = getDateParts(record.report_date);
-  const searchText = [record.report_date, record.created_at, record.status, extraText].join(" ").toLowerCase();
-  const recordDate = record.report_date ? new Date(`${record.report_date.slice(0, 10)}T00:00:00`) : null;
-  const matchesPeriod = recordDate && !Number.isNaN(recordDate.getTime()) && recordDate.getFullYear() === period.year
-    && (period.type === "year" || period.type === "week" || (period.type === "month" ? recordDate.getMonth() === period.month : Math.floor(recordDate.getMonth() / 3) + 1 === period.quarter));
-  return Boolean(parts && matchesPeriod && searchText.includes(searchTerm.toLowerCase()));
+  const searchText = extraText.toLowerCase();
+  return Boolean(parts && periodMatchesDate(record.report_date, period) && searchText.includes(searchTerm.toLowerCase()));
 };
 
 export default function EstablishmentSubmissionRecords({
@@ -107,7 +105,7 @@ export default function EstablishmentSubmissionRecords({
       record,
       searchTerm,
       period,
-      [record.guest_name, record.residence_category, record.residence_type, record.place_of_residence, record.municipality, record.province, record.country].join(" ")
+      [record.residence_category, record.residence_type, record.place_of_residence, record.municipality, record.province, record.country].join(" ")
     )
   );
   const filteredAccommodation = accommodationReports.filter((record) =>
