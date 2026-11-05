@@ -36,11 +36,11 @@ export const getGrandTotalLabels = (exportSection: "daytour" | "overnight" | "bo
   exportSection === "daytour"
     ? { E3: "Daytour", E9: "All Total", E12: "MALE", E15: "FEMALE", E18: "TOTAL M AND F" }
     : exportSection === "overnight"
-      ? { E6: "Overnight" }
+      ? {}
       : { E3: "Daytour", E6: "Overnight", E9: "All Total", E12: "MALE", E15: "FEMALE", E18: "TOTAL M AND F" };
 
-export const shouldShowGrandTotalEstablishmentTable = (exportSection: "daytour" | "overnight" | "both") =>
-  exportSection !== "overnight";
+export const shouldShowGrandTotalEstablishmentTable = (_exportSection: "daytour" | "overnight" | "both") =>
+  true;
 
 const downloadBuffer = (filename: string, buffer: ArrayBuffer | Uint8Array) => {
   const url = URL.createObjectURL(new Blob([buffer], { type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" }));
@@ -565,7 +565,7 @@ export const downloadOfficialArrivalsWorkbook = async ({
       setFormula(grandTotal.getCell("E7"), overnightTotalFormula);
     }
     if (exportSection === "overnight") {
-      ["E3", "E4", "E9", "E10", "E12", "E13", "E15", "E16", "E18", "E19"].forEach((cell) => {
+      ["E3", "E4", "E5", "E6", "E7", "E8", "E9", "E10", "E11", "E12", "E13", "E14", "E15", "E16", "E17", "E18", "E19"].forEach((cell) => {
         grandTotal.getCell(cell).value = null;
         clearCellBorders(grandTotal.getCell(cell));
       });
@@ -575,7 +575,7 @@ export const downloadOfficialArrivalsWorkbook = async ({
     setFormula(grandTotal.getCell("E16"), `SUM(${grandTotalMonthSheets.map((sheet) => `'${sheet.name}'!O${exportedDaytourTotalRow}`).join(",")})`);
     setFormula(grandTotal.getCell("E19"), "SUM(E13,E16)");
     if (exportSection === "overnight") {
-      ["E3", "E4", "E9", "E10", "E12", "E13", "E15", "E16", "E18", "E19"].forEach((cell) => {
+      ["E3", "E4", "E5", "E6", "E7", "E8", "E9", "E10", "E11", "E12", "E13", "E14", "E15", "E16", "E17", "E18", "E19"].forEach((cell) => {
         grandTotal.getCell(cell).value = null;
         clearCellBorders(grandTotal.getCell(cell));
       });

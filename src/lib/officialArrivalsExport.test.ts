@@ -20,11 +20,11 @@ describe("establishment submission-history export totals", () => {
       E15: "FEMALE",
       E18: "TOTAL M AND F",
     });
-    expect(getGrandTotalLabels("overnight").E6).toBe("Overnight");
+    expect(getGrandTotalLabels("overnight")).toEqual({});
   });
 
-  it("removes the overnight establishment table from the overnight grand total sheet", () => {
-    expect(shouldShowGrandTotalEstablishmentTable("overnight")).toBe(false);
+  it("keeps the establishment table while removing the overnight E-column summary", () => {
+    expect(shouldShowGrandTotalEstablishmentTable("overnight")).toBe(true);
     expect(shouldShowGrandTotalEstablishmentTable("daytour")).toBe(true);
   });
 
