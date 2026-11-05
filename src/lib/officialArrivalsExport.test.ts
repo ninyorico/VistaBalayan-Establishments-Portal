@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { getGrandTotalMetricConfig, shouldIncludeGrandTotal } from "./officialArrivalsExport";
+import { getGrandTotalLabels, getGrandTotalMetricConfig, shouldIncludeGrandTotal } from "./officialArrivalsExport";
 
 describe("establishment submission-history export totals", () => {
   it("omits grand total for month, quarter, and week exports", () => {
@@ -10,6 +10,17 @@ describe("establishment submission-history export totals", () => {
 
   it("includes grand total only for yearly exports", () => {
     expect(shouldIncludeGrandTotal({})).toBe(true);
+  });
+
+  it("removes the overnight block from day-tour grand totals", () => {
+    expect(getGrandTotalLabels("daytour")).toEqual({
+      E3: "Daytour",
+      E9: "All Total",
+      E12: "MALE",
+      E15: "FEMALE",
+      E18: "TOTAL M AND F",
+    });
+    expect(getGrandTotalLabels("overnight").E6).toBe("Overnight");
   });
 
   it("uses overnight guest check-ins for overnight grand totals", () => {
