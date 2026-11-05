@@ -24,7 +24,7 @@ describe("establishment submission-history export totals", () => {
   });
 
   it("uses overnight guest check-ins for overnight grand totals", () => {
-    expect(getGrandTotalMetricConfig("overnight")).toEqual({ metricColumn: "E", metricStartRowOffset: 45 });
-    expect(getGrandTotalMetricConfig("daytour")).toEqual({ metricColumn: "P", metricStartRowOffset: 15 });
+    expect(getGrandTotalMetricConfig("overnight")).toEqual({ metricColumn: "E", metricStartRowOffset: 14, metricTotalRowOffset: 26 });
+    expect(getGrandTotalMetricConfig("daytour")).toEqual({ metricColumn: "P", metricStartRowOffset: 15, metricTotalRowOffset: 0 });
   });
 });

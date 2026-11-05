@@ -28,13 +28,16 @@ export const shouldIncludeGrandTotal = ({
 
 export const getGrandTotalMetricConfig = (exportSection: "daytour" | "overnight" | "both") => ({
   metricColumn: exportSection === "overnight" ? "E" : "P",
-  metricStartRowOffset: exportSection === "overnight" ? 45 : 15,
+  metricStartRowOffset: exportSection === "overnight" ? 14 : 15,
+  metricTotalRowOffset: exportSection === "overnight" ? 26 : 0,
 });
 
 export const getGrandTotalLabels = (exportSection: "daytour" | "overnight" | "both") =>
   exportSection === "daytour"
     ? { E3: "Daytour", E9: "All Total", E12: "MALE", E15: "FEMALE", E18: "TOTAL M AND F" }
-    : { E3: "Daytour", E6: "Overnight", E9: "All Total", E12: "MALE", E15: "FEMALE", E18: "TOTAL M AND F" };
+    : exportSection === "overnight"
+      ? { E6: "Overnight" }
+      : { E3: "Daytour", E6: "Overnight", E9: "All Total", E12: "MALE", E15: "FEMALE", E18: "TOTAL M AND F" };
 
 const downloadBuffer = (filename: string, buffer: ArrayBuffer | Uint8Array) => {
   const url = URL.createObjectURL(new Blob([buffer], { type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" }));
@@ -499,8 +502,10 @@ export const downloadOfficialArrivalsWorkbook = async ({
   const grandTotalEstablishments = exportSection === "overnight" ? overnightEstablishments : daytourEstablishments;
   const grandTotalMetricConfig = getGrandTotalMetricConfig(exportSection);
   const grandTotalMetricColumn = grandTotalMetricConfig.metricColumn;
-  const grandTotalMetricTotalRow = exportSection === "overnight" ? exportedOvernightTotalRow : exportedDaytourTotalRow;
-  const grandTotalMetricStartRow = grandTotalMetricConfig.metricStartRowOffset + (exportSection === "overnight" ? daytourExtraRows : 0);
+  const grandTotalMetricStartRow = grandTotalMetricConfig.metricStartRowOffset;
+  const grandTotalMetricTotalRow = exportSection === "overnight"
+    ? grandTotalMetricConfig.metricTotalRowOffset + overnightExtraRows
+    : exportedDaytourTotalRow;
   const grandTotalExtraRows = Math.max(0, grandTotalEstablishments.length - 25);
   const grandTotalTotalRow = 4 + grandTotalEstablishments.length;
   const grandTotalUnusedTemplateRows = Math.max(0, 29 - grandTotalTotalRow);
@@ -556,11 +561,23 @@ export const downloadOfficialArrivalsWorkbook = async ({
     } else {
       setFormula(grandTotal.getCell("E7"), overnightTotalFormula);
     }
+    if (exportSection === "overnight") {
+      ["E3", "E4", "E9", "E10", "E12", "E13", "E15", "E16", "E18", "E19"].forEach((cell) => {
+        grandTotal.getCell(cell).value = null;
+        clearCellBorders(grandTotal.getCell(cell));
+      });
+    }
     setFormula(grandTotal.getCell("E10"), "SUM(E4,E7)");
     setFormula(grandTotal.getCell("E13"), `SUM(${grandTotalMonthSheets.map((sheet) => `'${sheet.name}'!N${exportedDaytourTotalRow}`).join(",")})`);
     setFormula(grandTotal.getCell("E16"), `SUM(${grandTotalMonthSheets.map((sheet) => `'${sheet.name}'!O${exportedDaytourTotalRow}`).join(",")})`);
     setFormula(grandTotal.getCell("E19"), "SUM(E13,E16)");
-    setFormula(grandTotal.getCell(`C${grandTotalTotalRow}`), `SUM(C4:C${3 + daytourEstablishments.length})`);
+    if (exportSection === "overnight") {
+      ["E3", "E4", "E9", "E10", "E12", "E13", "E15", "E16", "E18", "E19"].forEach((cell) => {
+        grandTotal.getCell(cell).value = null;
+        clearCellBorders(grandTotal.getCell(cell));
+      });
+    }
+    setFormula(grandTotal.getCell(`C${grandTotalTotalRow}`), `SUM(C4:C${3 + grandTotalEstablishments.length})`);
     // Keep the template's E summary block, but clear shifted legacy attraction cells.
     for (let rowNumber = 3; rowNumber <= grandTotal.rowCount; rowNumber += 1) {
       grandTotal.getCell(rowNumber, 4).value = null;
