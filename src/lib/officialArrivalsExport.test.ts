@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { getGrandTotalLabels, getGrandTotalMetricConfig, shouldIncludeGrandTotal } from "./officialArrivalsExport";
+import { getGrandTotalLabels, getGrandTotalMetricConfig, shouldIncludeGrandTotal, shouldShowGrandTotalEstablishmentTable } from "./officialArrivalsExport";
 
 describe("establishment submission-history export totals", () => {
   it("omits grand total for month, quarter, and week exports", () => {
@@ -21,6 +21,11 @@ describe("establishment submission-history export totals", () => {
       E18: "TOTAL M AND F",
     });
     expect(getGrandTotalLabels("overnight").E6).toBe("Overnight");
+  });
+
+  it("removes the overnight establishment table from the overnight grand total sheet", () => {
+    expect(shouldShowGrandTotalEstablishmentTable("overnight")).toBe(false);
+    expect(shouldShowGrandTotalEstablishmentTable("daytour")).toBe(true);
   });
 
   it("uses overnight guest check-ins for overnight grand totals", () => {

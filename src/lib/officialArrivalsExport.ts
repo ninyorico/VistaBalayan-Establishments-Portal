@@ -39,6 +39,9 @@ export const getGrandTotalLabels = (exportSection: "daytour" | "overnight" | "bo
       ? { E6: "Overnight" }
       : { E3: "Daytour", E6: "Overnight", E9: "All Total", E12: "MALE", E15: "FEMALE", E18: "TOTAL M AND F" };
 
+export const shouldShowGrandTotalEstablishmentTable = (exportSection: "daytour" | "overnight" | "both") =>
+  exportSection !== "overnight";
+
 const downloadBuffer = (filename: string, buffer: ArrayBuffer | Uint8Array) => {
   const url = URL.createObjectURL(new Blob([buffer], { type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" }));
   const link = document.createElement("a");
@@ -593,6 +596,16 @@ export const downloadOfficialArrivalsWorkbook = async ({
   if (grandTotal && includeGrandTotal) {
     // Final pass prevents template or row-insertion styles from overriding names.
     formatGrandTotalSheet(grandTotal, grandTotalTotalRow - 1, grandTotalTotalRow);
+    if (!shouldShowGrandTotalEstablishmentTable(exportSection)) {
+      ["A3:B3", "A5:B5"].forEach((range) => grandTotal.unMergeCells(range));
+      for (let row = 3; row <= grandTotalTotalRow; row += 1) {
+        for (let column = 1; column <= 3; column += 1) {
+          const cell = grandTotal.getCell(row, column);
+          cell.value = null;
+          clearCellBorders(cell);
+        }
+      }
+    }
   }
   workbook.creator = "VistaBalayan";
   workbook.modified = new Date();
