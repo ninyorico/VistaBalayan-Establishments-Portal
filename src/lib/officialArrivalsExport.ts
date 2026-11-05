@@ -26,6 +26,11 @@ export const shouldIncludeGrandTotal = ({
 }: { selectedMonth?: number; selectedMonths?: number[]; weeklyLabel?: string }) =>
   selectedMonth === undefined && selectedMonths === undefined && !weeklyLabel;
 
+export const getGrandTotalMetricConfig = (exportSection: "daytour" | "overnight" | "both") => ({
+  metricColumn: exportSection === "overnight" ? "E" : "P",
+  metricStartRowOffset: exportSection === "overnight" ? 45 : 15,
+});
+
 const downloadBuffer = (filename: string, buffer: ArrayBuffer | Uint8Array) => {
   const url = URL.createObjectURL(new Blob([buffer], { type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" }));
   const link = document.createElement("a");
@@ -486,8 +491,13 @@ export const downloadOfficialArrivalsWorkbook = async ({
   const grandTotalMonthSheets = monthsToWrite;
   const exportedDaytourTotalRow = 38 + daytourExtraRows;
   const exportedOvernightTotalRow = 54 + daytourExtraRows + overnightExtraRows;
-  const grandTotalExtraRows = Math.max(0, daytourEstablishments.length - 25);
-  const grandTotalTotalRow = 4 + daytourEstablishments.length;
+  const grandTotalEstablishments = exportSection === "overnight" ? overnightEstablishments : daytourEstablishments;
+  const grandTotalMetricConfig = getGrandTotalMetricConfig(exportSection);
+  const grandTotalMetricColumn = grandTotalMetricConfig.metricColumn;
+  const grandTotalMetricTotalRow = exportSection === "overnight" ? exportedOvernightTotalRow : exportedDaytourTotalRow;
+  const grandTotalMetricStartRow = grandTotalMetricConfig.metricStartRowOffset + (exportSection === "overnight" ? daytourExtraRows : 0);
+  const grandTotalExtraRows = Math.max(0, grandTotalEstablishments.length - 25);
+  const grandTotalTotalRow = 4 + grandTotalEstablishments.length;
   const grandTotalUnusedTemplateRows = Math.max(0, 29 - grandTotalTotalRow);
   const totalLabel = grandTotal ? String(grandTotal.getCell("A29").value || "Total of this Month ****") : "Total of this Month ****";
   if (grandTotal && includeGrandTotal && grandTotalExtraRows) {
@@ -506,11 +516,11 @@ export const downloadOfficialArrivalsWorkbook = async ({
       [...grandTotal.model.merges].forEach((range) => grandTotal.unMergeCells(range));
       grandTotal.mergeCells(`A${grandTotalTotalRow}:B${grandTotalTotalRow}`);
     }
-    daytourEstablishments.forEach((establishment, index) => {
+    grandTotalEstablishments.forEach((establishment, index) => {
       const rowNumber = 4 + index;
       grandTotal.getCell(rowNumber, 1).value = index + 1;
       grandTotal.getCell(rowNumber, 2).value = normalizeExportText(establishment.name);
-      const monthlyRows = grandTotalMonthSheets.map((sheet) => `'${sheet.name}'!P${15 + index}`);
+      const monthlyRows = grandTotalMonthSheets.map((sheet) => `'${sheet.name}'!${grandTotalMetricColumn}${grandTotalMetricStartRow + index}`);
       setFormula(grandTotal.getCell(rowNumber, 3), `SUM(${monthlyRows.join(",")})`);
     });
     grandTotal.getCell(`A${grandTotalTotalRow}`).value = normalizeExportText(totalLabel);
@@ -530,8 +540,14 @@ export const downloadOfficialArrivalsWorkbook = async ({
     Object.entries(grandTotalLabels).forEach(([cell, value]) => {
       grandTotal.getCell(cell).value = value;
     });
-    setFormula(grandTotal.getCell("E4"), `SUM(${grandTotalMonthSheets.map((sheet) => `'${sheet.name}'!P${exportedDaytourTotalRow}`).join(",")})`);
-    setFormula(grandTotal.getCell("E7"), "0");
+    const daytourTotalFormula = exportSection === "overnight"
+      ? "0"
+      : `SUM(${grandTotalMonthSheets.map((sheet) => `'${sheet.name}'!P${exportedDaytourTotalRow}`).join(",")})`;
+    const overnightTotalFormula = exportSection === "daytour"
+      ? "0"
+      : `SUM(${grandTotalMonthSheets.map((sheet) => `'${sheet.name}'!E${grandTotalMetricTotalRow}`).join(",")})`;
+    setFormula(grandTotal.getCell("E4"), daytourTotalFormula);
+    setFormula(grandTotal.getCell("E7"), overnightTotalFormula);
     setFormula(grandTotal.getCell("E10"), "SUM(E4,E7)");
     setFormula(grandTotal.getCell("E13"), `SUM(${grandTotalMonthSheets.map((sheet) => `'${sheet.name}'!N${exportedDaytourTotalRow}`).join(",")})`);
     setFormula(grandTotal.getCell("E16"), `SUM(${grandTotalMonthSheets.map((sheet) => `'${sheet.name}'!O${exportedDaytourTotalRow}`).join(",")})`);

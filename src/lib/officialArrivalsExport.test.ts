@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { shouldIncludeGrandTotal } from "./officialArrivalsExport";
+import { getGrandTotalMetricConfig, shouldIncludeGrandTotal } from "./officialArrivalsExport";
 
 describe("establishment submission-history export totals", () => {
   it("omits grand total for month, quarter, and week exports", () => {
@@ -10,5 +10,10 @@ describe("establishment submission-history export totals", () => {
 
   it("includes grand total only for yearly exports", () => {
     expect(shouldIncludeGrandTotal({})).toBe(true);
+  });
+
+  it("uses overnight guest check-ins for overnight grand totals", () => {
+    expect(getGrandTotalMetricConfig("overnight")).toEqual({ metricColumn: "E", metricStartRowOffset: 45 });
+    expect(getGrandTotalMetricConfig("daytour")).toEqual({ metricColumn: "P", metricStartRowOffset: 15 });
   });
 });
