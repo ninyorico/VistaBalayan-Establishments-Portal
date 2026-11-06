@@ -1244,10 +1244,17 @@ export default function Establishments() {
           <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
             <div className="max-h-[26rem] overflow-auto overscroll-contain touch-auto">
               <div className="min-w-full">
-                <table className="w-full min-w-[800px]">
+                <table className="w-full min-w-[800px] table-fixed">
+                <colgroup>
+                  <col className="w-[14rem] sm:w-[18rem]" />
+                  <col className="w-[14rem] sm:w-[18rem]" />
+                  <col className="w-[14rem] sm:w-[18rem]" />
+                  <col className="w-[7rem] sm:w-[9rem]" />
+                  <col className="w-[7rem] sm:w-[9rem]" />
+                </colgroup>
                 <thead className="bg-gray-50 border-b border-gray-200">
                   <tr>
-                    <th className="sticky top-0 z-20 bg-gray-50 px-2 py-2 text-left text-[10px] font-semibold text-gray-700 uppercase tracking-wider sm:px-4 sm:py-3 sm:text-xs">User</th>
+                    <th className="sticky left-0 top-0 z-30 w-[14rem] bg-gray-50 px-2 py-2 text-left text-[10px] font-semibold uppercase tracking-wider text-gray-700 shadow-[2px_0_4px_rgba(148,163,184,0.24)] sm:w-[18rem] sm:px-4 sm:py-3 sm:text-xs">User</th>
                     <th className="sticky top-0 z-20 bg-gray-50 px-2 py-2 text-left text-[10px] font-semibold text-gray-700 uppercase tracking-wider sm:px-4 sm:py-3 sm:text-xs">Role</th>
                     <th className="sticky top-0 z-20 bg-gray-50 px-2 py-2 text-left text-[10px] font-semibold text-gray-700 uppercase tracking-wider sm:px-4 sm:py-3 sm:text-xs">Establishment</th>
                     <th className="sticky top-0 z-20 bg-gray-50 px-2 py-2 text-left text-[10px] font-semibold text-gray-700 uppercase tracking-wider sm:px-4 sm:py-3 sm:text-xs">Status</th>
@@ -1259,13 +1266,13 @@ export default function Establishments() {
                     filteredUsers.map((user) => {
                       const establishment = establishments.find(e => e.id === user.establishment_id);
                       return (
-                        <tr key={user.id} className="hover:bg-gray-50">
-                          <td className="px-2 py-2 sm:px-4 sm:py-3">
-                            <div>
-                              <p className="font-medium text-[10px] leading-4 text-gray-900 sm:text-sm sm:leading-5">{user.full_name || "Unknown"}</p>
-                              <div className="flex items-center gap-1 text-gray-500 text-sm">
-                                <Mail className="w-3 h-3" />
-                                <span>{user.email}</span>
+                        <tr key={user.id} className="group hover:bg-gray-50">
+                          <td className="sticky left-0 z-10 w-[14rem] bg-white px-2 py-2 shadow-[2px_0_4px_rgba(148,163,184,0.18)] group-hover:bg-gray-50 sm:w-[18rem] sm:px-4 sm:py-3">
+                            <div className="min-w-0">
+                              <p className="truncate font-medium text-[10px] leading-4 text-gray-900 sm:text-sm sm:leading-5" title={user.full_name || "Unknown"}>{user.full_name || "Unknown"}</p>
+                              <div className="flex min-w-0 items-center gap-1 text-gray-500 text-sm">
+                                <Mail className="w-3 h-3 shrink-0" />
+                                <span className="min-w-0 truncate" title={user.email}>{user.email}</span>
                               </div>
                             </div>
                           </td>
