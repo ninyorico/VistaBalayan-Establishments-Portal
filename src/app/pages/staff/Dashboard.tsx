@@ -169,7 +169,7 @@ export default function StaffDashboard() {
       </section>
 
       <PanelCard title={metricsTitle} description="Overall totals calculated from all official reports submitted for this establishment." className="p-0">
-        <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-5 sm:gap-4">{metrics.map((stat) => <MetricCard key={stat.title} label={stat.title} value={stat.value} helper={stat.subtitle} icon={stat.icon} tone={stat.tone} compact compactValue={mode === "visitor"} valueFullWidth={stat.title === "Demographics"} className="bg-[#f8fbf8] shadow-none" />)}</div>
+        <div className={`grid grid-cols-2 gap-2 sm:grid-cols-3 sm:gap-4 ${mode === "both" ? "lg:grid-cols-4" : "lg:grid-cols-5"}`}>{metrics.map((stat) => <MetricCard key={stat.title} label={stat.title} value={stat.value} helper={stat.subtitle} icon={stat.icon} tone={stat.tone} compact compactValue={mode === "visitor"} valueFullWidth={stat.title === "Demographics"} className="bg-[#f8fbf8] shadow-none" />)}</div>
       </PanelCard>
 
       <section className="grid grid-cols-1 gap-6">
