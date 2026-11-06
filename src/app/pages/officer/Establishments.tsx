@@ -73,6 +73,7 @@ interface Profile {
 
 export default function Establishments() {
   const { horizontalRef: establishmentsTableRef } = useDominantAxisTableScroll();
+  const { horizontalRef: usersTableRef } = useDominantAxisTableScroll();
   const [activeTab, setActiveTab] = useState<"establishments" | "users">("establishments");
   const [searchTerm, setSearchTerm] = useState("");
   const [filterType, setFilterType] = useState("all");
@@ -1242,7 +1243,7 @@ export default function Establishments() {
 
           {/* Users Table */}
           <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
-            <div className="max-h-[26rem] overflow-auto overscroll-contain touch-auto">
+            <div ref={usersTableRef} className="max-h-[26rem] overflow-auto overscroll-contain touch-none [-webkit-overflow-scrolling:touch]">
               <div className="min-w-full">
                 <table className="w-full min-w-[800px] table-fixed">
                 <colgroup>
