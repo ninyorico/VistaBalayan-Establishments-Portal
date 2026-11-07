@@ -210,7 +210,12 @@ export default function SubmitAccommodationReport() {
         effectiveRoomConfig,
       );
       if (submittedRoomData) {
-        setRoomData(submittedRoomData);
+        setRoomData(await loadPreviousNightGuests(
+          profileData.establishment_id,
+          getPreviousDate(retrievalDate),
+          effectiveRoomConfig,
+          submittedRoomData,
+        ));
       } else if (!draftReportDate) {
         setRoomData(await loadPreviousNightGuests(
           profileData.establishment_id,
@@ -260,8 +265,9 @@ export default function SubmitAccommodationReport() {
     establishmentId: string,
     previousDate: string,
     rooms: EstablishmentRoomConfig[],
+    baseRoomData?: RoomOccupancy[],
   ): Promise<RoomOccupancy[]> => {
-    const empty = buildRoomData(rooms);
+    const empty = baseRoomData || buildRoomData(rooms);
 
     const { data: previousReport, error: previousReportError } = await supabase
       .from("accommodation_reports")
@@ -311,14 +317,25 @@ export default function SubmitAccommodationReport() {
       const previous = byCode.get(normalizedRoomCode)
         || byCode.get(`__room-number:${roomNumber || ""}`)
         || (normalizedRoomCode.endsWith("-1") ? byCode.get(baseCode) : undefined);
+      const previousGuestNights = previous?.guests || 0;
+      const previousNewGuests = Math.min(previous?.newGuests || 0, previousGuestNights);
+
+      if (baseRoomData) {
+        return {
+          ...room,
+          previousNewGuests,
+          previousGuestNights,
+        };
+      }
+
       return {
         ...room,
-        continuingGuests: previous?.guests || 0,
+        continuingGuests: previousGuestNights,
         shortStayCheckIns: previous?.shortStayCheckIns || 0,
-        previousNewGuests: Math.min(previous?.newGuests || 0, previous?.guests || 0),
-        previousGuestNights: previous?.guests || 0,
+        previousNewGuests,
+        previousGuestNights,
         isNewGuest: false,
-        guestNights: previous?.guests || 0,
+        guestNights: previousGuestNights,
         occupied: Math.min(previous?.occupied || 0, room.numberOfRooms),
       };
     });
@@ -397,11 +414,13 @@ export default function SubmitAccommodationReport() {
         date,
         roomTypes,
       );
-      const nextRoomData = submittedRoomData || await loadPreviousNightGuests(
-        profile.establishment_id,
-        getPreviousDate(date),
-        roomTypes,
-      );
+      const nextRoomData = submittedRoomData
+        ? await loadPreviousNightGuests(profile.establishment_id, getPreviousDate(date), roomTypes, submittedRoomData)
+        : await loadPreviousNightGuests(
+          profile.establishment_id,
+          getPreviousDate(date),
+          roomTypes,
+        );
       setRoomData(nextRoomData);
     } finally {
       setRetrievingPreviousData(false);
