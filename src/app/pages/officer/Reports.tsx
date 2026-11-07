@@ -34,6 +34,16 @@ const getCurrentYear = () => new Date().getFullYear().toString();
 
 const getCurrentMonth = () => new Date().toLocaleString("default", { month: "short" });
 
+const getMonthWeekCount = (year: string, month: string) => {
+  const monthIndex = [
+    "Jan", "Feb", "Mar", "Apr", "May", "Jun",
+    "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"
+  ].indexOf(month);
+  if (monthIndex < 0) return 4;
+  const daysInMonth = new Date(Number(year), monthIndex + 1, 0).getDate();
+  return Math.ceil(daysInMonth / 7);
+};
+
 const getWeekRange = (year: string, week: string) => {
   const yearNumber = parseInt(year, 10) || new Date().getFullYear();
   const weekNumber = parseInt(week, 10) || 1;
@@ -346,7 +356,7 @@ export default function Reports() {
         : filterType === "quarter"
           ? months.slice((Number(selectedQuarter) - 1) * 3, Number(selectedQuarter) * 3)
           : filterType === "month"
-            ? Array.from({ length: 5 }, (_, index) => `Week ${index + 1}`)
+            ? Array.from({ length: getMonthWeekCount(selectedYear, selectedMonth) }, (_, index) => `Week ${index + 1}`)
             : Array.from({ length: 7 }, (_, index) => {
                 const date = new Date(`${startDate}T00:00:00`);
                 date.setDate(date.getDate() + index);
