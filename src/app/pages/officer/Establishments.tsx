@@ -785,6 +785,7 @@ export default function Establishments() {
         toast.error("Only establishment staff users can be removed from this screen.");
       } else {
         let removeErrorMessage: string | null = null;
+        const linkedEstablishmentId = userToRemove.establishment_id;
 
         const { error: rpcError } = await supabase.rpc('remove_officer_user', {
           p_user_id: deleteTarget.id,
@@ -792,8 +793,22 @@ export default function Establishments() {
 
         if (rpcError) {
           removeErrorMessage = /remove_officer_user/i.test(rpcError.message || '')
-            ? "The verified user-removal database function is not installed yet. Apply the Supabase migration, then try removing the user again."
+            ? "The verified user-and-establishment removal database function is not installed yet. Apply the Supabase migration, then try removing the user again."
             : rpcError.message;
+        }
+
+        if (!removeErrorMessage && linkedEstablishmentId) {
+          const { data: stillExistingEstablishment, error: establishmentVerifyError } = await supabase
+            .from('establishments')
+            .select('id')
+            .eq('id', linkedEstablishmentId)
+            .maybeSingle();
+
+          if (establishmentVerifyError) {
+            removeErrorMessage = establishmentVerifyError.message;
+          } else if (stillExistingEstablishment) {
+            removeErrorMessage = "The database still shows the linked establishment after user removal. No success message was shown because the establishment was not actually deleted.";
+          }
         }
 
         if (!removeErrorMessage) {
@@ -814,9 +829,9 @@ export default function Establishments() {
         if (removeErrorMessage) {
           toast.error("Failed to remove user: " + removeErrorMessage);
         } else {
-          setUsers((current) => current.filter((user) => user.id !== deleteTarget.id));
-          toast.success("User removed successfully");
-          await fetchUsers();
+          setUsers((current) => current.filter((user) => user.id !== deleteTarget.id && (!linkedEstablishmentId || user.establishment_id !== linkedEstablishmentId)));
+          toast.success(linkedEstablishmentId ? "User and linked establishment removed successfully" : "User removed successfully");
+          await Promise.all([fetchUsers(), fetchEstablishments()]);
         }
       }
     }
