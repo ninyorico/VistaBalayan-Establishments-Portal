@@ -139,7 +139,7 @@ export default function StaffLayout() {
       </aside>
 
       {/* Main Content */}
-      <div className="min-w-0 max-w-full lg:ml-64">
+      <div className="lg:ml-64">
         {/* Top Navbar */}
         <header className="vb-neu-topbar sticky top-0 z-[80]">
           <div className="px-4 sm:px-6 py-4 flex items-center justify-between">
@@ -211,7 +211,7 @@ export default function StaffLayout() {
         </header>
 
         {/* Page Content */}
-        <main className="min-h-[calc(100dvh-4rem)] w-full min-w-0 max-w-full overflow-visible touch-pan-y bg-[#E0E5EC] p-3 sm:p-4 lg:min-h-[calc(100dvh-4.5rem)] lg:p-4 xl:p-5 2xl:p-6">
+        <main className="min-h-[calc(100dvh-4rem)] w-full overflow-visible touch-pan-y bg-[#E0E5EC] p-3 sm:p-4 lg:min-h-[calc(100dvh-4.5rem)] lg:p-4 xl:p-5 2xl:p-6">
           <Outlet />
         </main>
       </div>

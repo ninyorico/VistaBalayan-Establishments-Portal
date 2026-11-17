@@ -83,14 +83,10 @@
     font-size: var(--font-size);
     scroll-behavior: smooth;
     text-rendering: optimizeLegibility;
-    max-width: 100%;
-    overflow-x: hidden;
   }
 
   body {
     min-height: 100dvh;
-    max-width: 100%;
-    overflow-x: hidden;
     background: #E8EDF3;
     color: var(--foreground);
     font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
@@ -192,23 +188,6 @@
     --neu-teal: #0E5A72;
     background: var(--neu-surface) !important;
     color: var(--neu-text) !important;
-    width: 100%;
-    max-width: 100%;
-    min-width: 0;
-    overflow-x: hidden;
-  }
-
-  /*
-   * Keep wide data views inside their own scroll containers. A child table or
-   * chart may still scroll horizontally, but it must not widen the dashboard
-   * document and create a second scrollbar for the whole page.
-   */
-  #root,
-  .dashboard-neumorphic > div,
-  .dashboard-neumorphic main {
-    width: 100%;
-    max-width: 100%;
-    min-width: 0;
   }
 
   .dashboard-neumorphic .tourism-shell,

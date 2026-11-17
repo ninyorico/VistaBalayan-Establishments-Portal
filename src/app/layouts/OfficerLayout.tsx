@@ -112,7 +112,7 @@ export default function OfficerLayout() {
       </aside>
 
       {/* Main Content */}
-      <div className="min-w-0 max-w-full lg:ml-64">
+      <div className="lg:ml-64">
         {/* Top Navbar */}
         <header className="vb-neu-topbar sticky top-0 z-40">
           <div className="px-4 sm:px-6 py-4 flex items-center justify-between">
@@ -185,7 +185,7 @@ export default function OfficerLayout() {
         </header>
 
         {/* Page Content */}
-        <main className="mx-auto min-h-[calc(100dvh-4rem)] min-w-0 max-w-[1500px] overflow-visible p-4 touch-pan-y sm:p-6 lg:min-h-[calc(100dvh-4.5rem)] lg:p-8">
+        <main className="mx-auto min-h-[calc(100dvh-4rem)] max-w-[1500px] overflow-visible p-4 touch-pan-y sm:p-6 lg:min-h-[calc(100dvh-4.5rem)] lg:p-8">
           <Outlet />
         </main>
       </div>
