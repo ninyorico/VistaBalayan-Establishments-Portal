@@ -1100,10 +1100,9 @@ export default function Establishments() {
           <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
             <div ref={establishmentsTableRef} className="max-h-[26rem] overflow-auto overscroll-contain touch-none [-webkit-overflow-scrolling:touch]">
               <div className="min-w-full">
-                <table className="w-full min-w-[1100px]">
+                <table className="w-full min-w-[980px]">
                 <thead className="bg-gray-50 border-b border-gray-200">
                   <tr>
-                    <th className="sticky left-0 top-0 z-30 bg-gray-50 px-2 py-2 text-left text-[10px] font-semibold text-gray-700 uppercase tracking-wider sm:px-4 sm:py-3 sm:text-xs shadow-[2px_0_4px_rgba(148,163,184,0.24)]">Establishment</th>
                     <th className="sticky top-0 z-20 bg-gray-50 px-2 py-2 text-left text-[10px] font-semibold text-gray-700 uppercase tracking-wider sm:px-4 sm:py-3 sm:text-xs">Type</th>
                     <th className="sticky top-0 z-20 bg-gray-50 px-2 py-2 text-left text-[10px] font-semibold text-gray-700 uppercase tracking-wider sm:px-4 sm:py-3 sm:text-xs">Address</th>
                     <th className="sticky top-0 z-20 bg-gray-50 px-2 py-2 text-left text-[10px] font-semibold text-gray-700 uppercase tracking-wider sm:px-4 sm:py-3 sm:text-xs">Contact</th>
@@ -1118,9 +1117,6 @@ export default function Establishments() {
                   {filteredEstablishments.length > 0 ? (
                     filteredEstablishments.map((establishment) => (
                       <tr key={establishment.id} className="group hover:bg-gray-50">
-                        <td className="sticky left-0 z-10 bg-white px-2 py-2 sm:px-4 sm:py-3 shadow-[2px_0_4px_rgba(148,163,184,0.18)] group-hover:bg-gray-50">
-                          <p className="font-medium text-[10px] leading-4 text-gray-900 sm:text-sm sm:leading-5">{establishment.name}</p>
-                        </td>
                         <td className="px-2 py-2 sm:px-4 sm:py-3 text-[10px] text-gray-600 sm:text-sm">{establishment.type}</td>
                         <td className="px-2 py-2 sm:px-4 sm:py-3">
                           <div className="flex min-w-0 items-center gap-2 text-gray-600">
@@ -1168,7 +1164,7 @@ export default function Establishments() {
                     ))
                   ) : (
                     <tr>
-                      <td colSpan={9} className="px-6 py-12 text-center text-gray-500">
+                      <td colSpan={8} className="px-6 py-12 text-center text-gray-500">
                         No establishments found. Click "Add Record" to get started.
                       </td>
                     </tr>
