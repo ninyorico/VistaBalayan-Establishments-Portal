@@ -83,6 +83,8 @@
     font-size: var(--font-size);
     scroll-behavior: smooth;
     text-rendering: optimizeLegibility;
+    overflow-x: clip;
+    overscroll-behavior-x: none;
   }
 
   body {
@@ -91,6 +93,13 @@
     color: var(--foreground);
     font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
     font-feature-settings: "cv02", "cv03", "cv04", "tnum";
+    overflow-x: clip;
+    overscroll-behavior-x: none;
+  }
+
+  #root {
+    max-width: 100%;
+    overflow-x: clip;
   }
 
   body::before {
