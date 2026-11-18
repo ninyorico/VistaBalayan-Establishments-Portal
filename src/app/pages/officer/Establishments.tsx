@@ -1100,7 +1100,7 @@ export default function Establishments() {
           <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
             <div ref={establishmentsTableRef} className="max-h-[26rem] overflow-auto overscroll-contain touch-none [-webkit-overflow-scrolling:touch]">
               <div className="min-w-full">
-                <table className="w-full min-w-[980px]">
+                <table className="w-full min-w-[900px]">
                 <thead className="bg-gray-50 border-b border-gray-200">
                   <tr>
                     <th className="sticky top-0 z-20 bg-gray-50 px-2 py-2 text-left text-[10px] font-semibold text-gray-700 uppercase tracking-wider sm:px-4 sm:py-3 sm:text-xs">Type</th>
@@ -1108,7 +1108,6 @@ export default function Establishments() {
                     <th className="sticky top-0 z-20 bg-gray-50 px-2 py-2 text-left text-[10px] font-semibold text-gray-700 uppercase tracking-wider sm:px-4 sm:py-3 sm:text-xs">Contact</th>
                     <th className="sticky top-0 z-20 bg-gray-50 px-2 py-2 text-left text-[10px] font-semibold text-gray-700 uppercase tracking-wider sm:px-4 sm:py-3 sm:text-xs">Rooms</th>
                     <th className="sticky top-0 z-20 bg-gray-50 px-2 py-2 text-left text-[10px] font-semibold text-gray-700 uppercase tracking-wider sm:px-4 sm:py-3 sm:text-xs">Permit</th>
-                    <th className="sticky top-0 z-20 bg-gray-50 px-2 py-2 text-left text-[10px] font-semibold text-gray-700 uppercase tracking-wider sm:px-4 sm:py-3 sm:text-xs">Staff</th>
                     <th className="sticky top-0 z-20 bg-gray-50 px-2 py-2 text-left text-[10px] font-semibold text-gray-700 uppercase tracking-wider sm:px-4 sm:py-3 sm:text-xs">Status</th>
                     <th className="sticky top-0 z-20 bg-gray-50 px-2 py-2 text-left text-[10px] font-semibold text-gray-700 uppercase tracking-wider sm:px-4 sm:py-3 sm:text-xs">Actions</th>
                   </tr>
@@ -1142,7 +1141,6 @@ export default function Establishments() {
                             </span>
                           )}
                         </td>
-                        <td className="px-2 py-2 sm:px-4 sm:py-3 text-[10px] text-gray-900 sm:text-sm">{staffCountByEstablishment[establishment.id] || 0}</td>
                         <td className="px-2 py-2 sm:px-4 sm:py-3">
                           <span className={`inline-flex px-2.5 py-1 rounded-full text-xs font-medium ${
                             establishment.status === "active" ? "bg-green-100 text-green-700" : "bg-gray-100 text-gray-700"
@@ -1164,7 +1162,7 @@ export default function Establishments() {
                     ))
                   ) : (
                     <tr>
-                      <td colSpan={8} className="px-6 py-12 text-center text-gray-500">
+                      <td colSpan={7} className="px-6 py-12 text-center text-gray-500">
                         No establishments found. Click "Add Record" to get started.
                       </td>
                     </tr>
