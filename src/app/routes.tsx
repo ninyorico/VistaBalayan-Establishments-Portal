@@ -5,21 +5,26 @@ import OfficerLayout from "./layouts/OfficerLayout";
 import StaffLayout from "./layouts/StaffLayout";
 import { ProtectedRoute } from "./components/ProtectedRoute";
 import { LoadingState } from "./components/vista/PolishedShell";
+import OfflinePage from "./components/OfflinePage";
 import NotFound from "./pages/NotFound";
 
 const STAFF_CHUNK_RETRY_KEY = "vistabalayan:staff-chunk-retry";
 
-function StaffRouteError() {
+function SystemRouteError() {
   const error = useRouteError();
   const message = isRouteErrorResponse(error) ? error.statusText : error instanceof Error ? error.message : "";
-  const isChunkError = /dynamically imported module|importing a module script|Loading chunk/i.test(message);
+  const isNetworkError = !navigator.onLine || /failed to fetch|networkerror|load failed|dynamically imported module|importing a module script|loading chunk/i.test(message);
+
+  if (isNetworkError) {
+    return <OfflinePage />;
+  }
 
   return (
     <div className="flex min-h-[60vh] items-center justify-center p-6">
       <div className="max-w-lg rounded-3xl bg-[#E0E5EC] p-6 text-center shadow-[9px_9px_16px_rgba(163,177,198,0.6),-9px_-9px_16px_rgba(255,255,255,0.55)]">
         <h1 className="text-xl font-bold text-[#193364]">This page could not be loaded</h1>
         <p className="mt-2 text-sm text-[#64748b]">
-          {isChunkError ? "The page was updated while it was open. Refresh and try again." : "Please refresh the page and try again."}
+          Please refresh the page and try again.
         </p>
         <button
           type="button"
@@ -64,6 +69,7 @@ export const router = createBrowserRouter([
       </ProtectedRoute>
     ),
     HydrateFallback: () => <LoadingState label="Loading officer portal" />,
+    errorElement: <SystemRouteError />,
     children: [
       { index: true, lazy: async () => ({ Component: (await import("./pages/officer/Dashboard")).default }) },
       { path: "establishments", lazy: async () => ({ Component: (await import("./pages/officer/Establishments")).default }) },
@@ -86,7 +92,7 @@ export const router = createBrowserRouter([
       </ProtectedRoute>
     ),
     HydrateFallback: () => <LoadingState label="Loading staff portal" />,
-    errorElement: <StaffRouteError />,
+    errorElement: <SystemRouteError />,
     children: [
       { index: true, lazy: async () => ({ Component: (await import("./pages/staff/Dashboard")).default }) },
       {
