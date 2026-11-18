@@ -67,7 +67,7 @@ const getReportTypeLabel = (report: Submission) => report.type === "Visitor Repo
 const statusStyles = reportStatusClasses;
 const normalizeStatus = normalizeReportStatus;
 const formatStatus = reportStatusLabel;
-const submittedStatusClass = "bg-[#FFF4C2] text-[#8A6A00] ring-1 ring-[#F1D66A] shadow-[2px_2px_5px_rgba(163,177,198,0.28),-2px_-2px_5px_rgba(255,255,255,0.7)]";
+const submittedStatusClass = "bg-emerald-50 text-emerald-700 ring-emerald-200";
 const getStatusClass = (status?: string | null) => normalizeStatus(status) === "submitted"
   ? submittedStatusClass
   : statusStyles[normalizeStatus(status)] || statusStyles.pending;
@@ -848,7 +848,7 @@ export default function Reports() {
                     <td className="px-2 py-2 text-[11px] text-gray-900 sm:px-4 sm:py-3 sm:text-sm">{report.reportDate}</td>
                     <td className="px-2 py-2 text-[11px] text-gray-900 sm:px-4 sm:py-3 sm:text-sm">{report.visitors}</td>
                     <td className="px-4 py-3">
-                      <span className={`inline-flex rounded-full px-2.5 py-1 text-xs font-semibold ${getStatusClass(report.status)}`}>
+                      <span className={`inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-xs font-semibold capitalize ring-1 ${getStatusClass(report.status)}`}>
                         {formatStatus(report.status)}
                       </span>
                     </td>
@@ -917,7 +917,7 @@ export default function Reports() {
                 </div>
                 <div className="rounded-2xl bg-[#E0E5EC] p-4 shadow-[inset_5px_5px_10px_rgba(163,177,198,0.42),inset_-5px_-5px_10px_rgba(255,255,255,0.76)]">
                   <p className="text-xs font-semibold uppercase tracking-wide text-[#64748b]">Status</p>
-                  <span className={`mt-2 inline-flex rounded-full px-3 py-1 text-xs font-bold ${getStatusClass(selectedSubmission.status)}`}>{formatStatus(selectedSubmission.status)}</span>
+                  <span className={`mt-2 inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-xs font-semibold capitalize ring-1 ${getStatusClass(selectedSubmission.status)}`}>{formatStatus(selectedSubmission.status)}</span>
                 </div>
               </div>
               {selectedSubmission.notes && (
