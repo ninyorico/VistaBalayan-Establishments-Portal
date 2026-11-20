@@ -13,8 +13,3 @@ export const splitAiRecommendation = (description?: string | null, recommendedAc
 
   return { summary, action };
 };
-
-export const formatConfidence = (value?: number | null) => {
-  if (typeof value !== 'number' || Number.isNaN(value)) return null;
-  return `${Math.round(value * 100)}% confidence`;
-};

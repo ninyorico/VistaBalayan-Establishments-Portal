@@ -18,10 +18,6 @@ const MAX_REQUESTS_PER_WINDOW = 5;
 const MAX_AI_ITEMS = 10;
 
 const clean = (value, fallback = '') => String(value || fallback).replace(/\s+/g, ' ').trim();
-const confidence = (value) => {
-  const parsed = Number(value);
-  return Number.isFinite(parsed) ? Math.max(0, Math.min(1, parsed)) : 0.65;
-};
 const jsonObject = (text) => {
   const match = String(text).match(/\{[\s\S]*\}/);
   return match ? JSON.parse(match[0]) : {};
@@ -32,7 +28,6 @@ const normalizeInsights = (items) => (Array.isArray(items) ? items : []).slice(0
   impact: clean(item.impact, 'medium').toLowerCase(),
   category: clean(item.category, 'Operations'),
   recommended_action: clean(item.recommended_action || item.action, 'Review this trend and take one focused action.'),
-  confidence_score: confidence(item.confidence_score),
 }));
 const normalizeAnomalies = (items) => (Array.isArray(items) ? items : []).slice(0, MAX_AI_ITEMS).map((item) => ({
   type: clean(item.type || item.anomaly_type, 'Operational anomaly'),
@@ -40,7 +35,6 @@ const normalizeAnomalies = (items) => (Array.isArray(items) ? items : []).slice(
   description: clean(item.description),
   recommendation: clean(item.recommendation || item.recommended_action, 'Review this record manually.'),
   establishment: item.establishment ? clean(item.establishment) : undefined,
-  confidence_score: confidence(item.confidence_score),
 }));
 const rateLimit = (userId) => {
   const now = Date.now();
@@ -149,7 +143,7 @@ const getScopedData = async (supabaseAdmin, profile, scope) => {
 
 
 const generate = async (apiKey, data, scope) => {
-  const prompt = `You are a tourism data analyst for ${data.establishmentName}. Based only on the verified aggregate values below, return one JSON object with exactly ${scope === 'establishment' ? 3 : 4} concise recommendations. Use this exact shape: {"insights":[{"title":"max 6 words","description":"one sentence max 18 words; do not invent causes or figures","impact":"high|medium|low","category":"Seasonal|Operations|Marketing|Infrastructure","recommended_action":"one action sentence max 14 words","confidence_score":0.0}]}. Total submitted day-tour visitors: ${data.totalVisitors}. Average accommodation occupancy: ${data.avgOccupancy}%. Monthly metrics: ${JSON.stringify(data.monthlyMetrics)}. Do not generate anomaly classifications, numerical claims, causes, or personal data. The server computes anomaly evidence separately.`;
+  const prompt = `You are a tourism data analyst for ${data.establishmentName}. Based only on the verified aggregate values below, return one JSON object with exactly ${scope === 'establishment' ? 3 : 4} concise recommendations. Use this exact shape: {"insights":[{"title":"max 6 words","description":"one sentence max 18 words; do not invent causes or figures","impact":"high|medium|low","category":"Seasonal|Operations|Marketing|Infrastructure","recommended_action":"one action sentence max 14 words"}]}. Total submitted day-tour visitors: ${data.totalVisitors}. Average accommodation occupancy: ${data.avgOccupancy}%. Monthly metrics: ${JSON.stringify(data.monthlyMetrics)}. Do not generate anomaly classifications, numerical claims, causes, or personal data. The server computes anomaly evidence separately.`;
   const result = await generateContentWithFallback(apiKey, prompt);
   const generated = jsonObject(await result.response.text());
   return {

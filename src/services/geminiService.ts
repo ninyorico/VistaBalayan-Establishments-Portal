@@ -6,7 +6,6 @@ type Insight = {
   impact: string
   category: string
   recommended_action?: string
-  confidence_score?: number
 }
 
 type Anomaly = {
@@ -15,7 +14,6 @@ type Anomaly = {
   description: string
   recommendation: string
   establishment?: string
-  confidence_score?: number
 }
 
 const callGenerationApi = async (scope: 'municipality' | 'establishment') => {

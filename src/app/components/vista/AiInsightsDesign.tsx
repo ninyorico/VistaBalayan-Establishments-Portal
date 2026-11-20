@@ -1,7 +1,7 @@
 import type { ReactNode } from "react";
 import { AlertTriangle, CheckCircle2, Sparkles, TrendingUp } from "lucide-react";
 
-import { cleanAiText, formatConfidence, splitAiRecommendation } from "../../../lib/aiText";
+import { cleanAiText, splitAiRecommendation } from "../../../lib/aiText";
 import { AiFormattedText } from "../AiFormattedText";
 import { Badge } from "../ui/badge";
 import { Button } from "../ui/button";
@@ -36,15 +36,14 @@ interface AiRecommendationCardProps {
   impact: string;
   category: string;
   recommended_action?: string | null;
-  confidence_score?: number | null;
 }
 
 const severityTone = (severity?: string) => {
   if (severity === "high") {
     return {
-      badge: "border-red-200 bg-red-50 text-red-700",
-      icon: "text-red-600",
-      soft: "bg-red-50/70",
+      badge: "border-red-400 bg-red-100 text-red-900 font-bold",
+      icon: "text-red-700",
+      soft: "bg-red-100/90 border border-red-300",
     };
   }
 
@@ -237,7 +236,6 @@ export function AiAnomalyCard(anomaly: AiAnomalyCardProps) {
 
 export function AiRecommendationCard(insight: AiRecommendationCardProps) {
   const { summary, action } = splitAiRecommendation(insight.description, insight.recommended_action || undefined);
-  const confidence = formatConfidence(insight.confidence_score || undefined);
   const tone = severityTone(insight.impact);
 
   return (
@@ -276,7 +274,6 @@ export function AiRecommendationCard(insight: AiRecommendationCardProps) {
           <span className="min-w-0 truncate text-xs font-semibold uppercase tracking-[0.16em] text-slate-400">
             {cleanAiText(insight.category)}
           </span>
-          {confidence && <span className="shrink-0 text-xs font-medium text-slate-500">{confidence}</span>}
         </div>
       </div>
     </article>

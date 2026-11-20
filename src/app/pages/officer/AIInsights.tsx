@@ -32,7 +32,7 @@ interface Insight {
   impact: string
   category: string
   recommended_action?: string
-  confidence_score?: number
+
 }
 
 export default function AIInsights() {
