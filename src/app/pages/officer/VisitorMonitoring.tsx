@@ -12,6 +12,7 @@ import { periodMatchesDate, periodToMonthValue, getReportWeekRange, getReportWee
 
 interface VisitorRecord {
   id: string;
+  establishmentId: string;
   establishment: string;
   date: string;
   guestName: string;
@@ -54,6 +55,7 @@ export default function VisitorMonitoring({ embedded = false }: { embedded?: boo
         .from("visitor_reports")
         .select(`
           id,
+          establishment_id,
           report_date,
           total_male,
           total_female,
@@ -85,6 +87,7 @@ export default function VisitorMonitoring({ embedded = false }: { embedded?: boo
     // Transform data for display
     const formattedRecords: VisitorRecord[] = allRecords.map((item: any) => ({
       id: item.id,
+      establishmentId: item.establishment_id,
       establishment: item.establishments?.name || "Unknown",
       date: item.report_date,
       guestName: "N/A", // Note: guest_name field doesn't exist in your schema
@@ -182,6 +185,7 @@ export default function VisitorMonitoring({ embedded = false }: { embedded?: boo
   const totalVisitors = filteredRecords.reduce((sum, r) => sum + r.total, 0);
   const totalMale = filteredRecords.reduce((sum, r) => sum + r.male, 0);
   const totalFemale = filteredRecords.reduce((sum, r) => sum + r.female, 0);
+  const totalDailyReports = new Set(filteredRecords.map((record) => `${record.establishmentId}|${record.date}`)).size;
 
   const handleExport = () => {
     const establishmentNames = searchTerm.trim()
@@ -241,8 +245,8 @@ export default function VisitorMonitoring({ embedded = false }: { embedded?: boo
           <p className="text-2xl font-bold text-gray-900 sm:text-3xl">{totalFemale}</p>
         </div>
         <div className="rounded-lg border border-gray-200 bg-white p-4 shadow-sm sm:p-6">
-          <p className="mb-1 text-xs text-gray-600 sm:text-sm">Total Records</p>
-          <p className="text-2xl font-bold text-gray-900 sm:text-3xl">{filteredRecords.length}</p>
+          <p className="mb-1 text-xs text-gray-600 sm:text-sm">Total Daily Reports</p>
+          <p className="text-2xl font-bold text-gray-900 sm:text-3xl">{totalDailyReports}</p>
         </div>
       </div>
 
