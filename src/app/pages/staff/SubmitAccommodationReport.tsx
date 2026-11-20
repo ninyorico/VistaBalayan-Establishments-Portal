@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef, type MouseEvent, type PointerEvent, type TouchEvent } from "react";
 import { useNavigate } from "react-router";
-import { Save, Send, AlertTriangle, Plus, Trash2 } from "lucide-react";
+import { Save, Send, AlertTriangle, Plus, Trash2, CircleHelp, X } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "../../../lib/supabase";
 
@@ -44,11 +44,13 @@ export default function SubmitAccommodationReport() {
   const [error, setError] = useState<string | null>(null);
   const [establishmentName, setEstablishmentName] = useState("Loading...");
   const [showRoomSetup, setShowRoomSetup] = useState(false);
+  const [showFormHelp, setShowFormHelp] = useState(false);
   const [reportFormMode, setReportFormMode] = useState<AccommodationFormMode>("single");
   const [tempReportFormMode, setTempReportFormMode] = useState<AccommodationFormMode>("single");
   const [roomsToAdd, setRoomsToAdd] = useState("1");
 
   const roomDialogRef = useRef<HTMLDivElement>(null);
+  const formHelpDialogRef = useRef<HTMLDivElement>(null);
   const [tempRoomConfig, setTempRoomConfig] = useState<EstablishmentRoomConfig[]>(DEFAULT_ROOM_CONFIG);
   const [roomTypes, setRoomTypes] = useState<EstablishmentRoomConfig[]>(DEFAULT_ROOM_CONFIG);
   const [establishmentAmenities, setEstablishmentAmenities] = useState<string>("");
@@ -122,15 +124,16 @@ export default function SubmitAccommodationReport() {
   };
 
   useDialogFocus(showRoomSetup, roomDialogRef, () => setShowRoomSetup(false));
+  useDialogFocus(showFormHelp, formHelpDialogRef, () => setShowFormHelp(false));
 
   useEffect(() => {
-    if (!showRoomSetup) return;
+    if (!showRoomSetup && !showFormHelp) return;
     const previousBodyOverflow = document.body.style.overflow;
     document.body.style.overflow = "hidden";
     return () => {
       document.body.style.overflow = previousBodyOverflow;
     };
-  }, [showRoomSetup]);
+  }, [showRoomSetup, showFormHelp]);
 
   const [reportDate, setReportDate] = useState(getTodayDate());
 
@@ -828,6 +831,56 @@ export default function SubmitAccommodationReport() {
         compact
       />
 
+      {showFormHelp && (
+        <div className="fixed inset-0 z-[110] flex items-start justify-center overflow-y-auto bg-[#193364]/45 p-4 backdrop-blur-[2px] sm:items-center" role="presentation" onMouseDown={(event) => { if (event.target === event.currentTarget) setShowFormHelp(false); }}>
+          <section ref={formHelpDialogRef} className="my-4 max-h-[calc(100dvh-2rem)] w-full max-w-2xl overflow-y-auto rounded-[2rem] bg-[#E0E5EC] p-5 text-[#193364] shadow-[12px_12px_24px_rgba(15,35,60,0.28),-8px_-8px_20px_rgba(255,255,255,0.5)] sm:p-7" role="dialog" aria-modal="true" aria-labelledby="accommodation-form-help-title" tabIndex={-1}>
+            <div className="flex items-start justify-between gap-4">
+              <div>
+                <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[#0E5A72]">Form guide</p>
+                <h2 id="accommodation-form-help-title" className="mt-1 text-2xl font-semibold tracking-tight">How to use this form</h2>
+              </div>
+              <button type="button" onClick={() => setShowFormHelp(false)} className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[#E0E5EC] text-[#193364] shadow-[4px_4px_8px_rgba(163,177,198,0.55),-4px_-4px_8px_rgba(255,255,255,0.65)] hover:text-[#0E5A72]" aria-label="Close accommodation form guide">
+                <X className="h-5 w-5" />
+              </button>
+            </div>
+
+            <div className="mt-5 space-y-4 text-sm leading-6 text-[#40505A]">
+              <p>Enter the values for the selected report date. The form calculates occupied rooms, guest check-ins, and guest nights from the room entries; you do not need to calculate the totals manually.</p>
+
+              <div className="grid gap-3 sm:grid-cols-2">
+                <div className="rounded-2xl bg-white/70 p-4">
+                  <h3 className="font-semibold text-[#193364]">Room / Code</h3>
+                  <p className="mt-1">Identifies the room row. These values come from Room Configuration and are not daily visitor counts.</p>
+                </div>
+                <div className="rounded-2xl bg-white/70 p-4">
+                  <h3 className="font-semibold text-[#193364]">Previous Date</h3>
+                  <p className="mt-1">Shows the previous report’s guest value for reference. It is read-only. A red circle means the previous value included a new guest.</p>
+                </div>
+                <div className="rounded-2xl bg-white/70 p-4">
+                  <h3 className="font-semibold text-[#193364]">Short-stay Check-ins</h3>
+                  <p className="mt-1">Enter guests who used the room for a short stay on the selected date. This contributes to check-ins and guest nights.</p>
+                </div>
+                <div className="rounded-2xl bg-white/70 p-4">
+                  <h3 className="font-semibold text-[#193364]">Overnight</h3>
+                  <p className="mt-1">Enter the current date’s overnight guest value. In the single-value form, double-click the value to switch between continuing and new guest.</p>
+                </div>
+              </div>
+
+              <div className="rounded-2xl border border-red-200 bg-red-50/80 p-4 text-red-900">
+                <h3 className="font-semibold">What does the red marker mean?</h3>
+                <p className="mt-1">A red circle or red-bordered value identifies a new guest value. It is an indicator of guest type, not an error or warning. A normal gray value represents a continuing guest value.</p>
+              </div>
+
+              <ul className="list-disc space-y-1 pl-5">
+                <li>Use <strong>Save Draft</strong> to keep unfinished entries on this device.</li>
+                <li>Use <strong>Submit Accommodation Report</strong> only after checking the selected date and room values.</li>
+                <li>Use <strong>Configure Rooms</strong> when room names, codes, or room counts change.</li>
+              </ul>
+            </div>
+          </section>
+        </div>
+      )}
+
       {/* Room Setup Modal */}
       {showRoomSetup && (
         <div ref={roomDialogRef} className="fixed inset-0 z-[100] flex items-start justify-center overflow-y-auto bg-black bg-opacity-50 p-2 sm:items-center sm:p-4" role="dialog" aria-modal="true" aria-labelledby="room-configuration-title" tabIndex={-1} data-room-config-mobile-scroll="modal-owned">
@@ -959,7 +1012,12 @@ export default function SubmitAccommodationReport() {
       {/* Room Occupancy Table */}
       <div className="flex min-h-0 flex-col overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-sm lg:h-full">
         <div className="p-4 sm:p-5 lg:p-6 border-b border-gray-200">
-          <h3 className="text-lg font-semibold text-gray-900">Daily Room Occupancy</h3>
+          <div className="flex items-start justify-between gap-3">
+            <h3 className="text-lg font-semibold text-gray-900">Daily Room Occupancy</h3>
+            <button type="button" onClick={() => setShowFormHelp(true)} className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-[#B8D2CF] bg-[#E0E5EC] text-[#0E5A72] shadow-[3px_3px_7px_rgba(163,177,198,0.45),-3px_-3px_7px_rgba(255,255,255,0.65)] hover:text-[#193364]" aria-label="Open accommodation form guide" title="How to use this form">
+              <CircleHelp className="h-5 w-5" />
+            </button>
+          </div>
           <p className="mt-1 text-sm text-gray-500 lg:hidden">Compact full-width table for faster phone entry.</p>
           <p className="mt-2 text-sm text-gray-600">Double-click the current date value to switch between continuing and new guest; single-click to edit the value.</p>
 

@@ -421,11 +421,12 @@ setOccupancyRate(occupancyRate);
       <PanelCard title="Service Gaps" className="min-w-0">
         <div className="grid min-w-0 grid-cols-1 gap-4 xl:grid-cols-2">
           {anomalies.length > 0 ? (
-            anomalies.map((anomaly) => (
+            anomalies.map((anomaly, index) => (
               <AiAnomalyCard
                 key={anomaly.id}
                 {...anomaly}
                 establishments={anomaly.establishments || { name: "Municipality-wide" }}
+                className={index === anomalies.length - 1 && anomalies.length % 2 === 1 ? "xl:col-span-2" : undefined}
               />
             ))
           ) : (
