@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from "react";
+import { createPortal } from "react-dom";
 import { useNavigate } from "react-router";
 import { Save, Send, Plus, Trash2, AlertTriangle, CircleHelp, X } from "lucide-react";
 import { toast } from "sonner";
@@ -557,9 +558,9 @@ const loadProfile = async () => {
         compact
       />
 
-      {showFormHelp && (
-        <div className="fixed inset-0 z-[110] flex items-start justify-center overflow-y-auto bg-[#193364]/45 p-4 backdrop-blur-[2px] sm:items-center" role="presentation" onMouseDown={(event) => { if (event.target === event.currentTarget) setShowFormHelp(false); }}>
-          <section ref={formHelpDialogRef} className="my-4 max-h-[calc(100dvh-2rem)] w-full max-w-2xl overflow-y-auto rounded-[2rem] bg-[#E0E5EC] p-5 text-[#193364] shadow-[12px_12px_24px_rgba(15,35,60,0.28),-8px_-8px_20px_rgba(255,255,255,0.5)] sm:p-7" role="dialog" aria-modal="true" aria-labelledby="visitor-form-help-title" tabIndex={-1}>
+      {showFormHelp && createPortal((
+        <div className="fixed inset-0 z-[110] flex items-start justify-center overflow-y-auto bg-[#193364]/45 p-3 backdrop-blur-[2px] sm:items-center sm:p-4" role="presentation" onMouseDown={(event) => { if (event.target === event.currentTarget) setShowFormHelp(false); }}>
+          <section ref={formHelpDialogRef} className="my-3 max-h-[calc(100dvh-1.5rem)] w-full max-w-xl overflow-y-auto rounded-[1.5rem] bg-[#E0E5EC] p-4 text-[#193364] shadow-[12px_12px_24px_rgba(15,35,60,0.28),-8px_-8px_20px_rgba(255,255,255,0.5)] sm:my-4 sm:max-h-[calc(100dvh-2rem)] sm:rounded-[1.75rem] sm:p-6" role="dialog" aria-modal="true" aria-labelledby="visitor-form-help-title" tabIndex={-1}>
             <div className="flex items-start justify-between gap-4">
               <div>
                 <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[#0E5A72]">Form guide</p>
@@ -599,7 +600,7 @@ const loadProfile = async () => {
             </div>
           </section>
         </div>
-      )}
+      ), document.body)}
 
       <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4 sm:p-6 overflow-hidden">
         <div className="grid grid-cols-2 gap-3 sm:gap-6">

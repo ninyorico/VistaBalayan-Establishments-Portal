@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef, type MouseEvent, type PointerEvent, type TouchEvent } from "react";
+import { createPortal } from "react-dom";
 import { useNavigate } from "react-router";
 import { Save, Send, AlertTriangle, Plus, Trash2, CircleHelp, X } from "lucide-react";
 import { toast } from "sonner";
@@ -831,9 +832,9 @@ export default function SubmitAccommodationReport() {
         compact
       />
 
-      {showFormHelp && (
-        <div className="fixed inset-0 z-[110] flex items-start justify-center overflow-y-auto bg-[#193364]/45 p-4 backdrop-blur-[2px] sm:items-center" role="presentation" onMouseDown={(event) => { if (event.target === event.currentTarget) setShowFormHelp(false); }}>
-          <section ref={formHelpDialogRef} className="my-4 max-h-[calc(100dvh-2rem)] w-full max-w-2xl overflow-y-auto rounded-[2rem] bg-[#E0E5EC] p-5 text-[#193364] shadow-[12px_12px_24px_rgba(15,35,60,0.28),-8px_-8px_20px_rgba(255,255,255,0.5)] sm:p-7" role="dialog" aria-modal="true" aria-labelledby="accommodation-form-help-title" tabIndex={-1}>
+      {showFormHelp && createPortal((
+        <div className="fixed inset-0 z-[110] flex items-start justify-center overflow-y-auto bg-[#193364]/45 p-3 backdrop-blur-[2px] sm:items-center sm:p-4" role="presentation" onMouseDown={(event) => { if (event.target === event.currentTarget) setShowFormHelp(false); }}>
+          <section ref={formHelpDialogRef} className="my-3 max-h-[calc(100dvh-1.5rem)] w-full max-w-xl overflow-y-auto rounded-[1.5rem] bg-[#E0E5EC] p-4 text-[#193364] shadow-[12px_12px_24px_rgba(15,35,60,0.28),-8px_-8px_20px_rgba(255,255,255,0.5)] sm:my-4 sm:max-h-[calc(100dvh-2rem)] sm:rounded-[1.75rem] sm:p-6" role="dialog" aria-modal="true" aria-labelledby="accommodation-form-help-title" tabIndex={-1}>
             <div className="flex items-start justify-between gap-4">
               <div>
                 <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[#0E5A72]">Form guide</p>
@@ -881,8 +882,8 @@ export default function SubmitAccommodationReport() {
                     <p className="mt-1">Enter current-date short-stay check-ins for the room. These contribute to the room’s check-ins and guest nights.</p>
                   </div>
                   <div className="rounded-2xl bg-white/70 p-4">
-                    <h3 className="font-semibold text-[#193364]">Overnight continuing guest / new</h3>
-                    <p className="mt-1">Enter continuing overnight guests in the continuing guest field and newly arriving overnight guests in the new field. This option keeps the two values separate, so no double-click is needed.</p>
+                    <h3 className="font-semibold text-[#193364]">Overnight guests</h3>
+                    <p className="mt-1">Enter continuing overnight guests in the continuing field and newly arriving overnight guests in the new arrivals field. This option keeps the two values separate, so no double-click is needed.</p>
                   </div>
                 </div>
               )}
@@ -900,7 +901,7 @@ export default function SubmitAccommodationReport() {
             </div>
           </section>
         </div>
-      )}
+      ), document.body)}
 
       {/* Room Setup Modal */}
       {showRoomSetup && (
@@ -1011,8 +1012,8 @@ export default function SubmitAccommodationReport() {
 
       {/* Report Header */}
       <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-5 sm:p-6 lg:p-8 overflow-hidden">
-        <div className="grid grid-cols-3 gap-2 sm:gap-6">
-          <div className="min-w-0">
+        <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 sm:gap-6">
+          <div className="hidden min-w-0 sm:block">
             <label className="mb-2 block text-[10px] font-medium leading-tight text-gray-700 sm:text-sm">Establishment Name</label>
             <input type="text" value={establishmentName} disabled className="block w-full min-w-0 rounded-lg border border-gray-300 bg-gray-50 px-2 py-2 text-sm sm:px-4" />
           </div>
@@ -1053,9 +1054,20 @@ export default function SubmitAccommodationReport() {
         {reportFormMode === "old-new" && (
           <div className="min-h-0 flex-1 overflow-x-auto overscroll-x-contain lg:overflow-auto lg:overscroll-contain">
             <table className="w-full min-w-0 table-fixed border-collapse">
-              <thead className="sticky top-0 z-20 border-b border-gray-200 bg-gray-50"><tr><th className="w-[28%] bg-gray-50 px-2 py-3 text-center text-xs font-semibold uppercase text-gray-700">Room / Code</th><th className="w-[24%] bg-gray-50 px-2 py-3 text-center text-xs font-semibold uppercase text-gray-700">Previous-day guests</th><th className="w-[18%] bg-gray-50 px-2 py-3 text-center text-xs font-semibold uppercase text-[#0F4C75]">Short-stay</th><th className="w-[30%] bg-gray-50 px-2 py-3 text-center text-xs font-semibold uppercase text-[#0F4C75]">Overnight continuing guest / new</th></tr></thead>
+              <thead className="sticky top-0 z-20 border-b border-gray-200 bg-gray-50">
+                <tr>
+                  <th rowSpan={2} className="w-[28%] bg-gray-50 px-2 py-3 text-center align-middle text-xs font-semibold uppercase text-gray-700">Room / Code</th>
+                  <th rowSpan={2} className="w-[24%] bg-gray-50 px-2 py-3 text-center align-middle text-xs font-semibold uppercase text-gray-700">Previous-day guests</th>
+                  <th rowSpan={2} className="w-[18%] bg-gray-50 px-2 py-3 text-center align-middle text-xs font-semibold uppercase text-[#0F4C75]">Short-stay</th>
+                  <th colSpan={2} className="w-[30%] bg-gray-50 px-2 py-2 text-center text-xs font-semibold uppercase text-[#0F4C75]">Overnight guests</th>
+                </tr>
+                <tr>
+                  <th className="w-[15%] bg-gray-50 px-1 py-2 text-center text-[10px] font-semibold uppercase tracking-wide text-gray-600">Continuing</th>
+                  <th className="w-[15%] bg-gray-50 px-1 py-2 text-center text-[10px] font-semibold uppercase tracking-wide text-gray-600">New arrivals</th>
+                </tr>
+              </thead>
               <tbody className="divide-y divide-gray-200">{roomData.map((room, index) => { const previousTotal = Number(room.previousGuestNights || 0); const previousNew = Math.min(Number(room.previousNewGuests || 0), previousTotal); return (
-                <tr key={room.roomCode} className="border-b border-gray-200 bg-white"><th className="px-2 py-3 text-center"><div className="text-xs font-semibold text-gray-900 sm:text-sm">Room {getGeneratedRoomNumber(room.roomCode)}</div><div className="mt-1 inline-block rounded bg-gray-100 px-2 py-0.5 font-mono text-[10px] text-gray-600">{getBaseRoomCode(room.roomCode)}</div></th><td className="px-2 py-2 text-center"><span className={previousNew > 0 ? "inline-flex h-8 min-w-8 items-center justify-center rounded-full border-[3px] border-red-600 px-2 text-sm font-bold tabular-nums text-red-700" : "inline-flex text-sm font-normal tabular-nums text-gray-700"} style={previousNew > 0 ? { borderColor: "#dc2626", borderWidth: "3px", borderStyle: "solid", borderRadius: "9999px" } : undefined} aria-label={`${room.roomType} previous day guest value${previousNew > 0 ? ", includes new guest" : ", continuing guest"}`}>{previousTotal}</span></td><td className="px-2 py-2 text-center"><input type="text" inputMode="numeric" pattern="[0-9]*" value={numericInputValue(room.shortStayCheckIns)} onChange={(e) => updateRoomData(index, "shortStayCheckIns", parseNonNegativeInteger(e.target.value))} className="mx-auto w-full max-w-[100px] rounded-xl border border-gray-300 bg-white px-2 py-2 text-center text-sm tabular-nums text-[#193364]" aria-label={`${room.roomType} short-stay check-ins`} /></td><td className="px-2 py-2"><div className="grid gap-2 sm:grid-cols-2"><label className="text-center text-[10px] font-medium uppercase text-gray-500">Continuing<input type="text" inputMode="numeric" pattern="[0-9]*" value={numericInputValue(room.continuingGuests)} onChange={(e) => updateRoomData(index, "continuingGuests", parseNonNegativeInteger(e.target.value))} className="mt-1 w-full rounded-xl border-0 bg-[#E0E5EC] px-2 py-2 text-center text-sm tabular-nums text-[#193364]" aria-label={`${room.roomType} overnight continuing guest value`} /></label><label className="text-center text-[10px] font-medium uppercase text-gray-500">New<input type="text" inputMode="numeric" pattern="[0-9]*" value={numericInputValue(room.checkIns)} onChange={(e) => updateRoomData(index, "checkIns", parseNonNegativeInteger(e.target.value))} className="mt-1 w-full rounded-xl border-0 bg-[#FBE7BA] px-2 py-2 text-center text-sm tabular-nums text-[#193364]" aria-label={`${room.roomType} overnight new guest value`} /></label></div></td></tr>
+                <tr key={room.roomCode} className="border-b border-gray-200 bg-white"><th className="px-2 py-3 text-center"><div className="text-xs font-semibold text-gray-900 sm:text-sm">Room {getGeneratedRoomNumber(room.roomCode)}</div><div className="mt-1 inline-block rounded bg-gray-100 px-2 py-0.5 font-mono text-[10px] text-gray-600">{getBaseRoomCode(room.roomCode)}</div></th><td className="px-2 py-2 text-center"><span className={previousNew > 0 ? "inline-flex h-8 min-w-8 items-center justify-center rounded-full border-[3px] border-red-600 px-2 text-sm font-bold tabular-nums text-red-700" : "inline-flex text-sm font-normal tabular-nums text-gray-700"} style={previousNew > 0 ? { borderColor: "#dc2626", borderWidth: "3px", borderStyle: "solid", borderRadius: "9999px" } : undefined} aria-label={`${room.roomType} previous day guest value${previousNew > 0 ? ", includes new guest" : ", continuing guest"}`}>{previousTotal}</span></td><td className="px-2 py-2 text-center"><input type="text" inputMode="numeric" pattern="[0-9]*" value={numericInputValue(room.shortStayCheckIns)} onChange={(e) => updateRoomData(index, "shortStayCheckIns", parseNonNegativeInteger(e.target.value))} className="mx-auto w-full max-w-[100px] rounded-xl border border-gray-300 bg-white px-2 py-2 text-center text-sm tabular-nums text-[#193364]" aria-label={`${room.roomType} short-stay check-ins`} /></td><td className="px-2 py-2"><div className="grid gap-2 sm:grid-cols-2"><label className="text-center text-[10px] font-medium uppercase text-gray-500">Continuing<input type="text" inputMode="numeric" pattern="[0-9]*" value={numericInputValue(room.continuingGuests)} onChange={(e) => updateRoomData(index, "continuingGuests", parseNonNegativeInteger(e.target.value))} className="mt-1 w-full rounded-xl border-0 bg-[#E0E5EC] px-2 py-2 text-center text-sm tabular-nums text-[#193364]" aria-label={`${room.roomType} overnight continuing guest value`} /></label><label className="text-center text-[10px] font-medium uppercase text-gray-500">New arrivals<input type="text" inputMode="numeric" pattern="[0-9]*" value={numericInputValue(room.checkIns)} onChange={(e) => updateRoomData(index, "checkIns", parseNonNegativeInteger(e.target.value))} className="mt-1 w-full rounded-xl border-0 bg-[#FBE7BA] px-2 py-2 text-center text-sm tabular-nums text-[#193364]" aria-label={`${room.roomType} overnight new arrivals value`} /></label></div></td></tr>
               ); })}</tbody>
             </table>
           </div>

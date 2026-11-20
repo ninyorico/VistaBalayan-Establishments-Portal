@@ -185,7 +185,7 @@ export default function OfficerLayout() {
         </header>
 
         {/* Page Content */}
-        <main className="mx-auto min-h-[calc(100dvh-4rem)] w-full min-w-0 max-w-[1500px] overflow-x-clip p-4 touch-pan-y sm:p-6 lg:min-h-[calc(100dvh-4.5rem)] lg:p-8">
+        <main className="mx-auto min-h-[calc(100dvh-4rem)] w-full min-w-0 max-w-[1500px] p-4 touch-pan-y sm:p-6 lg:min-h-[calc(100dvh-4.5rem)] lg:p-8">
           <Outlet />
         </main>
       </div>
