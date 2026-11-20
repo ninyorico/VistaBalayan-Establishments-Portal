@@ -118,14 +118,14 @@ export function AiInsightsShell({
           <div className="pointer-events-none absolute -right-12 -top-16 h-40 w-40 rounded-full bg-[#C8CED8]/35 blur-3xl" />
           <div className="pointer-events-none absolute -bottom-20 left-1/3 h-44 w-44 rounded-full bg-white/35 blur-3xl" />
           <div className="relative flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
-            <div className="max-w-3xl">
+            <div className="min-w-0 flex-1 lg:pr-8">
               <div className="mb-3 inline-flex rounded-full border border-slate-200 bg-white/80 px-3 py-1 text-xs font-medium tracking-[0.18em] text-slate-500 shadow-sm backdrop-blur">
                 GEMINI OPERATIONS DESK
               </div>
               <h1 className="max-w-5xl text-[clamp(2rem,7vw,3.5rem)] font-semibold leading-tight tracking-[-0.045em] text-slate-800">
                 {title}
               </h1>
-              <p className="mt-3 max-w-2xl text-base leading-7 text-slate-600 sm:text-lg">
+              <p className="mt-3 max-w-none text-base leading-7 text-slate-600 sm:text-lg">
                 {subtitle}
               </p>
               {lastUpdated && (

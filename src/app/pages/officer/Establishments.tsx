@@ -958,14 +958,15 @@ export default function Establishments() {
   return (
     <div className="space-y-4 sm:space-y-6">
       <div className="relative overflow-hidden rounded-[2rem] border border-white/20 tourism-panel-dark p-5 shadow-[0_28px_90px_rgba(7,59,76,0.22)] sm:p-7">
-        <div>
+        <div className="flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between lg:gap-8">
+        <div className="min-w-0 flex-1">
           <p className="text-xs font-bold uppercase tracking-[0.16em] text-cyan-100">Tourism network</p>
           <h1 className="mt-2 text-xl sm:text-3xl font-semibold text-white">Establishments</h1>
           <p className="text-slate-200 mt-1 text-sm sm:text-base">
             Manage tourism establishments, staff assignments, and public listing records
           </p>
         </div>
-        <div className="mt-5 flex flex-col gap-2 sm:mt-6 sm:flex-row sm:justify-end">
+        <div className="flex shrink-0 flex-col gap-2 sm:flex-row lg:items-end">
           <button
             onClick={activeTab === "establishments" ? handleExportEstablishments : handleExportUsers}
             className="flex items-center justify-center gap-2 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition font-medium text-sm sm:text-base whitespace-nowrap"
@@ -978,6 +979,7 @@ export default function Establishments() {
           >
             <span>Add User</span>
           </button>
+        </div>
         </div>
       </div>
 

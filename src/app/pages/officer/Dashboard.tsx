@@ -28,15 +28,6 @@ import { Button } from "../../components/ui/button";
 import { EmptyState, LoadingState, MetricCard, PageHero, PanelCard } from "../../components/vista/PolishedShell";
 import { AiAnomalyCard } from "../../components/vista/AiInsightsDesign";
 
-interface RecentSubmission {
-  id: string;
-  establishment_name: string;
-  type: string;
-  status: string;
-  date: string;
-  created_at: string;
-}
-
 interface TopEstablishment {
   name: string;
   visitors: number;
@@ -98,7 +89,6 @@ export default function OfficerDashboard() {
   const [occupancyRate, setOccupancyRate] = useState(0);
   const [totalEstablishments, setTotalEstablishments] = useState(0);
   const [visitorTrends, setVisitorTrends] = useState<any[]>([]);
-  const [recentSubmissions, setRecentSubmissions] = useState<RecentSubmission[]>([]);
   const [demographics, setDemographics] = useState<Demographic[]>([]);
   const [topEstablishments, setTopEstablishments] = useState<TopEstablishment[]>([]);
   const [anomalies, setAnomalies] = useState<any[]>([]);
@@ -250,44 +240,7 @@ setOccupancyRate(occupancyRate);
         console.log('Top establishments:', sorted);
       }
 
-      // 6. Fetch recent submissions
-      const [{ data: visitorRecent }, { data: accommodationRecent }] = await Promise.all([
-        supabase
-          .from('visitor_reports')
-          .select(`id, report_date, status, created_at, reviewed_at, establishments(name)`)
-          .order('created_at', { ascending: false })
-          .limit(25),
-        supabase
-          .from('accommodation_reports')
-          .select(`id, report_date, status, created_at, reviewed_at, establishments(name)`)
-          .order('created_at', { ascending: false })
-          .limit(25),
-      ]);
-
-      const combined = [
-        ...(visitorRecent || []).map((v: any) => ({
-          id: v.id,
-          establishment_name: v.establishments?.name || "Unknown",
-          type: "Day-tour Report",
-          status: v.status,
-          date: v.report_date,
-          created_at: v.created_at,
-          reviewed_at: v.reviewed_at,
-        })),
-        ...(accommodationRecent || []).map((a: any) => ({
-          id: a.id,
-          establishment_name: a.establishments?.name || "Unknown",
-          type: "Accommodation Report",
-          status: a.status,
-          date: a.report_date,
-          created_at: a.created_at,
-          reviewed_at: a.reviewed_at,
-        })),
-      ].sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
-
-      setRecentSubmissions(combined.slice(0, 5));
-
-      // 7. Fetch anomalies
+      // 6. Fetch anomalies
       const { data: anomalyData } = await supabase
         .from('ai_anomalies_cache')
         .select('*')
@@ -465,48 +418,23 @@ setOccupancyRate(occupancyRate);
         )}
       </PanelCard>
 
-      <section className="grid grid-cols-1 gap-6 xl:grid-cols-2">
-        <PanelCard title="Recent submissions">
-          <div className="space-y-3">
-            {recentSubmissions.length > 0 ? (
-              recentSubmissions.map((sub) => (
-                <div key={sub.id} className="flex items-center justify-between gap-4 rounded-2xl border border-[#d7e5e2]/70 bg-[#f8fbf8] p-4">
-                  <div>
-                    <p className="font-semibold text-[#0B2530]">{sub.establishment_name}</p>
-                    <p className="mt-1 text-sm text-[#5D6F73]">{sub.type}</p>
-                  </div>
-                  <div className="text-right">
-                    <span className={`inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-xs font-semibold capitalize ring-1 ${
-                      sub.status === "submitted" ? "bg-emerald-50 text-emerald-700 ring-emerald-200" : "bg-slate-50 text-slate-700 ring-slate-200"
-                    }`}>
-                      {sub.status}
-                    </span>
-                    <p className="mt-1 text-xs text-[#5D6F73]">{sub.date}</p>
-                  </div>
-                </div>
-              ))
-            ) : (
-              <EmptyState>No submissions yet</EmptyState>
-            )}
-          </div>
-        </PanelCard>
-
-        <PanelCard title="Service Gaps">
-          <div className="space-y-3">
-            {anomalies.length > 0 ? (
-              anomalies.map((anomaly) => (
-                <AiAnomalyCard
-                  key={anomaly.id}
-                  {...anomaly}
-                  establishments={anomaly.establishments || { name: "Municipality-wide" }}
-                />
-              ))
-            ) : (
+      <PanelCard title="Service Gaps" className="min-w-0">
+        <div className="grid min-w-0 grid-cols-1 gap-4 xl:grid-cols-2">
+          {anomalies.length > 0 ? (
+            anomalies.map((anomaly) => (
+              <AiAnomalyCard
+                key={anomaly.id}
+                {...anomaly}
+                establishments={anomaly.establishments || { name: "Municipality-wide" }}
+              />
+            ))
+          ) : (
+            <div className="xl:col-span-2">
               <EmptyState>No service gaps or operational challenges detected</EmptyState>
-            )}
-          </div>
-        </PanelCard>
-      </section>
+            </div>
+          )}
+        </div>
+      </PanelCard>
     </div>
   );
 }
