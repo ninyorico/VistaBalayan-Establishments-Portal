@@ -48,29 +48,6 @@ export default function ReportMonitoring() {
             </div>
           </div>
 
-          <div className="inline-flex rounded-2xl bg-white/10 p-1">
-            {tabs.map((tab) => {
-              const Icon = tab.icon;
-              const isActive = activeTab === tab.id;
-              return (
-                <button
-                  key={tab.id}
-                  type="button"
-                  onClick={() => setActiveTab(tab.id)}
-                  className={`inline-flex items-center gap-2 rounded-xl px-3 py-2 text-sm font-semibold transition sm:px-4 ${
-                    isActive
-                                          ? "bg-[#E0E5EC] text-[#6474A5] shadow-[inset_3px_3px_6px_rgba(163,177,198,.45),inset_-3px_-3px_6px_rgba(255,255,255,.5)]"
-                                          : "text-slate-600 hover:bg-[#E0E5EC]/70 hover:text-[#3D4852]"
-                  }`}
-                  aria-pressed={isActive}
-                >
-                  <Icon className="h-4 w-4" />
-                  <span className="hidden sm:inline">{tab.label}</span>
-                  <span className="sm:hidden">{tab.id === "visitor" ? "Visitors" : "Rooms"}</span>
-                </button>
-              );
-            })}
-          </div>
         </div>
 
         <div className="mt-5 grid gap-3 sm:grid-cols-2">
