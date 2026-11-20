@@ -1052,9 +1052,8 @@ export default function SubmitAccommodationReport() {
         </div>
 
         {reportFormMode === "old-new" && (
-          <>
-            <div className="hidden min-h-0 flex-1 overflow-x-auto overscroll-x-contain lg:block lg:overflow-auto lg:overscroll-contain">
-              <table className="w-full min-w-0 table-fixed border-collapse">
+          <div className="min-h-0 flex-1 overflow-x-auto overscroll-x-contain lg:overflow-auto lg:overscroll-contain">
+            <table className="w-full min-w-0 table-fixed border-collapse">
               <thead className="sticky top-0 z-20 border-b border-gray-200 bg-gray-50">
                 <tr>
                   <th rowSpan={2} className="w-[26%] bg-gray-50 px-1 py-3 text-center align-middle text-[10px] font-semibold uppercase leading-tight text-gray-700 sm:w-[28%] sm:px-2 sm:text-xs">Room / Code</th>
@@ -1072,43 +1071,6 @@ export default function SubmitAccommodationReport() {
               ); })}</tbody>
             </table>
           </div>
-          <div className="min-h-0 flex-1 space-y-3 overflow-y-auto p-3 lg:hidden">
-            {roomData.map((room, index) => {
-              const previousTotal = room.previousGuestNights || 0;
-              const previousNew = Math.min(room.previousNewGuests || 0, previousTotal);
-              return (
-                <article key={room.roomCode} className="rounded-2xl border border-gray-200 bg-white p-3 shadow-sm">
-                  <div className="flex items-center justify-between gap-3 border-b border-gray-200 pb-3">
-                    <div>
-                      <p className="text-sm font-semibold text-gray-900">Room {getGeneratedRoomNumber(room.roomCode)}</p>
-                      <p className="mt-0.5 font-mono text-[10px] text-gray-500">{getBaseRoomCode(room.roomCode)}</p>
-                    </div>
-                    <div className="text-right">
-                      <p className="text-[10px] font-semibold uppercase tracking-wide text-gray-500">Previous-day guests</p>
-                      <span className={previousNew > 0 ? "mt-1 inline-flex h-8 min-w-8 items-center justify-center rounded-full border-[3px] border-red-600 px-2 text-sm font-bold tabular-nums text-red-700" : "mt-1 inline-flex text-sm font-semibold tabular-nums text-gray-700"} aria-label={`${room.roomType} previous day guest value${previousNew > 0 ? ", includes new guest" : ", continuing guest"}`}>{previousTotal}</span>
-                    </div>
-                  </div>
-                  <div className="mt-3">
-                    <label className="block text-[10px] font-semibold uppercase tracking-wide text-gray-600">Short-stay check-ins
-                      <input type="text" inputMode="numeric" pattern="[0-9]*" value={numericInputValue(room.shortStayCheckIns)} onChange={(e) => updateRoomData(index, "shortStayCheckIns", parseNonNegativeInteger(e.target.value))} className="mt-1 w-full rounded-xl border border-gray-300 bg-white px-3 py-2 text-center text-sm tabular-nums text-[#193364]" aria-label={`${room.roomType} short-stay check-ins`} />
-                    </label>
-                  </div>
-                  <div className="mt-3 rounded-xl bg-[#F5F8FF] p-2.5">
-                    <p className="text-[10px] font-semibold uppercase tracking-wide text-[#0F4C75]">Overnight guests</p>
-                    <div className="mt-2 grid grid-cols-2 gap-2">
-                      <label className="text-[10px] font-semibold text-gray-600">Continuing
-                        <input type="text" inputMode="numeric" pattern="[0-9]*" value={numericInputValue(room.continuingGuests)} onChange={(e) => updateRoomData(index, "continuingGuests", parseNonNegativeInteger(e.target.value))} className="mt-1 w-full rounded-xl border-0 bg-[#E0E5EC] px-2 py-2 text-center text-sm tabular-nums text-[#193364]" aria-label={`${room.roomType} overnight continuing guest value`} />
-                      </label>
-                      <label className="text-[10px] font-semibold text-gray-600">New arrivals
-                        <input type="text" inputMode="numeric" pattern="[0-9]*" value={numericInputValue(room.checkIns)} onChange={(e) => updateRoomData(index, "checkIns", parseNonNegativeInteger(e.target.value))} className="mt-1 w-full rounded-xl border-0 bg-[#FBE7BA] px-2 py-2 text-center text-sm tabular-nums text-[#193364]" aria-label={`${room.roomType} overnight new arrivals value`} />
-                      </label>
-                    </div>
-                  </div>
-                </article>
-              );
-            })}
-          </div>
-          </>
         )}
 
         {reportFormMode === "single" && (
