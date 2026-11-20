@@ -847,24 +847,45 @@ export default function SubmitAccommodationReport() {
             <div className="mt-5 space-y-4 text-sm leading-6 text-[#40505A]">
               <p>Enter the values for the selected report date. The form calculates occupied rooms, guest check-ins, and guest nights from the room entries; you do not need to calculate the totals manually.</p>
 
-              <div className="grid gap-3 sm:grid-cols-2">
-                <div className="rounded-2xl bg-white/70 p-4">
-                  <h3 className="font-semibold text-[#193364]">Room / Code</h3>
-                  <p className="mt-1">Identifies the room row. These values come from Room Configuration and are not daily visitor counts.</p>
+              {reportFormMode === "single" ? (
+                <div className="grid gap-3 sm:grid-cols-2">
+                  <div className="rounded-2xl bg-white/70 p-4">
+                    <h3 className="font-semibold text-[#193364]">Room / Code</h3>
+                    <p className="mt-1">Identifies the room row. These values come from Room Configuration and are not daily visitor counts.</p>
+                  </div>
+                  <div className="rounded-2xl bg-white/70 p-4">
+                    <h3 className="font-semibold text-[#193364]">Previous Date</h3>
+                    <p className="mt-1">Shows the previous report’s guest value for reference. It is read-only. A red circle means the previous value included a new guest.</p>
+                  </div>
+                  <div className="rounded-2xl bg-white/70 p-4">
+                    <h3 className="font-semibold text-[#193364]">Short-stay Check-ins</h3>
+                    <p className="mt-1">Enter guests who used the room for a short stay on the selected date. This contributes to check-ins and guest nights.</p>
+                  </div>
+                  <div className="rounded-2xl bg-white/70 p-4">
+                    <h3 className="font-semibold text-[#193364]">Overnight</h3>
+                    <p className="mt-1">Enter one overnight value per room. Single-click to edit; double-click the value to switch between continuing guest and new guest.</p>
+                  </div>
                 </div>
-                <div className="rounded-2xl bg-white/70 p-4">
-                  <h3 className="font-semibold text-[#193364]">Previous Date</h3>
-                  <p className="mt-1">Shows the previous report’s guest value for reference. It is read-only. A red circle means the previous value included a new guest.</p>
+              ) : (
+                <div className="grid gap-3 sm:grid-cols-2">
+                  <div className="rounded-2xl bg-white/70 p-4">
+                    <h3 className="font-semibold text-[#193364]">Room / Code</h3>
+                    <p className="mt-1">Identifies the room row. These values come from Room Configuration and are not daily visitor counts.</p>
+                  </div>
+                  <div className="rounded-2xl bg-white/70 p-4">
+                    <h3 className="font-semibold text-[#193364]">Previous-day guests</h3>
+                    <p className="mt-1">Shows the previous report’s guest value for reference and is read-only. A red circle means the previous value included a new guest.</p>
+                  </div>
+                  <div className="rounded-2xl bg-white/70 p-4">
+                    <h3 className="font-semibold text-[#193364]">Short-stay</h3>
+                    <p className="mt-1">Enter current-date short-stay check-ins for the room. These contribute to the room’s check-ins and guest nights.</p>
+                  </div>
+                  <div className="rounded-2xl bg-white/70 p-4">
+                    <h3 className="font-semibold text-[#193364]">Overnight continuing guest / new</h3>
+                    <p className="mt-1">Enter continuing overnight guests in the continuing guest field and newly arriving overnight guests in the new field. This option keeps the two values separate, so no double-click is needed.</p>
+                  </div>
                 </div>
-                <div className="rounded-2xl bg-white/70 p-4">
-                  <h3 className="font-semibold text-[#193364]">Short-stay Check-ins</h3>
-                  <p className="mt-1">Enter guests who used the room for a short stay on the selected date. This contributes to check-ins and guest nights.</p>
-                </div>
-                <div className="rounded-2xl bg-white/70 p-4">
-                  <h3 className="font-semibold text-[#193364]">Overnight</h3>
-                  <p className="mt-1">Enter the current date’s overnight guest value. In the single-value form, double-click the value to switch between continuing and new guest.</p>
-                </div>
-              </div>
+              )}
 
               <div className="rounded-2xl border border-red-200 bg-red-50/80 p-4 text-red-900">
                 <h3 className="font-semibold">What does the red marker mean?</h3>
@@ -1019,7 +1040,7 @@ export default function SubmitAccommodationReport() {
             </button>
           </div>
           <p className="mt-1 text-sm text-gray-500 lg:hidden">Compact full-width table for faster phone entry.</p>
-          <p className="mt-2 text-sm text-gray-600">Double-click the current date value to switch between continuing and new guest; single-click to edit the value.</p>
+          <p className="mt-2 text-sm text-gray-600">{reportFormMode === "single" ? "Double-click the current date value to switch between continuing and new guest; single-click to edit the value." : "Enter continuing guest and new guest values in their separate fields for the selected report date."}</p>
 
           {retrievingPreviousData && (
             <div className="mt-4 flex items-center gap-3 rounded-2xl bg-[#E0E5EC] px-4 py-3 text-sm text-[#193364] shadow-[inset_3px_3px_7px_rgba(163,177,198,0.45),inset_-3px_-3px_7px_rgba(255,255,255,0.65)]" role="status" aria-live="polite">
@@ -1032,9 +1053,9 @@ export default function SubmitAccommodationReport() {
         {reportFormMode === "old-new" && (
           <div className="min-h-0 flex-1 overflow-x-auto overscroll-x-contain lg:overflow-auto lg:overscroll-contain">
             <table className="w-full min-w-0 table-fixed border-collapse">
-              <thead className="sticky top-0 z-20 border-b border-gray-200 bg-gray-50"><tr><th className="w-[28%] bg-gray-50 px-2 py-3 text-center text-xs font-semibold uppercase text-gray-700">Room / Code</th><th className="w-[24%] bg-gray-50 px-2 py-3 text-center text-xs font-semibold uppercase text-gray-700">Previous-day guests</th><th className="w-[18%] bg-gray-50 px-2 py-3 text-center text-xs font-semibold uppercase text-[#0F4C75]">Short-stay</th><th className="w-[30%] bg-gray-50 px-2 py-3 text-center text-xs font-semibold uppercase text-[#0F4C75]">Overnight old / new</th></tr></thead>
+              <thead className="sticky top-0 z-20 border-b border-gray-200 bg-gray-50"><tr><th className="w-[28%] bg-gray-50 px-2 py-3 text-center text-xs font-semibold uppercase text-gray-700">Room / Code</th><th className="w-[24%] bg-gray-50 px-2 py-3 text-center text-xs font-semibold uppercase text-gray-700">Previous-day guests</th><th className="w-[18%] bg-gray-50 px-2 py-3 text-center text-xs font-semibold uppercase text-[#0F4C75]">Short-stay</th><th className="w-[30%] bg-gray-50 px-2 py-3 text-center text-xs font-semibold uppercase text-[#0F4C75]">Overnight continuing guest / new</th></tr></thead>
               <tbody className="divide-y divide-gray-200">{roomData.map((room, index) => { const previousTotal = Number(room.previousGuestNights || 0); const previousNew = Math.min(Number(room.previousNewGuests || 0), previousTotal); return (
-                <tr key={room.roomCode} className="border-b border-gray-200 bg-white"><th className="px-2 py-3 text-center"><div className="text-xs font-semibold text-gray-900 sm:text-sm">Room {getGeneratedRoomNumber(room.roomCode)}</div><div className="mt-1 inline-block rounded bg-gray-100 px-2 py-0.5 font-mono text-[10px] text-gray-600">{getBaseRoomCode(room.roomCode)}</div></th><td className="px-2 py-2 text-center"><span className={previousNew > 0 ? "inline-flex h-8 min-w-8 items-center justify-center rounded-full border-[3px] border-red-600 px-2 text-sm font-bold tabular-nums text-red-700" : "inline-flex text-sm font-normal tabular-nums text-gray-700"} style={previousNew > 0 ? { borderColor: "#dc2626", borderWidth: "3px", borderStyle: "solid", borderRadius: "9999px" } : undefined} aria-label={`${room.roomType} previous day guest value${previousNew > 0 ? ", includes new guest" : ", continuing guest"}`}>{previousTotal}</span></td><td className="px-2 py-2 text-center"><input type="text" inputMode="numeric" pattern="[0-9]*" value={numericInputValue(room.shortStayCheckIns)} onChange={(e) => updateRoomData(index, "shortStayCheckIns", parseNonNegativeInteger(e.target.value))} className="mx-auto w-full max-w-[100px] rounded-xl border border-gray-300 bg-white px-2 py-2 text-center text-sm tabular-nums text-[#193364]" aria-label={`${room.roomType} short-stay check-ins`} /></td><td className="px-2 py-2"><div className="grid gap-2 sm:grid-cols-2"><label className="text-center text-[10px] font-medium uppercase text-gray-500">Old<input type="text" inputMode="numeric" pattern="[0-9]*" value={numericInputValue(room.continuingGuests)} onChange={(e) => updateRoomData(index, "continuingGuests", parseNonNegativeInteger(e.target.value))} className="mt-1 w-full rounded-xl border-0 bg-[#E0E5EC] px-2 py-2 text-center text-sm tabular-nums text-[#193364]" aria-label={`${room.roomType} overnight old guest value`} /></label><label className="text-center text-[10px] font-medium uppercase text-gray-500">New<input type="text" inputMode="numeric" pattern="[0-9]*" value={numericInputValue(room.checkIns)} onChange={(e) => updateRoomData(index, "checkIns", parseNonNegativeInteger(e.target.value))} className="mt-1 w-full rounded-xl border-0 bg-[#FBE7BA] px-2 py-2 text-center text-sm tabular-nums text-[#193364]" aria-label={`${room.roomType} overnight new guest value`} /></label></div></td></tr>
+                <tr key={room.roomCode} className="border-b border-gray-200 bg-white"><th className="px-2 py-3 text-center"><div className="text-xs font-semibold text-gray-900 sm:text-sm">Room {getGeneratedRoomNumber(room.roomCode)}</div><div className="mt-1 inline-block rounded bg-gray-100 px-2 py-0.5 font-mono text-[10px] text-gray-600">{getBaseRoomCode(room.roomCode)}</div></th><td className="px-2 py-2 text-center"><span className={previousNew > 0 ? "inline-flex h-8 min-w-8 items-center justify-center rounded-full border-[3px] border-red-600 px-2 text-sm font-bold tabular-nums text-red-700" : "inline-flex text-sm font-normal tabular-nums text-gray-700"} style={previousNew > 0 ? { borderColor: "#dc2626", borderWidth: "3px", borderStyle: "solid", borderRadius: "9999px" } : undefined} aria-label={`${room.roomType} previous day guest value${previousNew > 0 ? ", includes new guest" : ", continuing guest"}`}>{previousTotal}</span></td><td className="px-2 py-2 text-center"><input type="text" inputMode="numeric" pattern="[0-9]*" value={numericInputValue(room.shortStayCheckIns)} onChange={(e) => updateRoomData(index, "shortStayCheckIns", parseNonNegativeInteger(e.target.value))} className="mx-auto w-full max-w-[100px] rounded-xl border border-gray-300 bg-white px-2 py-2 text-center text-sm tabular-nums text-[#193364]" aria-label={`${room.roomType} short-stay check-ins`} /></td><td className="px-2 py-2"><div className="grid gap-2 sm:grid-cols-2"><label className="text-center text-[10px] font-medium uppercase text-gray-500">Continuing<input type="text" inputMode="numeric" pattern="[0-9]*" value={numericInputValue(room.continuingGuests)} onChange={(e) => updateRoomData(index, "continuingGuests", parseNonNegativeInteger(e.target.value))} className="mt-1 w-full rounded-xl border-0 bg-[#E0E5EC] px-2 py-2 text-center text-sm tabular-nums text-[#193364]" aria-label={`${room.roomType} overnight continuing guest value`} /></label><label className="text-center text-[10px] font-medium uppercase text-gray-500">New<input type="text" inputMode="numeric" pattern="[0-9]*" value={numericInputValue(room.checkIns)} onChange={(e) => updateRoomData(index, "checkIns", parseNonNegativeInteger(e.target.value))} className="mt-1 w-full rounded-xl border-0 bg-[#FBE7BA] px-2 py-2 text-center text-sm tabular-nums text-[#193364]" aria-label={`${room.roomType} overnight new guest value`} /></label></div></td></tr>
               ); })}</tbody>
             </table>
           </div>

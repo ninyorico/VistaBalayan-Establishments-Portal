@@ -1,12 +1,13 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router";
-import { Save, Send, Plus, Trash2, AlertTriangle} from "lucide-react";
+import { Save, Send, Plus, Trash2, AlertTriangle, CircleHelp, X } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "../../../lib/supabase";
 import { canSubmitVisitorReport } from "../../../lib/establishmentReportForms";
 import { formatResidencePlace } from "../../../lib/reporting";
 import { buildVisitorReportReconciliation } from "../../../lib/visitorReportSubmission";
 import { LoadingState, PageHero } from "../../components/vista/PolishedShell";
+import { useDialogFocus } from "../../../hooks/useDialogFocus";
 
 interface VisitorEntry {
   id: number;
@@ -78,6 +79,19 @@ export default function SubmitVisitorReport() {
   const [visibleResidenceTypes, setVisibleResidenceTypes] = useState<Record<number, ResidenceTypeKey[]>>({ 1: residenceTypes.map((type) => type.key) });
   const [establishmentName, setEstablishmentName] = useState("Loading...");
   const [error, setError] = useState<string | null>(null);
+  const [showFormHelp, setShowFormHelp] = useState(false);
+  const formHelpDialogRef = useRef<HTMLDivElement>(null);
+
+  useDialogFocus(showFormHelp, formHelpDialogRef, () => setShowFormHelp(false));
+
+  useEffect(() => {
+    if (!showFormHelp) return;
+    const previousBodyOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    return () => {
+      document.body.style.overflow = previousBodyOverflow;
+    };
+  }, [showFormHelp]);
 
   const draftStorageKey = (userId?: string, establishmentId?: string) =>
     userId && establishmentId ? `visitorReportDraft:${userId}:${establishmentId}` : null;
@@ -543,6 +557,50 @@ const loadProfile = async () => {
         compact
       />
 
+      {showFormHelp && (
+        <div className="fixed inset-0 z-[110] flex items-start justify-center overflow-y-auto bg-[#193364]/45 p-4 backdrop-blur-[2px] sm:items-center" role="presentation" onMouseDown={(event) => { if (event.target === event.currentTarget) setShowFormHelp(false); }}>
+          <section ref={formHelpDialogRef} className="my-4 max-h-[calc(100dvh-2rem)] w-full max-w-2xl overflow-y-auto rounded-[2rem] bg-[#E0E5EC] p-5 text-[#193364] shadow-[12px_12px_24px_rgba(15,35,60,0.28),-8px_-8px_20px_rgba(255,255,255,0.5)] sm:p-7" role="dialog" aria-modal="true" aria-labelledby="visitor-form-help-title" tabIndex={-1}>
+            <div className="flex items-start justify-between gap-4">
+              <div>
+                <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[#0E5A72]">Form guide</p>
+                <h2 id="visitor-form-help-title" className="mt-1 text-2xl font-semibold tracking-tight">How to use this form</h2>
+              </div>
+              <button type="button" onClick={() => setShowFormHelp(false)} className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[#E0E5EC] text-[#193364] shadow-[4px_4px_8px_rgba(163,177,198,0.55),-4px_-4px_8px_rgba(255,255,255,0.65)] hover:text-[#0E5A72]" aria-label="Close day-tour form guide">
+                <X className="h-5 w-5" />
+              </button>
+            </div>
+
+            <div className="mt-5 space-y-4 text-sm leading-6 text-[#40505A]">
+              <p>Enter the visitors recorded by your establishment for the selected report date. Add one row for each visitor group, then classify the group by residence and sex.</p>
+
+              <div className="grid gap-3 sm:grid-cols-2">
+                <div className="rounded-2xl bg-white/70 p-4">
+                  <h3 className="font-semibold text-[#193364]">Establishment and Report Date</h3>
+                  <p className="mt-1">The establishment is linked to your account. Select the date represented by the report, not the date you are entering it.</p>
+                </div>
+                <div className="rounded-2xl bg-white/70 p-4">
+                  <h3 className="font-semibold text-[#193364]">Group Name</h3>
+                  <p className="mt-1">Optional label for the visitor group, such as a tour group, school group, or family. It is not required for counting visitors.</p>
+                </div>
+                <div className="rounded-2xl bg-white/70 p-4">
+                  <h3 className="font-semibold text-[#193364]">Residence Category</h3>
+                  <p className="mt-1">Choose This Province / Batangas, Other Province / Domestic, or Foreign Residence. For domestic and foreign visitors, enter the province/municipality or country when available.</p>
+                </div>
+                <div className="rounded-2xl bg-white/70 p-4">
+                  <h3 className="font-semibold text-[#193364]">Male and Female</h3>
+                  <p className="mt-1">Enter the number of male and female visitors within each residence category. Leave a value blank when there are none.</p>
+                </div>
+              </div>
+
+              <div className="rounded-2xl border border-[#B8D2CF] bg-white/70 p-4">
+                <h3 className="font-semibold text-[#193364]">Totals and actions</h3>
+                <p className="mt-1">The total visitors today is calculated from all group and residence entries. Use <strong>Save Draft</strong> for unfinished work and <strong>Submit Day-tour Report</strong> after reviewing the date and counts. Use <strong>Add Group</strong> when the report contains another visitor group.</p>
+              </div>
+            </div>
+          </section>
+        </div>
+      )}
+
       <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4 sm:p-6 overflow-hidden">
         <div className="grid grid-cols-2 gap-3 sm:gap-6">
           <div className="min-w-0">
@@ -559,8 +617,15 @@ const loadProfile = async () => {
       <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
         <div className="p-4 border-b border-gray-200 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <div>
-            <h3 className="text-lg font-semibold text-gray-900">Visitor Groups</h3>
-            <p className="mt-1 text-sm text-gray-500">Enter each group once, then split its visitors by residence below.</p>
+            <div className="flex items-start justify-between gap-3">
+              <div>
+                <h3 className="text-lg font-semibold text-gray-900">Visitor Groups</h3>
+                <p className="mt-1 text-sm text-gray-500">Enter each group once, then split its visitors by residence below.</p>
+              </div>
+              <button type="button" onClick={() => setShowFormHelp(true)} className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-[#B8D2CF] bg-[#E0E5EC] text-[#0E5A72] shadow-[3px_3px_7px_rgba(163,177,198,0.45),-3px_-3px_7px_rgba(255,255,255,0.65)] hover:text-[#193364]" aria-label="Open day-tour form guide" title="How to use this form">
+                <CircleHelp className="h-5 w-5" />
+              </button>
+            </div>
           </div>
           <button type="button" onClick={addEntry} className="inline-flex w-full sm:w-auto items-center justify-center gap-2 px-3 py-2 bg-[#0F4C75] text-white rounded-lg hover:bg-[#0F4C75] text-sm font-medium transition">
             <Plus className="w-4 h-4" /> Add Group
