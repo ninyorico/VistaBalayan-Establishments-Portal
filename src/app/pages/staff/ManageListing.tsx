@@ -498,7 +498,6 @@ export default function ManageListing() {
 
     const listingUpdates = {
       name: formData.name,
-      type: formData.type,
       address: formData.address,
       contact_number: formData.contact_number,
       description: formData.description,
@@ -568,7 +567,7 @@ export default function ManageListing() {
                 <CardTitle className="text-lg font-semibold tracking-[-0.02em] text-slate-950 sm:text-xl">Public listing details</CardTitle>
               </CardHeader>
               <CardContent className="space-y-4 px-4 py-5 sm:px-6">
-                <div className="grid gap-4 sm:grid-cols-[1.1fr_0.9fr]">
+                <div className="grid gap-4 sm:grid-cols-1">
                   <div className="min-w-0 space-y-2">
                     <Label htmlFor="listing-name">Establishment Name *</Label>
                     <Input
@@ -578,21 +577,6 @@ export default function ManageListing() {
                       onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                       className="h-11 rounded-xl border-0 bg-[#E0E5EC] shadow-[inset_4px_4px_8px_rgba(163,177,198,0.45),inset_-4px_-4px_8px_rgba(255,255,255,0.65)]"
                     />
-                  </div>
-                  <div className="min-w-0 space-y-2">
-                    <Label htmlFor="listing-category">Category *</Label>
-                    <select
-                      id="listing-category"
-                      value={formData.type}
-                      onChange={(e) => setFormData({ ...formData, type: e.target.value })}
-                      className="flex h-11 w-full min-w-0 rounded-xl border-0 bg-[#E0E5EC] px-3 py-2 text-sm shadow-[inset_4px_4px_8px_rgba(163,177,198,0.45),inset_-4px_-4px_8px_rgba(255,255,255,0.65)] outline-none transition focus:ring-2 focus:ring-[#6C63FF]/30"
-                    >
-                      <option value="Resort">Resort</option>
-                      <option value="Hotel">Hotel</option>
-                      <option value="Inn">Inn</option>
-                      <option value="Food & Beverage Establishment">Restaurant / Cafe</option>
-                      <option value="Tourist Attraction">Tourist Attraction</option>
-                    </select>
                   </div>
                 </div>
 

@@ -13,17 +13,9 @@ type ReportingMode = "accommodation" | "visitor" | "both";
 
 type DotClassification = "HTL" | "RES" | "APA" | "INN" | "PEN" | "MOT" | "ECO" | "HMS" | "CMP" | "OTH";
 
-const DOT_ESTABLISHMENT_CLASSES: { code: DotClassification; label: string; legacyType: string }[] = [
+const DOT_ESTABLISHMENT_CLASSES: { code: DotClassification; label: "Hotel" | "Resort"; legacyType: "Hotel" | "Resort" }[] = [
   { code: "HTL", label: "Hotel", legacyType: "Hotel" },
   { code: "RES", label: "Resort", legacyType: "Resort" },
-  { code: "APA", label: "Apartelle", legacyType: "Apartment Hotel" },
-  { code: "INN", label: "Tourist Inn", legacyType: "Tourist Inn" },
-  { code: "PEN", label: "Pension House", legacyType: "Pension House" },
-  { code: "MOT", label: "Motorist Hotel / Motel", legacyType: "Motel" },
-  { code: "ECO", label: "Eco-Lodge", legacyType: "Eco-Lodge" },
-  { code: "HMS", label: "Home Stay Site", legacyType: "Homestay" },
-  { code: "CMP", label: "Glamping / Camp Site", legacyType: "Glamping / Camp Site" },
-  { code: "OTH", label: "Others", legacyType: "Others" },
 ];
 const dotClassForValue = (value?: string | null): DotClassification => {
   const normalized = String(value || "").trim().toLowerCase();
@@ -1102,9 +1094,10 @@ export default function Establishments() {
           <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
             <div ref={establishmentsTableRef} className="max-h-[26rem] overflow-auto overscroll-contain touch-none [-webkit-overflow-scrolling:touch]">
               <div className="min-w-full">
-                <table className="w-full min-w-[900px]">
+                <table className="w-full min-w-[1050px]">
                 <thead className="bg-gray-50 border-b border-gray-200">
                   <tr>
+                    <th className="sticky left-0 top-0 z-30 w-[12rem] bg-gray-50 px-2 py-2 text-left text-[10px] font-semibold text-gray-700 uppercase tracking-wider shadow-[2px_0_4px_rgba(148,163,184,0.24)] sm:w-[16rem] sm:px-4 sm:py-3 sm:text-xs">Establishment</th>
                     <th className="sticky top-0 z-20 bg-gray-50 px-2 py-2 text-left text-[10px] font-semibold text-gray-700 uppercase tracking-wider sm:px-4 sm:py-3 sm:text-xs">Type</th>
                     <th className="sticky top-0 z-20 bg-gray-50 px-2 py-2 text-left text-[10px] font-semibold text-gray-700 uppercase tracking-wider sm:px-4 sm:py-3 sm:text-xs">Address</th>
                     <th className="sticky top-0 z-20 bg-gray-50 px-2 py-2 text-left text-[10px] font-semibold text-gray-700 uppercase tracking-wider sm:px-4 sm:py-3 sm:text-xs">Contact</th>
@@ -1118,6 +1111,9 @@ export default function Establishments() {
                   {filteredEstablishments.length > 0 ? (
                     filteredEstablishments.map((establishment) => (
                       <tr key={establishment.id} className="group hover:bg-gray-50">
+                        <td className="sticky left-0 z-10 max-w-[12rem] bg-white px-2 py-2 text-[10px] text-gray-900 shadow-[2px_0_4px_rgba(148,163,184,0.18)] group-hover:bg-gray-50 sm:max-w-[16rem] sm:px-4 sm:py-3 sm:text-sm" title={establishment.name}>
+                          <span className="block truncate font-medium">{establishment.name}</span>
+                        </td>
                         <td className="px-2 py-2 sm:px-4 sm:py-3 text-[10px] text-gray-600 sm:text-sm">{establishment.type}</td>
                         <td className="px-2 py-2 sm:px-4 sm:py-3">
                           <div className="flex min-w-0 items-center gap-2 text-gray-600">
