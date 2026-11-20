@@ -16,6 +16,7 @@ import { TrendingUp, TrendingDown, MapPin } from "lucide-react";
 import { supabase } from "../../../lib/supabase";
 import { getEstablishmentReportingMode, type ReportingMode } from "../../../lib/establishmentReportForms";
 import { formatResidencePlace } from "../../../lib/reporting";
+import { aggregateMonthlyMetrics } from "../../../lib/tourismMetrics.js";
 import DataState from "../../components/DataState";
 import { PageHero } from "../../components/vista/PolishedShell";
 import EstablishmentPerformanceDashboard, { type PerformanceInputWithMode } from "../../components/vista/EstablishmentPerformanceDashboard";
@@ -246,23 +247,16 @@ export default function Analytics() {
         return rows;
       });
     });
-    const monthlyData: Record<string, { label: string; visitors: number; guestCheckIns: number; guestNights: number }> = {};
-    visitors.forEach((item) => {
-      const key = monthKey(item.report_date);
-      if (!monthlyData[key]) {
-        monthlyData[key] = { label: monthLabel(item.report_date), visitors: 0, guestCheckIns: 0, guestNights: 0 };
-      }
-      monthlyData[key].visitors += item.total_guests || 0;
-    });
-
-    accommodations.forEach((item) => {
-      const key = monthKey(item.report_date);
-      if (!monthlyData[key]) {
-        monthlyData[key] = { label: monthLabel(item.report_date), visitors: 0, guestCheckIns: 0, guestNights: 0 };
-      }
-      monthlyData[key].guestCheckIns += item.total_check_ins || 0;
-      monthlyData[key].guestNights += item.total_guest_nights || 0;
-    });
+    const monthlyData = Object.fromEntries(
+      aggregateMonthlyMetrics(visitors, accommodations).map((item) => [item.month, {
+        label: monthLabel(`${item.month}-01`),
+        visitors: item.dayTourVisitors,
+        guestCheckIns: item.guestCheckIns,
+        guestNights: accommodations
+          .filter((row) => monthKey(row.report_date) === item.month)
+          .reduce((sum, row) => sum + Number((row as AccommodationReport & { total_guest_nights?: number | null }).total_guest_nights || 0), 0),
+      }])
+    );
 
     const sortedMonthKeys = Object.keys(monthlyData).sort();
     const calendarMonthKeys = Array.from({ length: 12 }, (_, index) => `${selectedYear}-${String(index + 1).padStart(2, "0")}`);

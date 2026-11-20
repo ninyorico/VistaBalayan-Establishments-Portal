@@ -345,11 +345,13 @@ export default function Reports() {
         report_date: item.report_date,
         visitors: Number(item.total_visitors ?? item.total_guests ?? 0),
         guestCheckIns: 0,
+        kind: "visitor" as const,
       })),
       ...(accommodationData || []).map((item: any) => ({
         report_date: item.report_date,
         visitors: 0,
         guestCheckIns: Number(item.total_check_ins ?? item.guest_check_ins ?? 0),
+        kind: "accommodation" as const,
       })),
     ].sort((a, b) => a.report_date.localeCompare(b.report_date));
 
@@ -366,21 +368,23 @@ export default function Reports() {
                 date.setDate(date.getDate() + index);
                 return date.toLocaleDateString("default", { weekday: "short" });
               });
-      const grouped: Record<string, { visitors: number; guestCheckIns: number }> = Object.fromEntries(
-        periodOrder.map((period) => [period, { visitors: 0, guestCheckIns: 0 }])
+      const grouped: Record<string, { visitors: number; guestCheckIns: number; hasVisitors: boolean; hasGuestCheckIns: boolean }> = Object.fromEntries(
+        periodOrder.map((period) => [period, { visitors: 0, guestCheckIns: 0, hasVisitors: false, hasGuestCheckIns: false }])
       );
       trendRows.forEach((item) => {
         const date = new Date(item.report_date);
         const key = filterType === "year" ? months[date.getMonth()] : getChartPeriod(date, item.report_date);
-        if (!grouped[key]) grouped[key] = { visitors: 0, guestCheckIns: 0 };
+        if (!grouped[key]) grouped[key] = { visitors: 0, guestCheckIns: 0, hasVisitors: false, hasGuestCheckIns: false };
+        if (item.kind === "visitor") grouped[key].hasVisitors = true;
+        if (item.kind === "accommodation") grouped[key].hasGuestCheckIns = true;
         grouped[key].visitors += item.visitors;
         grouped[key].guestCheckIns += item.guestCheckIns;
       });
 
       const chartDataArray = periodOrder.map((period) => ({
         period,
-        dayTourVisitors: grouped[period]?.visitors || 0,
-        guestCheckIns: grouped[period]?.guestCheckIns || 0,
+        dayTourVisitors: grouped[period]?.hasVisitors ? grouped[period].visitors : null,
+        guestCheckIns: grouped[period]?.hasGuestCheckIns ? grouped[period].guestCheckIns : null,
       }));
       setChartData(chartDataArray);
     } else {

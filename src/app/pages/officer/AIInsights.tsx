@@ -22,6 +22,7 @@ interface Anomaly {
   establishments?: { name: string }
   detected_at: string
   is_resolved: boolean
+  input_snapshot?: Record<string, unknown> | null
 }
 
 interface Insight {
@@ -129,7 +130,7 @@ export default function AIInsights() {
 
   return (
     <AiInsightsShell
-      subtitle="Municipality-wide service-gap tracking and recommendation review, organized for fast decisions."
+      subtitle="Deterministic visitor-drop evidence and AI-assisted recommendation review, organized for fast decisions."
       lastUpdated={lastUpdated}
       refreshing={refreshing}
       onRefresh={refreshData}

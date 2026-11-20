@@ -1,6 +1,7 @@
 import crypto from 'node:crypto';
 import { GoogleGenerativeAI } from '@google/generative-ai';
 import { getBearerToken, getSupabaseAdmin, readBody, sendJson } from './_utils/emailjs.js';
+import { aggregateMonthlyMetrics, buildDeterministicAnomalies } from '../src/lib/tourismMetrics.js';
 
 const MODEL_NAMES = Array.from(new Set([
   process.env.GEMINI_MODEL || 'gemini-3.5-flash-lite',
@@ -82,51 +83,75 @@ const generateContentWithFallback = async (apiKey, prompt) => {
   throw serviceError;
 };
 
+const getAllRows = async (queryFactory) => {
+  const pageSize = 1000;
+  const rows = [];
+  for (let offset = 0; ; offset += pageSize) {
+    const { data, error } = await queryFactory(offset, pageSize);
+    if (error) throw error;
+    rows.push(...(data || []));
+    if (!data || data.length < pageSize) break;
+  }
+  return rows;
+};
+
 const getScopedData = async (supabaseAdmin, profile, scope) => {
   const establishmentFilter = scope === 'establishment' ? profile.establishment_id : null;
-  const visitorQuery = supabaseAdmin
-    .from('visitor_reports')
-    .select('report_date,total_guests,residence_type,establishments(name)')
-    .eq('status', OFFICIAL_REPORT_STATUS)
-    .order('report_date', { ascending: false })
-    .limit(500);
-  const accommodationQuery = supabaseAdmin
-    .from('accommodation_reports')
-    .select('report_date,total_rooms,total_occupied_rooms')
-    .eq('status', OFFICIAL_REPORT_STATUS)
-    .limit(500);
-  if (establishmentFilter) {
-    visitorQuery.eq('establishment_id', establishmentFilter);
-    accommodationQuery.eq('establishment_id', establishmentFilter);
-  }
-  const [{ data: visitorData, error: visitorError }, { data: accommodationData, error: accommodationError }] = await Promise.all([visitorQuery, accommodationQuery]);
-  if (visitorError || accommodationError) throw new Error('Unable to load submitted tourism data');
-
-  const visitors = visitorData || [];
-  const accommodation = accommodationData || [];
-  const totalVisitors = visitors.reduce((sum, row) => sum + Number(row.total_guests || 0), 0);
-  const totalRooms = accommodation.reduce((sum, row) => sum + Number(row.total_rooms || 0), 0);
-  const totalOccupied = accommodation.reduce((sum, row) => sum + Number(row.total_occupied_rooms || 0), 0);
-  const monthlyTrends = {};
-  visitors.forEach((row) => {
-    if (row.report_date) monthlyTrends[row.report_date.slice(0, 7)] = (monthlyTrends[row.report_date.slice(0, 7)] || 0) + Number(row.total_guests || 0);
+  const visitorRows = await getAllRows((offset, pageSize) => {
+    let query = supabaseAdmin
+      .from('visitor_reports')
+      .select('report_date,total_guests,residence_type,establishment_id,establishments(name)')
+      .eq('status', OFFICIAL_REPORT_STATUS)
+      .order('report_date', { ascending: false })
+      .range(offset, offset + pageSize - 1);
+    if (establishmentFilter) query = query.eq('establishment_id', establishmentFilter);
+    return query;
   });
+  const accommodationRows = await getAllRows((offset, pageSize) => {
+    let query = supabaseAdmin
+      .from('accommodation_reports')
+      .select('report_date,total_rooms,total_occupied_rooms,total_check_ins,establishment_id')
+      .eq('status', OFFICIAL_REPORT_STATUS)
+      .order('report_date', { ascending: false })
+      .range(offset, offset + pageSize - 1);
+    if (establishmentFilter) query = query.eq('establishment_id', establishmentFilter);
+    return query;
+  });
+
+  let eligibleVisitorEstablishments = 0;
+  if (scope === 'municipality') {
+    const { data: establishments, error } = await supabaseAdmin
+      .from('establishments')
+      .select('id,reporting_mode,status')
+      .eq('status', 'active');
+    if (error) throw error;
+    eligibleVisitorEstablishments = (establishments || []).filter((row) => row.reporting_mode === 'visitor' || row.reporting_mode === 'both').length;
+  } else {
+    eligibleVisitorEstablishments = visitorRows.length > 0 ? 1 : 0;
+  }
+
+  const monthlyMetrics = aggregateMonthlyMetrics(visitorRows, accommodationRows, eligibleVisitorEstablishments);
+  const totalVisitors = visitorRows.reduce((sum, row) => sum + Number(row.total_guests || 0), 0);
+  const totalRooms = accommodationRows.reduce((sum, row) => sum + Number(row.total_rooms || 0), 0);
+  const totalOccupied = accommodationRows.reduce((sum, row) => sum + Number(row.total_occupied_rooms || 0), 0);
   return {
-    visitors,
+    visitors: visitorRows,
+    accommodation: accommodationRows,
     totalVisitors,
     avgOccupancy: totalRooms > 0 ? (totalOccupied / totalRooms) * 100 : 0,
-    monthlyTrends,
+    monthlyMetrics,
     establishmentName: scope === 'establishment' ? 'this establishment' : 'Balayan municipality',
   };
 };
 
+
 const generate = async (apiKey, data, scope) => {
-  const prompt = `You are a tourism data analyst for ${data.establishmentName}. Based only on these aggregate submitted-report values, return one JSON object with exactly ${scope === 'establishment' ? 3 : 4} concise insights and evidence-based anomalies. Use this exact shape: {"insights":[{"title":"max 6 words","description":"one sentence max 18 words with evidence","impact":"high|medium|low","category":"Seasonal|Operations|Marketing|Infrastructure","recommended_action":"one action sentence max 14 words","confidence_score":0.0}],"anomalies":[{"type":"Unusual Drop","severity":"high|medium|low","description":"brief evidence-based description","recommendation":"brief action","establishment":"${data.establishmentName}","confidence_score":0.0}]}. Total visitors: ${data.totalVisitors}. Average occupancy: ${data.avgOccupancy}%. Monthly trends: ${JSON.stringify(data.monthlyTrends)}. Submitted visitor rows: ${JSON.stringify(data.visitors.slice(0, 50))}. Do not include personal data or invent facts.`;
+  const prompt = `You are a tourism data analyst for ${data.establishmentName}. Based only on the verified aggregate values below, return one JSON object with exactly ${scope === 'establishment' ? 3 : 4} concise recommendations. Use this exact shape: {"insights":[{"title":"max 6 words","description":"one sentence max 18 words; do not invent causes or figures","impact":"high|medium|low","category":"Seasonal|Operations|Marketing|Infrastructure","recommended_action":"one action sentence max 14 words","confidence_score":0.0}]}. Total submitted day-tour visitors: ${data.totalVisitors}. Average accommodation occupancy: ${data.avgOccupancy}%. Monthly metrics: ${JSON.stringify(data.monthlyMetrics)}. Do not generate anomaly classifications, numerical claims, causes, or personal data. The server computes anomaly evidence separately.`;
   const result = await generateContentWithFallback(apiKey, prompt);
   const generated = jsonObject(await result.response.text());
   return {
     insights: normalizeInsights(generated.insights),
-    anomalies: normalizeAnomalies(generated.anomalies),
+    anomalies: buildDeterministicAnomalies(data.monthlyMetrics),
     modelName: result.modelName,
   };
 };
@@ -156,7 +181,41 @@ const insertResults = async (supabaseAdmin, results, scope, establishmentId, req
     if (error) throw new Error('Unable to save generated recommendations');
   }
   if (results.anomalies.length) {
-    const rows = results.anomalies.map((item) => ({ anomaly_type: item.type, severity: item.severity, description: item.description, recommendation: item.recommendation, establishment_id: scope === 'establishment' ? establishmentId : null, model_name: modelName, status: 'active', is_resolved: false, detected_at: new Date().toISOString() }));
+    for (const item of results.anomalies) {
+      const anomalyKey = item.evidence?.anomaly_key;
+      if (anomalyKey) {
+        let existingQuery = supabaseAdmin
+          .from('ai_anomalies_cache')
+          .select('id')
+          .eq('status', 'active')
+          .contains('input_snapshot', { anomaly_key: anomalyKey });
+        existingQuery = scope === 'establishment'
+          ? existingQuery.eq('establishment_id', establishmentId)
+          : existingQuery.is('establishment_id', null);
+        const { data: existing, error: existingError } = await existingQuery;
+        if (existingError) throw existingError;
+        const ids = (existing || []).map((row) => row.id).filter(Boolean);
+        if (ids.length) {
+          const { error: updateError } = await supabaseAdmin
+            .from('ai_anomalies_cache')
+            .update({ status: 'superseded', is_resolved: true })
+            .in('id', ids);
+          if (updateError) throw updateError;
+        }
+      }
+    }
+    const rows = results.anomalies.map((item) => ({
+      anomaly_type: item.type,
+      severity: item.severity,
+      description: item.description,
+      recommendation: item.recommendation,
+      establishment_id: scope === 'establishment' ? establishmentId : null,
+      model_name: 'deterministic-rule-v1',
+      input_snapshot: item.evidence,
+      status: 'active',
+      is_resolved: false,
+      detected_at: new Date().toISOString(),
+    }));
     const { error } = await supabaseAdmin.from('ai_anomalies_cache').insert(rows);
     if (error) throw new Error('Unable to save generated anomalies');
   }

@@ -26,6 +26,7 @@ interface AiAnomalyCardProps {
   recommendation?: string | null;
   detected_at: string;
   establishments?: { name: string } | null;
+  input_snapshot?: Record<string, unknown> | null;
 }
 
 interface AiRecommendationCardProps {
@@ -60,6 +61,15 @@ const severityTone = (severity?: string) => {
     icon: "text-sky-600",
     soft: "bg-sky-50/70",
   };
+};
+
+const formatEvidence = (snapshot?: Record<string, unknown> | null) => {
+  if (!snapshot || snapshot.metric !== "dayTourVisitors") return null;
+  const current = Number(snapshot.current_value || 0).toLocaleString();
+  const previous = Number(snapshot.previous_value || 0).toLocaleString();
+  const change = Number(snapshot.drop_percent || 0).toFixed(1);
+  const coverage = snapshot.current_coverage_percent == null ? "unavailable" : `${Number(snapshot.current_coverage_percent).toFixed(1)}%`;
+  return `${snapshot.previous_month}: ${previous} → ${snapshot.current_month}: ${current} · ${change}% decrease · coverage ${coverage}`;
 };
 
 export function AiInsightsShell({
@@ -176,6 +186,12 @@ export function AiAnomalyCard(anomaly: AiAnomalyCardProps) {
           <p className="text-justify hyphens-auto indent-5" data-ai-text-spacing="editorial-justified-indent">
             <AiFormattedText text={anomaly.description} />
           </p>
+          {formatEvidence(anomaly.input_snapshot) && (
+            <div className="rounded-2xl border border-slate-200 bg-slate-50/80 p-3 text-xs leading-5 text-slate-600">
+              <span className="font-semibold text-slate-800">Verified evidence:</span>{" "}
+              {formatEvidence(anomaly.input_snapshot)}
+            </div>
+          )}
           {anomaly.recommendation && (
             <div className="rounded-2xl border border-slate-200 bg-slate-50/80 p-3 text-justify leading-6 hyphens-auto" data-ai-action-note="editorial-shadcn">
               <span className="font-semibold text-slate-800">Recommendation:</span>{" "}
