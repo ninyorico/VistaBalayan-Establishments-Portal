@@ -1,6 +1,7 @@
 import { createContext, useContext, useEffect, useRef, useState } from 'react'
 import { supabase } from '../lib/supabase'
 import { User } from '@supabase/supabase-js'
+import { retryFutureJwt } from '../lib/authRetry'
 
 interface Profile {
   id: string
@@ -27,11 +28,26 @@ interface AuthContextType {
 const AuthContext = createContext<AuthContextType | undefined>(undefined)
 
 const loadProfile = async (userId: string): Promise<Profile | null> => {
-  const { data, error } = await supabase
-    .from('profiles')
-    .select('id,email,full_name,role,establishment_id,status')
-    .eq('id', userId)
-    .maybeSingle()
+  let profileResult
+  try {
+    profileResult = await retryFutureJwt(
+      async () => {
+        const result = await supabase
+          .from('profiles')
+          .select('id,email,full_name,role,establishment_id,status')
+          .eq('id', userId)
+          .maybeSingle()
+        if (result.error) throw result.error
+        return result
+      },
+      () => supabase.auth.refreshSession(),
+    )
+  } catch (error) {
+    console.error('Profile fetch error:', error)
+    return null
+  }
+
+  const { data, error } = profileResult
 
   if (error) {
     console.error('Profile fetch error:', error)
@@ -46,11 +62,26 @@ const loadProfile = async (userId: string): Promise<Profile | null> => {
   if (nextProfile.role === 'establishment_staff') {
     if (!nextProfile.establishment_id) return null
 
-    const { data: establishment, error: establishmentError } = await supabase
-      .from('establishments')
-      .select('type,total_rooms,reporting_mode,status')
-      .eq('id', nextProfile.establishment_id)
-      .maybeSingle()
+    let establishmentResult
+    try {
+      establishmentResult = await retryFutureJwt(
+        async () => {
+          const result = await supabase
+            .from('establishments')
+            .select('type,total_rooms,reporting_mode,status')
+            .eq('id', nextProfile.establishment_id)
+            .maybeSingle()
+          if (result.error) throw result.error
+          return result
+        },
+        () => supabase.auth.refreshSession(),
+      )
+    } catch (error) {
+      console.error('Establishment access check error:', error)
+      return null
+    }
+
+    const { data: establishment, error: establishmentError } = establishmentResult
 
     if (establishmentError) {
       console.error('Establishment access check error:', establishmentError)
@@ -175,7 +206,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, [])
 
   const signIn = async (email: string, password: string) => {
-    const { data, error } = await supabase.auth.signInWithPassword({ email, password })
+    const { data, error } = await retryFutureJwt(
+      () => supabase.auth.signInWithPassword({ email, password }),
+      () => supabase.auth.refreshSession(),
+    )
     if (error) throw error
 
     const nextProfile = await loadProfile(data.user.id)

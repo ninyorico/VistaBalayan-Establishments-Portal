@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Eye, EyeOff, LockKeyhole, Mail, ShieldCheck } from "lucide-react";
 import { supabase } from "../../lib/supabase";
+import { retryFutureJwt } from "../../lib/authRetry";
 
 import { getEstablishmentReportingMode } from "../../lib/establishmentReportForms";
 
@@ -27,18 +28,25 @@ export default function Login() {
     setLoading(true);
 
     try {
-      const { data, error } = await supabase.auth.signInWithPassword({
-        email,
-        password,
-      });
+      const { data, error } = await retryFutureJwt(
+        () => supabase.auth.signInWithPassword({ email, password }),
+        () => supabase.auth.refreshSession(),
+      );
 
       if (error) throw error;
 
-      const { data: profile, error: profileError } = await supabase
-        .from("profiles")
-        .select("role,status,establishment_id")
-        .eq("id", data.user.id)
-        .maybeSingle();
+      const { data: profile, error: profileError } = await retryFutureJwt(
+        async () => {
+          const result = await supabase
+            .from("profiles")
+            .select("role,status,establishment_id")
+            .eq("id", data.user.id)
+            .maybeSingle();
+          if (result.error) throw result.error;
+          return result;
+        },
+        () => supabase.auth.refreshSession(),
+      );
 
       if (profileError) throw profileError;
       if (!profile || profile.status === "deleted") {
@@ -53,11 +61,18 @@ export default function Login() {
           throw new Error("This account is not linked to an establishment. Please contact the municipal tourism office.");
         }
 
-        const { data: establishment, error: establishmentError } = await supabase
-          .from("establishments")
-          .select("type,reporting_mode,total_rooms,status")
-          .eq("id", profile.establishment_id)
-          .maybeSingle();
+        const { data: establishment, error: establishmentError } = await retryFutureJwt(
+          async () => {
+            const result = await supabase
+              .from("establishments")
+              .select("type,reporting_mode,total_rooms,status")
+              .eq("id", profile.establishment_id)
+              .maybeSingle();
+            if (result.error) throw result.error;
+            return result;
+          },
+          () => supabase.auth.refreshSession(),
+        );
 
         if (establishmentError) throw establishmentError;
         const reportingMode = getEstablishmentReportingMode(establishment);
