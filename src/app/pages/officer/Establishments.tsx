@@ -24,12 +24,11 @@ const dotClassForValue = (value?: string | null): DotClassification => {
   )?.code || "OTH";
 };
 
-const canonicalEstablishmentType = (establishment: Pick<Establishment, "type" | "dot_classification">): "Hotel" | "Resort" | null => {
+const canonicalEstablishmentType = (establishment: Pick<Establishment, "type" | "dot_classification">): "Hotel" | "Resort" => {
   const type = String(establishment.type || "").trim().toLowerCase();
   const dotClassification = String(establishment.dot_classification || "").trim().toUpperCase();
-  if (type === "hotel" || dotClassification === "HTL") return "Hotel";
   if (type === "resort" || type.includes("resort") || dotClassification === "RES") return "Resort";
-  return null;
+  return "Hotel";
 };
 
 interface Establishment {
@@ -210,7 +209,6 @@ export default function Establishments() {
 
   const filteredEstablishments = sortEstablishmentsAlphabetically(establishments.filter((est) => {
       const canonicalType = canonicalEstablishmentType(est);
-      if (!canonicalType) return false;
       const matchesSearch = est.name.toLowerCase().includes(searchTerm.toLowerCase());
       const matchesType = filterType === "all" || canonicalType === filterType;
       const matchesStatus = filterStatus === "all" || est.status === filterStatus;
