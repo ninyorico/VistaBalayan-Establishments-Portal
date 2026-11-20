@@ -109,8 +109,8 @@ describe("tourism monthly metrics", () => {
         current_coverage_percent: 3.23,
       },
     });
-    expect(overnight?.description).toContain("Reported overnight guest check-ins decreased 40.0% in April to May.");
-    expect(overnight?.recommendation).toContain("accommodation submissions");
+    expect(overnight?.description).toContain("Reported overnight guest check-ins decreased 40.0% from April to May 2026, with 3.2% accommodation reporting coverage.");
+    expect(overnight?.recommendation).toBe("Validate missing and late accommodation reports before confirming a decline in overnight tourism activity.");
   });
 
   it("explains missing and late submissions in deterministic anomaly evidence", () => {
@@ -125,9 +125,9 @@ describe("tourism monthly metrics", () => {
 
     const [anomaly] = buildDeterministicAnomalies(metrics);
 
-    expect(anomaly.description).toContain("Reporting coverage was 1.6%.");
-    expect(anomaly.description).toContain("61 expected reports are missing.");
-    expect(anomaly.description).toContain("1 submitted report was entered after the report date.");
+    expect(anomaly.description).toContain("with 1.6% reporting coverage.");
+    expect(anomaly.description).toContain("61 expected day-tour reports are missing.");
+    expect(anomaly.description).toContain("1 submitted day-tour report was entered after the report date.");
     expect(anomaly.evidence).toMatchObject({
       current_missing_reports: 61,
       current_late_reports: 1,

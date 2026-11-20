@@ -67,11 +67,12 @@ const formatEvidence = (snapshot?: Record<string, unknown> | null) => {
   if (!snapshot || !["dayTourVisitors", "overnightGuestCheckIns"].includes(String(snapshot.metric))) return null;
   const current = Number(snapshot.current_value || 0).toLocaleString();
   const previous = Number(snapshot.previous_value || 0).toLocaleString();
-  const change = Number(snapshot.drop_percent || 0).toFixed(1);
-  const coverage = snapshot.current_coverage_percent == null ? "unavailable" : `${Number(snapshot.current_coverage_percent).toFixed(1)}%`;
-  const missing = snapshot.current_missing_reports == null ? "missing unavailable" : `${Number(snapshot.current_missing_reports).toLocaleString()} missing`;
-  const late = `${Number(snapshot.current_late_reports || 0).toLocaleString()} late`;
-  return `${snapshot.previous_month}: ${previous} → ${snapshot.current_month}: ${current} · ${change}% decrease · coverage ${coverage} · ${missing} · ${late}`;
+  const previousMonth = formatMonthLabel(snapshot.previous_month);
+  const currentMonth = formatMonthLabel(snapshot.current_month);
+  const metricLabel = snapshot.metric === "overnightGuestCheckIns" ? "guest check-ins" : "visitors";
+  const missing = snapshot.current_missing_reports == null ? "missing reports unavailable" : `${Number(snapshot.current_missing_reports).toLocaleString()} missing reports`;
+  const late = `${Number(snapshot.current_late_reports || 0).toLocaleString()} late submissions`;
+  return `${previousMonth}: ${previous} → ${currentMonth}: ${current} ${metricLabel}; ${missing}; ${late}.`;
 };
 
 const formatMonthLabel = (value: unknown) => {
@@ -80,27 +81,40 @@ const formatMonthLabel = (value: unknown) => {
   return new Intl.DateTimeFormat("en-US", { month: "long" }).format(new Date(Date.UTC(year, month - 1, 1)));
 };
 
+const formatMonthYearLabel = (value: unknown) => {
+  if (typeof value !== "string" || !/^\d{4}-\d{2}$/.test(value)) return String(value || "the period");
+  const [year, month] = value.split("-").map(Number);
+  return new Intl.DateTimeFormat("en-US", { month: "long", year: "numeric" }).format(new Date(Date.UTC(year, month - 1, 1)));
+};
+
 const formatAnomalyDescription = (anomaly: AiAnomalyCardProps) => {
   const snapshot = anomaly.input_snapshot;
   if (!snapshot || !["dayTourVisitors", "overnightGuestCheckIns"].includes(String(snapshot.metric))) return anomaly.description;
 
   const drop = Number(snapshot.drop_percent ?? snapshot.change_percent ?? 0).toFixed(1);
   const previousMonth = formatMonthLabel(snapshot.previous_month);
-  const currentMonth = formatMonthLabel(snapshot.current_month);
+  const currentMonth = formatMonthYearLabel(snapshot.current_month);
   const isOvernight = snapshot.metric === "overnightGuestCheckIns";
   const metricLabel = isOvernight ? "overnight guest check-ins" : "day-tour visitors";
   const coverage = snapshot.current_coverage_percent == null
     ? `${isOvernight ? "Accommodation reporting" : "Reporting"} coverage was unavailable.`
-    : `${isOvernight ? "Accommodation reporting" : "Reporting"} coverage was ${Number(snapshot.current_coverage_percent).toFixed(1)}%.`;
+    : `with ${Number(snapshot.current_coverage_percent).toFixed(1)}% ${isOvernight ? "accommodation reporting" : "reporting"} coverage.`;
   const missing = snapshot.current_missing_reports == null
-    ? `${isOvernight ? "Missing accommodation report" : "Missing report"} count is unavailable.`
-    : `${Number(snapshot.current_missing_reports).toLocaleString()} expected ${isOvernight ? "accommodation " : ""}reports are missing.`;
+    ? `${isOvernight ? "Missing accommodation report" : "Missing day-tour report"} count is unavailable.`
+    : `${Number(snapshot.current_missing_reports).toLocaleString()} expected ${isOvernight ? "accommodation" : "day-tour"} reports are missing.`;
   const lateCount = Number(snapshot.current_late_reports || 0);
   const late = lateCount === 0
-    ? `No submitted ${isOvernight ? "accommodation " : ""}reports were identified as late.`
-    : `${lateCount.toLocaleString()} submitted ${isOvernight ? "accommodation " : ""}report${lateCount === 1 ? "" : "s"} ${lateCount === 1 ? "was" : "were"} entered after the report date.`;
+    ? `No submitted ${isOvernight ? "accommodation" : "day-tour"} reports were identified as late.`
+    : `${lateCount.toLocaleString()} submitted ${isOvernight ? "accommodation" : "day-tour"} report${lateCount === 1 ? "" : "s"} ${lateCount === 1 ? "was" : "were"} entered after the report date.`;
 
-  return `Reported ${metricLabel} decreased ${drop}% in ${previousMonth} to ${currentMonth}. ${coverage} ${missing} ${late}`;
+  return `Reported ${metricLabel} decreased ${drop}% from ${previousMonth} to ${currentMonth}, ${coverage} ${missing} ${late}`;
+};
+
+const formatAnomalyRecommendation = (anomaly: AiAnomalyCardProps) => {
+  const metric = anomaly.input_snapshot?.metric;
+  if (metric === "dayTourVisitors") return "Validate missing and late day-tour reports before confirming a decline in day-tourism activity.";
+  if (metric === "overnightGuestCheckIns") return "Validate missing and late accommodation reports before confirming a decline in overnight tourism activity.";
+  return anomaly.recommendation;
 };
 
 export function AiInsightsShell({
@@ -219,14 +233,14 @@ export function AiAnomalyCard(anomaly: AiAnomalyCardProps) {
           </p>
           {formatEvidence(anomaly.input_snapshot) && (
             <div className="rounded-2xl border border-slate-200 bg-slate-50/80 p-3 text-sm leading-6 text-slate-600">
-              <span className="font-semibold text-slate-800">Verified evidence:</span>{" "}
+              <span className="font-semibold text-slate-800">Verified Evidence:</span>{" "}
               {formatEvidence(anomaly.input_snapshot)}
             </div>
           )}
-          {anomaly.recommendation && (
+          {formatAnomalyRecommendation(anomaly) && (
             <div className="rounded-2xl border border-slate-200 bg-slate-50/80 p-3 text-justify leading-6 hyphens-auto" data-ai-action-note="editorial-shadcn">
               <span className="font-semibold text-slate-800">Recommendation:</span>{" "}
-              <AiFormattedText text={anomaly.recommendation} tone="action" />
+              <AiFormattedText text={formatAnomalyRecommendation(anomaly)} tone="action" />
             </div>
           )}
         </div>
