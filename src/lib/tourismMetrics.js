@@ -11,6 +11,36 @@ const daysInMonth = (key) => {
   return new Date(Date.UTC(year, month, 0)).getUTCDate()
 }
 
+export const deriveReportEvidence = (submittedReports, expectedReports) => {
+  const submitted = Number(submittedReports)
+  const expected = Number(expectedReports)
+  if (!Number.isFinite(submitted) || !Number.isFinite(expected) || expected <= 0) {
+    return { missingReports: null, coveragePercent: null }
+  }
+  return {
+    missingReports: Math.max(0, expected - submitted),
+    coveragePercent: Math.min(100, (submitted / expected) * 100),
+  }
+}
+
+export const hasConsistentAnomalyEvidence = (evidence = {}) => {
+  for (const prefix of ['current', 'previous']) {
+    const submitted = evidence[`${prefix}_submitted_reports`]
+    const expected = evidence[`${prefix}_expected_reports`]
+    const missing = evidence[`${prefix}_missing_reports`]
+    const coverage = evidence[`${prefix}_coverage_percent`]
+    if (expected == null) {
+      if (missing != null || coverage != null) return false
+      continue
+    }
+    const derived = deriveReportEvidence(submitted, expected)
+    if (derived.missingReports === null || derived.coveragePercent === null) return false
+    if (Number(missing) !== derived.missingReports) return false
+    if (Math.abs(Number(coverage) - derived.coveragePercent) > 0.01) return false
+  }
+  return true
+}
+
 /**
  * Aggregate submitted visitor and accommodation rows by calendar month.
  * Visitor rows may be one row per residence/category, so coverage uses
@@ -74,23 +104,17 @@ export const aggregateMonthlyMetrics = (visitorRows = [], accommodationRows = []
         : null
       const submittedVisitorReports = item.visitorSubmissionDays.size
       const lateVisitorReports = item.lateVisitorSubmissionDays.size
-      const coveragePercent = expectedVisitorReports
-        ? Math.min(100, (submittedVisitorReports / expectedVisitorReports) * 100)
-        : null
-      const missingVisitorReports = expectedVisitorReports === null
-        ? null
-        : Math.max(0, expectedVisitorReports - submittedVisitorReports)
+      const visitorEvidence = deriveReportEvidence(submittedVisitorReports, expectedVisitorReports)
+      const coveragePercent = visitorEvidence.coveragePercent
+      const missingVisitorReports = visitorEvidence.missingReports
       const expectedAccommodationReports = eligibleAccommodationEstablishments > 0
         ? eligibleAccommodationEstablishments * daysInMonth(item.month)
         : null
       const submittedAccommodationReports = item.accommodationSubmissionDays.size
       const lateAccommodationReports = item.lateAccommodationSubmissionDays.size
-      const accommodationCoveragePercent = expectedAccommodationReports
-        ? Math.min(100, (submittedAccommodationReports / expectedAccommodationReports) * 100)
-        : null
-      const missingAccommodationReports = expectedAccommodationReports === null
-        ? null
-        : Math.max(0, expectedAccommodationReports - submittedAccommodationReports)
+      const accommodationEvidence = deriveReportEvidence(submittedAccommodationReports, expectedAccommodationReports)
+      const accommodationCoveragePercent = accommodationEvidence.coveragePercent
+      const missingAccommodationReports = accommodationEvidence.missingReports
       return {
         month: item.month,
         dayTourVisitors: item.dayTourVisitors,

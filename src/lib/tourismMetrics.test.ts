@@ -1,8 +1,31 @@
 import { describe, expect, it } from "vitest";
 
-import { aggregateMonthlyMetrics, buildDeterministicAnomalies } from "./tourismMetrics.js";
+import { aggregateMonthlyMetrics, buildDeterministicAnomalies, deriveReportEvidence, hasConsistentAnomalyEvidence } from "./tourismMetrics.js";
 
 describe("tourism monthly metrics", () => {
+  it("derives consistent evidence from submitted and expected reports", () => {
+    expect(deriveReportEvidence(34, 687)).toEqual({
+      missingReports: 653,
+      coveragePercent: 34 / 687 * 100,
+    });
+    expect(hasConsistentAnomalyEvidence({
+      current_submitted_reports: 34,
+      current_expected_reports: 687,
+      current_missing_reports: 653,
+      current_coverage_percent: Number((34 / 687 * 100).toFixed(2)),
+      previous_submitted_reports: 1,
+      previous_expected_reports: 30,
+      previous_missing_reports: 29,
+      previous_coverage_percent: 3.33,
+    })).toBe(true);
+    expect(hasConsistentAnomalyEvidence({
+      current_submitted_reports: 34,
+      current_expected_reports: 687,
+      current_missing_reports: 653,
+      current_coverage_percent: 5.4,
+    })).toBe(false);
+  });
+
   it("aggregates visitor rows and counts distinct establishment/date submissions", () => {
     const metrics = aggregateMonthlyMetrics(
       [

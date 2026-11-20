@@ -63,16 +63,38 @@ const severityTone = (severity?: string) => {
   };
 };
 
+const deriveSnapshotEvidence = (snapshot: Record<string, unknown>, prefix: "current" | "previous" = "current") => {
+  const submittedValue = snapshot[`${prefix}_submitted_reports`];
+  const expectedValue = snapshot[`${prefix}_expected_reports`];
+  const submitted = Number(submittedValue);
+  const expected = Number(expectedValue);
+  if (submittedValue != null && expectedValue != null && Number.isFinite(submitted) && Number.isFinite(expected) && expected > 0) {
+    return {
+      submitted,
+      expected,
+      missing: Math.max(0, expected - submitted),
+      coverage: Math.min(100, (submitted / expected) * 100),
+    };
+  }
+  return {
+    submitted: submittedValue == null ? null : Number(submittedValue),
+    expected: expectedValue == null ? null : Number(expectedValue),
+    missing: snapshot[`${prefix}_missing_reports`] == null ? null : Number(snapshot[`${prefix}_missing_reports`]),
+    coverage: snapshot[`${prefix}_coverage_percent`] == null ? null : Number(snapshot[`${prefix}_coverage_percent`]),
+  };
+};
+
 const formatEvidence = (snapshot?: Record<string, unknown> | null) => {
   if (!snapshot || !["dayTourVisitors", "overnightGuestCheckIns"].includes(String(snapshot.metric))) return null;
-  const current = Number(snapshot.current_value || 0).toLocaleString();
-  const previous = Number(snapshot.previous_value || 0).toLocaleString();
+  const current = deriveSnapshotEvidence(snapshot);
+  const currentValue = Number(snapshot.current_value || 0).toLocaleString();
+  const previousValue = Number(snapshot.previous_value || 0).toLocaleString();
   const previousMonth = formatMonthLabel(snapshot.previous_month);
   const currentMonth = formatMonthLabel(snapshot.current_month);
   const metricLabel = snapshot.metric === "overnightGuestCheckIns" ? "guest check-ins" : "visitors";
-  const missing = snapshot.current_missing_reports == null ? "missing reports unavailable" : `${Number(snapshot.current_missing_reports).toLocaleString()} missing reports`;
+  const missing = current.missing == null ? "missing reports unavailable" : `${current.missing.toLocaleString()} missing reports`;
   const late = `${Number(snapshot.current_late_reports || 0).toLocaleString()} late submissions`;
-  return `${previousMonth}: ${previous} → ${currentMonth}: ${current} ${metricLabel}; ${missing}; ${late}.`;
+  return `${previousMonth}: ${previousValue} → ${currentMonth}: ${currentValue} ${metricLabel}; ${missing}; ${late}.`;
 };
 
 const formatMonthLabel = (value: unknown) => {
@@ -96,12 +118,13 @@ const formatAnomalyDescription = (anomaly: AiAnomalyCardProps) => {
   const currentMonth = formatMonthYearLabel(snapshot.current_month);
   const isOvernight = snapshot.metric === "overnightGuestCheckIns";
   const metricLabel = isOvernight ? "overnight guest check-ins" : "day-tour visitors";
-  const coverage = snapshot.current_coverage_percent == null
+  const evidence = deriveSnapshotEvidence(snapshot);
+  const coverage = evidence.coverage == null
     ? `${isOvernight ? "Accommodation reporting" : "Reporting"} coverage was unavailable.`
-    : `with ${Number(snapshot.current_coverage_percent).toFixed(1)}% ${isOvernight ? "accommodation reporting" : "reporting"} coverage.`;
-  const missing = snapshot.current_missing_reports == null
+    : `with ${evidence.coverage.toFixed(1)}% ${isOvernight ? "accommodation reporting" : "reporting"} coverage.`;
+  const missing = evidence.missing == null
     ? `${isOvernight ? "Missing accommodation report" : "Missing day-tour report"} count is unavailable.`
-    : `${Number(snapshot.current_missing_reports).toLocaleString()} expected ${isOvernight ? "accommodation" : "day-tour"} reports are missing.`;
+    : `${evidence.missing.toLocaleString()} expected ${isOvernight ? "accommodation" : "day-tour"} reports are missing.`;
   const lateCount = Number(snapshot.current_late_reports || 0);
   const late = lateCount === 0
     ? `No submitted ${isOvernight ? "accommodation" : "day-tour"} reports were identified as late.`

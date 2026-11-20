@@ -32,7 +32,15 @@ export function aggregateMonthlyMetrics(
   eligibleAccommodationEstablishments?: number,
 ): TourismMonthlyMetric[];
 
+export function deriveReportEvidence(
+  submittedReports: number,
+  expectedReports: number | null,
+): { missingReports: number | null; coveragePercent: number | null };
+
+export function hasConsistentAnomalyEvidence(evidence?: Record<string, unknown>): boolean;
+
 export function percentChange(current: number, previous: number): number | null;
+
 
 export function buildDeterministicAnomalies(
   monthlyMetrics?: TourismMonthlyMetric[],

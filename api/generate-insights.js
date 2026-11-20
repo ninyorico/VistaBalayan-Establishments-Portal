@@ -1,7 +1,7 @@
 import crypto from 'node:crypto';
 import { GoogleGenerativeAI } from '@google/generative-ai';
 import { getBearerToken, getSupabaseAdmin, readBody, sendJson } from './_utils/emailjs.js';
-import { aggregateMonthlyMetrics, buildDeterministicAnomalies } from '../src/lib/tourismMetrics.js';
+import { aggregateMonthlyMetrics, buildDeterministicAnomalies, hasConsistentAnomalyEvidence } from '../src/lib/tourismMetrics.js';
 
 const MODEL_NAMES = Array.from(new Set([
   process.env.GEMINI_MODEL || 'gemini-3.5-flash-lite',
@@ -201,18 +201,23 @@ const insertResults = async (supabaseAdmin, results, scope, establishmentId, req
         }
       }
     }
-    const rows = results.anomalies.map((item) => ({
-      anomaly_type: item.type,
-      severity: item.severity,
-      description: item.description,
-      recommendation: item.recommendation,
-      establishment_id: scope === 'establishment' ? establishmentId : null,
-      model_name: 'deterministic-rule-v1',
-      input_snapshot: item.evidence,
-      status: 'active',
-      is_resolved: false,
-      detected_at: new Date().toISOString(),
-    }));
+    const rows = results.anomalies.map((item) => {
+      if (!hasConsistentAnomalyEvidence(item.evidence)) {
+        throw new Error('Refusing to save inconsistent anomaly evidence');
+      }
+      return {
+        anomaly_type: item.type,
+        severity: item.severity,
+        description: item.description,
+        recommendation: item.recommendation,
+        establishment_id: scope === 'establishment' ? establishmentId : null,
+        model_name: 'deterministic-rule-v1',
+        input_snapshot: item.evidence,
+        status: 'active',
+        is_resolved: false,
+        detected_at: new Date().toISOString(),
+      };
+    });
     const { error } = await supabaseAdmin.from('ai_anomalies_cache').insert(rows);
     if (error) throw new Error('Unable to save generated anomalies');
   }
