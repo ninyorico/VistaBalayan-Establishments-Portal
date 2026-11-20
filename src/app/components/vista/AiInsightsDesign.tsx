@@ -64,7 +64,7 @@ const severityTone = (severity?: string) => {
 };
 
 const formatEvidence = (snapshot?: Record<string, unknown> | null) => {
-  if (!snapshot || snapshot.metric !== "dayTourVisitors") return null;
+  if (!snapshot || !["dayTourVisitors", "overnightGuestCheckIns"].includes(String(snapshot.metric))) return null;
   const current = Number(snapshot.current_value || 0).toLocaleString();
   const previous = Number(snapshot.previous_value || 0).toLocaleString();
   const change = Number(snapshot.drop_percent || 0).toFixed(1);
@@ -72,6 +72,35 @@ const formatEvidence = (snapshot?: Record<string, unknown> | null) => {
   const missing = snapshot.current_missing_reports == null ? "missing unavailable" : `${Number(snapshot.current_missing_reports).toLocaleString()} missing`;
   const late = `${Number(snapshot.current_late_reports || 0).toLocaleString()} late`;
   return `${snapshot.previous_month}: ${previous} → ${snapshot.current_month}: ${current} · ${change}% decrease · coverage ${coverage} · ${missing} · ${late}`;
+};
+
+const formatMonthLabel = (value: unknown) => {
+  if (typeof value !== "string" || !/^\d{4}-\d{2}$/.test(value)) return String(value || "the period");
+  const [year, month] = value.split("-").map(Number);
+  return new Intl.DateTimeFormat("en-US", { month: "long" }).format(new Date(Date.UTC(year, month - 1, 1)));
+};
+
+const formatAnomalyDescription = (anomaly: AiAnomalyCardProps) => {
+  const snapshot = anomaly.input_snapshot;
+  if (!snapshot || !["dayTourVisitors", "overnightGuestCheckIns"].includes(String(snapshot.metric))) return anomaly.description;
+
+  const drop = Number(snapshot.drop_percent ?? snapshot.change_percent ?? 0).toFixed(1);
+  const previousMonth = formatMonthLabel(snapshot.previous_month);
+  const currentMonth = formatMonthLabel(snapshot.current_month);
+  const isOvernight = snapshot.metric === "overnightGuestCheckIns";
+  const metricLabel = isOvernight ? "overnight guest check-ins" : "day-tour visitors";
+  const coverage = snapshot.current_coverage_percent == null
+    ? `${isOvernight ? "Accommodation reporting" : "Reporting"} coverage was unavailable.`
+    : `${isOvernight ? "Accommodation reporting" : "Reporting"} coverage was ${Number(snapshot.current_coverage_percent).toFixed(1)}%.`;
+  const missing = snapshot.current_missing_reports == null
+    ? `${isOvernight ? "Missing accommodation report" : "Missing report"} count is unavailable.`
+    : `${Number(snapshot.current_missing_reports).toLocaleString()} expected ${isOvernight ? "accommodation " : ""}reports are missing.`;
+  const lateCount = Number(snapshot.current_late_reports || 0);
+  const late = lateCount === 0
+    ? `No submitted ${isOvernight ? "accommodation " : ""}reports were identified as late.`
+    : `${lateCount.toLocaleString()} submitted ${isOvernight ? "accommodation " : ""}report${lateCount === 1 ? "" : "s"} ${lateCount === 1 ? "was" : "were"} entered after the report date.`;
+
+  return `Reported ${metricLabel} decreased ${drop}% in ${previousMonth} to ${currentMonth}. ${coverage} ${missing} ${late}`;
 };
 
 export function AiInsightsShell({
@@ -186,10 +215,10 @@ export function AiAnomalyCard(anomaly: AiAnomalyCardProps) {
 
         <div className="mt-4 space-y-3 text-sm leading-6 text-slate-600">
           <p className="text-justify hyphens-auto indent-5" data-ai-text-spacing="editorial-justified-indent">
-            <AiFormattedText text={anomaly.description} />
+            <AiFormattedText text={formatAnomalyDescription(anomaly)} />
           </p>
           {formatEvidence(anomaly.input_snapshot) && (
-            <div className="rounded-2xl border border-slate-200 bg-slate-50/80 p-3 text-xs leading-5 text-slate-600">
+            <div className="rounded-2xl border border-slate-200 bg-slate-50/80 p-3 text-sm leading-6 text-slate-600">
               <span className="font-semibold text-slate-800">Verified evidence:</span>{" "}
               {formatEvidence(anomaly.input_snapshot)}
             </div>

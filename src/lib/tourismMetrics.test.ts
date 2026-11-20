@@ -84,6 +84,35 @@ describe("tourism monthly metrics", () => {
     expect(buildDeterministicAnomalies(metrics)).toHaveLength(0);
   });
 
+  it("creates a separate overnight guest check-in decline with accommodation evidence", () => {
+    const metrics = aggregateMonthlyMetrics(
+      [],
+      [
+        { report_date: "2026-04-01", establishment_id: "hotel-a", total_check_ins: 100 },
+        { report_date: "2026-05-03", created_at: "2026-05-04T09:00:00Z", establishment_id: "hotel-a", total_check_ins: 60 },
+      ],
+      0,
+      1,
+    );
+    const anomalies = buildDeterministicAnomalies(metrics);
+    const overnight = anomalies.find((anomaly) => anomaly.evidence.metric === "overnightGuestCheckIns");
+
+    expect(overnight).toMatchObject({
+      type: "Overnight guest check-in decline",
+      severity: "medium",
+      evidence: {
+        previous_value: 100,
+        current_value: 60,
+        drop_percent: 40,
+        current_late_reports: 1,
+        current_missing_reports: 30,
+        current_coverage_percent: 3.23,
+      },
+    });
+    expect(overnight?.description).toContain("Reported overnight guest check-ins decreased 40.0% in April to May.");
+    expect(overnight?.recommendation).toContain("accommodation submissions");
+  });
+
   it("explains missing and late submissions in deterministic anomaly evidence", () => {
     const metrics = aggregateMonthlyMetrics(
       [

@@ -110,7 +110,7 @@ const getScopedData = async (supabaseAdmin, profile, scope) => {
   const accommodationRows = await getAllRows((offset, pageSize) => {
     let query = supabaseAdmin
       .from('accommodation_reports')
-      .select('report_date,total_rooms,total_occupied_rooms,total_check_ins,establishment_id')
+      .select('report_date,created_at,total_rooms,total_occupied_rooms,total_check_ins,establishment_id')
       .eq('status', OFFICIAL_REPORT_STATUS)
       .order('report_date', { ascending: false })
       .range(offset, offset + pageSize - 1);
@@ -119,6 +119,7 @@ const getScopedData = async (supabaseAdmin, profile, scope) => {
   });
 
   let eligibleVisitorEstablishments = 0;
+  let eligibleAccommodationEstablishments = 0;
   if (scope === 'municipality') {
     const { data: establishments, error } = await supabaseAdmin
       .from('establishments')
@@ -126,11 +127,13 @@ const getScopedData = async (supabaseAdmin, profile, scope) => {
       .eq('status', 'active');
     if (error) throw error;
     eligibleVisitorEstablishments = (establishments || []).filter((row) => row.reporting_mode === 'visitor' || row.reporting_mode === 'both').length;
+    eligibleAccommodationEstablishments = (establishments || []).filter((row) => row.reporting_mode === 'accommodation' || row.reporting_mode === 'both').length;
   } else {
     eligibleVisitorEstablishments = visitorRows.length > 0 ? 1 : 0;
+    eligibleAccommodationEstablishments = accommodationRows.length > 0 ? 1 : 0;
   }
 
-  const monthlyMetrics = aggregateMonthlyMetrics(visitorRows, accommodationRows, eligibleVisitorEstablishments);
+  const monthlyMetrics = aggregateMonthlyMetrics(visitorRows, accommodationRows, eligibleVisitorEstablishments, eligibleAccommodationEstablishments);
   const totalVisitors = visitorRows.reduce((sum, row) => sum + Number(row.total_guests || 0), 0);
   const totalRooms = accommodationRows.reduce((sum, row) => sum + Number(row.total_rooms || 0), 0);
   const totalOccupied = accommodationRows.reduce((sum, row) => sum + Number(row.total_occupied_rooms || 0), 0);
