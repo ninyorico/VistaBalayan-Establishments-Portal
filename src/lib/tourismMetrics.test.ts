@@ -7,7 +7,7 @@ describe("tourism monthly metrics", () => {
     const metrics = aggregateMonthlyMetrics(
       [
         { report_date: "2026-02-01", establishment_id: "a", total_guests: 600 },
-        { report_date: "2026-02-01", establishment_id: "a", total_guests: 100 },
+        { report_date: "2026-02-01", created_at: "2026-02-02T01:00:00Z", establishment_id: "a", total_guests: 100 },
         { report_date: "2026-02-02", establishment_id: "b", total_guests: 300 },
         { report_date: "2026-03-01", establishment_id: "a", total_guests: 400 },
       ],
@@ -22,6 +22,8 @@ describe("tourism monthly metrics", () => {
         guestCheckIns: 50,
         submittedVisitorReports: 2,
         expectedVisitorReports: 56,
+        missingVisitorReports: 54,
+        lateVisitorReports: 1,
       }),
       expect.objectContaining({
         month: "2026-03",
@@ -80,5 +82,26 @@ describe("tourism monthly metrics", () => {
     );
 
     expect(buildDeterministicAnomalies(metrics)).toHaveLength(0);
+  });
+
+  it("explains missing and late submissions in deterministic anomaly evidence", () => {
+    const metrics = aggregateMonthlyMetrics(
+      [
+        { report_date: "2026-02-01", establishment_id: "a", total_guests: 1200 },
+        { report_date: "2026-03-01", establishment_id: "a", created_at: "2026-03-04T09:00:00Z", total_guests: 600 },
+      ],
+      [],
+      2,
+    );
+
+    const [anomaly] = buildDeterministicAnomalies(metrics);
+
+    expect(anomaly.description).toContain("Reporting coverage was 1.6%.");
+    expect(anomaly.description).toContain("61 expected reports are missing.");
+    expect(anomaly.description).toContain("1 submitted report was entered after the report date.");
+    expect(anomaly.evidence).toMatchObject({
+      current_missing_reports: 61,
+      current_late_reports: 1,
+    });
   });
 });

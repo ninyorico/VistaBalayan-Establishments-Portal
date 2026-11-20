@@ -100,7 +100,7 @@ const getScopedData = async (supabaseAdmin, profile, scope) => {
   const visitorRows = await getAllRows((offset, pageSize) => {
     let query = supabaseAdmin
       .from('visitor_reports')
-      .select('report_date,total_guests,residence_type,establishment_id,establishments(name)')
+      .select('report_date,created_at,total_guests,residence_type,establishment_id,establishments(name)')
       .eq('status', OFFICIAL_REPORT_STATUS)
       .order('report_date', { ascending: false })
       .range(offset, offset + pageSize - 1);

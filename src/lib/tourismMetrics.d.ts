@@ -6,6 +6,8 @@ export type TourismMonthlyMetric = {
   visitorRowCount: number;
   accommodationRowCount: number;
   submittedVisitorReports: number;
+  lateVisitorReports: number;
+  missingVisitorReports: number | null;
   submittedAccommodationReports: number;
   expectedVisitorReports: number | null;
   coveragePercent: number | null;

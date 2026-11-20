@@ -69,7 +69,9 @@ const formatEvidence = (snapshot?: Record<string, unknown> | null) => {
   const previous = Number(snapshot.previous_value || 0).toLocaleString();
   const change = Number(snapshot.drop_percent || 0).toFixed(1);
   const coverage = snapshot.current_coverage_percent == null ? "unavailable" : `${Number(snapshot.current_coverage_percent).toFixed(1)}%`;
-  return `${snapshot.previous_month}: ${previous} → ${snapshot.current_month}: ${current} · ${change}% decrease · coverage ${coverage}`;
+  const missing = snapshot.current_missing_reports == null ? "missing unavailable" : `${Number(snapshot.current_missing_reports).toLocaleString()} missing`;
+  const late = `${Number(snapshot.current_late_reports || 0).toLocaleString()} late`;
+  return `${snapshot.previous_month}: ${previous} → ${snapshot.current_month}: ${current} · ${change}% decrease · coverage ${coverage} · ${missing} · ${late}`;
 };
 
 export function AiInsightsShell({

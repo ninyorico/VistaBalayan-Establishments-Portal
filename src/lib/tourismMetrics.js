@@ -28,6 +28,7 @@ export const aggregateMonthlyMetrics = (visitorRows = [], accommodationRows = []
         visitorRowCount: 0,
         accommodationRowCount: 0,
         visitorSubmissionDays: new Set(),
+        lateVisitorSubmissionDays: new Set(),
         accommodationSubmissionDays: new Set(),
       })
     }
@@ -40,7 +41,13 @@ export const aggregateMonthlyMetrics = (visitorRows = [], accommodationRows = []
     const item = ensure(key)
     item.dayTourVisitors += numberOrZero(row.total_visitors ?? row.total_guests)
     item.visitorRowCount += 1
-    if (row.establishment_id && row.report_date) item.visitorSubmissionDays.add(`${row.establishment_id}|${row.report_date}`)
+    if (row.establishment_id && row.report_date) {
+      const submissionKey = `${row.establishment_id}|${row.report_date}`
+      item.visitorSubmissionDays.add(submissionKey)
+      if (String(row.created_at || '').slice(0, 10) > String(row.report_date).slice(0, 10)) {
+        item.lateVisitorSubmissionDays.add(submissionKey)
+      }
+    }
   }
 
   for (const row of accommodationRows) {
@@ -59,9 +66,13 @@ export const aggregateMonthlyMetrics = (visitorRows = [], accommodationRows = []
         ? eligibleVisitorEstablishments * daysInMonth(item.month)
         : null
       const submittedVisitorReports = item.visitorSubmissionDays.size
+      const lateVisitorReports = item.lateVisitorSubmissionDays.size
       const coveragePercent = expectedVisitorReports
         ? Math.min(100, (submittedVisitorReports / expectedVisitorReports) * 100)
         : null
+      const missingVisitorReports = expectedVisitorReports === null
+        ? null
+        : Math.max(0, expectedVisitorReports - submittedVisitorReports)
       return {
         month: item.month,
         dayTourVisitors: item.dayTourVisitors,
@@ -70,6 +81,8 @@ export const aggregateMonthlyMetrics = (visitorRows = [], accommodationRows = []
         visitorRowCount: item.visitorRowCount,
         accommodationRowCount: item.accommodationRowCount,
         submittedVisitorReports,
+        lateVisitorReports,
+        missingVisitorReports,
         submittedAccommodationReports: item.accommodationSubmissionDays.size,
         expectedVisitorReports,
         coveragePercent,
@@ -111,11 +124,17 @@ export const buildDeterministicAnomalies = (monthlyMetrics = [], options = {}) =
     const coverageNote = current.coveragePercent === null
       ? 'Reporting coverage is unavailable.'
       : `Reporting coverage was ${current.coveragePercent.toFixed(1)}%.`
+    const missingNote = current.missingVisitorReports === null
+      ? 'Missing report count is unavailable.'
+      : `${current.missingVisitorReports} expected report${current.missingVisitorReports === 1 ? '' : 's'} ${current.missingVisitorReports === 1 ? 'is' : 'are'} missing.`
+    const lateNote = current.lateVisitorReports > 0
+      ? `${current.lateVisitorReports} submitted report${current.lateVisitorReports === 1 ? '' : 's'} ${current.lateVisitorReports === 1 ? 'was' : 'were'} entered after the report date.`
+      : 'No submitted reports were identified as late.'
     rows.push({
       type: 'Day-tour visitor decline',
       severity,
-      description: `Submitted day-tour visitors decreased from ${previous.dayTourVisitors.toLocaleString()} in ${previous.month} to ${current.dayTourVisitors.toLocaleString()} in ${current.month} (${dropPercent.toFixed(1)}% decrease). ${coverageNote}`,
-      recommendation: 'Review the affected submissions and confirm whether the decline reflects activity or incomplete reporting.',
+      description: `Reported day-tour visitors decreased from ${previous.dayTourVisitors.toLocaleString()} in ${previous.month} to ${current.dayTourVisitors.toLocaleString()} in ${current.month} (${dropPercent.toFixed(1)}% decrease). ${coverageNote} ${missingNote} ${lateNote} Review these reporting gaps before treating the decrease as confirmed tourism activity change.`,
+      recommendation: 'Review missing and late submissions before treating the decrease as confirmed tourism activity change.',
       evidence: {
         anomaly_key: anomalyKey,
         metric: 'dayTourVisitors',
@@ -129,11 +148,15 @@ export const buildDeterministicAnomalies = (monthlyMetrics = [], options = {}) =
         minimum_previous_visitors: minimumPreviousVisitors,
         current_submitted_reports: current.submittedVisitorReports,
         current_expected_reports: current.expectedVisitorReports,
+        current_missing_reports: current.missingVisitorReports,
+        current_late_reports: current.lateVisitorReports,
         current_coverage_percent: current.coveragePercent === null ? null : Number(current.coveragePercent.toFixed(2)),
         previous_submitted_reports: previous.submittedVisitorReports,
         previous_expected_reports: previous.expectedVisitorReports,
+        previous_missing_reports: previous.missingVisitorReports,
+        previous_late_reports: previous.lateVisitorReports,
         previous_coverage_percent: previous.coveragePercent === null ? null : Number(previous.coveragePercent.toFixed(2)),
-        rule_version: 'day-tour-monthly-drop-v1',
+        rule_version: 'day-tour-monthly-drop-v2',
       },
     })
   }
