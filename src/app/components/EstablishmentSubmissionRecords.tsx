@@ -217,16 +217,16 @@ export default function EstablishmentSubmissionRecords({
           {isVisitor ? (
             <table className="w-full min-w-[680px] text-left text-xs lg:min-w-0 lg:table-fixed lg:text-sm">
               <colgroup>
-                <col className="w-[14%]" />
-                <col className="w-[16%]" />
-                <col className="w-[16%]" />
-                <col className="w-[24%]" />
-                <col className="w-[10%]" />
-                <col className="w-[10%]" />
-                <col className="w-[10%]" />
+                <col className="w-[14%] lg:w-[13%]" />
+                <col className="w-[16%] lg:w-[15%]" />
+                <col className="w-[16%] lg:w-[13%]" />
+                <col className="w-[24%] lg:w-[30.5%]" />
+                <col className="w-[10%] lg:w-[9.5%]" />
+                <col className="w-[10%] lg:w-[9.5%]" />
+                <col className="w-[10%] lg:w-[9.5%]" />
               </colgroup>
-              <thead className="sticky top-0 z-20 border-b border-slate-200 bg-slate-50 text-[10px] uppercase tracking-wider text-slate-600 lg:text-xs"><tr><th className="sticky left-0 top-0 z-30 whitespace-nowrap bg-slate-50 px-3 py-2 shadow-[2px_0_4px_rgba(148,163,184,0.24)] lg:px-4 lg:py-3">Report date</th><th className="px-3 py-2 lg:px-4 lg:py-3">Guest / group</th><th className="px-3 py-2 lg:px-4 lg:py-3">Residence</th><th className="px-3 py-2 lg:px-4 lg:py-3">Location</th><th className="px-3 py-2 text-center lg:px-4 lg:py-3">Male</th><th className="px-3 py-2 text-center lg:px-4 lg:py-3">Female</th><th className="px-3 py-2 text-center lg:px-4 lg:py-3">Total visitors</th></tr></thead>
-              <tbody className="divide-y divide-slate-100">{filteredVisitors.map((record) => <tr key={record.id} className="hover:bg-slate-50"><td className="sticky left-0 z-10 whitespace-nowrap bg-white px-3 py-2 font-medium text-slate-900 shadow-[2px_0_4px_rgba(148,163,184,0.18)] lg:px-4 lg:py-3 lg:text-sm">{formatDate(record.report_date)}</td><td className="px-3 py-2 text-slate-700 lg:px-4 lg:py-3 lg:text-sm">{record.guest_group_name || record.guest_name || "—"}</td><td className="px-3 py-2 text-slate-700 lg:px-4 lg:py-3 lg:text-sm">{getResidenceLabel(record)}</td><td className="px-3 py-2 text-slate-700 lg:px-4 lg:py-3 lg:text-sm">{getLocationLabel(record)}</td><td className="px-3 py-2 text-center text-blue-600 lg:px-4 lg:py-3 lg:text-sm">{Number(record.total_male || 0)}</td><td className="px-3 py-2 text-center text-purple-600 lg:px-4 lg:py-3 lg:text-sm">{Number(record.total_female || 0)}</td><td className="px-3 py-2 text-center font-semibold text-slate-900 lg:px-4 lg:py-3 lg:text-sm">{Number(record.total_guests || 0)}</td></tr>)}</tbody>
+              <thead className="sticky top-0 z-20 border-b border-slate-200 bg-slate-50 text-[10px] uppercase tracking-wider text-slate-600 lg:text-xs"><tr><th className="sticky left-0 top-0 z-30 whitespace-nowrap bg-slate-50 px-3 py-2 shadow-[2px_0_4px_rgba(148,163,184,0.24)] lg:px-4 lg:py-3">Report date</th><th className="px-3 py-2 lg:px-4 lg:py-3">Guest / group</th><th className="px-3 py-2 lg:px-4 lg:py-3">Residence</th><th className="px-3 py-2 lg:px-4 lg:py-3">Location</th><th className="px-3 py-2 text-center lg:px-5 lg:py-3">Male</th><th className="px-3 py-2 text-center lg:px-5 lg:py-3">Female</th><th className="px-3 py-2 text-center lg:px-5 lg:py-3">Total visitors</th></tr></thead>
+              <tbody className="divide-y divide-slate-100">{filteredVisitors.map((record) => <tr key={record.id} className="hover:bg-slate-50"><td className="sticky left-0 z-10 whitespace-nowrap bg-white px-3 py-2 font-medium text-slate-900 shadow-[2px_0_4px_rgba(148,163,184,0.18)] lg:px-4 lg:py-3 lg:text-sm">{formatDate(record.report_date)}</td><td className="px-3 py-2 text-slate-700 lg:px-4 lg:py-3 lg:text-sm">{record.guest_group_name || record.guest_name || "—"}</td><td className="px-3 py-2 text-slate-700 lg:px-4 lg:py-3 lg:text-sm">{getResidenceLabel(record)}</td><td className="px-3 py-2 text-slate-700 lg:px-4 lg:py-3 lg:text-sm">{getLocationLabel(record)}</td><td className="px-3 py-2 text-center text-blue-600 lg:px-5 lg:py-3 lg:text-sm">{Number(record.total_male || 0)}</td><td className="px-3 py-2 text-center text-purple-600 lg:px-5 lg:py-3 lg:text-sm">{Number(record.total_female || 0)}</td><td className="px-3 py-2 text-center font-semibold text-slate-900 lg:px-5 lg:py-3 lg:text-sm">{Number(record.total_guests || 0)}</td></tr>)}</tbody>
             </table>
           ) : (
             <table className="w-full min-w-[560px] text-left text-xs lg:min-w-0 lg:table-fixed lg:text-sm">
