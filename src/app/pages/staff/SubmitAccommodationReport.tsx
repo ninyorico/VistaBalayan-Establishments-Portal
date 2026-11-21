@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef, type MouseEvent, type PointerEvent, type TouchEvent } from "react";
 import { createPortal } from "react-dom";
 import { useNavigate } from "react-router";
-import { Save, Send, AlertTriangle, Plus, Trash2, CircleHelp, X } from "lucide-react";
+import { Save, Send, AlertTriangle, Plus, Trash2, CircleHelp, X, BedDouble, CheckCircle2 } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "../../../lib/supabase";
 
@@ -836,17 +836,36 @@ export default function SubmitAccommodationReport() {
         <div className="fixed inset-0 z-[110] flex items-start justify-center overflow-y-auto bg-[#193364]/45 p-3 backdrop-blur-[2px] sm:items-center sm:p-4" role="presentation" onMouseDown={(event) => { if (event.target === event.currentTarget) setShowFormHelp(false); }}>
           <section ref={formHelpDialogRef} className="my-3 flex max-h-[calc(100dvh-1.5rem)] w-full max-w-2xl flex-col overflow-hidden rounded-[1.5rem] bg-[#E0E5EC] text-[#193364] shadow-[12px_12px_24px_rgba(15,35,60,0.28),-8px_-8px_20px_rgba(255,255,255,0.5)] sm:my-4 sm:max-h-[calc(100dvh-2rem)] sm:rounded-[1.75rem]" role="dialog" aria-modal="true" aria-labelledby="accommodation-form-help-title" tabIndex={-1}>
             <div className="sticky top-0 z-10 flex shrink-0 items-start justify-between gap-4 border-b border-[#C8D2DE] bg-[#E0E5EC]/95 p-4 backdrop-blur-sm sm:p-6">
-              <div>
-                <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[#0E5A72]">Form guide</p>
-                <h2 id="accommodation-form-help-title" className="mt-1 text-2xl font-semibold tracking-tight">How to use this form</h2>
-              </div>
+                          <div className="flex min-w-0 items-center gap-3">
+                            <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-[#D5F0EF] text-[#0E5A72] shadow-[inset_3px_3px_6px_rgba(163,177,198,0.35),inset_-3px_-3px_6px_rgba(255,255,255,0.7)]">
+                              <BedDouble className="h-6 w-6" aria-hidden="true" />
+                            </div>
+                            <div className="min-w-0">
+                              <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-[#0E5A72]">Accommodation guide</p>
+                              <h2 id="accommodation-form-help-title" className="mt-1 text-xl font-semibold tracking-tight sm:text-2xl">Your daily room report, made simple</h2>
+                              <p className="mt-1 text-xs leading-5 text-[#65717A]">Both layouts record the same information. Choose the layout that feels easiest for your team.</p>
+                            </div>
+                          </div>
               <button type="button" onClick={() => setShowFormHelp(false)} className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[#E0E5EC] text-[#193364] shadow-[4px_4px_8px_rgba(163,177,198,0.55),-4px_-4px_8px_rgba(255,255,255,0.65)] hover:text-[#0E5A72]" aria-label="Close accommodation form guide">
                 <X className="h-5 w-5" />
               </button>
             </div>
 
-            <div className="min-h-0 flex-1 space-y-4 overflow-y-auto overscroll-y-contain p-4 text-justify text-sm leading-6 text-[#40505A] [-webkit-overflow-scrolling:touch] sm:p-6">
-              <p>Enter the values for the selected report date. The form calculates occupied rooms, guest check-ins, and guest nights from the room entries; you do not need to calculate the totals manually.</p>
+            <div className="vista-scrollbar min-h-0 flex-1 space-y-4 overflow-y-auto overscroll-y-contain p-4 text-sm leading-6 text-[#40505A] [-webkit-overflow-scrolling:touch] sm:p-6">
+                          <div className="rounded-2xl border border-[#A9D9D3] bg-[#F2FFFD] p-4 shadow-[4px_4px_9px_rgba(163,177,198,0.28),-4px_-4px_9px_rgba(255,255,255,0.7)]">
+                            <div className="flex items-start gap-3">
+                              <div className="mt-0.5 rounded-full bg-[#0E5A72] p-1.5 text-white"><CheckCircle2 className="h-4 w-4" /></div>
+                              <div><h3 className="font-semibold text-[#193364]">First, remember this</h3><p className="mt-1 text-[#40505A]">The two options are not different report types. They are two ways to enter the same room, short-stay, and overnight information. The system uses either layout to calculate the same daily totals.</p></div>
+                            </div>
+                          </div>
+
+                          <div className="grid gap-3 sm:grid-cols-3">
+                            <div className="rounded-2xl bg-white/75 p-4 shadow-[3px_3px_7px_rgba(163,177,198,0.22),-3px_-3px_7px_rgba(255,255,255,0.65)]"><p className="text-[10px] font-bold uppercase tracking-[0.14em] text-[#0E5A72]">01 · Date</p><p className="mt-1 font-semibold text-[#193364]">Choose the report date</p><p className="mt-1 text-xs leading-5">Enter what happened on that date—not necessarily today.</p></div>
+                            <div className="rounded-2xl bg-white/75 p-4 shadow-[3px_3px_7px_rgba(163,177,198,0.22),-3px_-3px_7px_rgba(255,255,255,0.65)]"><p className="text-[10px] font-bold uppercase tracking-[0.14em] text-[#0E5A72]">02 · Rooms</p><p className="mt-1 font-semibold text-[#193364]">Complete each room row</p><p className="mt-1 text-xs leading-5">Use the previous-day value as a reference, then enter the selected day.</p></div>
+                            <div className="rounded-2xl bg-white/75 p-4 shadow-[3px_3px_7px_rgba(163,177,198,0.22),-3px_-3px_7px_rgba(255,255,255,0.65)]"><p className="text-[10px] font-bold uppercase tracking-[0.14em] text-[#0E5A72]">03 · Review</p><p className="mt-1 font-semibold text-[#193364]">Check totals and submit</p><p className="mt-1 text-xs leading-5">Save a draft if unfinished; submit only after checking the date and values.</p></div>
+                          </div>
+
+                          <p className="rounded-xl bg-[#D9E0E8]/70 px-4 py-3">Enter the values for the selected report date. The form calculates occupied rooms, guest check-ins, and guest nights from the room entries; you do not need to calculate the totals manually.</p>
 
               {reportFormMode === "single" ? (
                 <div className="grid gap-3 sm:grid-cols-2">
@@ -888,10 +907,9 @@ export default function SubmitAccommodationReport() {
                 </div>
               )}
 
-              <div className="rounded-2xl border border-red-200 bg-red-50/80 p-4 text-red-900">
-                <h3 className="font-semibold">What does the red marker mean?</h3>
-                <p className="mt-1">A red circle or red-bordered value identifies a new guest value. It is an indicator of guest type, not an error or warning. A normal gray value represents a continuing guest value.</p>
-              </div>
+              <div className="rounded-2xl border border-[#F1B6B6] bg-[#FFF5F4] p-4 text-[#7E2D32] shadow-[3px_3px_7px_rgba(163,177,198,0.18),-3px_-3px_7px_rgba(255,255,255,0.65)]">
+                              <div className="flex items-start gap-3"><div className="rounded-full bg-[#D95C62] px-2 py-1 text-xs font-bold text-white">NEW</div><div><h3 className="font-semibold">Why is Previous Day sometimes red?</h3><p className="mt-1">A red circle or red-bordered value means the previous report marked that value as a <strong>new arrival</strong>. Normal gray text means the previous value was marked as a <strong>continuing guest</strong>. This is an indicator of guest type—not an error, warning, or missing value.</p></div></div>
+                            </div>
 
               <ul className="list-disc space-y-1 pl-5">
                 <li>Use <strong>Save Draft</strong> to keep unfinished entries on this device.</li>
@@ -920,13 +938,13 @@ export default function SubmitAccommodationReport() {
                 <div className="mt-3 grid gap-3 sm:grid-cols-2">
                   <label className={`cursor-pointer rounded-2xl p-3 transition ${tempReportFormMode === "single" ? "bg-[#F5F8FF] text-[#193364] shadow-[inset_3px_3px_7px_rgba(163,177,198,0.4),inset_-3px_-3px_7px_rgba(255,255,255,0.65)]" : "text-[#6B7280]"}`}>
                     <input type="radio" name="accommodation-form-mode" value="single" checked={tempReportFormMode === "single"} onChange={() => setTempReportFormMode("single")} className="sr-only" />
-                    <span className="block text-sm font-semibold">One guest value per room</span>
-                    <span className="mt-1 block text-xs leading-5">Current form with double-click to switch continuing/new guest.</span>
+                    <span className="block text-sm font-semibold">Single-field entry</span>
+                                        <span className="mt-1 block text-xs leading-5">One overnight field per room. Double-click to mark the value as continuing or new.</span>
                   </label>
                   <label className={`cursor-pointer rounded-2xl p-3 transition ${tempReportFormMode === "old-new" ? "bg-[#F5F8FF] text-[#193364] shadow-[inset_3px_3px_7px_rgba(163,177,198,0.4),inset_-3px_-3px_7px_rgba(255,255,255,0.65)]" : "text-[#6B7280]"}`}>
                     <input type="radio" name="accommodation-form-mode" value="old-new" checked={tempReportFormMode === "old-new"} onChange={() => setTempReportFormMode("old-new")} className="sr-only" />
-                    <span className="block text-sm font-semibold">Old and new guest fields</span>
-                    <span className="mt-1 block text-xs leading-5">Separate continuing and new guest values; previous new guests are encircled.</span>
+                    <span className="block text-sm font-semibold">Separate-field entry</span>
+                                        <span className="mt-1 block text-xs leading-5">Two overnight fields per room: continuing and new arrivals. Same report, no double-click.</span>
                   </label>
                 </div>
               </fieldset>
