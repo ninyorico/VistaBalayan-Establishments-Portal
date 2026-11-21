@@ -339,12 +339,11 @@ const loadProfile = async () => {
   };
 
   const updateResidence = (id: number, residenceType: keyof VisitorEntry["breakdown"], field: "male" | "female" | "placeOfResidence", value: string | number) => {
-    const nextValue = field === "placeOfResidence" && residenceType !== "THIS_PROVINCE"
-      ? formatResidencePlace(value)
-      : value;
+    // Keep text exactly as typed while editing. Formatting on every keystroke trims
+    // the trailing space, making multi-word places impossible to enter.
     setEntries(entries.map(entry => entry.id === id ? {
       ...entry,
-      breakdown: { ...entry.breakdown, [residenceType]: { ...entry.breakdown[residenceType], [field]: nextValue } },
+      breakdown: { ...entry.breakdown, [residenceType]: { ...entry.breakdown[residenceType], [field]: value } },
     } : entry));
   };
 
