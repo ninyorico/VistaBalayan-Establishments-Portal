@@ -915,8 +915,8 @@ export default function SubmitAccommodationReport() {
             </div>
 
             <div className="min-h-0 flex-1 overflow-y-auto overscroll-y-contain p-4 sm:p-6 [-webkit-overflow-scrolling:touch]">
-              <fieldset className="mb-5 rounded-2xl bg-[#E0E5EC] p-4 shadow-[inset_4px_4px_8px_rgba(163,177,198,0.4),inset_-4px_-4px_8px_rgba(255,255,255,0.65)]">
-                <legend className="text-sm font-semibold text-[#193364]">Choose accommodation report form</legend>
+              <fieldset className="mb-5 rounded-2xl bg-[#E0E5EC] p-4 pt-5 shadow-[inset_4px_4px_8px_rgba(163,177,198,0.4),inset_-4px_-4px_8px_rgba(255,255,255,0.65)]">
+                <legend className="px-2 text-sm font-semibold text-[#193364]">Choose accommodation report form</legend>
                 <div className="mt-3 grid gap-3 sm:grid-cols-2">
                   <label className={`cursor-pointer rounded-2xl p-3 transition ${tempReportFormMode === "single" ? "bg-[#F5F8FF] text-[#193364] shadow-[inset_3px_3px_7px_rgba(163,177,198,0.4),inset_-3px_-3px_7px_rgba(255,255,255,0.65)]" : "text-[#6B7280]"}`}>
                     <input type="radio" name="accommodation-form-mode" value="single" checked={tempReportFormMode === "single"} onChange={() => setTempReportFormMode("single")} className="sr-only" />
