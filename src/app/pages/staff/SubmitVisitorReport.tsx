@@ -560,7 +560,7 @@ const loadProfile = async () => {
 
       {showFormHelp && createPortal((
         <div className="fixed inset-0 z-[110] flex items-start justify-center overflow-y-auto bg-[#193364]/45 p-3 backdrop-blur-[2px] sm:items-center sm:p-4" role="presentation" onMouseDown={(event) => { if (event.target === event.currentTarget) setShowFormHelp(false); }}>
-          <section ref={formHelpDialogRef} className="my-3 max-h-[calc(100dvh-1.5rem)] w-full max-w-xl overflow-y-auto rounded-[1.5rem] bg-[#E0E5EC] p-4 text-[#193364] shadow-[12px_12px_24px_rgba(15,35,60,0.28),-8px_-8px_20px_rgba(255,255,255,0.5)] sm:my-4 sm:max-h-[calc(100dvh-2rem)] sm:rounded-[1.75rem] sm:p-6" role="dialog" aria-modal="true" aria-labelledby="visitor-form-help-title" tabIndex={-1}>
+          <section ref={formHelpDialogRef} className="vista-scrollbar my-3 max-h-[calc(100dvh-1.5rem)] w-full max-w-xl overflow-y-auto rounded-[1.5rem] bg-[#E0E5EC] p-4 text-[#193364] shadow-[12px_12px_24px_rgba(15,35,60,0.28),-8px_-8px_20px_rgba(255,255,255,0.5)] sm:my-4 sm:max-h-[calc(100dvh-2rem)] sm:rounded-[1.75rem] sm:p-6" role="dialog" aria-modal="true" aria-labelledby="visitor-form-help-title" tabIndex={-1}>
             <div className="flex items-start justify-between gap-4">
               <div>
                 <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[#0E5A72]">Form guide</p>
@@ -571,7 +571,7 @@ const loadProfile = async () => {
               </button>
             </div>
 
-            <div className="mt-5 space-y-4 text-sm leading-6 text-[#40505A]">
+            <div className="mt-5 space-y-4 text-justify text-sm leading-6 text-[#40505A]">
               <p>Enter the visitors recorded by your establishment for the selected report date. Add one row for each visitor group, then classify the group by residence and sex.</p>
 
               <div className="grid gap-3 sm:grid-cols-2">
@@ -623,14 +623,16 @@ const loadProfile = async () => {
                 <h3 className="text-lg font-semibold text-gray-900">Visitor Groups</h3>
                 <p className="mt-1 text-sm text-gray-500">Enter each group once, then split its visitors by residence below.</p>
               </div>
-              <button type="button" onClick={() => setShowFormHelp(true)} className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-[#B8D2CF] bg-[#E0E5EC] text-[#0E5A72] shadow-[3px_3px_7px_rgba(163,177,198,0.45),-3px_-3px_7px_rgba(255,255,255,0.65)] hover:text-[#193364]" aria-label="Open day-tour form guide" title="How to use this form">
-                <CircleHelp className="h-5 w-5" />
-              </button>
             </div>
           </div>
-          <button type="button" onClick={addEntry} className="inline-flex w-full sm:w-auto items-center justify-center gap-2 px-3 py-2 bg-[#0F4C75] text-white rounded-lg hover:bg-[#0F4C75] text-sm font-medium transition">
-            <Plus className="w-4 h-4" /> Add Group
-          </button>
+          <div className="flex w-full items-center gap-2 sm:w-auto">
+            <button type="button" onClick={() => setShowFormHelp(true)} className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-[#B8D2CF] bg-[#E0E5EC] text-[#0E5A72] shadow-[3px_3px_7px_rgba(163,177,198,0.45),-3px_-3px_7px_rgba(255,255,255,0.65)] hover:text-[#193364]" aria-label="Open day-tour form guide" title="How to use this form">
+              <CircleHelp className="h-5 w-5" />
+            </button>
+            <button type="button" onClick={addEntry} className="inline-flex min-h-10 flex-1 items-center justify-center gap-2 rounded-lg bg-[#0F4C75] px-3 py-2 text-sm font-medium text-white transition hover:bg-[#0F4C75] sm:flex-none">
+              <Plus className="w-4 h-4" /> Add Group
+            </button>
+          </div>
         </div>
         <div className="space-y-4 p-4">
           {entries.map((entry, entryIndex) => (

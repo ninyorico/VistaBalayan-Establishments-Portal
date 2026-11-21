@@ -85,6 +85,32 @@
     text-rendering: optimizeLegibility;
     overflow-x: clip;
     overscroll-behavior-x: none;
+    scrollbar-width: thin;
+    scrollbar-color: rgba(25, 51, 100, 0.38) rgba(217, 224, 232, 0.72);
+  }
+
+  html::-webkit-scrollbar,
+  .vista-scrollbar::-webkit-scrollbar {
+    width: 10px;
+    height: 10px;
+  }
+
+  html::-webkit-scrollbar-track,
+  .vista-scrollbar::-webkit-scrollbar-track {
+    background: rgba(217, 224, 232, 0.72);
+    border-radius: 999px;
+  }
+
+  html::-webkit-scrollbar-thumb,
+  .vista-scrollbar::-webkit-scrollbar-thumb {
+    background: rgba(25, 51, 100, 0.38);
+    border: 3px solid rgba(217, 224, 232, 0.72);
+    border-radius: 999px;
+  }
+
+  html::-webkit-scrollbar-thumb:hover,
+  .vista-scrollbar::-webkit-scrollbar-thumb:hover {
+    background: rgba(14, 90, 114, 0.62);
   }
 
   body {
