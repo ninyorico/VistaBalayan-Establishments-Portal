@@ -49,7 +49,8 @@ export default function AIInsights() {
   const visibleInsights = showAllRecommendations ? insights : insights.slice(0, INITIAL_AI_ITEMS_VISIBLE)
 
   useEffect(() => {
-    loadCachedData()
+    // Opening the page reads saved insights only. Generation is manual via Refresh.
+    loadCachedData(false)
   }, [])
 
   const loadCachedData = async (generateIfEmpty = true) => {

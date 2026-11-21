@@ -120,8 +120,8 @@ export default function StaffAIInsights() {
         console.log('Establishment name:', estData.name)
       }
       
-      // Load cached data for this establishment
-      await loadCachedData(profileData.establishment_id)
+      // Opening the page reads saved insights only. Generation is manual via Refresh.
+      await loadCachedData(profileData.establishment_id, false)
       
     } catch (error) {
       console.error('Error loading user data:', error)
