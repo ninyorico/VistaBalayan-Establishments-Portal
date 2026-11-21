@@ -31,7 +31,7 @@ const menuItems = [
 
 export default function StaffLayout() {
   const navigate = useNavigate();
-  const { profile, signOut } = useAuth();
+  const { profile, user, signOut } = useAuth();
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [profileDropdownOpen, setProfileDropdownOpen] = useState(false);
   const [establishment, setEstablishment] = useState<any>(null);
@@ -174,7 +174,7 @@ export default function StaffLayout() {
                       Establishment Staff
                     </div>
                     <div className="text-xs text-[#6B7280]">
-                      staff@establishment.com
+                      {user?.email || profile?.email || ""}
                     </div>
                   </div>
                 </button>
