@@ -60,6 +60,8 @@ export default function VisitorMonitoring({ embedded = false }: { embedded?: boo
           total_male,
           total_female,
           total_guests,
+          guest_name,
+          guest_group_name,
           residence_category,
           residence_type,
           place_of_residence,
@@ -90,7 +92,7 @@ export default function VisitorMonitoring({ embedded = false }: { embedded?: boo
       establishmentId: item.establishment_id,
       establishment: item.establishments?.name || "Unknown",
       date: item.report_date,
-      guestName: "N/A", // Note: guest_name field doesn't exist in your schema
+      guestName: item.guest_group_name || item.guest_name || "N/A",
       male: item.total_male || 0,
       female: item.total_female || 0,
       total: item.total_guests || 0,
@@ -107,6 +109,7 @@ export default function VisitorMonitoring({ embedded = false }: { embedded?: boo
   const filteredRecords = visitorRecords.filter((record) => {
     const matchesSearch = 
       record.establishment.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      record.guestName.toLowerCase().includes(searchTerm.toLowerCase()) ||
       record.location.toLowerCase().includes(searchTerm.toLowerCase());
     
     const matchesResidence = filterResidence === "all" || record.residenceCategory === filterResidence;
