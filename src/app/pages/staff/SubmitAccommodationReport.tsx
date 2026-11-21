@@ -834,8 +834,8 @@ export default function SubmitAccommodationReport() {
 
       {showFormHelp && createPortal((
         <div className="fixed inset-0 z-[110] flex items-start justify-center overflow-y-auto bg-[#193364]/45 p-3 backdrop-blur-[2px] sm:items-center sm:p-4" role="presentation" onMouseDown={(event) => { if (event.target === event.currentTarget) setShowFormHelp(false); }}>
-          <section ref={formHelpDialogRef} className="my-3 max-h-[calc(100dvh-1.5rem)] w-full max-w-xl overflow-y-auto rounded-[1.5rem] bg-[#E0E5EC] p-4 text-[#193364] shadow-[12px_12px_24px_rgba(15,35,60,0.28),-8px_-8px_20px_rgba(255,255,255,0.5)] sm:my-4 sm:max-h-[calc(100dvh-2rem)] sm:rounded-[1.75rem] sm:p-6" role="dialog" aria-modal="true" aria-labelledby="accommodation-form-help-title" tabIndex={-1}>
-            <div className="flex items-start justify-between gap-4">
+          <section ref={formHelpDialogRef} className="my-3 flex max-h-[calc(100dvh-1.5rem)] w-full max-w-2xl flex-col overflow-hidden rounded-[1.5rem] bg-[#E0E5EC] text-[#193364] shadow-[12px_12px_24px_rgba(15,35,60,0.28),-8px_-8px_20px_rgba(255,255,255,0.5)] sm:my-4 sm:max-h-[calc(100dvh-2rem)] sm:rounded-[1.75rem]" role="dialog" aria-modal="true" aria-labelledby="accommodation-form-help-title" tabIndex={-1}>
+            <div className="sticky top-0 z-10 flex shrink-0 items-start justify-between gap-4 border-b border-[#C8D2DE] bg-[#E0E5EC]/95 p-4 backdrop-blur-sm sm:p-6">
               <div>
                 <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[#0E5A72]">Form guide</p>
                 <h2 id="accommodation-form-help-title" className="mt-1 text-2xl font-semibold tracking-tight">How to use this form</h2>
@@ -845,7 +845,7 @@ export default function SubmitAccommodationReport() {
               </button>
             </div>
 
-            <div className="mt-5 space-y-4 text-sm leading-6 text-[#40505A]">
+            <div className="min-h-0 flex-1 space-y-4 overflow-y-auto overscroll-y-contain p-4 text-justify text-sm leading-6 text-[#40505A] [-webkit-overflow-scrolling:touch] sm:p-6">
               <p>Enter the values for the selected report date. The form calculates occupied rooms, guest check-ins, and guest nights from the room entries; you do not need to calculate the totals manually.</p>
 
               {reportFormMode === "single" ? (
@@ -1056,10 +1056,10 @@ export default function SubmitAccommodationReport() {
             <table className="w-full min-w-0 table-fixed border-collapse">
               <thead className="sticky top-0 z-20 border-b border-gray-200 bg-gray-50">
                 <tr>
-                  <th rowSpan={2} className="w-[26%] bg-gray-50 px-1 py-3 text-center align-middle text-[10px] font-semibold uppercase leading-tight text-gray-700 sm:w-[28%] sm:px-2 sm:text-xs">Room / Code</th>
-                  <th rowSpan={2} className="w-[20%] bg-gray-50 px-1 py-3 text-center align-middle text-[10px] font-semibold uppercase leading-tight text-gray-700 sm:w-[24%] sm:px-2 sm:text-xs">Previous-day guests</th>
-                  <th rowSpan={2} className="w-[20%] bg-gray-50 px-1 py-3 text-center align-middle text-[10px] font-semibold uppercase leading-tight text-[#0F4C75] sm:w-[18%] sm:px-2 sm:text-xs">Short-stay</th>
-                  <th colSpan={2} className="w-[34%] bg-gray-50 px-1 py-2 text-center text-[10px] font-semibold uppercase leading-tight text-[#0F4C75] sm:w-[30%] sm:px-2 sm:text-xs">Overnight guests</th>
+                  <th rowSpan={2} className="w-[26%] bg-gray-50 px-1 py-3 text-center align-middle text-[9px] font-semibold uppercase leading-tight text-gray-700 sm:w-[28%] sm:px-2 sm:text-xs">Room / Code</th>
+                  <th rowSpan={2} className="w-[20%] bg-gray-50 px-1 py-3 text-center align-middle text-[9px] font-semibold uppercase leading-tight text-gray-700 sm:w-[24%] sm:px-2 sm:text-xs">Previous-day guests</th>
+                  <th rowSpan={2} className="w-[20%] bg-gray-50 px-1 py-3 text-center align-middle text-[9px] font-semibold uppercase leading-tight text-[#0F4C75] sm:w-[18%] sm:px-2 sm:text-xs">Short-stay</th>
+                  <th colSpan={2} className="w-[34%] bg-gray-50 px-1 py-2 text-center text-[9px] font-semibold uppercase leading-tight text-[#0F4C75] sm:w-[30%] sm:px-2 sm:text-xs">Overnight guests</th>
                 </tr>
                 <tr>
                   <th className="w-[17%] bg-gray-50 px-0.5 py-2 text-center text-[9px] font-semibold uppercase leading-tight tracking-wide text-gray-600 sm:w-[15%] sm:px-1 sm:text-[10px]"> <span className="sm:hidden">Cont.</span><span className="hidden sm:inline">Continuing</span></th>
@@ -1067,7 +1067,7 @@ export default function SubmitAccommodationReport() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-200">{roomData.map((room, index) => { const previousTotal = Number(room.previousGuestNights || 0); const previousNew = Math.min(Number(room.previousNewGuests || 0), previousTotal); return (
-                <tr key={room.roomCode} className="border-b border-gray-200 bg-white"><th className="px-1 py-3 text-center sm:px-2"><div className="text-xs font-semibold text-gray-900 sm:text-sm">Room {getGeneratedRoomNumber(room.roomCode)}</div><div className="mt-1 inline-block rounded bg-gray-100 px-1.5 py-0.5 font-mono text-[9px] text-gray-600 sm:px-2 sm:text-[10px]">{getBaseRoomCode(room.roomCode)}</div></th><td className="px-1 py-2 text-center sm:px-2"><span className={previousNew > 0 ? "inline-flex h-8 min-w-8 items-center justify-center rounded-full border-[3px] border-red-600 px-2 text-sm font-bold tabular-nums text-red-700" : "inline-flex text-sm font-normal tabular-nums text-gray-700"} style={previousNew > 0 ? { borderColor: "#dc2626", borderWidth: "3px", borderStyle: "solid", borderRadius: "9999px" } : undefined} aria-label={`${room.roomType} previous day guest value${previousNew > 0 ? ", includes new guest" : ", continuing guest"}`}>{previousTotal}</span></td><td className="px-1 py-2 text-center sm:px-2"><input type="text" inputMode="numeric" pattern="[0-9]*" value={numericInputValue(room.shortStayCheckIns)} onChange={(e) => updateRoomData(index, "shortStayCheckIns", parseNonNegativeInteger(e.target.value))} className="mx-auto w-full max-w-[100px] rounded-xl border border-gray-300 bg-white px-1.5 py-2 text-center text-sm tabular-nums text-[#193364] sm:px-2" aria-label={`${room.roomType} short-stay check-ins`} /></td><td colSpan={2} className="px-1 py-2 sm:px-2"><div className="grid grid-cols-2 gap-1 sm:gap-2"><label className="text-center text-[0px] font-medium uppercase leading-none text-gray-500">Continuing<input type="text" inputMode="numeric" pattern="[0-9]*" value={numericInputValue(room.continuingGuests)} onChange={(e) => updateRoomData(index, "continuingGuests", parseNonNegativeInteger(e.target.value))} className="mt-0 w-full rounded-xl border-0 bg-[#E0E5EC] px-1.5 py-2 text-center text-sm tabular-nums text-[#193364] sm:px-2" aria-label={`${room.roomType} overnight continuing guest value`} /></label><label className="text-center text-[0px] font-medium uppercase leading-none text-gray-500">New arrivals<input type="text" inputMode="numeric" pattern="[0-9]*" value={numericInputValue(room.checkIns)} onChange={(e) => updateRoomData(index, "checkIns", parseNonNegativeInteger(e.target.value))} className="mt-0 w-full rounded-xl border-0 bg-[#FBE7BA] px-1.5 py-2 text-center text-sm tabular-nums text-[#193364] sm:px-2" aria-label={`${room.roomType} overnight new arrivals value`} /></label></div></td></tr>
+                <tr key={room.roomCode} className="border-b border-gray-200 bg-white"><th className="px-1 py-3 text-center sm:px-2"><div className="text-[11px] font-semibold text-gray-900 sm:text-sm">Room {getGeneratedRoomNumber(room.roomCode)}</div><div className="mt-1 inline-block rounded bg-gray-100 px-1.5 py-0.5 font-mono text-[9px] text-gray-600 sm:px-2 sm:text-[10px]">{getBaseRoomCode(room.roomCode)}</div></th><td className="px-1 py-2 text-center sm:px-2"><span className={previousNew > 0 ? "inline-flex h-8 min-w-8 items-center justify-center rounded-full border-[3px] border-red-600 px-2 text-sm font-bold tabular-nums text-red-700" : "inline-flex text-xs tabular-nums text-gray-700 sm:text-sm"} style={previousNew > 0 ? { borderColor: "#dc2626", borderWidth: "3px", borderStyle: "solid", borderRadius: "9999px" } : undefined} aria-label={`${room.roomType} previous day guest value${previousNew > 0 ? ", includes new guest" : ", continuing guest"}`}>{previousTotal}</span></td><td className="px-1 py-2 text-center sm:px-2"><input type="text" inputMode="numeric" pattern="[0-9]*" value={numericInputValue(room.shortStayCheckIns)} onChange={(e) => updateRoomData(index, "shortStayCheckIns", parseNonNegativeInteger(e.target.value))} className="mx-auto w-full max-w-[100px] rounded-xl border border-gray-300 bg-white px-1.5 py-2 text-center text-xs tabular-nums text-[#193364] sm:px-2 sm:text-sm" aria-label={`${room.roomType} short-stay check-ins`} /></td><td colSpan={2} className="px-1 py-2 sm:px-2"><div className="grid grid-cols-2 gap-1 sm:gap-2"><label className="text-center text-[0px] font-medium uppercase leading-none text-gray-500">Continuing<input type="text" inputMode="numeric" pattern="[0-9]*" value={numericInputValue(room.continuingGuests)} onChange={(e) => updateRoomData(index, "continuingGuests", parseNonNegativeInteger(e.target.value))} className="mt-0 w-full rounded-xl border-0 bg-[#E0E5EC] px-1.5 py-2 text-center text-xs tabular-nums text-[#193364] sm:px-2 sm:text-sm" aria-label={`${room.roomType} overnight continuing guest value`} /></label><label className="text-center text-[0px] font-medium uppercase leading-none text-gray-500">New arrivals<input type="text" inputMode="numeric" pattern="[0-9]*" value={numericInputValue(room.checkIns)} onChange={(e) => updateRoomData(index, "checkIns", parseNonNegativeInteger(e.target.value))} className="mt-0 w-full rounded-xl border-0 bg-[#FBE7BA] px-1.5 py-2 text-center text-xs tabular-nums text-[#193364] sm:px-2 sm:text-sm" aria-label={`${room.roomType} overnight new arrivals value`} /></label></div></td></tr>
               ); })}</tbody>
             </table>
           </div>
@@ -1093,11 +1093,11 @@ export default function SubmitAccommodationReport() {
                   return (
                     <tr key={room.roomCode} className="border-b border-gray-200 bg-white">
                       <th className="sticky left-0 z-10 border-r border-gray-200 bg-white px-1.5 py-2 text-center sm:px-3 sm:py-3">
-                        <div className="truncate text-xs font-semibold text-gray-900 sm:text-sm">Room {getGeneratedRoomNumber(room.roomCode)}</div>
+                        <div className="truncate text-[11px] font-semibold text-gray-900 sm:text-sm">Room {getGeneratedRoomNumber(room.roomCode)}</div>
                         <div className="mt-0.5 inline-block max-w-full truncate rounded bg-gray-100 px-1.5 py-0.5 font-mono text-[9px] font-normal text-gray-600 sm:mt-1 sm:px-2 sm:text-[10px]">{getBaseRoomCode(room.roomCode)}</div>
                       </th>
                       <td className="border-r border-gray-200 px-1.5 py-2 text-center sm:px-3 sm:py-3">
-                        <span className={previousNew > 0 ? "inline-flex h-8 min-w-8 items-center justify-center rounded-full border-[3px] border-red-600 px-2 text-sm font-bold tabular-nums text-red-700" : "text-sm font-normal tabular-nums text-gray-700"} style={previousNew > 0 ? { borderColor: "#dc2626", borderWidth: "3px", borderStyle: "solid", borderRadius: "9999px" } : undefined} aria-label={`${room.roomType} previous date guest value${previousNew > 0 ? ", includes new guest" : ", continuing guest"}`}>{previousTotal}</span>
+                        <span className={previousNew > 0 ? "inline-flex h-8 min-w-8 items-center justify-center rounded-full border-[3px] border-red-600 px-2 text-sm font-bold tabular-nums text-red-700" : "text-xs tabular-nums text-gray-700 sm:text-sm"} style={previousNew > 0 ? { borderColor: "#dc2626", borderWidth: "3px", borderStyle: "solid", borderRadius: "9999px" } : undefined} aria-label={`${room.roomType} previous date guest value${previousNew > 0 ? ", includes new guest" : ", continuing guest"}`}>{previousTotal}</span>
                       </td>
                       <td className="px-1.5 py-1.5 text-center sm:px-3 sm:py-2">
                         <input
@@ -1106,7 +1106,7 @@ export default function SubmitAccommodationReport() {
                           pattern="[0-9]*"
                           value={numericInputValue(room.shortStayCheckIns)}
                           onChange={(e) => updateRoomData(index, "shortStayCheckIns", parseNonNegativeInteger(e.target.value))}
-                          className="mx-auto w-full max-w-[80px] rounded-md border border-gray-300 bg-white px-1.5 py-2 text-center text-sm tabular-nums text-gray-700"
+                          className="mx-auto w-full max-w-[80px] rounded-md border border-gray-300 bg-white px-1.5 py-2 text-center text-xs tabular-nums text-gray-700"
                           aria-label={`${room.roomType} short-stay check-ins`}
                         />
                       </td>
@@ -1125,7 +1125,7 @@ export default function SubmitAccommodationReport() {
                           onContextMenu={(e) => e.preventDefault()}
                           onDragStart={(e) => e.preventDefault()}
                           draggable={false}
-                          className={isActiveNewGuest ? "mx-auto w-full max-w-[150px] select-none rounded-full border-[3px] !border-red-600 bg-white px-2 py-2 text-center text-sm font-bold tabular-nums text-red-700" : "mx-auto w-full max-w-[150px] select-none rounded-md border border-gray-300 bg-white px-2 py-2 text-center text-sm font-normal tabular-nums text-gray-700"}
+                          className={isActiveNewGuest ? "mx-auto w-full max-w-[150px] select-none rounded-full border-[3px] !border-red-600 bg-white px-2 py-2 text-center text-sm font-bold tabular-nums text-red-700" : "mx-auto w-full max-w-[150px] select-none rounded-md border border-gray-300 bg-white px-2 py-2 text-center text-xs tabular-nums text-gray-700 sm:text-sm"}
                           style={{
                             WebkitUserSelect: "none",
                             userSelect: "none",

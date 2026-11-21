@@ -396,7 +396,7 @@ export default function Analytics() {
       </PageHero>
 
       <div className="grid grid-cols-3 gap-2 sm:gap-4 lg:gap-6" data-analytics-kpi-row="mobile-one-row">
-        <div className="flex min-h-[132px] flex-col rounded-lg border border-gray-200 bg-white p-2.5 shadow-sm sm:p-5 lg:min-h-[164px] lg:p-6">
+        <div className="flex min-h-0 flex-col rounded-lg border border-gray-200 bg-white p-2.5 shadow-sm sm:p-5 lg:min-h-[164px] lg:p-6">
           <div className="mb-1.5 flex items-center justify-between gap-1 lg:mb-3">
             <p className="text-[10px] font-medium leading-tight text-gray-600 sm:text-sm lg:text-base">Peak Season Activity</p>
             <TrendingUp className="h-3.5 w-3.5 shrink-0 text-green-600 sm:h-5 sm:w-5" />
@@ -409,7 +409,7 @@ export default function Analytics() {
             {data.peakSeason.visitors.toLocaleString()} visitors + {data.peakSeason.guestCheckIns.toLocaleString()} check-ins
           </p>
         </div>
-        <div className="flex min-h-[132px] flex-col rounded-lg border border-gray-200 bg-white p-2.5 shadow-sm sm:p-5 lg:min-h-[164px] lg:p-6">
+        <div className="flex min-h-0 flex-col rounded-lg border border-gray-200 bg-white p-2.5 shadow-sm sm:p-5 lg:min-h-[164px] lg:p-6">
           <div className="mb-1.5 flex items-center justify-between gap-1 lg:mb-3">
             <p className="text-[10px] font-medium leading-tight text-gray-600 sm:text-sm lg:text-base">Top Origin</p>
             <MapPin className="h-3.5 w-3.5 shrink-0 text-purple-600 sm:h-5 sm:w-5" />
@@ -417,7 +417,7 @@ export default function Analytics() {
           <p className="truncate text-base font-bold leading-tight text-gray-900 sm:text-2xl lg:text-3xl">{data.topOrigin.location || "N/A"}</p>
           <p className="mt-1 truncate text-[10px] leading-tight text-purple-600 sm:text-sm lg:mt-2 lg:text-base">{data.topOrigin.percentage}% visitors</p>
         </div>
-        <div className="flex min-h-[132px] flex-col rounded-lg border border-gray-200 bg-white p-2.5 shadow-sm sm:p-5 lg:min-h-[164px] lg:p-6">
+        <div className="flex min-h-0 flex-col rounded-lg border border-gray-200 bg-white p-2.5 shadow-sm sm:p-5 lg:min-h-[164px] lg:p-6">
           <div className="mb-1.5 flex items-center justify-between gap-1 lg:mb-3">
             <p className="text-[10px] font-medium leading-tight text-gray-600 sm:text-sm lg:text-base">Latest Growth</p>
             {data.growthRate === null ? null : data.growthRate >= 0 ? (
