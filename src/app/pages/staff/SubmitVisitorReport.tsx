@@ -560,8 +560,8 @@ const loadProfile = async () => {
 
       {showFormHelp && createPortal((
         <div className="fixed inset-0 z-[110] flex items-start justify-center overflow-y-auto bg-[#193364]/45 p-3 backdrop-blur-[2px] sm:items-center sm:p-4" role="presentation" onMouseDown={(event) => { if (event.target === event.currentTarget) setShowFormHelp(false); }}>
-          <section ref={formHelpDialogRef} className="vista-scrollbar my-3 max-h-[calc(100dvh-1.5rem)] w-full max-w-xl overflow-y-auto rounded-[1.5rem] bg-[#E0E5EC] p-4 text-[#193364] shadow-[12px_12px_24px_rgba(15,35,60,0.28),-8px_-8px_20px_rgba(255,255,255,0.5)] sm:my-4 sm:max-h-[calc(100dvh-2rem)] sm:rounded-[1.75rem] sm:p-6" role="dialog" aria-modal="true" aria-labelledby="visitor-form-help-title" tabIndex={-1}>
-            <div className="flex items-start justify-between gap-4">
+          <section ref={formHelpDialogRef} className="my-3 flex max-h-[calc(100dvh-1.5rem)] w-full max-w-2xl flex-col overflow-hidden rounded-[1.5rem] bg-[#E0E5EC] p-4 text-[#193364] shadow-[12px_12px_24px_rgba(15,35,60,0.28),-8px_-8px_20px_rgba(255,255,255,0.5)] sm:my-4 sm:max-h-[calc(100dvh-2rem)] sm:rounded-[1.75rem] sm:p-6" role="dialog" aria-modal="true" aria-labelledby="visitor-form-help-title" tabIndex={-1}>
+            <div className="sticky top-0 z-10 flex shrink-0 items-start justify-between gap-4 bg-[#E0E5EC] pb-4">
               <div>
                 <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[#0E5A72]">Form guide</p>
                 <h2 id="visitor-form-help-title" className="mt-1 text-2xl font-semibold tracking-tight">How to use this form</h2>
@@ -571,31 +571,33 @@ const loadProfile = async () => {
               </button>
             </div>
 
-            <div className="mt-5 space-y-4 text-justify text-sm leading-6 text-[#40505A]">
-              <p>Enter the visitors recorded by your establishment for the selected report date. Add one row for each visitor group, then classify the group by residence and sex.</p>
+            <div className="vista-scrollbar min-h-0 flex-1 overflow-y-auto pr-1 text-sm leading-6 text-[#40505A]">
+              <div className="space-y-4 pt-1 text-justify">
+              <p className="text-justify">Enter the visitors recorded by your establishment for the selected report date. Add one row for each visitor group, then classify the group by residence and sex.</p>
 
               <div className="grid gap-3 sm:grid-cols-2">
                 <div className="rounded-2xl bg-white/70 p-4">
                   <h3 className="font-semibold text-[#193364]">Establishment and Report Date</h3>
-                  <p className="mt-1">The establishment is linked to your account. Select the date represented by the report, not the date you are entering it.</p>
+                  <p className="mt-1 text-justify">The establishment is linked to your account. Select the date represented by the report, not the date you are entering it.</p>
                 </div>
                 <div className="rounded-2xl bg-white/70 p-4">
                   <h3 className="font-semibold text-[#193364]">Group Name</h3>
-                  <p className="mt-1">Optional label for the visitor group, such as a tour group, school group, or family. It is not required for counting visitors.</p>
+                  <p className="mt-1 text-justify">Optional label for the visitor group, such as a tour group, school group, or family. It is not required for counting visitors.</p>
                 </div>
                 <div className="rounded-2xl bg-white/70 p-4">
                   <h3 className="font-semibold text-[#193364]">Residence Category</h3>
-                  <p className="mt-1">Choose This Province / Batangas, Other Province / Domestic, or Foreign Residence. For domestic and foreign visitors, enter the province/municipality or country when available.</p>
+                  <p className="mt-1 text-justify">Choose This Province / Batangas, Other Province / Domestic, or Foreign Residence. For domestic and foreign visitors, enter the province/municipality or country when available.</p>
                 </div>
                 <div className="rounded-2xl bg-white/70 p-4">
                   <h3 className="font-semibold text-[#193364]">Male and Female</h3>
-                  <p className="mt-1">Enter the number of male and female visitors within each residence category. Leave a value blank when there are none.</p>
+                  <p className="mt-1 text-justify">Enter the number of male and female visitors within each residence category. Leave a value blank when there are none.</p>
                 </div>
               </div>
 
               <div className="rounded-2xl border border-[#B8D2CF] bg-white/70 p-4">
                 <h3 className="font-semibold text-[#193364]">Totals and actions</h3>
-                <p className="mt-1">The total visitors today is calculated from all group and residence entries. Use <strong>Save Draft</strong> for unfinished work and <strong>Submit Day-tour Report</strong> after reviewing the date and counts. Use <strong>Add Group</strong> when the report contains another visitor group.</p>
+                <p className="mt-1 text-justify">The total visitors today is calculated from all group and residence entries. Use <strong>Save Draft</strong> for unfinished work and <strong>Submit Day-tour Report</strong> after reviewing the date and counts. Use <strong>Add Group</strong> when the report contains another visitor group.</p>
+              </div>
               </div>
             </div>
           </section>
