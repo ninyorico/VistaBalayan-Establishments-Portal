@@ -26,7 +26,7 @@ interface AnalyticsData {
   seasonalData: { month: string; visitors: number; guestCheckIns: number; guestNights: number }[];
   visitorOrigins: { location: string; visitors: number; growth: number | null }[];
   performancePeriods: Record<string, PerformanceInputWithMode[]>;
-  peakSeason: { month: string; visitors: number; growth: number };
+  peakSeason: { month: string; activity: number; visitors: number; guestCheckIns: number; growth: number };
   topOrigin: { location: string; percentage: number };
   growthRate: number | null;
 }
@@ -109,7 +109,7 @@ export default function Analytics() {
     seasonalData: [],
     visitorOrigins: [],
     performancePeriods: {},
-    peakSeason: { month: "", visitors: 0, growth: 0 },
+    peakSeason: { month: "", activity: 0, visitors: 0, guestCheckIns: 0, growth: 0 },
     topOrigin: { location: "", percentage: 0 },
     growthRate: null,
   });
@@ -337,7 +337,7 @@ export default function Analytics() {
       .slice(0, 8);
 
     const peakKey = sortedMonthKeys.reduce(
-      (best, key) => (monthlyData[key].visitors > (monthlyData[best]?.visitors || 0) ? key : best),
+      (best, key) => ((monthlyData[key].visitors + monthlyData[key].guestCheckIns) > ((monthlyData[best]?.visitors || 0) + (monthlyData[best]?.guestCheckIns || 0)) ? key : best),
       sortedMonthKeys[0] || ""
     );
     const peakIndex = sortedMonthKeys.indexOf(peakKey);
@@ -352,8 +352,13 @@ export default function Analytics() {
       performancePeriods,
       peakSeason: {
         month: monthlyData[peakKey]?.label || "N/A",
+        activity: (monthlyData[peakKey]?.visitors || 0) + (monthlyData[peakKey]?.guestCheckIns || 0),
         visitors: monthlyData[peakKey]?.visitors || 0,
-        growth: percentChange(monthlyData[peakKey]?.visitors || 0, monthlyData[beforePeakKey]?.visitors || 0) ?? 0,
+        guestCheckIns: monthlyData[peakKey]?.guestCheckIns || 0,
+        growth: percentChange(
+          (monthlyData[peakKey]?.visitors || 0) + (monthlyData[peakKey]?.guestCheckIns || 0),
+          (monthlyData[beforePeakKey]?.visitors || 0) + (monthlyData[beforePeakKey]?.guestCheckIns || 0)
+        ) ?? 0,
       },
       topOrigin: {
         location: topLocation,
@@ -393,12 +398,15 @@ export default function Analytics() {
       <div className="grid grid-cols-3 gap-2 sm:gap-4" data-analytics-kpi-row="mobile-one-row">
         <div className="bg-white rounded-lg border border-gray-200 p-2.5 shadow-sm sm:p-5">
           <div className="mb-1.5 flex items-center justify-between gap-1">
-            <p className="text-[10px] font-medium leading-tight text-gray-600 sm:text-sm">Peak Season</p>
+            <p className="text-[10px] font-medium leading-tight text-gray-600 sm:text-sm">Peak Season Activity</p>
             <TrendingUp className="h-3.5 w-3.5 shrink-0 text-green-600 sm:h-5 sm:w-5" />
           </div>
           <p className="truncate text-base font-bold leading-tight text-gray-900 sm:text-2xl">{data.peakSeason.month || "N/A"}</p>
           <p className="mt-1 truncate text-[10px] leading-tight text-green-600 sm:text-sm">
-            {data.peakSeason.visitors.toLocaleString()} visitors
+            {data.peakSeason.activity.toLocaleString()} recorded activities
+          </p>
+          <p className="mt-1 hidden truncate text-[10px] leading-tight text-gray-500 sm:block sm:text-xs">
+            {data.peakSeason.visitors.toLocaleString()} visitors + {data.peakSeason.guestCheckIns.toLocaleString()} check-ins
           </p>
         </div>
         <div className="bg-white rounded-lg border border-gray-200 p-2.5 shadow-sm sm:p-5">
