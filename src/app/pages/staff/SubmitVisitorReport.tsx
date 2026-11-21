@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from "react";
 import { createPortal } from "react-dom";
 import { useNavigate } from "react-router";
-import { Save, Send, Plus, Trash2, AlertTriangle, CircleHelp, X, CalendarDays, CheckCircle2 } from "lucide-react";
+import { Save, Send, Plus, Trash2, AlertTriangle, CircleHelp, X } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "../../../lib/supabase";
 import { canSubmitVisitorReport } from "../../../lib/establishmentReportForms";
@@ -561,32 +561,19 @@ const loadProfile = async () => {
       {showFormHelp && createPortal((
         <div className="fixed inset-0 z-[110] flex items-start justify-center overflow-y-auto bg-[#193364]/45 p-3 backdrop-blur-[2px] sm:items-center sm:p-4" role="presentation" onMouseDown={(event) => { if (event.target === event.currentTarget) setShowFormHelp(false); }}>
           <section ref={formHelpDialogRef} className="my-3 flex max-h-[calc(100dvh-1.5rem)] w-full max-w-2xl flex-col overflow-hidden rounded-[1.5rem] bg-[#E0E5EC] p-4 text-[#193364] shadow-[12px_12px_24px_rgba(15,35,60,0.28),-8px_-8px_20px_rgba(255,255,255,0.5)] sm:my-4 sm:max-h-[calc(100dvh-2rem)] sm:rounded-[1.75rem] sm:p-6" role="dialog" aria-modal="true" aria-labelledby="visitor-form-help-title" tabIndex={-1}>
-            <div className="sticky top-0 z-10 flex shrink-0 items-start justify-between gap-4 border-b border-[#C8D2DE] bg-[#E0E5EC]/95 p-4 backdrop-blur-sm sm:p-6">
-                          <div className="flex min-w-0 items-center gap-3">
-                            <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-[#D5F0EF] text-[#0E5A72] shadow-[inset_3px_3px_6px_rgba(163,177,198,0.35),inset_-3px_-3px_6px_rgba(255,255,255,0.7)]">
-                              <CalendarDays className="h-6 w-6" aria-hidden="true" />
-                            </div>
-                            <div className="min-w-0">
-                              <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-[#0E5A72]">Day-tour guide</p>
-                              <h2 id="visitor-form-help-title" className="mt-1 text-xl font-semibold tracking-tight sm:text-2xl">Record today’s visitors with confidence</h2>
-                              <p className="mt-1 text-xs leading-5 text-[#65717A]">A quick guide to groups, residence categories, and visitor totals.</p>
-                            </div>
-                          </div>
+            <div className="sticky top-0 z-10 flex shrink-0 items-start justify-between gap-4 bg-[#E0E5EC] pb-4">
+              <div>
+                <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[#0E5A72]">Form guide</p>
+                <h2 id="visitor-form-help-title" className="mt-1 text-2xl font-semibold tracking-tight">How to use this form</h2>
+              </div>
               <button type="button" onClick={() => setShowFormHelp(false)} className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[#E0E5EC] text-[#193364] shadow-[4px_4px_8px_rgba(163,177,198,0.55),-4px_-4px_8px_rgba(255,255,255,0.65)] hover:text-[#0E5A72]" aria-label="Close day-tour form guide">
                 <X className="h-5 w-5" />
               </button>
             </div>
 
-            <div className="vista-scrollbar min-h-0 flex-1 space-y-4 overflow-y-auto pr-1 text-sm leading-6 text-[#40505A]">
-                          <div className="rounded-2xl border border-[#A9D9D3] bg-[#F2FFFD] p-4 shadow-[4px_4px_9px_rgba(163,177,198,0.28),-4px_-4px_9px_rgba(255,255,255,0.7)]">
-                            <div className="flex items-start gap-3"><div className="mt-0.5 rounded-full bg-[#0E5A72] p-1.5 text-white"><CheckCircle2 className="h-4 w-4" /></div><div><h3 className="font-semibold text-[#193364]">The simple idea</h3><p className="mt-1">One row represents one visitor group. Add the group’s residence category and male/female counts, then the system combines all rows into the day’s total visitors.</p></div></div>
-                          </div>
-                          <div className="grid gap-3 sm:grid-cols-3">
-                            <div className="rounded-2xl bg-white/75 p-4 shadow-[3px_3px_7px_rgba(163,177,198,0.22),-3px_-3px_7px_rgba(255,255,255,0.65)]"><p className="text-[10px] font-bold uppercase tracking-[0.14em] text-[#0E5A72]">01 · Date</p><p className="mt-1 font-semibold text-[#193364]">Report the correct day</p><p className="mt-1 text-xs leading-5">Choose the date the visitors arrived, not automatically today’s date.</p></div>
-                            <div className="rounded-2xl bg-white/75 p-4 shadow-[3px_3px_7px_rgba(163,177,198,0.22),-3px_-3px_7px_rgba(255,255,255,0.65)]"><p className="text-[10px] font-bold uppercase tracking-[0.14em] text-[#0E5A72]">02 · Groups</p><p className="mt-1 font-semibold text-[#193364]">Add one row per group</p><p className="mt-1 text-xs leading-5">Use a name when helpful, then classify the group’s visitors.</p></div>
-                            <div className="rounded-2xl bg-white/75 p-4 shadow-[3px_3px_7px_rgba(163,177,198,0.22),-3px_-3px_7px_rgba(255,255,255,0.65)]"><p className="text-[10px] font-bold uppercase tracking-[0.14em] text-[#0E5A72]">03 · Check</p><p className="mt-1 font-semibold text-[#193364]">Review before sending</p><p className="mt-1 text-xs leading-5">Confirm categories and counts, then save a draft or submit.</p></div>
-                          </div>
-                          <div className="space-y-4 text-justify">
+            <div className="vista-scrollbar min-h-0 flex-1 overflow-y-auto pr-1 text-sm leading-6 text-[#40505A]">
+              <div className="space-y-4 pt-1 text-justify">
+              <p className="text-justify">Enter the visitors recorded by your establishment for the selected report date. Add one row for each visitor group, then classify the group by residence and sex.</p>
 
               <div className="grid gap-3 sm:grid-cols-2">
                 <div className="rounded-2xl bg-white/70 p-4">
