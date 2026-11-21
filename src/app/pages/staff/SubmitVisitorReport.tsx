@@ -475,9 +475,25 @@ const loadProfile = async () => {
       existing: existingRows || [],
       desired: submissions,
     });
-    const updateResults = await Promise.all(reconciliation.updates.map(({ id, values }) =>
-      supabase.from("visitor_reports").update(values).eq("id", id)
-    ));
+    const updateResults = await Promise.all(reconciliation.updates.map(({ id, values }) => {
+      const editableValues = {
+        guest_name: values.guest_name,
+        guest_group_name: values.guest_group_name,
+        total_male: values.total_male,
+        total_female: values.total_female,
+        total_guests: values.total_guests,
+        male_visitors: values.male_visitors,
+        female_visitors: values.female_visitors,
+        total_visitors: values.total_visitors,
+        residence_type: values.residence_type,
+        residence_category: values.residence_category,
+        place_of_residence: values.place_of_residence,
+        municipality: values.municipality,
+        province: values.province,
+        country: values.country,
+      };
+      return supabase.from("visitor_reports").update(editableValues).eq("id", id);
+    }));
     const updateError = updateResults.find((result) => result.error)?.error;
     if (updateError) {
       console.error("Visitor report update error:", updateError);
