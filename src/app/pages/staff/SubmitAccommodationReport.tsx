@@ -297,15 +297,17 @@ export default function SubmitAccommodationReport() {
       return empty;
     }
 
-    const byCode = new Map<string, { guests: number; newGuests: number; shortStayCheckIns: number; occupied: number }>();
+    const byCode = new Map<string, { guests: number; guestNights: number; newGuests: number; shortStayCheckIns: number; occupied: number }>();
     (previousDetails || []).forEach((detail) => {
       const normalizedCode = String(detail.room_code || "").trim().toUpperCase();
       const shortStayCheckIns = Math.max(0, Number(detail.short_stay_check_ins) || 0);
-      const overnightGuestNights = Math.max(0, (Number(detail.guest_nights) || 0) - shortStayCheckIns);
+      const guestNights = Math.max(0, Number(detail.guest_nights) || 0);
+      const overnightGuestNights = Math.max(0, guestNights - shortStayCheckIns);
       const values = {
         guests: overnightGuestNights,
+        guestNights,
         newGuests: Math.max(0, Number(detail.check_ins) || 0),
-        shortStayCheckIns: 0,
+        shortStayCheckIns,
         occupied: Math.max(0, Number(detail.occupied_rooms) || 0),
       };
       if (!normalizedCode) return;
@@ -314,14 +316,16 @@ export default function SubmitAccommodationReport() {
       if (roomNumber) byCode.set(`__room-number:${roomNumber}`, values);
     });
 
+    const legacyDetail = previousDetails.length === 1 ? Array.from(byCode.values())[0] : undefined;
+
     return empty.map((room) => {
       const normalizedRoomCode = room.roomCode.trim().toUpperCase();
       const baseCode = normalizedRoomCode.replace(/-\d+$/, "");
       const roomNumber = normalizedRoomCode.match(/-(\d+)$/)?.[1];
       const previous = byCode.get(normalizedRoomCode)
         || byCode.get(`__room-number:${roomNumber || ""}`)
-        || (normalizedRoomCode.endsWith("-1") ? byCode.get(baseCode) : undefined);
-      const previousGuestNights = previous?.guests || 0;
+        || (normalizedRoomCode.endsWith("-1") ? byCode.get(baseCode) || legacyDetail : undefined);
+      const previousGuestNights = previous?.guestNights || 0;
       const previousNewGuests = Math.min(previous?.newGuests || 0, previousGuestNights);
 
       if (baseRoomData) {
@@ -339,7 +343,7 @@ export default function SubmitAccommodationReport() {
         previousNewGuests,
         previousGuestNights,
         isNewGuest: false,
-        guestNights: previousGuestNights,
+        guestNights: previousGuestNights + (previous?.shortStayCheckIns || 0),
         occupied: Math.min(previous?.occupied || 0, room.numberOfRooms),
       };
     });
@@ -384,13 +388,15 @@ export default function SubmitAccommodationReport() {
       if (roomNumber) byCode.set(`__room-number:${roomNumber}`, detail);
     });
 
+    const legacyDetail = details.length === 1 ? details[0] : undefined;
+
     return buildRoomData(rooms).map((room) => {
       const normalizedRoomCode = room.roomCode.trim().toUpperCase();
       const baseCode = normalizedRoomCode.replace(/-\d+$/, "");
       const roomNumber = normalizedRoomCode.match(/-(\d+)$/)?.[1];
       const detail = byCode.get(normalizedRoomCode)
         || byCode.get(`__room-number:${roomNumber || ""}`)
-        || (normalizedRoomCode.endsWith("-1") ? byCode.get(baseCode) : undefined);
+        || (normalizedRoomCode.endsWith("-1") ? byCode.get(baseCode) || legacyDetail : undefined);
       const shortStayCheckIns = Math.max(0, Number(detail?.short_stay_check_ins) || 0);
       const overnightTotal = Math.max(0, (Number(detail?.guest_nights) || 0) - shortStayCheckIns);
       const checkIns = Math.max(0, Number(detail?.check_ins) || 0);
