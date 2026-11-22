@@ -906,18 +906,19 @@ export default function SubmitAccommodationReport() {
       {/* Room Setup Modal */}
       {showRoomSetup && typeof document !== "undefined" && createPortal(
         <div ref={roomDialogRef} className="fixed inset-0 z-[100] flex items-start justify-center overflow-y-auto bg-black bg-opacity-50 p-2 sm:items-center sm:p-4" role="dialog" aria-modal="true" aria-labelledby="room-configuration-title" tabIndex={-1} data-room-config-mobile-scroll="modal-owned">
-          <div className="my-0 flex max-h-[calc(100dvh-1rem)] w-full max-w-2xl flex-col overflow-hidden rounded-2xl bg-[#E0E5EC] shadow-xl sm:my-4 sm:max-h-[92vh] sm:rounded-lg">
-            <div className="shrink-0 border-b border-gray-200 p-4 sm:p-6">
-              <h2 id="room-configuration-title" className="text-xl sm:text-2xl font-bold text-gray-900">Room Configuration</h2>
-              <p className="text-gray-600 mt-1">
+          <div className="my-0 flex max-h-[calc(100dvh-1rem)] w-full max-w-2xl flex-col overflow-hidden rounded-[28px] bg-[#E0E5EC] shadow-[9px_9px_16px_rgba(163,177,198,0.6),-9px_-9px_16px_rgba(255,255,255,0.55)] sm:my-4 sm:max-h-[92vh]">
+            <div className="shrink-0 px-4 pb-3 pt-4 sm:px-6 sm:pb-4 sm:pt-5">
+              <h2 id="room-configuration-title" className="text-xl font-bold text-[#3D4852] sm:text-2xl">Room Configuration</h2>
+              <p className="mt-1 text-sm leading-5 text-[#6B7280]">
                 Set each room name, room type/code, and number of rooms. This will be saved for future reports.
               </p>
+              <div className="mt-3 border-b border-[#AFB3B5]" aria-hidden="true" />
             </div>
 
-            <div className="min-h-0 flex-1 overflow-y-auto overscroll-y-contain p-4 sm:p-6 [-webkit-overflow-scrolling:touch]">
-              <section aria-labelledby="accommodation-form-mode-title" className="mb-5 rounded-2xl bg-[#E0E5EC] p-4 pt-4 shadow-[inset_4px_4px_8px_rgba(163,177,198,0.4),inset_-4px_-4px_8px_rgba(255,255,255,0.65)]">
+            <div className="min-h-0 flex-1 overflow-y-auto overscroll-y-contain px-4 pb-4 pt-2 sm:px-6 sm:pb-5 sm:pt-2 [-webkit-overflow-scrolling:touch]">
+              <section aria-labelledby="accommodation-form-mode-title" className="mb-3 rounded-2xl bg-[#E0E5EC] p-3 shadow-[inset_4px_4px_8px_rgba(163,177,198,0.4),inset_-4px_-4px_8px_rgba(255,255,255,0.65)]">
                 <div id="accommodation-form-mode-title" className="px-1 text-sm font-semibold text-[#193364]">Choose accommodation report form</div>
-                <div className="mt-3 grid gap-3 sm:grid-cols-2">
+                <div className="mt-2 grid gap-2 sm:grid-cols-2">
                   <label className={`cursor-pointer rounded-2xl p-3 transition ${tempReportFormMode === "single" ? "bg-[#F5F8FF] text-[#193364] shadow-[inset_3px_3px_7px_rgba(163,177,198,0.4),inset_-3px_-3px_7px_rgba(255,255,255,0.65)]" : "text-[#6B7280]"}`}>
                     <input type="radio" name="accommodation-form-mode" value="single" checked={tempReportFormMode === "single"} onChange={() => setTempReportFormMode("single")} className="sr-only" />
                     <span className="block text-sm font-semibold">One guest value per room</span>
@@ -931,57 +932,57 @@ export default function SubmitAccommodationReport() {
                 </div>
               </section>
 
-            <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-              <p className="text-sm font-medium text-gray-700">Editable accommodation room setup</p>
-              <div className="flex items-end gap-2">
-                <label className="min-w-0 flex-1 text-xs font-medium text-gray-600">
-                  Rooms to add
-                  <input
-                    type="number"
-                    min="1"
-                    max="100"
-                    value={roomsToAdd}
-                    onChange={(e) => setRoomsToAdd(e.target.value)}
-                    className="mt-1 block w-full min-w-16 rounded-lg border border-gray-300 px-3 py-2 text-sm"
-                    aria-label="Number of rooms to add"
-                  />
-                </label>
-                <button
-                  type="button"
-                  onClick={addRoomConfigRows}
-                  className="inline-flex shrink-0 items-center gap-1 rounded-lg bg-blue-50 px-3 py-2 text-sm font-medium text-blue-700 hover:bg-blue-100"
-                >
-                  <Plus className="h-4 w-4" /> Add Rooms
-                </button>
+              <div className="mb-3 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+                <p className="text-sm font-semibold text-[#3D4852]">Editable accommodation room setup</p>
+                <div className="flex items-end gap-2">
+                  <label className="min-w-0 flex-1 text-xs font-medium text-[#6B7280]">
+                    Rooms to add
+                    <input
+                      type="number"
+                      min="1"
+                      max="100"
+                      value={roomsToAdd}
+                      onChange={(e) => setRoomsToAdd(e.target.value)}
+                      className="mt-1 block w-full min-w-16 rounded-2xl border-0 bg-[#E0E5EC] px-3 py-2 text-sm text-[#3D4852] shadow-[inset_4px_4px_8px_rgba(163,177,198,0.5),inset_-4px_-4px_8px_rgba(255,255,255,0.65)] outline-none focus:ring-2 focus:ring-[#6C63FF]/50"
+                      aria-label="Number of rooms to add"
+                    />
+                  </label>
+                  <button
+                    type="button"
+                    onClick={addRoomConfigRows}
+                    className="inline-flex shrink-0 items-center gap-1 rounded-2xl bg-[#E0E5EC] px-3 py-2 text-sm font-semibold text-[#193364] shadow-[5px_5px_10px_rgba(163,177,198,0.6),-5px_-5px_10px_rgba(255,255,255,0.52)] transition hover:text-[#6C63FF] active:shadow-[inset_3px_3px_7px_rgba(163,177,198,0.45),inset_-3px_-3px_7px_rgba(255,255,255,0.6)]"
+                  >
+                    <Plus className="h-4 w-4" /> Add Rooms
+                  </button>
+                </div>
               </div>
-              </div>
-              <div className="space-y-4">
+              <div className="space-y-3">
                 {tempRoomConfig.map((room, index) => (
-                  <div key={`room-config-${index}`} className="grid grid-cols-1 gap-3 rounded-lg border border-gray-200 p-4 sm:grid-cols-[1fr_1fr_auto] sm:items-end">
+                  <div key={`room-config-${index}`} className="grid grid-cols-1 gap-3 rounded-2xl bg-[#E0E5EC] p-3 shadow-[5px_5px_10px_rgba(163,177,198,0.45),-5px_-5px_10px_rgba(255,255,255,0.55)] sm:grid-cols-[1fr_1fr_auto] sm:items-end">
                     <div className="min-w-0">
-                      <label className="mb-1 block text-sm font-medium text-gray-700">Room Name</label>
+                      <label className="mb-1 block text-sm font-medium text-[#3D4852]">Room Name</label>
                       <input
                         type="text"
                         value={room.type}
                         onChange={(e) => updateTempRoomConfig(index, "type", e.target.value)}
-                        className="block w-full min-w-0 rounded-lg border border-gray-300 px-3 py-2 text-sm"
+                        className="block w-full min-w-0 rounded-2xl border-0 bg-[#E0E5EC] px-3 py-2 text-sm text-[#3D4852] shadow-[inset_4px_4px_8px_rgba(163,177,198,0.5),inset_-4px_-4px_8px_rgba(255,255,255,0.65)] outline-none focus:ring-2 focus:ring-[#6C63FF]/50"
                         placeholder="1"
                       />
                     </div>
                     <div className="min-w-0">
-                      <label className="mb-1 block text-sm font-medium text-gray-700">Room Type Code <span className="font-normal text-gray-500">(optional)</span></label>
+                      <label className="mb-1 block text-sm font-medium text-[#3D4852]">Room Type Code <span className="font-normal text-[#6B7280]">(optional)</span></label>
                       <input
                         type="text"
                         value={room.code}
                         onChange={(e) => updateTempRoomConfig(index, "code", e.target.value)}
-                        className="block w-full min-w-0 rounded-lg border border-gray-300 px-3 py-2 text-sm uppercase"
+                        className="block w-full min-w-0 rounded-2xl border-0 bg-[#E0E5EC] px-3 py-2 text-sm uppercase text-[#3D4852] shadow-[inset_4px_4px_8px_rgba(163,177,198,0.5),inset_-4px_-4px_8px_rgba(255,255,255,0.65)] outline-none focus:ring-2 focus:ring-[#6C63FF]/50"
                         placeholder="D = Deluxe"
                       />
                     </div>
                     <button
                       type="button"
                       onClick={() => removeRoomConfigRow(index)}
-                      className="inline-flex h-10 items-center justify-center rounded-lg px-3 py-2 text-red-600 hover:bg-red-50 disabled:cursor-not-allowed disabled:opacity-40"
+                      className="inline-flex h-10 items-center justify-center rounded-2xl px-3 py-2 text-[#E35D6A] transition hover:bg-[#E35D6A]/10 disabled:cursor-not-allowed disabled:opacity-40"
                       aria-label="Remove room"
                       disabled={tempRoomConfig.length <= 1}
                     >
@@ -992,16 +993,16 @@ export default function SubmitAccommodationReport() {
               </div>
             </div>
 
-            <div className="shrink-0 p-4 sm:p-6 border-t border-gray-200 grid grid-cols-1 gap-3 sm:flex sm:justify-end">
+            <div className="grid shrink-0 grid-cols-1 gap-3 border-t border-[#AFB3B5] p-4 sm:flex sm:justify-end sm:px-6 sm:py-4">
               <button
                 onClick={() => setShowRoomSetup(false)}
-                className="px-6 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200"
+                className="rounded-2xl bg-[#E0E5EC] px-6 py-2 text-[#3D4852] shadow-[5px_5px_10px_rgba(163,177,198,0.6),-5px_-5px_10px_rgba(255,255,255,0.52)] transition hover:text-[#6C63FF] active:shadow-[inset_3px_3px_7px_rgba(163,177,198,0.45),inset_-3px_-3px_7px_rgba(255,255,255,0.6)]"
               >
                 Cancel
               </button>
               <button
                 onClick={saveRoomConfiguration}
-                className="px-6 py-2 bg-[#0F4C75] text-white rounded-lg hover:bg-[#0F4C75]"
+                className="rounded-2xl bg-[#193364] px-6 py-2 font-semibold text-white shadow-[5px_5px_10px_rgba(163,177,198,0.6),-5px_-5px_10px_rgba(255,255,255,0.52)] transition hover:bg-[#274a82] active:shadow-[inset_3px_3px_7px_rgba(0,0,0,0.22),inset_-3px_-3px_7px_rgba(255,255,255,0.2)]"
               >
                 Save Configuration
               </button>
