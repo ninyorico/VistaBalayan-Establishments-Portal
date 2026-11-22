@@ -68,6 +68,7 @@ as $$
       or lower(coalesce(p_type, '')) like '%resort%'
       or lower(coalesce(p_type, '')) like '%pool%'
       or lower(coalesce(p_type, '')) like '%farm%'
+      or lower(coalesce(p_type, '')) like '%accommodation%'
       or lower(coalesce(p_type, '')) like '%tourist%'
       or lower(coalesce(p_type, '')) like '%attraction%'
       or lower(coalesce(p_type, '')) like '%food%'
