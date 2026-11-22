@@ -541,9 +541,10 @@ export default function SubmitAccommodationReport() {
             if (field === "continuingGuests") updatedRoom.checkIns = 0;
           }
 
-          if (field === "shortStayCheckIns") {
-            // Short-stay guests are separate check-ins and must not erase
-            // overnight continuing/new-guest values in the same room.
+          if (field === "shortStayCheckIns" && Number(numericValue) > 0) {
+            updatedRoom.continuingGuests = 0;
+            updatedRoom.checkIns = 0;
+            updatedRoom.isNewGuest = false;
           }
 
           if (field === "checkIns" || field === "continuingGuests" || field === "shortStayCheckIns") {

@@ -718,7 +718,7 @@ export default function AccommodationMonitoring({ embedded = false }: { embedded
                   <div className="divide-y divide-gray-100">
                     {selectedAccommodationGroup.records.map((record) => (
                       <div key={record.id} className="grid grid-cols-[6rem_7rem_7rem_7rem_7rem_7rem] align-top sm:grid-cols-[15%_17%_17%_17%_17%_17%]">
-                        <div className="sticky left-0 z-10 break-words bg-white px-1.5 py-1.5 text-[10px] text-gray-600 shadow-[2px_0_4px_rgba(148,163,184,0.18)] sm:px-4 sm:py-3 sm:text-sm">{record.date}</div>
+                        <div className="sticky left-0 z-10 break-words bg-[#E0E5EC] px-1.5 py-1.5 text-[10px] text-gray-600 shadow-[2px_0_4px_rgba(148,163,184,0.18)] sm:px-4 sm:py-3 sm:text-sm">{record.date}</div>
 
                         <div className="px-1.5 py-1.5 text-[10px] text-gray-900 sm:px-4 sm:py-3 sm:text-sm">{record.totalRooms}</div>
                         <div className="px-1.5 py-1.5 text-[10px] font-medium text-gray-900 sm:px-4 sm:py-3 sm:text-sm">{record.occupiedRooms}</div>
