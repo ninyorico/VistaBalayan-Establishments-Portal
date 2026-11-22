@@ -405,8 +405,8 @@ export default function VisitorMonitoring({ embedded = false }: { embedded?: boo
                       <div key={record.id} className="grid grid-cols-[6rem_9rem_4.5rem_4.5rem_4.5rem_1fr] align-top sm:grid-cols-[16%_22%_11%_11%_11%_29%]">
                         <div className="sticky left-0 z-10 break-words bg-[#E0E5EC] px-1.5 py-1.5 text-[10px] text-gray-600 shadow-[2px_0_4px_rgba(148,163,184,0.18)] sm:px-4 sm:py-3 sm:text-sm">{record.date}</div>
                         <div className="break-words px-1.5 py-1.5 text-[10px] text-gray-900 sm:px-4 sm:py-3 sm:text-sm">{record.guestName}</div>
-                        <div className="px-1.5 py-1.5 text-[10px] font-medium text-blue-600 sm:px-4 sm:py-3 sm:text-sm">{record.male}</div>
-                        <div className="px-1.5 py-1.5 text-[10px] font-medium text-purple-600 sm:px-4 sm:py-3 sm:text-sm">{record.female}</div>
+                        <div className="px-1.5 py-1.5 text-[10px] font-medium text-gray-900 sm:px-4 sm:py-3 sm:text-sm">{record.male}</div>
+                        <div className="px-1.5 py-1.5 text-[10px] font-medium text-gray-900 sm:px-4 sm:py-3 sm:text-sm">{record.female}</div>
                         <div className="px-1.5 py-1.5 text-[10px] font-semibold text-gray-900 sm:px-4 sm:py-3 sm:text-sm">{record.total}</div>
                         <div className="break-words px-1.5 py-1.5 text-[10px] text-gray-600 sm:px-4 sm:py-3 sm:text-sm">{record.location}</div>
                       </div>

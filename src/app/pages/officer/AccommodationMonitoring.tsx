@@ -661,8 +661,8 @@ export default function AccommodationMonitoring({ embedded = false }: { embedded
 
       {selectedAccommodationGroup && typeof document !== "undefined" && createPortal(
         <div ref={accommodationDialogRef} className="fixed inset-0 z-[100] flex items-end justify-center overscroll-contain bg-slate-950/60 p-0 backdrop-blur-sm touch-none sm:items-center sm:p-4" role="dialog" aria-modal="true" aria-labelledby="accommodation-records-dialog-title" tabIndex={-1} onClick={() => setSelectedAccommodationGroupKey(null)}>
-          <div className="max-h-[90dvh] w-full touch-auto overflow-hidden overscroll-contain rounded-t-2xl bg-white shadow-2xl sm:max-w-5xl sm:rounded-2xl" onClick={(event) => event.stopPropagation()}>
-            <div className="flex items-start justify-between gap-4 border-b border-gray-200 bg-gray-50 px-4 py-4 sm:px-6">
+          <div className="max-h-[90dvh] w-full touch-auto overflow-hidden overscroll-contain rounded-t-2xl border border-[#D2D8E0] bg-[#E0E5EC] shadow-[12px_12px_28px_rgba(15,23,42,0.2),-8px_-8px_20px_rgba(255,255,255,0.2)] sm:max-w-5xl sm:rounded-2xl" onClick={(event) => event.stopPropagation()}>
+            <div className="flex items-start justify-between gap-4 border-b border-[#D2D8E0] bg-[#E0E5EC] px-4 py-4 sm:px-6">
               <div className="min-w-0">
                 <p className="text-xs font-semibold uppercase tracking-wider text-blue-600">Accommodation records</p>
                 <h3 id="accommodation-records-dialog-title" className="mt-1 truncate text-lg font-semibold text-gray-900 sm:text-xl">{selectedAccommodationGroup.establishment}</h3>
@@ -678,7 +678,7 @@ export default function AccommodationMonitoring({ embedded = false }: { embedded
               </button>
             </div>
 
-            <div className="grid grid-cols-4 gap-1 border-b border-gray-100 px-2 py-2 text-center sm:gap-2 sm:px-6 sm:py-3">
+            <div className="grid grid-cols-4 gap-1 border-b border-[#D2D8E0] px-2 py-2 text-center sm:gap-2 sm:px-6 sm:py-3">
                           <div className="min-w-0 rounded-xl bg-[#E0E5EC] px-1 py-2 shadow-[inset_3px_3px_6px_rgba(163,177,198,.35),inset_-3px_-3px_6px_rgba(255,255,255,.45)] sm:rounded-2xl sm:px-3 sm:py-3">
                             <p className="break-words text-[8px] font-medium uppercase leading-tight tracking-wide text-[#6474A5] sm:text-[10px] sm:text-xs">Occupied Rooms</p>
                             <p className="text-base font-bold text-[#3D4852] sm:text-lg sm:text-2xl">{selectedAccommodationGroup.occupiedRooms}</p>
@@ -706,8 +706,8 @@ export default function AccommodationMonitoring({ embedded = false }: { embedded
                 className="max-h-[48dvh] overflow-auto overscroll-contain touch-none [-webkit-overflow-scrolling:touch] sm:max-h-[54vh]"
               >
                 <div className="min-w-[41rem]">
-                  <div className="sticky top-0 z-20 grid grid-cols-[6rem_7rem_7rem_7rem_7rem_7rem] border-b border-gray-200 bg-white shadow-[0_1px_0_rgba(148,163,184,0.35)] sm:grid-cols-[15%_17%_17%_17%_17%_17%]" data-accommodation-records-table-modal="phone-fixed-header">
-                    <div className="sticky left-0 z-20 flex min-h-10 items-center justify-center bg-white px-1.5 py-1.5 text-center text-[9px] font-semibold uppercase leading-tight tracking-wider text-gray-600 shadow-[2px_0_4px_rgba(148,163,184,0.24)] sm:min-h-0 sm:px-4 sm:py-2 sm:text-xs">Date</div>
+                  <div className="sticky top-0 z-20 grid grid-cols-[6rem_7rem_7rem_7rem_7rem_7rem] border-b border-[#D2D8E0] bg-[#E0E5EC] shadow-[0_1px_0_rgba(148,163,184,0.35)] sm:grid-cols-[15%_17%_17%_17%_17%_17%]" data-accommodation-records-table-modal="phone-fixed-header">
+                    <div className="sticky left-0 z-20 flex min-h-10 items-center justify-center bg-[#E0E5EC] px-1.5 py-1.5 text-center text-[9px] font-semibold uppercase leading-tight tracking-wider text-gray-600 shadow-[2px_0_4px_rgba(148,163,184,0.24)] sm:min-h-0 sm:px-4 sm:py-2 sm:text-xs">Date</div>
 
                     <div className="flex min-h-10 items-center justify-center px-1.5 py-1.5 text-center text-[9px] font-semibold uppercase leading-tight tracking-wider text-gray-600 sm:min-h-0 sm:px-4 sm:py-2 sm:text-xs">Total Rooms</div>
                     <div className="flex min-h-10 items-center justify-center px-1.5 py-1.5 text-center text-[9px] font-semibold uppercase leading-tight tracking-wider text-gray-600 sm:min-h-0 sm:px-4 sm:py-2 sm:text-xs">Occupied Rooms</div>
@@ -723,7 +723,7 @@ export default function AccommodationMonitoring({ embedded = false }: { embedded
                         <div className="px-1.5 py-1.5 text-[10px] text-gray-900 sm:px-4 sm:py-3 sm:text-sm">{record.totalRooms}</div>
                         <div className="px-1.5 py-1.5 text-[10px] font-medium text-gray-900 sm:px-4 sm:py-3 sm:text-sm">{record.occupiedRooms}</div>
                         <div className="px-1.5 py-1.5 text-[10px] font-medium text-green-700 sm:px-4 sm:py-3 sm:text-sm">{record.avgOccupancy.toFixed(1)}%</div>
-                        <div className="px-1.5 py-1.5 text-[10px] font-medium text-blue-600 sm:px-4 sm:py-3 sm:text-sm">{record.totalGuests}</div>
+                        <div className="px-1.5 py-1.5 text-[10px] font-medium text-gray-900 sm:px-4 sm:py-3 sm:text-sm">{record.totalGuests}</div>
                         <div className="px-1.5 py-1.5 text-[10px] text-gray-900 sm:px-4 sm:py-3 sm:text-sm">{record.guestNights}</div>
                       </div>
                     ))}
