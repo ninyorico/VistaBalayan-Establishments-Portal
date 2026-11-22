@@ -1,5 +1,5 @@
 import type { ReactNode } from "react";
-import { AlertTriangle, CheckCircle2, Sparkles, TrendingUp } from "lucide-react";
+import { AlertTriangle, CheckCircle2, RefreshCw, Sparkles, TrendingUp } from "lucide-react";
 
 import { cleanAiText, splitAiRecommendation } from "../../../lib/aiText";
 import { AiFormattedText } from "../AiFormattedText";
@@ -178,7 +178,8 @@ export function AiInsightsShell({
               disabled={!canRefresh || refreshing}
               className="h-12 rounded-2xl bg-[#6C63FF] px-5 text-white shadow-[5px_5px_12px_rgba(163,177,198,0.55),-5px_-5px_12px_rgba(255,255,255,0.65)] hover:bg-[#5B54D6] sm:h-11"
             >
-              {refreshing ? "Refreshing" : "Refresh Analysis"}
+              {refreshing ? <RefreshCw className="h-4 w-4 animate-spin" aria-hidden="true" /> : <Sparkles className="h-4 w-4" aria-hidden="true" />}
+              <span>{refreshing ? "Refreshing…" : "Refresh Analysis"}</span>
             </Button>
           </div>
         </section>

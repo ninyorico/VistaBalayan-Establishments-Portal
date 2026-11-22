@@ -7,6 +7,7 @@ import {
   Sparkles,
   X,
   AlertTriangle,
+  Loader2,
 } from "lucide-react";
 import {
   AreaChart,
@@ -695,7 +696,7 @@ export default function Reports() {
             disabled={administrativeReportLoading}
             className="col-span-1 flex w-full items-center justify-center gap-2 rounded-xl bg-[#193364] px-3 py-2 text-sm text-white hover:bg-[#10264c] disabled:cursor-wait disabled:opacity-60 sm:col-span-1 sm:w-auto sm:px-4"
           >
-            <Sparkles className="h-4 w-4" /> {administrativeReportLoading ? "Loading AI reports…" : "AI Administrative Reports"}
+            {administrativeReportLoading ? <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" /> : <Sparkles className="h-4 w-4" aria-hidden="true" />} {administrativeReportLoading ? "Generating AI reports…" : "AI Administrative Reports"}
           </button>
           <button
             type="button"
