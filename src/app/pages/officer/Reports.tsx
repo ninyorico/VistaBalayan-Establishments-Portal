@@ -143,7 +143,7 @@ function AdministrativeReportExportPreview({ report }: { report: any }) {
 
 export default function Reports() {
   const { horizontalRef: submissionsTableRef } = useDominantAxisTableScroll();
-  const [filterType, setFilterType] = useState<"year" | "quarter" | "month" | "week">("month");
+  const [filterType, setFilterType] = useState<"year" | "quarter" | "month" | "week">("year");
   const [selectedYear, setSelectedYear] = useState(getCurrentYear());
   const [selectedQuarter, setSelectedQuarter] = useState("1");
   const [selectedMonth, setSelectedMonth] = useState(getCurrentMonth());
@@ -253,13 +253,6 @@ export default function Reports() {
       (a, b) => new Date(b.submitted).getTime() - new Date(a.submitted).getTime()
     );
     setSubmissions(combined);
-    const submittedReportYears = combined
-      .filter((report) => normalizeStatus(report.status) === "submitted")
-      .map((report) => Number(report.reportDate.slice(0, 4)))
-      .filter((year) => Number.isFinite(year));
-    if (submittedReportYears.length > 0) {
-      setSelectedYear(String(Math.max(...submittedReportYears)));
-    }
     setLoading(false);
   };
 
