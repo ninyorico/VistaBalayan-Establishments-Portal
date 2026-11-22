@@ -7,16 +7,16 @@ import { currentMonthKey, currentYear, buildAccommodationMonthlySeries, buildVis
 import { LoadingState, MetricCard, PageHero } from "../../components/vista/PolishedShell";
 import DataState from "../../components/DataState";
 
-const panelClass = "rounded-3xl border border-[#C3CBD7] bg-[#E0E5EC] p-5 shadow-[8px_8px_15px_rgba(163,177,198,.48),-8px_-8px_15px_rgba(255,255,255,.48)] sm:p-6";
 const chartClass = "rounded-3xl border border-[#AFB3B5]/45 bg-[#F5F8FF]/88 p-4 shadow-tourism sm:p-6";
 
 type AnalyticsMetric = { label: string; value: ReactNode; helper: string; icon: typeof UsersRound; tone: string };
 
 const MetricGrid = ({ metrics }: { metrics: AnalyticsMetric[] }) => {
   const alignValues = metrics.length >= 6;
+  const desktopColumns = metrics.length >= 7 ? "lg:grid-cols-7" : metrics.length === 6 ? "lg:grid-cols-6" : metrics.length === 5 ? "lg:grid-cols-5" : "lg:grid-cols-4";
 
   return (
-    <div className={`grid grid-cols-2 gap-3 ${alignValues ? "lg:grid-cols-6" : "lg:grid-cols-4"}`}>
+    <div className={`grid grid-cols-2 gap-3 ${desktopColumns}`}>
       {metrics.map((metric) => <MetricCard key={metric.label} label={metric.label} value={metric.value} helper={metric.helper} icon={metric.icon} tone={metric.tone} compact alignValue={alignValues} className="bg-[#f8fbf8] shadow-none" />)}
     </div>
   );
@@ -153,6 +153,7 @@ export default function Analytics() {
     { label: "Monthly Average Guest Per Room", value: (currentAccommodationMonth?.guestsPerRoom || 0).toFixed(2), helper: "current month", icon: UsersRound, tone: "bg-emerald-50 text-emerald-700 ring-emerald-100" },
     { label: "Monthly Total Check-ins", value: currentMonthCheckIns.toLocaleString(), helper: "current month", icon: UsersRound, tone: "bg-sky-50 text-sky-700 ring-sky-100" },
     { label: "Monthly Average Guest Night", value: (currentAccommodationMonth?.guestNightAverage || 0).toFixed(2), helper: "nights per check-in", icon: Moon, tone: "bg-amber-50 text-amber-700 ring-amber-100" },
+    { label: "Best Performing Month", value: accommodationBestMonth?.month || "No data", helper: `${(accommodationBestMonth?.checkIns || 0).toLocaleString()} check-ins · ${(accommodationBestMonth?.guestNights || 0).toLocaleString()} guest nights`, icon: TrendingUp, tone: "bg-violet-50 text-violet-700 ring-violet-100" },
   ];
   const combinedMetrics: AnalyticsMetric[] = [
     { label: "Monthly Day-tour Arrivals", value: currentMonthVisitorTotal.toLocaleString(), helper: "current month", icon: UsersRound, tone: "bg-emerald-50 text-emerald-700 ring-emerald-100" },
@@ -161,6 +162,7 @@ export default function Analytics() {
     { label: "Monthly Demographics", value: demographicValue, helper: demographicHelper, icon: PieChart, tone: "bg-violet-50 text-violet-700 ring-violet-100" },
     { label: "Monthly Average Occupied Rooms", value: (currentAccommodationMonth?.averageOccupiedRooms || 0).toFixed(2), helper: "occupied rooms per report", icon: BedDouble, tone: "bg-purple-50 text-purple-700 ring-purple-100" },
     { label: "Monthly Average Guests per Room", value: (currentAccommodationMonth?.guestsPerRoom || 0).toFixed(2), helper: "current month", icon: UsersRound, tone: "bg-rose-50 text-rose-700 ring-rose-100" },
+    { label: "Best Performing Month", value: accommodationBestMonth?.month || "No data", helper: `${(accommodationBestMonth?.checkIns || 0).toLocaleString()} check-ins · ${(accommodationBestMonth?.guestNights || 0).toLocaleString()} guest nights`, icon: TrendingUp, tone: "bg-violet-50 text-violet-700 ring-violet-100" },
   ];
 
   return (
@@ -191,7 +193,6 @@ export default function Analytics() {
         <MetricGrid metrics={accommodationMetrics} />
         <div className={chartClass}><ChartTitle icon={BarChart3}>Monthly Performance Overview ({year})</ChartTitle><ResponsiveContainer width="100%" height={340}><BarChart data={accommodationMonths}><CartesianGrid strokeDasharray="3 3" vertical={true} horizontal={true} /><XAxis dataKey="month" /><YAxis allowDecimals={false} /><Tooltip /><Legend /><Bar dataKey="checkIns" fill="#193364" name="Check-ins" /><Bar dataKey="guestNights" fill="#D69A3A" name="Guest Nights" /></BarChart></ResponsiveContainer></div>
         <div className={chartClass}><ChartTitle icon={TrendingUp}>Occupancy Rate and Guests per Room Trend ({year})</ChartTitle><ResponsiveContainer width="100%" height={340}><AreaChart data={accommodationMonths}><CartesianGrid strokeDasharray="3 3" vertical={true} horizontal={true} /><XAxis dataKey="month" /><YAxis allowDecimals={false} /><Tooltip /><Legend /><Area type="monotone" dataKey="occupancyRate" stroke="#193364" fill="#193364" fillOpacity={0.2} dot={{ r: 3, strokeWidth: 1, fill: "#193364" }} activeDot={{ r: 5 }} strokeWidth={2} name="Occupancy Rate %" /><Area type="monotone" dataKey="guestsPerRoom" stroke="#D69A3A" fill="#D69A3A" fillOpacity={0.2} dot={{ r: 3, strokeWidth: 1, fill: "#D69A3A" }} activeDot={{ r: 5 }} strokeWidth={2} name="Guests per Room" /></AreaChart></ResponsiveContainer></div>
-        <div className={panelClass}><h3 className="font-semibold text-[#0B2530]">Best Performing Month</h3><p className="mt-2 text-3xl font-bold text-[#0B2530]">{accommodationBestMonth.month}</p><p className="mt-1 text-sm text-[#193364]">{accommodationBestMonth.checkIns.toLocaleString()} check-ins · {accommodationBestMonth.guestNights.toLocaleString()} guest nights</p></div>
       </>}
 
       {mode === "both" && showVisitorAnalytics && showAccommodationAnalytics && <>
@@ -203,7 +204,6 @@ export default function Analytics() {
         </div>
         <div className={chartClass}><ChartTitle icon={BarChart3}>Monthly Performance Overview ({year})</ChartTitle><ResponsiveContainer width="100%" height={340}><BarChart data={visitorMonths.map((month, index) => ({ month: month.month, dayTour: month.visitors, checkIns: accommodationMonths[index]?.checkIns || 0, guestNights: accommodationMonths[index]?.guestNights || 0 }))}><CartesianGrid strokeDasharray="3 3" vertical={true} horizontal={true} /><XAxis dataKey="month" /><YAxis allowDecimals={false} /><Tooltip /><Legend /><Bar dataKey="dayTour" fill="#193364" name="Day-tour Visitors" /><Bar dataKey="checkIns" fill="#D69A3A" name="Guest Check-ins" /><Bar dataKey="guestNights" fill="#6C9772" name="Guest Nights" /></BarChart></ResponsiveContainer></div>
         <div className={chartClass}><ChartTitle icon={TrendingUp}>Occupancy Rate and Guests per Room Trend ({year})</ChartTitle><ResponsiveContainer width="100%" height={340}><AreaChart data={accommodationMonths}><CartesianGrid strokeDasharray="3 3" vertical={true} horizontal={true} /><XAxis dataKey="month" /><YAxis allowDecimals={false} /><Tooltip /><Legend /><Area type="monotone" dataKey="occupancyRate" stroke="#193364" fill="#193364" fillOpacity={0.2} dot={{ r: 3, strokeWidth: 1, fill: "#193364" }} activeDot={{ r: 5 }} strokeWidth={2} name="Occupancy Rate %" /><Area type="monotone" dataKey="guestsPerRoom" stroke="#D69A3A" fill="#D69A3A" fillOpacity={0.2} dot={{ r: 3, strokeWidth: 1, fill: "#D69A3A" }} activeDot={{ r: 5 }} strokeWidth={2} name="Guests per Room" /></AreaChart></ResponsiveContainer></div>
-        <div className={panelClass}><h3 className="font-semibold text-[#0B2530]">Best Performing Month</h3><p className="mt-2 text-3xl font-bold text-[#0B2530]">{visitorBestMonth.month}</p><p className="mt-1 text-sm text-[#193364]">{visitorBestMonth.visitors.toLocaleString()} day-tour visitors · {accommodationMonths.find((month) => month.monthKey === visitorBestMonth.monthKey)?.checkIns.toLocaleString() || "0"} check-ins</p></div>
       </>}
     </div>
   );
