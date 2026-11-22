@@ -184,6 +184,14 @@ export function AiInsightsShell({
           </div>
         </section>
 
+        {refreshing && (
+          <div role="status" aria-live="polite" className="flex items-center gap-3 rounded-2xl border border-[#C9C3FF] bg-[#F1F0FF] px-4 py-3 text-sm font-semibold text-[#193364] shadow-[inset_3px_3px_7px_rgba(163,177,198,0.3),inset_-3px_-3px_7px_rgba(255,255,255,0.7)]">
+            <RefreshCw className="h-4 w-4 shrink-0 animate-spin text-[#6C63FF]" aria-hidden="true" />
+            <span>Refreshing insights and checking the latest tourism data…</span>
+            <span className="ml-auto h-2 w-20 shrink-0 animate-pulse rounded-full bg-[#6C63FF]/35" aria-hidden="true" />
+          </div>
+        )}
+
         {children}
       </div>
     </main>

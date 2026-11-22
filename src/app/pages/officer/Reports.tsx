@@ -706,6 +706,13 @@ export default function Reports() {
             <FileSpreadsheet className="h-4 w-4" /> Export
           </button>
         </div>
+        {administrativeReportLoading && (
+          <div role="status" aria-live="polite" className="mt-3 flex items-center gap-3 rounded-xl border border-[#B8C7E6] bg-[#EEF3FF] px-3 py-2.5 text-sm font-semibold text-[#193364]">
+            <Loader2 className="h-4 w-4 shrink-0 animate-spin text-[#193364]" aria-hidden="true" />
+            <span>Generating the AI administrative report for the selected period…</span>
+            <span className="ml-auto h-2 w-16 shrink-0 animate-pulse rounded-full bg-[#193364]/30" aria-hidden="true" />
+          </div>
+        )}
       </div>
 
       {/* Report Chart */}
