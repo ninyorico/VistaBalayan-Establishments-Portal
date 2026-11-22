@@ -76,7 +76,9 @@ const matchesCommonFilters = (
   extraText: string
 ) => {
   const parts = getDateParts(record.report_date);
-  const searchText = extraText.toLowerCase();
+  const searchText = [record.report_date, extraText]
+    .join(" ")
+    .toLowerCase();
   return Boolean(parts && periodMatchesDate(record.report_date, period) && searchText.includes(searchTerm.toLowerCase()));
 };
 
@@ -133,7 +135,6 @@ export default function EstablishmentSubmissionRecords({
         ]
       : [
           ["Total submissions", filteredAccommodation.length, "text-sky-700"],
-          ["Accommodation report submissions", filteredAccommodation.length, "text-purple-600"],
         ];
 
   return (

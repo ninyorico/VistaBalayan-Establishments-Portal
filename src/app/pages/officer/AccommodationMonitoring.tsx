@@ -1,3 +1,4 @@
+import { createPortal } from "react-dom";
 import { Fragment, useState, useEffect, useMemo, useRef } from "react";
 import { ChevronDown, ChevronRight, Download, Search, TrendingUp, X } from "lucide-react";
 import { toast } from "sonner";
@@ -658,7 +659,7 @@ export default function AccommodationMonitoring({ embedded = false }: { embedded
         </div>
       </div>
 
-      {selectedAccommodationGroup && (
+      {selectedAccommodationGroup && typeof document !== "undefined" && createPortal(
         <div ref={accommodationDialogRef} className="fixed inset-0 z-[100] flex items-end justify-center overscroll-contain bg-slate-950/60 p-0 backdrop-blur-sm touch-none sm:items-center sm:p-4" role="dialog" aria-modal="true" aria-labelledby="accommodation-records-dialog-title" tabIndex={-1} onClick={() => setSelectedAccommodationGroupKey(null)}>
           <div className="max-h-[90dvh] w-full touch-auto overflow-hidden overscroll-contain rounded-t-2xl bg-white shadow-2xl sm:max-w-5xl sm:rounded-2xl" onClick={(event) => event.stopPropagation()}>
             <div className="flex items-start justify-between gap-4 border-b border-gray-200 bg-gray-50 px-4 py-4 sm:px-6">
@@ -731,8 +732,7 @@ export default function AccommodationMonitoring({ embedded = false }: { embedded
               </div>
             </div>
           </div>
-        </div>
-      )}
+        </div>, document.body)}
     </div>
   );
 }

@@ -1,3 +1,4 @@
+import { createPortal } from "react-dom";
 import { useState, useEffect, useMemo, useRef } from "react";
 import { Download, Search, X } from "lucide-react";
 import { toast } from "sonner";
@@ -6,7 +7,7 @@ import { downloadReportMonitoringWorkbook } from "../../../lib/reportMonitoringE
 import DataState from "../../components/DataState";
 import { useDialogFocus } from "../../../hooks/useDialogFocus";
 import { useDominantAxisTableScroll } from "../../../hooks/useDominantAxisTableScroll";
-import { getVisitorResidenceLabel, getVisitorResidenceLocation, normalizeResidenceCategory } from "../../../lib/reporting";
+import { getVisitorResidenceLocation, normalizeResidenceCategory } from "../../../lib/reporting";
 import ReportPeriodFilter from "../../components/ReportPeriodFilter";
 import { periodMatchesDate, periodToMonthValue, getReportWeekRange, getReportWeekLabel, type ReportPeriodSelection } from "../../../lib/reportPeriod";
 
@@ -19,7 +20,6 @@ interface VisitorRecord {
   male: number;
   female: number;
   total: number;
-  residenceType: string;
   residenceCategory: string;
   location: string;
 }
@@ -96,7 +96,6 @@ export default function VisitorMonitoring({ embedded = false }: { embedded?: boo
       male: item.total_male || 0,
       female: item.total_female || 0,
       total: item.total_guests || 0,
-      residenceType: getVisitorResidenceLabel(item),
       residenceCategory: normalizeResidenceCategory(item) || "UNKNOWN",
       location: getVisitorResidenceLocation(item),
     }));
@@ -127,7 +126,6 @@ export default function VisitorMonitoring({ embedded = false }: { embedded?: boo
       female: number;
       total: number;
       locations: Set<string>;
-      residenceTypes: Set<string>;
     }>();
 
     filteredRecords.forEach((record) => {
@@ -138,7 +136,6 @@ export default function VisitorMonitoring({ embedded = false }: { embedded?: boo
         female: 0,
         total: 0,
         locations: new Set<string>(),
-        residenceTypes: new Set<string>(),
       };
 
       current.records.push(record);
@@ -146,7 +143,6 @@ export default function VisitorMonitoring({ embedded = false }: { embedded?: boo
       current.female += record.female;
       current.total += record.total;
       current.locations.add(record.location);
-      current.residenceTypes.add(record.residenceType);
       groups.set(record.establishment, current);
     });
 
@@ -338,7 +334,7 @@ export default function VisitorMonitoring({ embedded = false }: { embedded?: boo
                         <td className="px-2 py-1.5 text-[10px] font-medium text-blue-600 sm:px-6 sm:py-4 sm:text-sm">{group.male}</td>
                         <td className="px-2 py-1.5 text-[10px] font-medium text-purple-600 sm:px-6 sm:py-4 sm:text-sm">{group.female}</td>
                         <td className="px-2 py-1.5 text-[10px] font-semibold text-gray-900 sm:px-6 sm:py-4 sm:text-sm">{group.total}</td>
-                        <td className="max-w-[9rem] px-2 py-1.5 text-[10px] text-gray-600 sm:max-w-none sm:px-6 sm:py-4 sm:text-sm">{Array.from(group.residenceTypes).join(", ")}</td>
+                        <td className="max-w-[9rem] px-2 py-1.5 text-[10px] text-gray-600 sm:max-w-none sm:px-6 sm:py-4 sm:text-sm">{Array.from(group.locations).join(", ")}</td>
                       </tr>
                 ))
               ) : (
@@ -353,7 +349,7 @@ export default function VisitorMonitoring({ embedded = false }: { embedded?: boo
         </div>
       </div>
 
-      {selectedGroup && (
+      {selectedGroup && typeof document !== "undefined" && createPortal(
         <div ref={visitorDialogRef} className="fixed inset-0 z-[100] flex items-end justify-center overscroll-contain bg-slate-950/60 p-0 backdrop-blur-sm touch-none sm:items-center sm:p-4" role="dialog" aria-modal="true" aria-labelledby="visitor-records-dialog-title" tabIndex={-1} onClick={() => setSelectedEstablishment(null)}>
           <div className="max-h-[90dvh] w-full touch-auto overflow-hidden overscroll-contain rounded-t-2xl border border-[#D2D8E0] bg-[#E0E5EC] shadow-[12px_12px_28px_rgba(15,23,42,0.2),-8px_-8px_20px_rgba(255,255,255,0.2)] sm:max-w-5xl sm:rounded-2xl" onClick={(event) => event.stopPropagation()}>
             <div className="flex items-start justify-between gap-4 border-b border-[#D2D8E0] bg-[#E0E5EC] px-4 py-4 sm:px-6">
@@ -420,8 +416,7 @@ export default function VisitorMonitoring({ embedded = false }: { embedded?: boo
               </div>
             </div>
           </div>
-        </div>
-      )}
+        </div>, document.body)}
     </div>
   );
 }
