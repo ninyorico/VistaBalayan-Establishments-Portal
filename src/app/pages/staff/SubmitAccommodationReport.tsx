@@ -904,7 +904,7 @@ export default function SubmitAccommodationReport() {
       ), document.body)}
 
       {/* Room Setup Modal */}
-      {showRoomSetup && (
+      {showRoomSetup && typeof document !== "undefined" && createPortal(
         <div ref={roomDialogRef} className="fixed inset-0 z-[100] flex items-start justify-center overflow-y-auto bg-black bg-opacity-50 p-2 sm:items-center sm:p-4" role="dialog" aria-modal="true" aria-labelledby="room-configuration-title" tabIndex={-1} data-room-config-mobile-scroll="modal-owned">
           <div className="my-0 flex max-h-[calc(100dvh-1rem)] w-full max-w-2xl flex-col overflow-hidden rounded-2xl bg-[#E0E5EC] shadow-xl sm:my-4 sm:max-h-[92vh] sm:rounded-lg">
             <div className="shrink-0 border-b border-gray-200 p-4 sm:p-6">
@@ -1007,8 +1007,7 @@ export default function SubmitAccommodationReport() {
               </button>
             </div>
           </div>
-        </div>
-      )}
+        </div>, document.body)}
 
       {/* Report Header */}
       <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-5 sm:p-6 lg:p-8 overflow-hidden">
