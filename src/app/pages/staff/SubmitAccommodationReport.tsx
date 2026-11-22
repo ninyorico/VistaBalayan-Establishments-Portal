@@ -339,11 +339,11 @@ export default function SubmitAccommodationReport() {
       return {
         ...room,
         continuingGuests: previousGuestNights,
-        shortStayCheckIns: previous?.shortStayCheckIns || 0,
+        shortStayCheckIns: 0,
         previousNewGuests,
         previousGuestNights,
         isNewGuest: false,
-        guestNights: previousGuestNights + (previous?.shortStayCheckIns || 0),
+        guestNights: previousGuestNights,
         occupied: Math.min(previous?.occupied || 0, room.numberOfRooms),
       };
     });
@@ -541,10 +541,9 @@ export default function SubmitAccommodationReport() {
             if (field === "continuingGuests") updatedRoom.checkIns = 0;
           }
 
-          if (field === "shortStayCheckIns" && Number(numericValue) > 0) {
-            updatedRoom.continuingGuests = 0;
-            updatedRoom.checkIns = 0;
-            updatedRoom.isNewGuest = false;
+          if (field === "shortStayCheckIns") {
+            // Short-stay guests are separate check-ins and must not erase
+            // overnight continuing/new-guest values in the same room.
           }
 
           if (field === "checkIns" || field === "continuingGuests" || field === "shortStayCheckIns") {
@@ -1095,7 +1094,7 @@ export default function SubmitAccommodationReport() {
                   const previousTotal = room.previousGuestNights || 0;
                   const previousNew = Math.min(room.previousNewGuests || 0, previousTotal);
                   const currentGuestValue = Number(room.isNewGuest ? room.checkIns : room.continuingGuests) || 0;
-                  const isActiveNewGuest = currentGuestValue > 0 && (room.isNewGuest === true || Number(room.shortStayCheckIns || 0) > 0);
+                  const isActiveNewGuest = currentGuestValue > 0 && room.isNewGuest === true;
                   return (
                     <tr key={room.roomCode} className="border-b border-gray-200 bg-white">
                       <th className="sticky left-0 z-10 border-r border-gray-200 bg-white px-1.5 py-2 text-center sm:px-3 sm:py-3">
