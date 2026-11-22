@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { createPortal } from "react-dom";
 import { useDominantAxisTableScroll } from "../../../hooks/useDominantAxisTableScroll";
 import {
   FileSpreadsheet,
@@ -877,20 +878,26 @@ export default function Reports() {
         </div>
       </div>
 
-      {showAdministrativeReport && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-[#193364]/35 p-4 backdrop-blur-[3px]" role="presentation" onMouseDown={(event) => { if (event.target === event.currentTarget) setShowAdministrativeReport(false); }}>
+      {showAdministrativeReport && typeof document !== "undefined" && createPortal(
+        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-[#193364]/35 p-4 backdrop-blur-[3px]" role="presentation" onMouseDown={(event) => { if (event.target === event.currentTarget && !administrativeReportLoading) setShowAdministrativeReport(false); }}>
           <div className="max-h-[92vh] w-full max-w-4xl overflow-y-auto overscroll-contain rounded-[2rem] border border-white/50 bg-[#E0E5EC] text-[#193364] shadow-[18px_18px_36px_rgba(163,177,198,0.62),-12px_-12px_30px_rgba(255,255,255,0.76)]" role="dialog" aria-modal="true" aria-labelledby="administrative-report-title">
             <div className="sticky top-0 z-30 flex items-start justify-between gap-4 border-b border-[#c7ced8]/70 bg-[#E0E5EC]/95 px-5 py-4 backdrop-blur-sm sm:px-7 sm:py-5">
               <div><p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-[#0E5A72]">AI Administrative Reports</p><h2 id="administrative-report-title" className="mt-1 text-xl font-bold sm:text-2xl">Generated tourism report</h2></div>
               <button type="button" onClick={() => setShowAdministrativeReport(false)} className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[#E0E5EC] shadow-[inset_4px_4px_8px_rgba(163,177,198,0.42),inset_-4px_-4px_8px_rgba(255,255,255,0.78)]" aria-label="Close administrative reports"><X className="h-5 w-5" /></button>
             </div>
             <div className="space-y-5 px-5 py-5 sm:px-7 sm:py-6">
-              {activeAdministrativeReport && <div className="flex flex-wrap items-center justify-between gap-3"><div><p className="text-xs font-bold uppercase tracking-wide text-[#64748b]">{activeAdministrativeReport.status}</p><h3 className="mt-1 text-lg font-bold">{activeAdministrativeReport.periodLabel}</h3></div><div className="flex flex-wrap gap-2"><button type="button" onClick={() => exportAdministrativeReportPdf(activeAdministrativeReport)} className="inline-flex items-center gap-2 rounded-xl bg-[#0E5A72] px-3 py-2 text-xs font-bold text-white"><Download className="h-4 w-4" />Export PDF</button><button type="button" disabled={administrativeReportLoading} onClick={() => void handleAdministrativeReports(true)} className="inline-flex items-center gap-2 rounded-xl bg-[#193364] px-3 py-2 text-xs font-bold text-white disabled:opacity-60"><Sparkles className="h-4 w-4" />Regenerate</button></div></div>}
+              {administrativeReportLoading && (
+                <div role="status" aria-live="polite" className="flex items-center gap-3 rounded-2xl border border-[#B8C7E6] bg-[#EEF3FF] px-4 py-3 text-sm font-semibold text-[#193364]">
+                  <Loader2 className="h-4 w-4 shrink-0 animate-spin" aria-hidden="true" />
+                  <span>Regenerating this administrative report…</span>
+                  <span className="ml-auto h-2 w-20 shrink-0 animate-pulse rounded-full bg-[#193364]/30" aria-hidden="true" />
+                </div>
+              )}
+              {activeAdministrativeReport && <div className="flex flex-wrap items-center justify-between gap-3"><div><p className="text-xs font-bold uppercase tracking-wide text-[#64748b]">{activeAdministrativeReport.status}</p><h3 className="mt-1 text-lg font-bold">{activeAdministrativeReport.periodLabel}</h3></div><div className="flex flex-wrap gap-2"><button type="button" onClick={() => exportAdministrativeReportPdf(activeAdministrativeReport)} disabled={administrativeReportLoading} className="inline-flex items-center gap-2 rounded-xl bg-[#0E5A72] px-3 py-2 text-xs font-bold text-white disabled:cursor-wait disabled:opacity-60"><Download className="h-4 w-4" />Export PDF</button><button type="button" disabled={administrativeReportLoading} onClick={() => void handleAdministrativeReports(true)} className="inline-flex items-center gap-2 rounded-xl bg-[#193364] px-3 py-2 text-xs font-bold text-white disabled:cursor-wait disabled:opacity-60">{administrativeReportLoading ? <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" /> : <Sparkles className="h-4 w-4" aria-hidden="true" />}{administrativeReportLoading ? "Regenerating…" : "Regenerate"}</button></div></div>}
               {activeAdministrativeReport ? <AdministrativeReportExportPreview report={activeAdministrativeReport} /> : <p className="rounded-2xl bg-[#F5F8FF] p-5 text-sm text-[#64748b]">No saved report exists for the current {filterType} filter yet. Click the AI Administrative Reports button again to generate the report bundle.</p>}
             </div>
           </div>
-        </div>
-      )}
+        </div>, document.body)}
 
       {/* Review Modal */}
       {showDetailModal && selectedSubmission && (
