@@ -123,19 +123,25 @@ export default function EstablishmentSubmissionRecords({
   const isVisitor = activeType === "visitor";
   const activeCount = isVisitor ? filteredVisitors.length : filteredAccommodation.length;
   const hasBothReportTypes = canSubmitVisitor && canSubmitAccommodation;
-  const submissionKpis = hasBothReportTypes
-    ? [
-        ["Total report submissions", filteredVisitors.length + filteredAccommodation.length, "text-sky-700"],
-        ["Day-tour report submissions", filteredVisitors.length, "text-blue-600"],
-        ["Accommodation report submissions", filteredAccommodation.length, "text-purple-600"],
-      ]
-    : isVisitor
+  const accommodationCheckIns = filteredAccommodation.reduce((sum, record) => sum + Number(record.total_check_ins || 0), 0);
+  const accommodationGuestNights = filteredAccommodation.reduce((sum, record) => sum + Number(record.total_guest_nights || 0), 0);
+  const accommodationOccupiedRooms = filteredAccommodation.reduce((sum, record) => sum + Number(record.total_occupied_rooms || 0), 0);
+  const averageGuestPerRoom = accommodationOccupiedRooms > 0 ? accommodationGuestNights / accommodationOccupiedRooms : 0;
+  const averageGuestNight = accommodationCheckIns > 0 ? accommodationGuestNights / accommodationCheckIns : 0;
+  const submissionKpis = isVisitor
+    ? hasBothReportTypes
       ? [
-          ["Total submissions", filteredVisitors.length, "text-sky-700"],
+          ["Total report submissions", filteredVisitors.length + filteredAccommodation.length, "text-sky-700"],
+          ["Day-tour report submissions", filteredVisitors.length, "text-blue-600"],
+          ["Accommodation report submissions", filteredAccommodation.length, "text-purple-600"],
         ]
-      : [
-          ["Total submissions", filteredAccommodation.length, "text-sky-700"],
-        ];
+      : [["Total submissions", filteredVisitors.length, "text-sky-700"]]
+    : [
+        ["Total submissions", filteredAccommodation.length, "text-sky-700"],
+        ["Monthly Average Guest Per Room", averageGuestPerRoom.toFixed(2), "text-violet-700"],
+        ["Monthly Total Check-ins", accommodationCheckIns, "text-blue-600"],
+        ["Average Guest Night", averageGuestNight.toFixed(2), "text-amber-700"],
+      ];
 
   return (
     <div className="space-y-6">
@@ -169,7 +175,7 @@ export default function EstablishmentSubmissionRecords({
         </div>
       )}
 
-      <div className={`grid gap-2 sm:gap-4 ${hasBothReportTypes ? "grid-cols-3" : "grid-cols-2"}`}>
+      <div className={`grid gap-2 sm:gap-4 ${isVisitor ? (hasBothReportTypes ? "grid-cols-3" : "grid-cols-2") : "grid-cols-2 sm:grid-cols-4"}`}>
         {submissionKpis.map(([label, value, tone]) => (
           <div key={String(label)} className="min-w-0 rounded-3xl border border-slate-200 bg-white p-3 shadow-sm sm:p-5">
             <p className="break-words text-[11px] font-medium leading-4 text-slate-500 sm:text-sm sm:leading-5">
