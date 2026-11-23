@@ -134,14 +134,14 @@ export default function EstablishmentSubmissionRecords({
   const submissionKpis = isVisitor
     ? [
         ["Total submissions", filteredVisitors.length, "text-[#193364]"],
-        ["Monthly Day-tour Count", visitorCount, "text-[#193364]"],
-        ["Monthly Male Visitors", visitorMaleCount, "text-[#193364]"],
-        ["Monthly Female Visitors", visitorFemaleCount, "text-[#193364]"],
+        ["Day-tour Count", visitorCount, "text-[#193364]"],
+        ["Male Visitors", visitorMaleCount, "text-[#193364]"],
+        ["Female Visitors", visitorFemaleCount, "text-[#193364]"],
       ]
     : [
         ["Total submissions", filteredAccommodation.length, "text-[#193364]"],
-        ["Monthly Average Guest Per Room", averageGuestPerRoom.toFixed(2), "text-[#193364]"],
-        ["Monthly Total Check-ins", accommodationCheckIns, "text-[#193364]"],
+        ["Average Guest Per Room", averageGuestPerRoom.toFixed(2), "text-[#193364]"],
+        ["Total Check-ins", accommodationCheckIns, "text-[#193364]"],
         ["Average Guest Night", averageGuestNight.toFixed(2), "text-[#193364]"],
       ];
 
