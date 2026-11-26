@@ -10,6 +10,7 @@ import {
   CartesianGrid,
   Tooltip,
   Legend,
+  ReferenceDot,
   ResponsiveContainer,
 } from "recharts";
 import { AlertTriangle, RefreshCw, TrendingUp, TrendingDown, MapPin } from "lucide-react";
@@ -26,6 +27,11 @@ import { MAX_AI_ITEMS } from "../../../lib/aiInsights";
 import ReportPeriodFilter from "../../components/ReportPeriodFilter";
 import { getReportPeriodRange, type ReportPeriodSelection } from "../../../lib/reportPeriod";
 import { geminiService } from "../../../services/geminiService";
+import {
+  assignRecommendationsToAnomalies,
+  deduplicateStandaloneRecommendations,
+  isEvidenceBoundRecommendation,
+} from "../../../lib/aiRecommendationIntegrity";
 
 interface AnalyticsData {
   seasonalData: { month: string; visitors: number; guestCheckIns: number; guestNights: number }[];
@@ -140,24 +146,6 @@ const getComparisonPeriod = (period: ReportPeriodSelection, year: number): Repor
 
 const getComparisonLabel = (period: ReportPeriodSelection, comparisonYear: string) =>
   period.type === "year" ? `Year ${comparisonYear}` : `${period.type === "quarter" ? `Q${period.quarter}` : period.type === "month" ? new Date(2000, period.month, 1).toLocaleString("default", { month: "short" }) : period.type === "week" ? `Week ${period.week}` : "Custom range"} ${comparisonYear}`;
-
-const recommendationMetric = (insight: AnalyticsAiInsight) => String(insight.input_snapshot?.metric || "").toLowerCase();
-
-const recommendationText = (insight: AnalyticsAiInsight) => `${insight.title} ${insight.description} ${insight.recommended_action || ""} ${insight.category}`.toLowerCase();
-
-const recommendationActionKey = (insight: AnalyticsAiInsight) => String(insight.recommended_action || "")
-  .toLowerCase()
-  .replace(/recommendation:\s*/g, "")
-  .replace(/[^a-z0-9]+/g, " ")
-  .trim();
-
-const recommendationMatchesAnomaly = (insight: AnalyticsAiInsight, metric: unknown) => {
-  const text = recommendationText(insight);
-  const explicitMetric = recommendationMetric(insight);
-  if (metric === "dayTourVisitors") return explicitMetric === "daytourvisitors" || /day.?tour|visitor|season|origin|marketing/.test(text);
-  if (metric === "overnightGuestCheckIns") return explicitMetric === "overnightguestcheckins" || /overnight|accommodation|guest check|room|occupancy/.test(text);
-  return true;
-};
 
 const aiFindingMatchesPeriod = (anomaly: AnalyticsAiAnomaly, period: ReportPeriodSelection) => {
   const month = anomaly.input_snapshot?.current_month;
@@ -518,20 +506,27 @@ export default function Analytics() {
     </div>
   );
 
-  const matchedInsights = aiAnomalies.slice(0, 4)
-    .map((anomaly) => aiInsights.find((insight) => recommendationMatchesAnomaly(insight, anomaly.input_snapshot?.metric)))
-    .filter((insight): insight is AnalyticsAiInsight => Boolean(insight));
-  const matchedInsightIds = new Set(matchedInsights.map((insight) => insight.id));
-  const matchedRecommendationKeys = new Set(
-    matchedInsights.map(recommendationActionKey).filter(Boolean),
+  const recommendationAssignments = assignRecommendationsToAnomalies(
+    aiAnomalies.slice(0, 4).map((anomaly) => ({
+      id: anomaly.id,
+      metric: anomaly.input_snapshot?.metric,
+      currentMonth: anomaly.input_snapshot?.current_month,
+    })),
+    aiInsights,
   );
-
-  const standaloneAiInsights = aiInsights
-    .filter((insight) => !matchedInsightIds.has(insight.id) && !matchedRecommendationKeys.has(recommendationActionKey(insight)))
-    .filter((insight, index, insights) => {
-      const actionKey = recommendationActionKey(insight);
-      return !actionKey || insights.findIndex((candidate) => recommendationActionKey(candidate) === actionKey) === index;
-    });
+  const standaloneAiInsights = deduplicateStandaloneRecommendations(
+    aiInsights,
+    recommendationAssignments.usedCandidateIds,
+    recommendationAssignments.usedActionKeys,
+  );
+  const visibleAnomalyCount = Math.min(aiAnomalies.length, 4);
+  const visibleStandaloneCount = Math.min(standaloneAiInsights.length, 4);
+  const anomalyMarkers = aiAnomalies.slice(0, 4).map((anomaly) => ({
+    anomaly,
+    month: anomaly.input_snapshot?.current_month,
+    value: Number(anomaly.input_snapshot?.current_value || 0),
+    metric: anomaly.input_snapshot?.metric,
+  })).filter((item) => typeof item.month === "string" && item.value >= 0);
 
   return (
     <div className="space-y-6">
@@ -605,7 +600,10 @@ export default function Analytics() {
 
       <div id="analytics-trends" className="bg-white rounded-lg shadow-sm border border-gray-200 p-4 sm:p-6">
         <div className="flex flex-col gap-3 border-b border-gray-200 pb-4 sm:flex-row sm:items-start sm:justify-between">
-          <h3 className="text-base font-semibold text-gray-900 sm:text-lg">Tourism Trends and Seasonal Patterns ({getAnalyticsYearRange(selectedYear).label})</h3>
+          <div>
+            <h3 className="text-base font-semibold text-gray-900 sm:text-lg">Tourism Trends and Seasonal Patterns ({getAnalyticsYearRange(selectedYear).label})</h3>
+            {anomalyMarkers.length > 0 && <p className="mt-1 text-xs font-medium text-red-700">Red markers identify periods with verified unusual declines. Review the related finding below for the evidence.</p>}
+          </div>
           {panelFilter("Filter this chart")}
         </div>
         {data.seasonalData.length > 0 ? (
@@ -633,6 +631,9 @@ export default function Analytics() {
                 activeDot={{ r: 5 }}
                 name="Visitors"
               />
+              {anomalyMarkers.filter((item) => item.metric === "dayTourVisitors").map((item) => (
+                <ReferenceDot key={`day-tour-${item.anomaly.id}`} x={monthLabel(`${String(item.month)}-01`)} y={item.value} r={7} fill="#B42318" stroke="#fff" strokeWidth={2} isFront label="Drop" />
+              ))}
               <Area
                 type="monotone"
                 dataKey="guestCheckIns"
@@ -643,6 +644,9 @@ export default function Analytics() {
                 activeDot={{ r: 5 }}
                 name="Guest check-ins"
               />
+              {anomalyMarkers.filter((item) => item.metric === "overnightGuestCheckIns").map((item) => (
+                <ReferenceDot key={`overnight-${item.anomaly.id}`} x={monthLabel(`${String(item.month)}-01`)} y={item.value} r={7} fill="#B42318" stroke="#fff" strokeWidth={2} isFront label="Drop" />
+              ))}
             </AreaChart>
             </ResponsiveContainer>
           </div>
@@ -711,9 +715,10 @@ export default function Analytics() {
         </div>
         <EstablishmentPerformanceDashboard periods={data.performancePeriods} year={selectedYear} />
       </div>
+      <section id="analytics-ai-findings">
       <AiSectionCard
         title="AI findings and recommendations"
-        countLabel={`${aiAnomalies.length + aiInsights.length} Active`}
+        countLabel={`${visibleAnomalyCount + visibleStandaloneCount} Visible`}
         icon={<AlertTriangle className="size-5 text-amber-600" />}
         action={(
           <button type="button" onClick={refreshAiInsights} disabled={refreshingAi} className="inline-flex items-center gap-2 rounded-xl bg-[#193364] px-3 py-2 text-xs font-semibold text-white shadow-sm transition hover:bg-[#0E5A72] disabled:cursor-not-allowed disabled:opacity-60 sm:px-4 sm:text-sm">
@@ -729,14 +734,16 @@ export default function Analytics() {
         <div className="grid grid-cols-1 gap-3 lg:grid-cols-2">
           {aiAnomalies.length > 0 ? aiAnomalies.slice(0, 4).map((anomaly) => {
             const metric = anomaly.input_snapshot?.metric;
-            const matchingInsight = aiInsights.find((insight) => recommendationMatchesAnomaly(insight, metric));
-            return <AiAnomalyCard key={anomaly.id} {...anomaly} aiRecommendation={matchingInsight?.recommended_action || null} />;
+            const matchingInsight = recommendationAssignments.assignments.get(anomaly.id);
+            const fallbackRecommendation = (metric === "dayTourVisitors" || metric === "overnightGuestCheckIns") && isEvidenceBoundRecommendation(anomaly.recommendation, metric) ? anomaly.recommendation : null;
+            return <AiAnomalyCard key={anomaly.id} {...anomaly} aiRecommendation={matchingInsight?.recommended_action || fallbackRecommendation} evidenceHref="#analytics-trends" evidenceLabel="trend chart" />;
           }) : <AiEmptyState variant="gaps" />}
           {standaloneAiInsights.length > 0 ? standaloneAiInsights.slice(0, 4).map((insight) => (
             <AiRecommendationCard key={insight.id} {...insight} />
           )) : <AiEmptyState variant="recommendations" />}
         </div>
       </AiSectionCard>
+      </section>
 
     </div>
   );
