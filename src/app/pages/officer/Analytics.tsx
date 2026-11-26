@@ -571,7 +571,6 @@ export default function Analytics() {
       const metric = String(anomaly.input_snapshot?.metric || "");
       return metrics.includes(metric) && recommendationAssignments.assignments.has(anomaly.id);
     });
-    if (related.length === 0 && !aiRefreshError) return null;
     const evidenceHref = metrics.includes("visitorOrigins")
       ? "#analytics-origins"
       : metrics.includes("establishmentPerformance")
@@ -590,6 +589,7 @@ export default function Analytics() {
           </button>
         </div>
         {aiRefreshError && <p role="alert" className="mb-3 rounded-xl border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-800">{aiRefreshError}</p>}
+        {related.length === 0 && !aiRefreshError && <p className="rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-xs text-slate-600">No evidence-matched action is available for this chart yet. Refresh AI analysis to generate a metric-specific recommendation.</p>}
         {related.length > 0 && (
           <>
             <p className="mb-3 text-[11px] font-semibold uppercase tracking-[0.12em] text-amber-800">{related.length} actionable finding{related.length === 1 ? "" : "s"}</p>
