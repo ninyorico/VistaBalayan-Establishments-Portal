@@ -281,7 +281,12 @@ export default function Analytics() {
         .limit(MAX_AI_ITEMS),
     ]);
 
-    const periodAnomalies = ((aiAnomalyResult.data || []) as AnalyticsAiAnomaly[]).filter((anomaly) => aiFindingMatchesPeriod(anomaly, analyticsPeriod));
+    const periodAnomalies = (aiAnomalyResult.data || [])
+      .map((anomaly) => ({
+        ...anomaly,
+        establishments: Array.isArray(anomaly.establishments) ? anomaly.establishments[0] || null : anomaly.establishments,
+      }))
+      .filter((anomaly) => aiFindingMatchesPeriod(anomaly as AnalyticsAiAnomaly, analyticsPeriod)) as AnalyticsAiAnomaly[];
     setAiAnomalies(periodAnomalies);
     setAiInsights((aiInsightResult.data || []) as AnalyticsAiInsight[]);
 
