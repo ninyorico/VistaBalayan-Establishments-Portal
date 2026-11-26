@@ -536,14 +536,6 @@ export default function Analytics() {
         description={`Data-driven tourism analytics and decision support for the selected reporting period. Rankings, charts, origins, and performance findings use the active filter.`}
         compact
       >
-        <div className="w-full sm:w-auto">
-          <label className="flex items-center justify-end gap-2 text-xs font-medium text-slate-200">
-            Compare with
-            <select value={comparisonYear} onChange={(event) => setComparisonYear(event.target.value)} className="rounded-xl border border-white/20 bg-white px-3 py-2 text-sm text-gray-900 focus:border-cyan-200 focus:outline-none">
-              {analyticsYears.map((year) => <option key={year} value={year}>{year}</option>)}
-            </select>
-          </label>
-        </div>
       </PageHero>
 
       <div className="grid grid-cols-3 gap-2 sm:gap-4 lg:gap-6" data-analytics-kpi-row="mobile-one-row">
@@ -655,6 +647,36 @@ export default function Analytics() {
         )}
       </div>
 
+      <section id="analytics-ai-findings">
+        <AiSectionCard
+          title="AI findings and recommendations"
+          countLabel={`${visibleAnomalyCount + visibleStandaloneCount} Visible`}
+          icon={<AlertTriangle className="size-5 text-amber-600" />}
+          action={(
+            <button type="button" onClick={refreshAiInsights} disabled={refreshingAi} className="inline-flex items-center gap-2 rounded-xl bg-[#193364] px-3 py-2 text-xs font-semibold text-white shadow-sm transition hover:bg-[#0E5A72] disabled:cursor-not-allowed disabled:opacity-60 sm:px-4 sm:text-sm">
+              <RefreshCw className={`size-4 ${refreshingAi ? "animate-spin" : ""}`} aria-hidden="true" />
+              {refreshingAi ? "Refreshing…" : "Refresh AI analysis"}
+            </button>
+          )}
+        >
+          <p className="mb-4 text-sm text-gray-600">
+            These findings are based on the verified trend evidence above. Matching AI actions appear inside the related anomaly card; unrelated recommendations remain in this same section.
+          </p>
+          {aiRefreshError && <p role="alert" className="mb-4 rounded-xl border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-800">{aiRefreshError}</p>}
+          <div className="grid grid-cols-1 gap-3 lg:grid-cols-2">
+            {aiAnomalies.length > 0 ? aiAnomalies.slice(0, 4).map((anomaly) => {
+              const metric = anomaly.input_snapshot?.metric;
+              const matchingInsight = recommendationAssignments.assignments.get(anomaly.id);
+              const fallbackRecommendation = (metric === "dayTourVisitors" || metric === "overnightGuestCheckIns") && isEvidenceBoundRecommendation(anomaly.recommendation, metric) ? anomaly.recommendation : null;
+              return <AiAnomalyCard key={anomaly.id} {...anomaly} aiRecommendation={matchingInsight?.recommended_action || fallbackRecommendation} evidenceHref="#analytics-trends" evidenceLabel="trend chart" />;
+            }) : <AiEmptyState variant="gaps" />}
+            {standaloneAiInsights.length > 0 ? standaloneAiInsights.slice(0, 4).map((insight) => (
+              <AiRecommendationCard key={insight.id} {...insight} />
+            )) : <AiEmptyState variant="recommendations" />}
+          </div>
+        </AiSectionCard>
+      </section>
+
       <div id="analytics-origins" className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
         <div className="flex flex-col gap-3 border-b border-gray-200 p-6 sm:flex-row sm:items-start sm:justify-between">
           <h3 className="text-lg font-semibold text-gray-900">Visitor Origins & Actual Growth</h3>
@@ -706,44 +728,8 @@ export default function Analytics() {
       </div>
 
       <div id="analytics-performance">
-        <div className="mb-3 flex flex-col gap-3 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm sm:flex-row sm:items-start sm:justify-between sm:p-6">
-          <div>
-            <h3 className="text-base font-semibold text-gray-900 sm:text-lg">Establishment performance dashboard</h3>
-            <p className="mt-1 text-sm text-gray-600">Compare performance classifications for the selected reporting period.</p>
-          </div>
-          {panelFilter("Filter this dashboard")}
-        </div>
         <EstablishmentPerformanceDashboard periods={data.performancePeriods} year={selectedYear} />
       </div>
-      <section id="analytics-ai-findings">
-      <AiSectionCard
-        title="AI findings and recommendations"
-        countLabel={`${visibleAnomalyCount + visibleStandaloneCount} Visible`}
-        icon={<AlertTriangle className="size-5 text-amber-600" />}
-        action={(
-          <button type="button" onClick={refreshAiInsights} disabled={refreshingAi} className="inline-flex items-center gap-2 rounded-xl bg-[#193364] px-3 py-2 text-xs font-semibold text-white shadow-sm transition hover:bg-[#0E5A72] disabled:cursor-not-allowed disabled:opacity-60 sm:px-4 sm:text-sm">
-            <RefreshCw className={`size-4 ${refreshingAi ? "animate-spin" : ""}`} aria-hidden="true" />
-            {refreshingAi ? "Refreshing…" : "Refresh AI analysis"}
-          </button>
-        )}
-      >
-        <p className="mb-4 text-sm text-gray-600">
-          These findings summarize active anomalies and generated recommendations in one AI decision-support section. Matching AI actions appear inside the related anomaly card; unrelated recommendations remain in this same section. AI explains the displayed data but does not change the chart, totals, or rankings.
-        </p>
-        {aiRefreshError && <p role="alert" className="mb-4 rounded-xl border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-800">{aiRefreshError}</p>}
-        <div className="grid grid-cols-1 gap-3 lg:grid-cols-2">
-          {aiAnomalies.length > 0 ? aiAnomalies.slice(0, 4).map((anomaly) => {
-            const metric = anomaly.input_snapshot?.metric;
-            const matchingInsight = recommendationAssignments.assignments.get(anomaly.id);
-            const fallbackRecommendation = (metric === "dayTourVisitors" || metric === "overnightGuestCheckIns") && isEvidenceBoundRecommendation(anomaly.recommendation, metric) ? anomaly.recommendation : null;
-            return <AiAnomalyCard key={anomaly.id} {...anomaly} aiRecommendation={matchingInsight?.recommended_action || fallbackRecommendation} evidenceHref="#analytics-trends" evidenceLabel="trend chart" />;
-          }) : <AiEmptyState variant="gaps" />}
-          {standaloneAiInsights.length > 0 ? standaloneAiInsights.slice(0, 4).map((insight) => (
-            <AiRecommendationCard key={insight.id} {...insight} />
-          )) : <AiEmptyState variant="recommendations" />}
-        </div>
-      </AiSectionCard>
-      </section>
 
     </div>
   );

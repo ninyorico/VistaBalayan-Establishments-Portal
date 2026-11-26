@@ -42,3 +42,18 @@ Build warnings remain non-blocking: stale Browserslist data, empty `src/styles/f
 ## Remaining scope
 
 This revision does not implement public-site verified rating accounts, entrance-fee verification, or a multi-indicator establishment-quality score because those flows are not contained in the audited authenticated portal implementation. They require a separate public-site/data-governance scope and must not be fabricated in this repository.
+
+## Follow-up layout revision
+
+- Removed the `Compare with` control from the Tourism intelligence hero.
+- Removed the redundant outer Establishment performance filter card.
+- Kept the establishment performance reporting-period control inside the Tourism Establishment Performance Dashboard card.
+- Moved the unified AI findings section directly below the tourism trend chart so anomaly evidence, AI findings, and recommendations appear together before origins and performance panels.
+- Preserved the single unified AI section; AI cards are not embedded separately inside every chart.
+
+Verification for this follow-up:
+
+- `npm test`: 11 test files, 45 tests passed.
+- `npx tsc --noEmit`: passed.
+- `npm run build`: passed.
+- `git diff --check`: passed.
