@@ -253,7 +253,6 @@ export default function Analytics() {
         .select("id,anomaly_type,severity,description,recommendation,detected_at,is_resolved,input_snapshot,establishments(name)")
         .eq("status", "active")
         .eq("is_resolved", false)
-        .gt("expires_at", new Date().toISOString())
         .is("establishment_id", null)
         .order("detected_at", { ascending: false })
         .limit(MAX_AI_ITEMS),
