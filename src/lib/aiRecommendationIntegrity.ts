@@ -37,7 +37,15 @@ export const recommendationSupportsMetric = (candidate: RecommendationCandidate,
 
 export const recommendationSupportsPeriod = (candidate: RecommendationCandidate, currentMonth?: unknown) => {
   const candidateMonth = monthOf(candidate);
-  return !candidateMonth || !currentMonth || candidateMonth === String(currentMonth);
+  if (!currentMonth) return true;
+  if (candidateMonth && candidateMonth !== String(currentMonth)) return false;
+  const analysisPeriod = candidate.input_snapshot?.analysis_period;
+  if (!analysisPeriod || typeof analysisPeriod !== "object") return true;
+  const period = analysisPeriod as Record<string, unknown>;
+  const start = String(period.selectedStartDate || period.queryStart || "");
+  const end = String(period.selectedEndDate || period.queryEnd || "");
+  const month = String(currentMonth);
+  return !start || !end || `${month}-01` <= end && `${month}-31` >= start;
 };
 
 export const isEvidenceBoundRecommendation = (action: string | null | undefined, metric: RecommendationMetric) => {

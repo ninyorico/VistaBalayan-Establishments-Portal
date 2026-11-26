@@ -1,8 +1,28 @@
 import { describe, expect, it } from "vitest";
 
-import { aggregateMonthlyMetrics, buildDeterministicAnomalies, deriveReportEvidence, hasConsistentAnomalyEvidence } from "./tourismMetrics.js";
+import { aggregateMonthlyMetrics, buildDeterministicAnomalies, coverageConfidence, deriveReportEvidence, hasConsistentAnomalyEvidence } from "./tourismMetrics.js";
 
 describe("tourism monthly metrics", () => {
+  it("classifies coverage deterministically without model input", () => {
+    expect(coverageConfidence(8.7)).toBe("Very Low");
+    expect(coverageConfidence(20)).toBe("Very Low");
+    expect(coverageConfidence(41.9)).toBe("Low");
+    expect(coverageConfidence(65)).toBe("Moderate");
+    expect(coverageConfidence(90)).toBe("High");
+    expect(coverageConfidence(null)).toBe(null);
+  });
+  it("represents empty months inside an explicit period with missing-report evidence", () => {
+    const metrics = aggregateMonthlyMetrics(
+      [{ report_date: "2026-01-15", establishment_id: "a", total_guests: 10 }],
+      [],
+      1,
+      0,
+      { startDate: "2026-01-01", endDate: "2026-03-31" },
+    );
+    expect(metrics.map((row) => row.month)).toEqual(["2026-01", "2026-02", "2026-03"]);
+    expect(metrics[1]).toMatchObject({ dayTourVisitors: 0, submittedVisitorReports: 0, expectedVisitorReports: 28, missingVisitorReports: 28, coveragePercent: 0 });
+  });
+
   it("derives consistent evidence from submitted and expected reports", () => {
     expect(deriveReportEvidence(34, 687)).toEqual({
       missingReports: 653,
@@ -46,7 +66,8 @@ describe("tourism monthly metrics", () => {
         submittedVisitorReports: 2,
         expectedVisitorReports: 56,
         missingVisitorReports: 54,
-        lateVisitorReports: 1,
+        enteredAfterReportDateVisitorReports: 1,
+        lateVisitorReports: 0,
       }),
       expect.objectContaining({
         month: "2026-03",
@@ -127,7 +148,8 @@ describe("tourism monthly metrics", () => {
         previous_value: 100,
         current_value: 60,
         drop_percent: 40,
-        current_late_reports: 1,
+        current_late_reports: 0,
+        current_entered_after_report_date: 1,
         current_missing_reports: 30,
         current_coverage_percent: 3.23,
       },
@@ -150,10 +172,11 @@ describe("tourism monthly metrics", () => {
 
     expect(anomaly.description).toContain("with 1.6% reporting coverage.");
     expect(anomaly.description).toContain("61 expected day-tour reports are missing.");
-    expect(anomaly.description).toContain("1 submitted day-tour report was entered after the report date.");
+    expect(anomaly.description).toContain("1 submitted report was entered after the report date; submission timing requires verification.");
     expect(anomaly.evidence).toMatchObject({
       current_missing_reports: 61,
-      current_late_reports: 1,
+      current_late_reports: 0,
+      current_entered_after_report_date: 1,
     });
   });
 });

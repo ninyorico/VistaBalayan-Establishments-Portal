@@ -253,6 +253,7 @@ export default function Analytics() {
         .select("id,anomaly_type,severity,description,recommendation,detected_at,is_resolved,input_snapshot,establishments(name)")
         .eq("status", "active")
         .eq("is_resolved", false)
+        .gt("expires_at", new Date().toISOString())
         .is("establishment_id", null)
         .order("detected_at", { ascending: false })
         .limit(MAX_AI_ITEMS),
@@ -260,6 +261,7 @@ export default function Analytics() {
         .from("ai_recommendations")
         .select("id,title,description,impact,category,recommended_action,input_snapshot")
         .eq("status", "active")
+        .gt("expires_at", new Date().toISOString())
         .is("establishment_id", null)
         .order("created_at", { ascending: false })
         .limit(MAX_AI_ITEMS),
@@ -350,7 +352,7 @@ export default function Analytics() {
       });
     });
     const monthlyData = Object.fromEntries(
-      aggregateMonthlyMetrics(visitors, accommodations).map((item) => [item.month, {
+      aggregateMonthlyMetrics(visitors, accommodations, 0, 0, { startDate: selectedRange.startDate, endDate: selectedRange.endDate }).map((item) => [item.month, {
         label: monthLabel(`${item.month}-01`),
         visitors: item.dayTourVisitors,
         guestCheckIns: item.guestCheckIns,
@@ -481,7 +483,15 @@ export default function Analytics() {
     setRefreshingAi(true);
     setAiRefreshError(null);
     try {
-      await geminiService.refreshAllData();
+      const selectedRange = getReportPeriodRange(analyticsPeriod);
+      const comparisonRange = getReportPeriodRange(getComparisonPeriod(analyticsPeriod, Number(comparisonYear)));
+      await geminiService.refreshAllData({
+        selectedStartDate: selectedRange.startDate,
+        selectedEndDate: selectedRange.endDate,
+        comparisonStartDate: comparisonRange.startDate,
+        comparisonEndDate: comparisonRange.endDate,
+        label: analyticsPeriod.type === "year" ? `Year ${selectedYear} compared with ${comparisonYear}` : `${selectedRange.startDate} to ${selectedRange.endDate} compared with ${comparisonRange.startDate} to ${comparisonRange.endDate}`,
+      });
       await fetchAnalytics();
     } catch (error) {
       setAiRefreshError(error instanceof Error ? error.message : "Unable to refresh AI analysis right now.");

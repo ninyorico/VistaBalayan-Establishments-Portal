@@ -6,9 +6,11 @@ export type TourismMonthlyMetric = {
   visitorRowCount: number;
   accommodationRowCount: number;
   submittedVisitorReports: number;
+  enteredAfterReportDateVisitorReports: number;
   lateVisitorReports: number;
   missingVisitorReports: number | null;
   submittedAccommodationReports: number;
+  enteredAfterReportDateAccommodationReports: number;
   lateAccommodationReports: number;
   missingAccommodationReports: number | null;
   expectedAccommodationReports: number | null;
@@ -29,12 +31,15 @@ export function aggregateMonthlyMetrics(
   accommodationRows?: Array<Record<string, unknown>>,
   eligibleVisitorEstablishments?: number,
   eligibleAccommodationEstablishments?: number,
+  period?: { startDate?: string; endDate?: string } | null,
 ): TourismMonthlyMetric[];
 
 export function deriveReportEvidence(
   submittedReports: number,
   expectedReports: number | null,
 ): { missingReports: number | null; coveragePercent: number | null };
+
+export function coverageConfidence(coveragePercent: number | null): 'Very Low' | 'Low' | 'Moderate' | 'High' | null;
 
 export function hasConsistentAnomalyEvidence(evidence?: Record<string, unknown>): boolean;
 

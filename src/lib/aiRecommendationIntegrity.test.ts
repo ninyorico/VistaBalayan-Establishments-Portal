@@ -3,6 +3,7 @@ import {
   assignRecommendationsToAnomalies,
   deduplicateStandaloneRecommendations,
   isEvidenceBoundRecommendation,
+  recommendationSupportsPeriod,
 } from "./aiRecommendationIntegrity";
 
 describe("AI recommendation integrity", () => {
@@ -32,6 +33,11 @@ describe("AI recommendation integrity", () => {
     const assignments = assignRecommendationsToAnomalies([{ id: "a1", metric: "overnightGuestCheckIns" }], candidates);
     const standalone = deduplicateStandaloneRecommendations(candidates, assignments.usedCandidateIds, assignments.usedActionKeys);
     expect(standalone.map((item) => item.id)).toEqual(["day-tour-1"]);
+  });
+
+  it("does not attach a recommendation outside its generated period", () => {
+    expect(recommendationSupportsPeriod({ id: "period", input_snapshot: { analysis_period: { selectedStartDate: "2026-01-01", selectedEndDate: "2026-01-31" } } }, "2026-01")).toBe(true);
+    expect(recommendationSupportsPeriod({ id: "period", input_snapshot: { analysis_period: { selectedStartDate: "2026-01-01", selectedEndDate: "2026-01-31" } } }, "2026-02")).toBe(false);
   });
 
   it("rejects generic and unsupported causal actions", () => {

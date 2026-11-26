@@ -126,8 +126,9 @@ const formatEvidence = (snapshot?: Record<string, unknown> | null) => {
   const currentMonth = formatMonthLabel(snapshot.current_month);
   const metricLabel = snapshot.metric === "overnightGuestCheckIns" ? "guest check-ins" : "visitors";
   const missing = current.missing == null ? "missing reports unavailable" : `${current.missing.toLocaleString()} missing reports`;
-  const late = `${Number(snapshot.current_late_reports || 0).toLocaleString()} late submissions`;
-  return `${previousMonth}: ${previousValue} → ${currentMonth}: ${currentValue} ${metricLabel}; ${missing}; ${late}.`;
+  const enteredAfterReportDate = snapshot["current_entered_after_report_date"] == null ? 0 : Number(snapshot["current_entered_after_report_date"]);
+  const timing = enteredAfterReportDate > 0 ? `${enteredAfterReportDate.toLocaleString()} entered after report date; timing requires verification` : "submission timing requires verification";
+  return `${previousMonth}: ${previousValue} → ${currentMonth}: ${currentValue} ${metricLabel}; ${missing}; ${timing}.`;
 };
 
 const formatMonthLabel = (value: unknown) => {

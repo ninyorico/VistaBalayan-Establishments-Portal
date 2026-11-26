@@ -23,6 +23,17 @@ export const deriveReportEvidence = (submittedReports, expectedReports) => {
   }
 }
 
+export const coverageConfidence = (coveragePercent) => {
+  if (coveragePercent == null || coveragePercent === '') return null
+  const coverage = Number(coveragePercent)
+  if (!Number.isFinite(coverage)) return null
+  if (coverage < 25) return 'Very Low'
+  if (coverage < 50) return 'Low'
+  if (coverage < 80) return 'Moderate'
+  if (coverage <= 100) return 'High'
+  return null
+}
+
 export const hasConsistentAnomalyEvidence = (evidence = {}) => {
   for (const prefix of ['current', 'previous']) {
     const submitted = evidence[`${prefix}_submitted_reports`]
@@ -41,12 +52,24 @@ export const hasConsistentAnomalyEvidence = (evidence = {}) => {
   return true
 }
 
+const monthKeysBetween = (startDate, endDate) => {
+  if (!startDate || !endDate) return []
+  const start = new Date(`${startDate.slice(0, 7)}-01T00:00:00Z`)
+  const end = new Date(`${endDate.slice(0, 7)}-01T00:00:00Z`)
+  if (Number.isNaN(start.getTime()) || Number.isNaN(end.getTime()) || start > end) return []
+  const keys = []
+  for (const cursor = new Date(start); cursor <= end; cursor.setUTCMonth(cursor.getUTCMonth() + 1)) {
+    keys.push(`${cursor.getUTCFullYear()}-${String(cursor.getUTCMonth() + 1).padStart(2, '0')}`)
+  }
+  return keys
+}
+
 /**
  * Aggregate submitted visitor and accommodation rows by calendar month.
  * Visitor rows may be one row per residence/category, so coverage uses
  * distinct establishment/date pairs rather than raw row count.
  */
-export const aggregateMonthlyMetrics = (visitorRows = [], accommodationRows = [], eligibleVisitorEstablishments = 0, eligibleAccommodationEstablishments = 0) => {
+export const aggregateMonthlyMetrics = (visitorRows = [], accommodationRows = [], eligibleVisitorEstablishments = 0, eligibleAccommodationEstablishments = 0, period = null) => {
   const byMonth = new Map()
   const ensure = (key) => {
     if (!byMonth.has(key)) {
@@ -58,13 +81,15 @@ export const aggregateMonthlyMetrics = (visitorRows = [], accommodationRows = []
         visitorRowCount: 0,
         accommodationRowCount: 0,
         visitorSubmissionDays: new Set(),
-        lateVisitorSubmissionDays: new Set(),
         accommodationSubmissionDays: new Set(),
-        lateAccommodationSubmissionDays: new Set(),
+        enteredAfterReportDateVisitorSubmissionDays: new Set(),
+        enteredAfterReportDateAccommodationSubmissionDays: new Set(),
       })
     }
     return byMonth.get(key)
   }
+
+  for (const key of monthKeysBetween(period?.startDate, period?.endDate)) ensure(key)
 
   for (const row of visitorRows) {
     const key = monthKey(row.report_date)
@@ -76,7 +101,7 @@ export const aggregateMonthlyMetrics = (visitorRows = [], accommodationRows = []
       const submissionKey = `${row.establishment_id}|${row.report_date}`
       item.visitorSubmissionDays.add(submissionKey)
       if (String(row.created_at || '').slice(0, 10) > String(row.report_date).slice(0, 10)) {
-        item.lateVisitorSubmissionDays.add(submissionKey)
+        item.enteredAfterReportDateVisitorSubmissionDays.add(submissionKey)
       }
     }
   }
@@ -91,7 +116,7 @@ export const aggregateMonthlyMetrics = (visitorRows = [], accommodationRows = []
       const submissionKey = `${row.establishment_id}|${row.report_date}`
       item.accommodationSubmissionDays.add(submissionKey)
       if (String(row.created_at || '').slice(0, 10) > String(row.report_date).slice(0, 10)) {
-        item.lateAccommodationSubmissionDays.add(submissionKey)
+        item.enteredAfterReportDateAccommodationSubmissionDays.add(submissionKey)
       }
     }
   }
@@ -103,7 +128,8 @@ export const aggregateMonthlyMetrics = (visitorRows = [], accommodationRows = []
         ? eligibleVisitorEstablishments * daysInMonth(item.month)
         : null
       const submittedVisitorReports = item.visitorSubmissionDays.size
-      const lateVisitorReports = item.lateVisitorSubmissionDays.size
+      const enteredAfterReportDateVisitorReports = item.enteredAfterReportDateVisitorSubmissionDays.size
+      const lateVisitorReports = 0
       const visitorEvidence = deriveReportEvidence(submittedVisitorReports, expectedVisitorReports)
       const coveragePercent = visitorEvidence.coveragePercent
       const missingVisitorReports = visitorEvidence.missingReports
@@ -111,7 +137,8 @@ export const aggregateMonthlyMetrics = (visitorRows = [], accommodationRows = []
         ? eligibleAccommodationEstablishments * daysInMonth(item.month)
         : null
       const submittedAccommodationReports = item.accommodationSubmissionDays.size
-      const lateAccommodationReports = item.lateAccommodationSubmissionDays.size
+      const enteredAfterReportDateAccommodationReports = item.enteredAfterReportDateAccommodationSubmissionDays.size
+      const lateAccommodationReports = 0
       const accommodationEvidence = deriveReportEvidence(submittedAccommodationReports, expectedAccommodationReports)
       const accommodationCoveragePercent = accommodationEvidence.coveragePercent
       const missingAccommodationReports = accommodationEvidence.missingReports
@@ -123,9 +150,11 @@ export const aggregateMonthlyMetrics = (visitorRows = [], accommodationRows = []
         visitorRowCount: item.visitorRowCount,
         accommodationRowCount: item.accommodationRowCount,
         submittedVisitorReports,
+        enteredAfterReportDateVisitorReports,
         lateVisitorReports,
         missingVisitorReports,
         submittedAccommodationReports,
+        enteredAfterReportDateAccommodationReports,
         lateAccommodationReports,
         missingAccommodationReports,
         expectedAccommodationReports,
@@ -181,13 +210,13 @@ export const buildDeterministicAnomalies = (monthlyMetrics = [], options = {}) =
       const missingNote = current.missingVisitorReports === null
         ? 'Missing report count is unavailable.'
         : `${current.missingVisitorReports} expected report${current.missingVisitorReports === 1 ? '' : 's'} ${current.missingVisitorReports === 1 ? 'is' : 'are'} missing.`
-      const lateNote = current.lateVisitorReports > 0
-        ? `${current.lateVisitorReports} submitted report${current.lateVisitorReports === 1 ? '' : 's'} ${current.lateVisitorReports === 1 ? 'was' : 'were'} entered after the report date.`
-        : 'No submitted reports were identified as late.'
+      const enteredAfterReportDateNote = current.enteredAfterReportDateVisitorReports > 0
+        ? `${current.enteredAfterReportDateVisitorReports} submitted report${current.enteredAfterReportDateVisitorReports === 1 ? '' : 's'} ${current.enteredAfterReportDateVisitorReports === 1 ? 'was' : 'were'} entered after the report date; submission timing requires verification.`
+        : 'Submission timing was not assessed because no configured deadline is available.'
       rows.push({
         type: 'Day-tour visitor decline',
         severity,
-        description: `Reported day-tour visitors decreased ${dropPercent.toFixed(1)}% from ${monthLabel(previous.month)} to ${monthLabel(current.month)} ${current.month.slice(0, 4)}, with ${current.coveragePercent === null ? 'unavailable' : `${current.coveragePercent.toFixed(1)}%`} reporting coverage. ${current.missingVisitorReports === null ? 'Missing day-tour report count is unavailable.' : `${current.missingVisitorReports} expected day-tour reports are missing.`} ${current.lateVisitorReports > 0 ? `${current.lateVisitorReports} submitted day-tour report${current.lateVisitorReports === 1 ? '' : 's'} ${current.lateVisitorReports === 1 ? 'was' : 'were'} entered after the report date.` : 'No submitted day-tour reports were identified as late.'}`,
+        description: `Reported day-tour visitors decreased ${dropPercent.toFixed(1)}% from ${monthLabel(previous.month)} to ${monthLabel(current.month)} ${current.month.slice(0, 4)}, with ${current.coveragePercent === null ? 'unavailable' : `${current.coveragePercent.toFixed(1)}%`} reporting coverage. ${current.missingVisitorReports === null ? 'Missing day-tour report count is unavailable.' : `${current.missingVisitorReports} expected day-tour reports are missing.`} ${enteredAfterReportDateNote}`,
         evidence: {
           anomaly_key: anomalyKey,
           metric: 'dayTourVisitors',
@@ -203,11 +232,13 @@ export const buildDeterministicAnomalies = (monthlyMetrics = [], options = {}) =
           current_expected_reports: current.expectedVisitorReports,
           current_missing_reports: current.missingVisitorReports,
           current_late_reports: current.lateVisitorReports,
+          current_entered_after_report_date: current.enteredAfterReportDateVisitorReports,
           current_coverage_percent: current.coveragePercent === null ? null : Number(current.coveragePercent.toFixed(2)),
           previous_submitted_reports: previous.submittedVisitorReports,
           previous_expected_reports: previous.expectedVisitorReports,
           previous_missing_reports: previous.missingVisitorReports,
           previous_late_reports: previous.lateVisitorReports,
+          previous_entered_after_report_date: previous.enteredAfterReportDateVisitorReports,
           previous_coverage_percent: previous.coveragePercent === null ? null : Number(previous.coveragePercent.toFixed(2)),
           rule_version: 'day-tour-monthly-drop-v2',
         },
@@ -223,13 +254,13 @@ export const buildDeterministicAnomalies = (monthlyMetrics = [], options = {}) =
       const overnightMissingNote = current.missingAccommodationReports === null
         ? 'Missing accommodation report count is unavailable.'
         : `${current.missingAccommodationReports} expected accommodation report${current.missingAccommodationReports === 1 ? '' : 's'} ${current.missingAccommodationReports === 1 ? 'is' : 'are'} missing.`
-      const overnightLateNote = current.lateAccommodationReports > 0
-        ? `${current.lateAccommodationReports} submitted accommodation report${current.lateAccommodationReports === 1 ? '' : 's'} ${current.lateAccommodationReports === 1 ? 'was' : 'were'} entered after the report date.`
-        : 'No submitted accommodation reports were identified as late.'
+      const enteredAfterReportDateOvernightNote = current.enteredAfterReportDateAccommodationReports > 0
+        ? `${current.enteredAfterReportDateAccommodationReports} submitted accommodation report${current.enteredAfterReportDateAccommodationReports === 1 ? '' : 's'} ${current.enteredAfterReportDateAccommodationReports === 1 ? 'was' : 'were'} entered after the report date; submission timing requires verification.`
+        : 'Submission timing was not assessed because no configured deadline is available.'
       rows.push({
         type: 'Overnight guest check-in decline',
         severity: overnightDropPercent >= 50 ? 'high' : 'medium',
-        description: `Reported overnight guest check-ins decreased ${overnightDropPercent.toFixed(1)}% from ${monthLabel(previous.month)} to ${monthLabel(current.month)} ${current.month.slice(0, 4)}, with ${current.accommodationCoveragePercent === null ? 'unavailable' : `${current.accommodationCoveragePercent.toFixed(1)}%`} accommodation reporting coverage. ${current.missingAccommodationReports === null ? 'Missing accommodation report count is unavailable.' : `${current.missingAccommodationReports} expected accommodation reports are missing.`} ${current.lateAccommodationReports > 0 ? `${current.lateAccommodationReports} submitted accommodation report${current.lateAccommodationReports === 1 ? '' : 's'} ${current.lateAccommodationReports === 1 ? 'was' : 'were'} entered after the report date.` : 'No submitted accommodation reports were identified as late.'}`,
+        description: `Reported overnight guest check-ins decreased ${overnightDropPercent.toFixed(1)}% from ${monthLabel(previous.month)} to ${monthLabel(current.month)} ${current.month.slice(0, 4)}, with ${current.accommodationCoveragePercent === null ? 'unavailable' : `${current.accommodationCoveragePercent.toFixed(1)}%`} accommodation reporting coverage. ${current.missingAccommodationReports === null ? 'Missing accommodation report count is unavailable.' : `${current.missingAccommodationReports} expected accommodation reports are missing.`} ${enteredAfterReportDateOvernightNote}`,
         evidence: {
           anomaly_key: `overnight-guest-check-ins:${current.month}`,
           metric: 'overnightGuestCheckIns',
@@ -245,11 +276,13 @@ export const buildDeterministicAnomalies = (monthlyMetrics = [], options = {}) =
           current_expected_reports: current.expectedAccommodationReports,
           current_missing_reports: current.missingAccommodationReports,
           current_late_reports: current.lateAccommodationReports,
+          current_entered_after_report_date: current.enteredAfterReportDateAccommodationReports,
           current_coverage_percent: current.accommodationCoveragePercent === null ? null : Number(current.accommodationCoveragePercent.toFixed(2)),
           previous_submitted_reports: previous.submittedAccommodationReports,
           previous_expected_reports: previous.expectedAccommodationReports,
           previous_missing_reports: previous.missingAccommodationReports,
           previous_late_reports: previous.lateAccommodationReports,
+          previous_entered_after_report_date: previous.enteredAfterReportDateAccommodationReports,
           previous_coverage_percent: previous.accommodationCoveragePercent === null ? null : Number(previous.accommodationCoveragePercent.toFixed(2)),
           rule_version: 'overnight-monthly-drop-v1',
         },

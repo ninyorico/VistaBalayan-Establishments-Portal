@@ -16,7 +16,15 @@ type Anomaly = {
   establishment?: string
 }
 
-const callGenerationApi = async (scope: 'municipality' | 'establishment') => {
+type AnalysisContext = {
+  selectedStartDate?: string
+  selectedEndDate?: string
+  comparisonStartDate?: string
+  comparisonEndDate?: string
+  label?: string
+}
+
+const callGenerationApi = async (scope: 'municipality' | 'establishment', analysisContext?: AnalysisContext) => {
   const requestId = crypto.randomUUID()
   const { data: sessionData, error: sessionError } = await supabase.auth.getSession()
   const accessToken = sessionData.session?.access_token
@@ -28,7 +36,7 @@ const callGenerationApi = async (scope: 'municipality' | 'establishment') => {
       'Content-Type': 'application/json',
       Authorization: `Bearer ${accessToken}`,
     },
-    body: JSON.stringify({ scope, request_id: requestId }),
+    body: JSON.stringify({ scope, request_id: requestId, analysis_period: analysisContext }),
   })
   const result = await response.json().catch(() => ({}))
   if (!response.ok) throw new Error(result.error || 'AI generation failed')
@@ -36,8 +44,8 @@ const callGenerationApi = async (scope: 'municipality' | 'establishment') => {
 }
 
 export const geminiService = {
-  async refreshAllData() {
-    return callGenerationApi('municipality')
+  async refreshAllData(analysisContext?: AnalysisContext) {
+    return callGenerationApi('municipality', analysisContext)
   },
 
   async generateForEstablishment() {
