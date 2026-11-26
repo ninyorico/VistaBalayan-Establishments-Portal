@@ -72,11 +72,18 @@ const normalizePriority = (value, metric, confidence) => {
   const priority = clean(value).toLowerCase();
   return ['critical', 'high', 'medium', 'low'].includes(priority) ? priority[0].toUpperCase() + priority.slice(1) : 'Medium';
 };
+const normalizeActionPriority = (value, metric, confidence, recommendationClass) => {
+  if (confidence === 'Very Low') return recommendationClass === 'Data Validation' ? 'High' : 'Medium';
+  if (confidence === 'Low') return ['Critical', 'High'].includes(value) ? 'High' : 'Medium';
+  const priority = clean(value).toLowerCase();
+  return ['critical', 'high', 'medium', 'low'].includes(priority) ? priority[0].toUpperCase() + priority.slice(1) : 'Medium';
+};
 const gateActions = (actions, metric, confidence, monthlyMetrics = []) => actions.filter((action) => {
   const text = `${action.recommendation_class} ${action.action_category} ${action.action_title} ${action.action_description} ${action.success_indicators.join(' ')}`.toLowerCase();
   const strategic = /strategic|promotion|tourism development|tourism planning|resource allocation|accommodation development|campaign|package|partnership/.test(text);
   if (strategic && confidence === 'Very Low' && !action.validation_required) return false;
   if (/tourism statistics officer|tourism statistics unit|tourism data analyst|tourism policy committee/.test(text)) return false;
+  if (/non[- ]compliant|noncompliance/.test(text)) return false;
   if (metric === 'seasonality') {
     const peak = peakMonthName(monthlyMetrics);
     const referencedMonths = MONTH_NAMES.filter((month) => text.includes(month.toLowerCase()));
@@ -87,7 +94,11 @@ const gateActions = (actions, metric, confidence, monthlyMetrics = []) => action
 
 const normalizeInsights = (items, coverageByMetric = {}, analysisPeriod = null, allowedEvidenceIds = new Set(), monthlyMetrics = []) => (Array.isArray(items) ? items : []).slice(0, MAX_AI_ITEMS).map((item) => {
   const confidence = confidenceForMetric(item.metric, coverageByMetric);
-  const actions = gateActions((Array.isArray(item.recommended_actions) ? item.recommended_actions : [item.recommended_action || item.action]).map((action) => normalizeAction(action, allowedEvidenceIds)).filter((action) => action?.action_description).slice(0, 4), item.metric, confidence, monthlyMetrics);
+  const actions = gateActions((Array.isArray(item.recommended_actions) ? item.recommended_actions : [item.recommended_action || item.action])
+    .map((action) => normalizeAction(action, allowedEvidenceIds))
+    .filter((action) => action?.action_description)
+    .map((action) => ({ ...action, action_priority: normalizeActionPriority(action.action_priority, item.metric, confidence, action.recommendation_class) }))
+    .slice(0, 4), item.metric, confidence, monthlyMetrics);
   const decisionSupport = {
     insight_category: clean(item.insight_category || item.category, 'Operations'),
     priority: normalizePriority(item.priority || item.impact, item.metric, confidenceForMetric(item.metric, coverageByMetric)),
@@ -429,7 +440,7 @@ export default async function handler(req, res) {
     if (!apiKey) return sendJson(res, 503, { error: 'AI service is not configured' });
     const data = await getScopedData(supabaseAdmin, profile, scope, analysisPeriod);
     const sourceFingerprint = crypto.createHash('sha256').update(JSON.stringify({ monthlyMetrics: data.monthlyMetrics, originEvidence: data.originEvidence, establishmentEvidence: data.establishmentEvidence })).digest('hex');
-    const generationKey = crypto.createHash('sha256').update(JSON.stringify({ ruleVersion: 'decision-support-v4', scope, establishmentId: profile.establishment_id || null, analysisPeriod, sourceFingerprint })).digest('hex');
+    const generationKey = crypto.createHash('sha256').update(JSON.stringify({ ruleVersion: 'decision-support-v6', scope, establishmentId: profile.establishment_id || null, analysisPeriod, sourceFingerprint })).digest('hex');
     const cachedResults = await findCachedResults(supabaseAdmin, scope, profile.establishment_id, generationKey);
     if (cachedResults) return sendJson(res, 200, cachedResults);
     const results = await generate(apiKey, data, scope);

@@ -314,7 +314,7 @@ export function AiAnomalyCard(anomaly: AiAnomalyCardProps) {
                       {action.action_priority && <span className="shrink-0 text-[10px] font-bold uppercase tracking-[0.12em] text-amber-700">{action.action_priority}</span>}
                     </div>
                     <p className="mt-1 text-sm leading-6 text-slate-700"><AiFormattedText text={action.action_description || ""} tone="action" /></p>
-                    {(action.responsible_entity || action.suggested_timeframe) && <p className="mt-2 text-xs font-medium text-slate-500">Owner: {action.responsible_entity || "Suggested implementing entity"} · Timeframe: {action.suggested_timeframe || "To be scheduled"}</p>}
+                    {(action.responsible_entity || action.suggested_timeframe) && <p className="mt-2 text-xs font-medium text-slate-500">Responsible role/office: {action.responsible_entity || "To be assigned"} · Timeframe: {action.suggested_timeframe || "To be scheduled"}</p>}
                     {action.success_indicators?.length ? <p className="mt-2 text-xs leading-5 text-slate-600"><span className="font-semibold text-slate-700">Success indicator:</span> {action.success_indicators.join("; ")}</p> : null}
                   </li>
                 ))}
