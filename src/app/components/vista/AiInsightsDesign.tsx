@@ -39,6 +39,8 @@ interface AiRecommendationCardProps {
   impact: string;
   category: string;
   recommended_action?: string | null;
+  evidenceHref?: string;
+  evidenceLabel?: string;
 }
 
 const severityTone = (severity?: string) => {
@@ -209,6 +211,7 @@ export function AiSectionCard({
   title: string;
   countLabel?: string;
   icon: ReactNode;
+  action?: ReactNode;
   children: ReactNode;
 }) {
   return (
@@ -224,6 +227,7 @@ export function AiSectionCard({
               {countLabel}
             </Badge>
           )}
+          {action}
         </div>
       </CardHeader>
       <CardContent className="rounded-b-[1.5rem] px-4 py-4 sm:px-6 sm:py-5">{children}</CardContent>
@@ -323,6 +327,11 @@ export function AiRecommendationCard(insight: AiRecommendationCardProps) {
             <span className="font-semibold text-slate-800">Action:</span>{" "}
             <AiFormattedText text={action} tone="action" />
           </div>
+        )}
+        {insight.evidenceHref && (
+          <a href={insight.evidenceHref} className="mt-3 inline-flex text-sm font-semibold text-[#0E5A72] underline decoration-[#0E5A72]/35 underline-offset-4 hover:text-[#193364]">
+            View related {insight.evidenceLabel || "Analytics evidence"}
+          </a>
         )}
         <div className="mt-auto flex items-center justify-between gap-3 border-t border-slate-100 pt-3">
           <span className="min-w-0 truncate text-xs font-semibold uppercase tracking-[0.16em] text-slate-400">
