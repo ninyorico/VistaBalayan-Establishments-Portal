@@ -22,7 +22,7 @@ import DataState from "../../components/DataState";
 import { PageHero } from "../../components/vista/PolishedShell";
 import EstablishmentPerformanceDashboard, { type PerformanceInputWithMode } from "../../components/vista/EstablishmentPerformanceDashboard";
 import { useDominantAxisTableScroll } from "../../../hooks/useDominantAxisTableScroll";
-import { AiAnomalyCard } from "../../components/vista/AiInsightsDesign";
+import { AiAnomalyCard, type AiDecisionSupport } from "../../components/vista/AiInsightsDesign";
 import { MAX_AI_ITEMS } from "../../../lib/aiInsights";
 import ReportPeriodFilter from "../../components/ReportPeriodFilter";
 import { getReportPeriodRange, type ReportPeriodSelection } from "../../../lib/reportPeriod";
@@ -562,7 +562,7 @@ export default function Analytics() {
               {related.map((anomaly) => {
                 const metric = anomaly.input_snapshot?.metric;
                 const matchingInsight = recommendationAssignments.assignments.get(anomaly.id);
-                return <AiAnomalyCard key={anomaly.id} {...anomaly} aiRecommendation={matchingInsight?.recommended_action || null} showRecommendationUnavailable evidenceHref="#analytics-trends" evidenceLabel="chart evidence" />;
+                return <AiAnomalyCard key={anomaly.id} {...anomaly} aiRecommendation={matchingInsight?.recommended_action || null} decisionSupport={matchingInsight?.input_snapshot?.decision_support as AiDecisionSupport | undefined} showRecommendationUnavailable evidenceHref="#analytics-trends" evidenceLabel="chart evidence" />;
               })}
             </div>
           </>

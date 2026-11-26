@@ -18,6 +18,32 @@ interface AiInsightShellProps {
   children: ReactNode;
 }
 
+export interface AiDecisionSupport {
+  insight_category?: string;
+  priority?: string;
+  analysis_period?: string;
+  geographic_scope?: string;
+  data_confidence?: string;
+  data_limitations?: string[];
+  decision_implication?: string;
+  recommended_actions?: Array<{
+    action_title?: string;
+    action_description?: string;
+    action_priority?: string;
+    action_category?: string;
+    responsible_entity?: string;
+    suggested_timeframe?: string;
+    prerequisites?: string[];
+    success_indicators?: string[];
+    validation_required?: boolean;
+  }>;
+  responsible_entities?: string[];
+  suggested_timeframe?: string;
+  expected_outcome?: string;
+  success_indicators?: string[];
+  validation_required?: boolean;
+}
+
 interface AiAnomalyCardProps {
   id: string;
   anomaly_type: string;
@@ -28,6 +54,7 @@ interface AiAnomalyCardProps {
   establishments?: { name: string } | null;
   input_snapshot?: Record<string, unknown> | null;
   aiRecommendation?: string | null;
+  decisionSupport?: AiDecisionSupport | null;
   showRecommendationUnavailable?: boolean;
   evidenceHref?: string;
   evidenceLabel?: string;
@@ -233,6 +260,7 @@ export function AiSectionCard({
 
 export function AiAnomalyCard(anomaly: AiAnomalyCardProps) {
   const tone = severityTone(anomaly.severity);
+  const actionPlan = anomaly.decisionSupport?.recommended_actions?.filter((action) => action.action_description) || [];
 
   return (
     <article className={cn("group relative h-full overflow-hidden rounded-2xl border border-slate-200 bg-white p-0 shadow-[0_14px_40px_rgba(15,23,42,0.05)] transition-all duration-500 hover:-translate-y-0.5 hover:shadow-[0_18px_55px_rgba(15,23,42,0.08)]", anomaly.className)} data-ai-card-layout="shadcn-anomaly-editorial">
@@ -271,7 +299,30 @@ export function AiAnomalyCard(anomaly: AiAnomalyCardProps) {
               {formatEvidence(anomaly.input_snapshot)}
             </div>
           )}
-          {anomaly.aiRecommendation ? (
+          {actionPlan.length > 0 ? (
+            <div className="space-y-3" data-ai-action-plan="decision-support">
+              <div className="flex items-center justify-between gap-2">
+                <span className="font-semibold text-slate-800">Recommended actions</span>
+                {anomaly.decisionSupport?.data_confidence && <Badge variant="outline" className="rounded-full border-slate-300 text-xs text-slate-600">{anomaly.decisionSupport.data_confidence} confidence</Badge>}
+              </div>
+              <ol className="space-y-3">
+                {actionPlan.map((action, index) => (
+                  <li key={`${action.action_title || "action"}-${index}`} className="rounded-2xl border border-slate-200 bg-slate-50/80 p-3">
+                    <div className="flex items-start justify-between gap-3">
+                      <p className="font-semibold text-slate-800">{index + 1}. {cleanAiText(action.action_title || "Recommended action")}</p>
+                      {action.action_priority && <span className="shrink-0 text-[10px] font-bold uppercase tracking-[0.12em] text-amber-700">{action.action_priority}</span>}
+                    </div>
+                    <p className="mt-1 text-sm leading-6 text-slate-700"><AiFormattedText text={action.action_description || ""} tone="action" /></p>
+                    {(action.responsible_entity || action.suggested_timeframe) && <p className="mt-2 text-xs font-medium text-slate-500">Owner: {action.responsible_entity || "Suggested implementing entity"} · Timeframe: {action.suggested_timeframe || "To be scheduled"}</p>}
+                    {action.success_indicators?.length ? <p className="mt-2 text-xs leading-5 text-slate-600"><span className="font-semibold text-slate-700">Success indicator:</span> {action.success_indicators.join("; ")}</p> : null}
+                  </li>
+                ))}
+              </ol>
+              {anomaly.decisionSupport?.decision_implication && <p className="rounded-xl border border-blue-100 bg-blue-50/70 p-3 text-sm leading-6 text-blue-900"><span className="font-semibold">Decision implication:</span> {anomaly.decisionSupport.decision_implication}</p>}
+              {anomaly.decisionSupport?.expected_outcome && <p className="text-sm leading-6 text-slate-600"><span className="font-semibold text-slate-800">Expected outcome:</span> {anomaly.decisionSupport.expected_outcome}</p>}
+              {anomaly.decisionSupport?.data_limitations?.length ? <p className="text-xs leading-5 text-slate-500"><span className="font-semibold text-slate-700">Limitations:</span> {anomaly.decisionSupport.data_limitations.join("; ")}</p> : null}
+            </div>
+          ) : anomaly.aiRecommendation ? (
             <div className="rounded-2xl border border-slate-200 bg-slate-50/80 p-3 text-justify leading-6 hyphens-auto" data-ai-action-note="editorial-shadcn">
               <span className="font-semibold text-slate-800">Recommendation:</span>{" "}
               <AiFormattedText text={anomaly.aiRecommendation} tone="action" />

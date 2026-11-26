@@ -22,14 +22,49 @@ const jsonObject = (text) => {
   const match = String(text).match(/\{[\s\S]*\}/);
   return match ? JSON.parse(match[0]) : {};
 };
-const normalizeInsights = (items) => (Array.isArray(items) ? items : []).slice(0, MAX_AI_ITEMS).map((item) => ({
-  title: clean(item.title, 'Tourism insight'),
-  description: clean(item.description),
-  impact: clean(item.impact, 'medium').toLowerCase(),
-  category: clean(item.category, 'Operations'),
-  recommended_action: clean(item.recommended_action || item.action),
-  input_snapshot: item.metric ? { metric: clean(item.metric) } : null,
-}));
+const normalizeAction = (action) => {
+  if (!action || typeof action !== 'object') return null;
+  const successIndicators = Array.isArray(action.success_indicators) ? action.success_indicators.map((value) => clean(value)).filter(Boolean).slice(0, 5) : [];
+  return {
+    action_title: clean(action.action_title || action.title, 'Recommended action'),
+    action_description: clean(action.action_description || action.description || action.recommended_action || action.action),
+    action_priority: clean(action.action_priority || action.priority, 'Medium'),
+    action_category: clean(action.action_category || action.category, 'Operations'),
+    responsible_entity: clean(action.responsible_entity || action.responsible, 'Municipal Tourism Office'),
+    suggested_timeframe: clean(action.suggested_timeframe || action.timeframe, 'During the next reporting period'),
+    supporting_evidence_ids: Array.isArray(action.supporting_evidence_ids) ? action.supporting_evidence_ids.map((value) => clean(value)).filter(Boolean).slice(0, 8) : [],
+    prerequisites: Array.isArray(action.prerequisites) ? action.prerequisites.map((value) => clean(value)).filter(Boolean).slice(0, 5) : [],
+    success_indicators: successIndicators,
+    validation_required: action.validation_required !== false,
+  };
+};
+const normalizeInsights = (items) => (Array.isArray(items) ? items : []).slice(0, MAX_AI_ITEMS).map((item) => {
+  const actions = (Array.isArray(item.recommended_actions) ? item.recommended_actions : [item.recommended_action || item.action]).map(normalizeAction).filter((action) => action?.action_description).slice(0, 4);
+  const decisionSupport = {
+    insight_category: clean(item.insight_category || item.category, 'Operations'),
+    priority: clean(item.priority || item.impact, 'Medium'),
+    analysis_period: clean(item.analysis_period),
+    geographic_scope: clean(item.geographic_scope, 'Balayan municipality'),
+    data_confidence: clean(item.data_confidence, 'Requires officer review'),
+    data_limitations: Array.isArray(item.data_limitations) ? item.data_limitations.map((value) => clean(value)).filter(Boolean).slice(0, 5) : [],
+    decision_implication: clean(item.decision_implication),
+    recommended_actions: actions,
+    responsible_entities: Array.isArray(item.responsible_entities) ? item.responsible_entities.map((value) => clean(value)).filter(Boolean).slice(0, 5) : [],
+    suggested_timeframe: clean(item.suggested_timeframe),
+    expected_outcome: clean(item.expected_outcome),
+    success_indicators: Array.isArray(item.success_indicators) ? item.success_indicators.map((value) => clean(value)).filter(Boolean).slice(0, 8) : [],
+    validation_required: item.validation_required !== false,
+    related_evidence_ids: Array.isArray(item.related_evidence_ids) ? item.related_evidence_ids.map((value) => clean(value)).filter(Boolean).slice(0, 8) : [],
+  };
+  return {
+    title: clean(item.title || item.insight_title, 'Tourism insight'),
+    description: clean(item.description || item.ai_insight),
+    impact: clean(item.impact || item.priority, 'medium').toLowerCase(),
+    category: decisionSupport.insight_category,
+    recommended_action: actions[0]?.action_description || '',
+    input_snapshot: item.metric ? { metric: clean(item.metric), decision_support: decisionSupport } : null,
+  };
+});
 const normalizeAnomalies = (items) => (Array.isArray(items) ? items : []).slice(0, MAX_AI_ITEMS).map((item) => ({
   type: clean(item.type || item.anomaly_type, 'Operational anomaly'),
   severity: clean(item.severity, 'medium').toLowerCase(),
@@ -145,7 +180,7 @@ const getScopedData = async (supabaseAdmin, profile, scope) => {
 
 const generate = async (apiKey, data, scope) => {
   const anomalies = buildDeterministicAnomalies(data.monthlyMetrics);
-  const prompt = `You are a tourism data analyst for ${data.establishmentName}. This is a decision-support system for a municipal tourism officer. Based only on the verified aggregate values below, return one JSON object with exactly ${scope === 'establishment' ? 3 : 4} concise recommendations. Use this exact shape: {"insights":[{"title":"max 6 words","description":"one sentence max 18 words; describe only the supplied evidence","impact":"high|medium|low","category":"Operations|Seasonal","metric":"dayTourVisitors|overnightGuestCheckIns|seasonality","recommended_action":"one specific decision-support action sentence max 18 words"}]}. Every action must help the officer decide what to do next: name a concrete operational step such as contacting responsible establishments, assigning follow-up, setting a completion deadline, coordinating a response, escalating a verified issue, or using a confirmed seasonal peak as a planning benchmark. State the evidence-supported decision purpose. Do not begin with or consist only of review, investigate, compare, monitor, validate, or study. Do not merely repeat the decline or say to take action. For dayTourVisitors and overnightGuestCheckIns, use only the supplied reported values, reporting coverage, missing reports, late reports, and period-to-period changes. For seasonality, use only repeated monthly visitor or check-in patterns and the observed peak month; recommend studying or preserving an observed pattern, not an invented cause. Do not recommend promotions, campaigns, marketing, capacity, rooms, lodging expansion, occupancy changes, pricing, events, weather responses, or causes unless those exact values are supplied. Do not invent causes, figures, or personal data. The server computes anomaly evidence separately. Total submitted day-tour visitors: ${data.totalVisitors}. Average accommodation occupancy: ${data.avgOccupancy}%. Monthly metrics: ${JSON.stringify(data.monthlyMetrics)}. Verified anomaly evidence: ${JSON.stringify(anomalies.map((item) => item.evidence))}.`;
+  const prompt = `You are a tourism data analyst for ${data.establishmentName}. This is a decision-support system for a municipal tourism officer. Based only on the verified aggregate values below, return one JSON object with exactly ${scope === 'establishment' ? 3 : 4} concise insights. Use this exact shape: {"insights":[{"title":"max 6 words","description":"one sentence max 30 words; describe only supplied evidence","impact":"high|medium|low","insight_category":"Reporting Compliance|Data Validation|Tourism Planning|Tourism Promotion|Accommodation Development|Resource Allocation|Comparative Tourism Assessment|Policy and Program Evaluation","metric":"dayTourVisitors|overnightGuestCheckIns|seasonality","analysis_period":"selected period","geographic_scope":"Balayan municipality","data_confidence":"Very Low|Low|Moderate|High","data_limitations":["specific limitation"],"decision_implication":"why this matters for a municipal decision, max 35 words","recommended_actions":[{"action_title":"max 8 words","action_description":"specific action with an owner or target, max 28 words","action_priority":"Critical|High|Medium|Low","action_category":"Operations|Reporting Compliance|Tourism Planning|Tourism Promotion|Accommodation Development|Resource Allocation","responsible_entity":"suggested entity","suggested_timeframe":"Immediate|Within 7 days|Within 14 days|Within 30 days|Within 30–60 days|Before the anticipated peak season|During the next reporting period","supporting_evidence_ids":["evidence key"],"prerequisites":["required condition"],"success_indicators":["measurable result"],"validation_required":true}],"responsible_entities":["suggested entity"],"suggested_timeframe":"suggested timeframe","expected_outcome":"intended benefit, max 25 words","success_indicators":["measurable result"],"validation_required":true,"related_evidence_ids":["evidence key"]}]}. Generate 2 to 4 concrete actions per insight. Actions must help the officer decide what to do next: name a concrete operational step such as contacting responsible establishments, assigning follow-up, setting a completion deadline, coordinating a response, escalating a verified issue, or using a confirmed seasonal peak as a planning benchmark. Do not begin with or consist only of review, investigate, compare, monitor, validate, or study. State the evidence-supported decision purpose. For dayTourVisitors and overnightGuestCheckIns, use only supplied reported values, reporting coverage, missing reports, late reports, and period-to-period changes. For seasonality, use only repeated monthly visitor or check-in patterns and the observed peak month; a single peak is only a potential seasonal pattern. Do not recommend promotions, campaigns, marketing, capacity, rooms, lodging expansion, occupancy changes, pricing, events, weather responses, or causes unless those exact values are supplied. Do not invent causes, figures, establishments, or personal data. Confidence must reflect coverage and limitations: below 25% is Very Low, 25% to below 50% Low, 50% to below 80% Moderate, and 80% or higher High. These are internal decision-support thresholds, not official standards. Total submitted day-tour visitors: ${data.totalVisitors}. Average accommodation occupancy: ${data.avgOccupancy}%. Monthly metrics: ${JSON.stringify(data.monthlyMetrics)}. Verified anomaly evidence: ${JSON.stringify(anomalies.map((item) => item.evidence))}.`;
   const result = await generateContentWithFallback(apiKey, prompt);
   const generated = jsonObject(await result.response.text());
   return {
