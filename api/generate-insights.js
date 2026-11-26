@@ -429,7 +429,7 @@ export default async function handler(req, res) {
     if (!apiKey) return sendJson(res, 503, { error: 'AI service is not configured' });
     const data = await getScopedData(supabaseAdmin, profile, scope, analysisPeriod);
     const sourceFingerprint = crypto.createHash('sha256').update(JSON.stringify({ monthlyMetrics: data.monthlyMetrics, originEvidence: data.originEvidence, establishmentEvidence: data.establishmentEvidence })).digest('hex');
-    const generationKey = crypto.createHash('sha256').update(JSON.stringify({ ruleVersion: 'decision-support-v3', scope, establishmentId: profile.establishment_id || null, analysisPeriod, sourceFingerprint })).digest('hex');
+    const generationKey = crypto.createHash('sha256').update(JSON.stringify({ ruleVersion: 'decision-support-v4', scope, establishmentId: profile.establishment_id || null, analysisPeriod, sourceFingerprint })).digest('hex');
     const cachedResults = await findCachedResults(supabaseAdmin, scope, profile.establishment_id, generationKey);
     if (cachedResults) return sendJson(res, 200, cachedResults);
     const results = await generate(apiKey, data, scope);
