@@ -145,6 +145,12 @@ const recommendationMetric = (insight: AnalyticsAiInsight) => String(insight.inp
 
 const recommendationText = (insight: AnalyticsAiInsight) => `${insight.title} ${insight.description} ${insight.recommended_action || ""} ${insight.category}`.toLowerCase();
 
+const recommendationActionKey = (insight: AnalyticsAiInsight) => String(insight.recommended_action || "")
+  .toLowerCase()
+  .replace(/recommendation:\s*/g, "")
+  .replace(/[^a-z0-9]+/g, " ")
+  .trim();
+
 const recommendationMatchesAnomaly = (insight: AnalyticsAiInsight, metric: unknown) => {
   const text = recommendationText(insight);
   const explicitMetric = recommendationMetric(insight);
@@ -507,11 +513,20 @@ export default function Analytics() {
     </div>
   );
 
-  const matchedInsightIds = new Set(
-    aiAnomalies.slice(0, 4)
-      .map((anomaly) => aiInsights.find((insight) => recommendationMatchesAnomaly(insight, anomaly.input_snapshot?.metric))?.id)
-      .filter(Boolean)
+  const matchedInsights = aiAnomalies.slice(0, 4)
+    .map((anomaly) => aiInsights.find((insight) => recommendationMatchesAnomaly(insight, anomaly.input_snapshot?.metric)))
+    .filter((insight): insight is AnalyticsAiInsight => Boolean(insight));
+  const matchedInsightIds = new Set(matchedInsights.map((insight) => insight.id));
+  const matchedRecommendationKeys = new Set(
+    matchedInsights.map(recommendationActionKey).filter(Boolean),
   );
+
+  const standaloneAiInsights = aiInsights
+    .filter((insight) => !matchedInsightIds.has(insight.id) && !matchedRecommendationKeys.has(recommendationActionKey(insight)))
+    .filter((insight, index, insights) => {
+      const actionKey = recommendationActionKey(insight);
+      return !actionKey || insights.findIndex((candidate) => recommendationActionKey(candidate) === actionKey) === index;
+    });
 
   return (
     <div className="space-y-6">
@@ -712,7 +727,7 @@ export default function Analytics() {
             const matchingInsight = aiInsights.find((insight) => recommendationMatchesAnomaly(insight, metric));
             return <AiAnomalyCard key={anomaly.id} {...anomaly} aiRecommendation={matchingInsight?.recommended_action || null} />;
           }) : <AiEmptyState variant="gaps" />}
-          {aiInsights.length > 0 ? aiInsights.filter((insight) => !matchedInsightIds.has(insight.id)).slice(0, 4).map((insight) => (
+          {standaloneAiInsights.length > 0 ? standaloneAiInsights.slice(0, 4).map((insight) => (
             <AiRecommendationCard key={insight.id} {...insight} />
           )) : <AiEmptyState variant="recommendations" />}
         </div>
