@@ -1,4 +1,4 @@
-export type RecommendationMetric = "dayTourVisitors" | "overnightGuestCheckIns";
+export type RecommendationMetric = "dayTourVisitors" | "overnightGuestCheckIns" | "seasonality";
 
 export type RecommendationCandidate = {
   id: string;
@@ -49,7 +49,9 @@ export const isEvidenceBoundRecommendation = (action: string | null | undefined,
   if (!evidenceTerms.test(normalized)) return false;
   const metricTerms = metric === "overnightGuestCheckIns"
     ? /overnight|accommodation|guest check|report|reporting|missing|late|submitted|coverage/
-    : /day tour|visitor|tourism|arrival|report|reporting|missing|late|submitted|coverage|origin/;
+    : metric === "seasonality"
+      ? /season|seasonal|month|peak|visitor|check in|check-in|guest/
+      : /day tour|visitor|tourism|arrival|report|reporting|missing|late|submitted|coverage|origin/;
   return metricTerms.test(normalized);
 };
 
@@ -63,7 +65,7 @@ export const assignRecommendationsToAnomalies = <T extends RecommendationCandida
 
   for (const anomaly of anomalies) {
     const metric = String(anomaly.metric || "") as RecommendationMetric;
-    if (metric !== "dayTourVisitors" && metric !== "overnightGuestCheckIns") continue;
+    if (metric !== "dayTourVisitors" && metric !== "overnightGuestCheckIns" && metric !== "seasonality") continue;
     const candidate = candidates.find((item) => {
       const actionKey = recommendationActionKey(item);
       return !usedCandidateIds.has(item.id)

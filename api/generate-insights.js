@@ -144,12 +144,13 @@ const getScopedData = async (supabaseAdmin, profile, scope) => {
 
 
 const generate = async (apiKey, data, scope) => {
-  const prompt = `You are a tourism data analyst for ${data.establishmentName}. Based only on the verified aggregate values below, return one JSON object with exactly ${scope === 'establishment' ? 3 : 4} concise recommendations. Use this exact shape: {"insights":[{"title":"max 6 words","description":"one sentence max 18 words; do not invent causes or figures","impact":"high|medium|low","category":"Seasonal|Operations|Marketing|Infrastructure","metric":"dayTourVisitors|overnightGuestCheckIns|visitorOrigins|establishmentPerformance|seasonality|general","recommended_action":"one action sentence max 14 words"}]}. Total submitted day-tour visitors: ${data.totalVisitors}. Average accommodation occupancy: ${data.avgOccupancy}%. Monthly metrics: ${JSON.stringify(data.monthlyMetrics)}. Do not generate anomaly classifications, numerical claims, causes, or personal data. The server computes anomaly evidence separately.`;
+  const anomalies = buildDeterministicAnomalies(data.monthlyMetrics);
+  const prompt = `You are a tourism data analyst for ${data.establishmentName}. Based only on the verified aggregate values below, return one JSON object with exactly ${scope === 'establishment' ? 3 : 4} concise recommendations. Use this exact shape: {"insights":[{"title":"max 6 words","description":"one sentence max 18 words; describe only the supplied evidence","impact":"high|medium|low","category":"Operations|Seasonal","metric":"dayTourVisitors|overnightGuestCheckIns|seasonality","recommended_action":"one specific action sentence max 18 words"}]}. Every action must be directly supported by the matching metric evidence. For dayTourVisitors and overnightGuestCheckIns, use only the supplied reported values, reporting coverage, missing reports, late reports, and period-to-period changes. For seasonality, use only repeated monthly visitor or check-in patterns and the observed peak month. Do not recommend promotions, campaigns, marketing, capacity, rooms, lodging expansion, occupancy changes, pricing, events, weather responses, or causes unless those exact values are supplied. Do not invent causes, figures, or personal data. The server computes anomaly evidence separately. Total submitted day-tour visitors: ${data.totalVisitors}. Average accommodation occupancy: ${data.avgOccupancy}%. Monthly metrics: ${JSON.stringify(data.monthlyMetrics)}. Verified anomaly evidence: ${JSON.stringify(anomalies.map((item) => item.evidence))}.`;
   const result = await generateContentWithFallback(apiKey, prompt);
   const generated = jsonObject(await result.response.text());
   return {
     insights: normalizeInsights(generated.insights),
-    anomalies: buildDeterministicAnomalies(data.monthlyMetrics),
+    anomalies,
     modelName: result.modelName,
   };
 };

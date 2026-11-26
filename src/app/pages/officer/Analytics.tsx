@@ -502,30 +502,52 @@ export default function Analytics() {
     </div>
   );
 
-  const recommendationAssignments = assignRecommendationsToAnomalies(
-    aiAnomalies.slice(0, 4).map((anomaly) => ({
-      id: anomaly.id,
-      metric: anomaly.input_snapshot?.metric,
-      currentMonth: anomaly.input_snapshot?.current_month,
-    })),
-    aiInsights,
-  );
   const anomalyMarkers = aiAnomalies.slice(0, 4).map((anomaly) => ({
     anomaly,
     month: anomaly.input_snapshot?.current_month,
     value: Number(anomaly.input_snapshot?.current_value || 0),
     metric: anomaly.input_snapshot?.metric,
   })).filter((item) => typeof item.month === "string" && item.value >= 0);
+  const seasonalPeak = data.seasonalData
+    .map((item, index) => ({ ...item, index, combinedActivity: item.visitors + item.guestCheckIns }))
+    .filter((item) => item.combinedActivity > 0)
+    .sort((a, b) => b.combinedActivity - a.combinedActivity)[0];
+  const seasonalFindings: AnalyticsAiAnomaly[] = seasonalPeak ? [{
+    id: `seasonality-peak-${selectedYear}`,
+    anomaly_type: "Seasonal activity peak",
+    severity: "low",
+    description: `The selected year recorded its highest combined reported visitor and overnight check-in activity in ${seasonalPeak.month}, with ${seasonalPeak.visitors.toLocaleString()} visitors and ${seasonalPeak.guestCheckIns.toLocaleString()} overnight guest check-ins.`,
+    recommendation: "",
+    detected_at: new Date().toISOString(),
+    is_resolved: false,
+    input_snapshot: {
+      metric: "seasonality",
+      current_month: `${selectedYear}-${String(seasonalPeak.index + 1).padStart(2, "0")}`,
+      current_value: seasonalPeak.combinedActivity,
+      peak_month: seasonalPeak.month,
+      visitor_value: seasonalPeak.visitors,
+      overnight_check_in_value: seasonalPeak.guestCheckIns,
+    },
+  }] : [];
+  const allAiFindings = [...aiAnomalies, ...seasonalFindings];
+  const recommendationAssignments = assignRecommendationsToAnomalies(
+    allAiFindings.slice(0, 5).map((anomaly) => ({
+      id: anomaly.id,
+      metric: anomaly.input_snapshot?.metric,
+      currentMonth: anomaly.input_snapshot?.current_month,
+    })),
+    aiInsights,
+  );
 
   const renderRelatedAiFindings = (metrics: string[]) => {
-    const related = aiAnomalies.filter((anomaly) => metrics.includes(String(anomaly.input_snapshot?.metric)));
+    const related = allAiFindings.filter((anomaly) => metrics.includes(String(anomaly.input_snapshot?.metric)));
     if (related.length === 0 && !aiRefreshError) return null;
     return (
       <div className="mt-5 border-t border-slate-200 pt-5" aria-label="AI findings related to this chart">
         <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
           <div>
             <h4 className="text-sm font-semibold text-slate-900">Related AI findings and recommendations</h4>
-            <p className="mt-1 text-xs text-slate-500">Based on the unusual periods marked in this chart and the active reporting filter.</p>
+            <p className="mt-1 text-xs text-slate-500">Based on verified chart evidence, seasonal patterns, and the active reporting filter.</p>
           </div>
           <button type="button" onClick={refreshAiInsights} disabled={refreshingAi} className="inline-flex items-center gap-2 rounded-xl bg-[#193364] px-3 py-2 text-xs font-semibold text-white shadow-sm transition hover:bg-[#0E5A72] disabled:cursor-not-allowed disabled:opacity-60">
             <RefreshCw className={`size-4 ${refreshingAi ? "animate-spin" : ""}`} aria-hidden="true" />
@@ -666,7 +688,7 @@ export default function Analytics() {
         ) : (
           <div className="text-center py-12 text-gray-500">No seasonal data available</div>
         )}
-        {renderRelatedAiFindings(["dayTourVisitors", "overnightGuestCheckIns"])}
+        {renderRelatedAiFindings(["dayTourVisitors", "overnightGuestCheckIns", "seasonality"])}
       </div>
 
       <div id="analytics-origins" className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
