@@ -153,21 +153,6 @@ const recommendationMatchesAnomaly = (insight: AnalyticsAiInsight, metric: unkno
   return true;
 };
 
-const evidenceForRecommendation = (insight: AnalyticsAiInsight) => {
-  const metric = recommendationMetric(insight);
-  const text = recommendationText(insight);
-  if (metric === "overnightguestcheckins" || /overnight|accommodation|guest check|room|occupancy/.test(text)) {
-    return { evidenceHref: "#analytics-performance", evidenceLabel: "accommodation performance dashboard" };
-  }
-  if (metric === "visitororigins" || /origin|residence|domestic|foreign/.test(text)) {
-    return { evidenceHref: "#analytics-origins", evidenceLabel: "visitor origins table" };
-  }
-  if (metric === "establishmentperformance" || /establishment|ranking|comparison/.test(text)) {
-    return { evidenceHref: "#analytics-rankings", evidenceLabel: "establishment comparison table" };
-  }
-  return { evidenceHref: "#analytics-trends", evidenceLabel: "visitor trend chart" };
-};
-
 const aiFindingMatchesPeriod = (anomaly: AnalyticsAiAnomaly, period: ReportPeriodSelection) => {
   const month = anomaly.input_snapshot?.current_month;
   if (typeof month !== "string" || !/^\d{4}-\d{2}$/.test(month)) return true;
@@ -522,6 +507,12 @@ export default function Analytics() {
     </div>
   );
 
+  const matchedInsightIds = new Set(
+    aiAnomalies.slice(0, 4)
+      .map((anomaly) => aiInsights.find((insight) => recommendationMatchesAnomaly(insight, anomaly.input_snapshot?.metric))?.id)
+      .filter(Boolean)
+  );
+
   return (
     <div className="space-y-6">
       <PageHero
@@ -712,19 +703,17 @@ export default function Analytics() {
         )}
       >
         <p className="mb-4 text-sm text-gray-600">
-          These findings summarize active anomalies and generated recommendations across the dashboard. Each card links to the chart, table, or performance dashboard that supports it; AI explains the displayed data but does not change the chart, totals, or rankings.
+          These findings summarize active anomalies and generated recommendations in one AI decision-support section. Matching AI actions appear inside the related anomaly card; unrelated recommendations remain in this same section. AI explains the displayed data but does not change the chart, totals, or rankings.
         </p>
         {aiRefreshError && <p role="alert" className="mb-4 rounded-xl border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-800">{aiRefreshError}</p>}
         <div className="grid grid-cols-1 gap-3 lg:grid-cols-2">
           {aiAnomalies.length > 0 ? aiAnomalies.slice(0, 4).map((anomaly) => {
             const metric = anomaly.input_snapshot?.metric;
-            const evidenceHref = metric === "overnightGuestCheckIns" ? "#analytics-performance" : metric === "dayTourVisitors" ? "#analytics-trends" : "#analytics-rankings";
-            const evidenceLabel = metric === "overnightGuestCheckIns" ? "accommodation performance dashboard" : metric === "dayTourVisitors" ? "visitor trend chart" : "establishment comparison table";
             const matchingInsight = aiInsights.find((insight) => recommendationMatchesAnomaly(insight, metric));
-            return <AiAnomalyCard key={anomaly.id} {...anomaly} aiRecommendation={matchingInsight?.recommended_action || null} evidenceHref={evidenceHref} evidenceLabel={evidenceLabel} />;
+            return <AiAnomalyCard key={anomaly.id} {...anomaly} aiRecommendation={matchingInsight?.recommended_action || null} />;
           }) : <AiEmptyState variant="gaps" />}
-          {aiInsights.length > 0 ? aiInsights.slice(0, 4).map((insight) => (
-            <AiRecommendationCard key={insight.id} {...insight} {...evidenceForRecommendation(insight)} />
+          {aiInsights.length > 0 ? aiInsights.filter((insight) => !matchedInsightIds.has(insight.id)).slice(0, 4).map((insight) => (
+            <AiRecommendationCard key={insight.id} {...insight} />
           )) : <AiEmptyState variant="recommendations" />}
         </div>
       </AiSectionCard>
