@@ -206,6 +206,7 @@ export function AiSectionCard({
   title,
   countLabel,
   icon,
+  action,
   children,
 }: {
   title: string;

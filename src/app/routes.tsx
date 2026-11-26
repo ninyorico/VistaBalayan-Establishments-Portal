@@ -8,7 +8,7 @@ import { LoadingState } from "./components/vista/PolishedShell";
 import OfflinePage from "./components/OfflinePage";
 import NotFound from "./pages/NotFound";
 
-const STAFF_CHUNK_RETRY_KEY = "vistabalayan:staff-chunk-retry";
+const CHUNK_RETRY_KEY = "vistabalayan:chunk-retry";
 
 function SystemRouteError() {
   const error = useRouteError();
@@ -41,15 +41,16 @@ function SystemRouteError() {
 const reloadOnceAfterChunkFailure = async <T,>(load: () => Promise<T>) => {
   try {
     const result = await load();
-    sessionStorage.removeItem(STAFF_CHUNK_RETRY_KEY);
+    sessionStorage.removeItem(CHUNK_RETRY_KEY);
     return result;
   } catch (error) {
-    if (!sessionStorage.getItem(STAFF_CHUNK_RETRY_KEY)) {
-      sessionStorage.setItem(STAFF_CHUNK_RETRY_KEY, "1");
-      window.location.reload();
+    if (!sessionStorage.getItem(CHUNK_RETRY_KEY)) {
+      sessionStorage.setItem(CHUNK_RETRY_KEY, "1");
+      const separator = window.location.search ? "&" : "?";
+      window.location.replace(`${window.location.href}${separator}chunk_retry=${Date.now()}`);
       return new Promise<T>(() => {});
     }
-    sessionStorage.removeItem(STAFF_CHUNK_RETRY_KEY);
+    sessionStorage.removeItem(CHUNK_RETRY_KEY);
     throw error;
   }
 };
@@ -79,7 +80,13 @@ export const router = createBrowserRouter([
       { path: "accommodation-monitoring", element: <Navigate to="/officer/report-monitoring" replace /> },
       { path: "reports", lazy: async () => ({ Component: (await import("./pages/officer/Reports")).default }) },
 
-      { path: "analytics", lazy: async () => ({ Component: (await import("./pages/officer/Analytics")).default }) },
+      {
+        path: "analytics",
+        lazy: async () => {
+          const Page = (await reloadOnceAfterChunkFailure(() => import("./pages/officer/Analytics"))).default;
+          return { Component: Page };
+        },
+      },
       { path: "settings", lazy: async () => ({ Component: (await import("./pages/officer/Settings")).default }) },
     ],
   },
