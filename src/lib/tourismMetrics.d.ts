@@ -21,7 +21,6 @@ export type DeterministicAnomaly = {
   type: string;
   severity: 'high' | 'medium';
   description: string;
-  recommendation: string;
   evidence: Record<string, unknown>;
 };
 

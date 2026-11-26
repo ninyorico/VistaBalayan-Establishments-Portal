@@ -188,7 +188,6 @@ export const buildDeterministicAnomalies = (monthlyMetrics = [], options = {}) =
         type: 'Day-tour visitor decline',
         severity,
         description: `Reported day-tour visitors decreased ${dropPercent.toFixed(1)}% from ${monthLabel(previous.month)} to ${monthLabel(current.month)} ${current.month.slice(0, 4)}, with ${current.coveragePercent === null ? 'unavailable' : `${current.coveragePercent.toFixed(1)}%`} reporting coverage. ${current.missingVisitorReports === null ? 'Missing day-tour report count is unavailable.' : `${current.missingVisitorReports} expected day-tour reports are missing.`} ${current.lateVisitorReports > 0 ? `${current.lateVisitorReports} submitted day-tour report${current.lateVisitorReports === 1 ? '' : 's'} ${current.lateVisitorReports === 1 ? 'was' : 'were'} entered after the report date.` : 'No submitted day-tour reports were identified as late.'}`,
-        recommendation: 'Validate missing and late day-tour reports before confirming a decline in day-tourism activity.',
         evidence: {
           anomaly_key: anomalyKey,
           metric: 'dayTourVisitors',
@@ -231,7 +230,6 @@ export const buildDeterministicAnomalies = (monthlyMetrics = [], options = {}) =
         type: 'Overnight guest check-in decline',
         severity: overnightDropPercent >= 50 ? 'high' : 'medium',
         description: `Reported overnight guest check-ins decreased ${overnightDropPercent.toFixed(1)}% from ${monthLabel(previous.month)} to ${monthLabel(current.month)} ${current.month.slice(0, 4)}, with ${current.accommodationCoveragePercent === null ? 'unavailable' : `${current.accommodationCoveragePercent.toFixed(1)}%`} accommodation reporting coverage. ${current.missingAccommodationReports === null ? 'Missing accommodation report count is unavailable.' : `${current.missingAccommodationReports} expected accommodation reports are missing.`} ${current.lateAccommodationReports > 0 ? `${current.lateAccommodationReports} submitted accommodation report${current.lateAccommodationReports === 1 ? '' : 's'} ${current.lateAccommodationReports === 1 ? 'was' : 'were'} entered after the report date.` : 'No submitted accommodation reports were identified as late.'}`,
-        recommendation: 'Validate missing and late accommodation reports before confirming a decline in overnight tourism activity.',
         evidence: {
           anomaly_key: `overnight-guest-check-ins:${current.month}`,
           metric: 'overnightGuestCheckIns',

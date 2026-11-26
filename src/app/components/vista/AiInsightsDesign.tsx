@@ -28,6 +28,7 @@ interface AiAnomalyCardProps {
   establishments?: { name: string } | null;
   input_snapshot?: Record<string, unknown> | null;
   aiRecommendation?: string | null;
+  showRecommendationUnavailable?: boolean;
   evidenceHref?: string;
   evidenceLabel?: string;
   className?: string;
@@ -270,12 +271,16 @@ export function AiAnomalyCard(anomaly: AiAnomalyCardProps) {
               {formatEvidence(anomaly.input_snapshot)}
             </div>
           )}
-          {anomaly.aiRecommendation && (
+          {anomaly.aiRecommendation ? (
             <div className="rounded-2xl border border-slate-200 bg-slate-50/80 p-3 text-justify leading-6 hyphens-auto" data-ai-action-note="editorial-shadcn">
               <span className="font-semibold text-slate-800">Recommendation:</span>{" "}
               <AiFormattedText text={anomaly.aiRecommendation} tone="action" />
             </div>
-          )}
+          ) : anomaly.showRecommendationUnavailable ? (
+            <div className="rounded-2xl border border-amber-200 bg-amber-50/70 p-3 text-sm leading-6 text-amber-900" data-ai-action-note="unavailable">
+              No evidence-supported recommendation is available for this finding.
+            </div>
+          ) : null}
           {anomaly.evidenceHref && (
             <a href={anomaly.evidenceHref} className="inline-flex text-sm font-semibold text-[#0E5A72] underline decoration-[#0E5A72]/35 underline-offset-4 hover:text-[#193364]">
               View related {anomaly.evidenceLabel || "Analytics evidence"}

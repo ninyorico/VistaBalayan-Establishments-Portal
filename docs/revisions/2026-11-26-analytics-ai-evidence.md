@@ -15,7 +15,7 @@ This revision keeps AI findings in one unified Analytics section while connectin
 - Collapsed duplicate standalone recommendation actions.
 - Excluded generic fallback actions such as `Review this trend and take one focused action.`
 - Rejected recommendation text containing unsupported causal claims such as weather, events, or guaranteed outcomes.
-- Used the deterministic anomaly recommendation as the fallback when an AI action is not evidence-bound.
+- Never use deterministic anomaly text as a recommendation fallback. If no evidence-bound AI action is available, the UI shows an explicit unavailable state.
 - Added red markers to the visitor and overnight guest-check-in trend series for verified unusual decline periods.
 - Added a link from each anomaly card back to the unified trend chart.
 - Corrected the AI section count to count visible cards instead of raw linked database rows.

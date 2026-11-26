@@ -27,14 +27,14 @@ const normalizeInsights = (items) => (Array.isArray(items) ? items : []).slice(0
   description: clean(item.description),
   impact: clean(item.impact, 'medium').toLowerCase(),
   category: clean(item.category, 'Operations'),
-  recommended_action: clean(item.recommended_action || item.action, 'Review this trend and take one focused action.'),
+  recommended_action: clean(item.recommended_action || item.action),
   input_snapshot: item.metric ? { metric: clean(item.metric) } : null,
 }));
 const normalizeAnomalies = (items) => (Array.isArray(items) ? items : []).slice(0, MAX_AI_ITEMS).map((item) => ({
   type: clean(item.type || item.anomaly_type, 'Operational anomaly'),
   severity: clean(item.severity, 'medium').toLowerCase(),
   description: clean(item.description),
-  recommendation: clean(item.recommendation || item.recommended_action, 'Review this record manually.'),
+  recommendation: clean(item.recommendation || item.recommended_action),
   establishment: item.establishment ? clean(item.establishment) : undefined,
 }));
 const rateLimit = (userId) => {

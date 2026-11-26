@@ -27,10 +27,7 @@ import { MAX_AI_ITEMS } from "../../../lib/aiInsights";
 import ReportPeriodFilter from "../../components/ReportPeriodFilter";
 import { getReportPeriodRange, type ReportPeriodSelection } from "../../../lib/reportPeriod";
 import { geminiService } from "../../../services/geminiService";
-import {
-  assignRecommendationsToAnomalies,
-  isEvidenceBoundRecommendation,
-} from "../../../lib/aiRecommendationIntegrity";
+import { assignRecommendationsToAnomalies } from "../../../lib/aiRecommendationIntegrity";
 
 interface AnalyticsData {
   seasonalData: { month: string; visitors: number; guestCheckIns: number; guestNights: number }[];
@@ -543,8 +540,7 @@ export default function Analytics() {
               {related.map((anomaly) => {
                 const metric = anomaly.input_snapshot?.metric;
                 const matchingInsight = recommendationAssignments.assignments.get(anomaly.id);
-                const fallbackRecommendation = (metric === "dayTourVisitors" || metric === "overnightGuestCheckIns") && isEvidenceBoundRecommendation(anomaly.recommendation, metric) ? anomaly.recommendation : null;
-                return <AiAnomalyCard key={anomaly.id} {...anomaly} aiRecommendation={matchingInsight?.recommended_action || fallbackRecommendation} evidenceHref="#analytics-trends" evidenceLabel="chart evidence" />;
+                return <AiAnomalyCard key={anomaly.id} {...anomaly} aiRecommendation={matchingInsight?.recommended_action || null} showRecommendationUnavailable evidenceHref="#analytics-trends" evidenceLabel="chart evidence" />;
               })}
             </div>
           </>

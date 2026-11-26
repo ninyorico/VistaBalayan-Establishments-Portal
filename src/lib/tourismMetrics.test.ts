@@ -133,7 +133,7 @@ describe("tourism monthly metrics", () => {
       },
     });
     expect(overnight?.description).toContain("Reported overnight guest check-ins decreased 40.0% from April to May 2026, with 3.2% accommodation reporting coverage.");
-    expect(overnight?.recommendation).toBe("Validate missing and late accommodation reports before confirming a decline in overnight tourism activity.");
+    expect("recommendation" in (overnight ?? {})).toBe(false);
   });
 
   it("explains missing and late submissions in deterministic anomaly evidence", () => {
