@@ -23,6 +23,8 @@ import EstablishmentPerformanceDashboard, { type PerformanceInputWithMode } from
 import { useDominantAxisTableScroll } from "../../../hooks/useDominantAxisTableScroll";
 import { AiAnomalyCard, AiEmptyState, AiRecommendationCard, AiSectionCard } from "../../components/vista/AiInsightsDesign";
 import { MAX_AI_ITEMS } from "../../../lib/aiInsights";
+import ReportPeriodFilter from "../../components/ReportPeriodFilter";
+import { getReportPeriodRange, type ReportPeriodSelection } from "../../../lib/reportPeriod";
 
 interface AnalyticsData {
   seasonalData: { month: string; visitors: number; guestCheckIns: number; guestNights: number }[];
@@ -31,6 +33,8 @@ interface AnalyticsData {
   peakSeason: { month: string; activity: number; visitors: number; guestCheckIns: number; growth: number };
   topOrigin: { location: string; percentage: number };
   growthRate: number | null;
+  comparisonLabel: string;
+  comparisonRankings: { name: string; current: number; comparison: number; change: number | null }[];
 }
 
 type Establishment = {
@@ -125,6 +129,15 @@ const getAnalyticsYearRange = (year: string) => ({
   end: `${year}-12-31`,
 });
 
+const getComparisonPeriod = (period: ReportPeriodSelection, year: number): ReportPeriodSelection => {
+  if (period.type !== "custom") return { ...period, year };
+  const shift = (value: string | undefined) => value ? `${year}-${value.slice(5)}` : "";
+  return { ...period, year, startDate: shift(period.startDate), endDate: shift(period.endDate) };
+};
+
+const getComparisonLabel = (period: ReportPeriodSelection, comparisonYear: string) =>
+  period.type === "year" ? `Year ${comparisonYear}` : `${period.type === "quarter" ? `Q${period.quarter}` : period.type === "month" ? new Date(2000, period.month, 1).toLocaleString("default", { month: "short" }) : period.type === "week" ? `Week ${period.week}` : "Custom range"} ${comparisonYear}`;
+
 export default function Analytics() {
   const { horizontalRef: originsTableRef } = useDominantAxisTableScroll();
   const [data, setData] = useState<AnalyticsData>({
@@ -134,24 +147,31 @@ export default function Analytics() {
     peakSeason: { month: "", activity: 0, visitors: 0, guestCheckIns: 0, growth: 0 },
     topOrigin: { location: "", percentage: 0 },
     growthRate: null,
+    comparisonLabel: "",
+    comparisonRankings: [],
   });
   const [loading, setLoading] = useState(true);
   const currentDate = new Date();
-  const [selectedYear, setSelectedYear] = useState(String(currentDate.getFullYear()));
+  const [analyticsPeriod, setAnalyticsPeriod] = useState<ReportPeriodSelection>({ type: "year", year: currentDate.getFullYear(), month: currentDate.getMonth(), quarter: Math.floor(currentDate.getMonth() / 3) + 1, week: 1 });
+  const selectedYear = String(analyticsPeriod.year);
+  const [comparisonYear, setComparisonYear] = useState(String(currentDate.getFullYear() - 1));
   const [aiAnomalies, setAiAnomalies] = useState<AnalyticsAiAnomaly[]>([]);
   const [aiInsights, setAiInsights] = useState<AnalyticsAiInsight[]>([]);
 
   useEffect(() => {
     fetchAnalytics();
-  }, [selectedYear]);
+  }, [analyticsPeriod, comparisonYear]);
 
   const fetchAnalytics = async () => {
     setLoading(true);
-    const selectedRange = getAnalyticsYearRange(selectedYear);
+    const selectedRange = getReportPeriodRange(analyticsPeriod);
+    const comparisonPeriod = getComparisonPeriod(analyticsPeriod, Number(comparisonYear));
+    const comparisonRange = getReportPeriodRange(comparisonPeriod);
 
     const fetchAllReports = async (
       table: "visitor_reports" | "accommodation_reports",
       select: string,
+      range = selectedRange,
     ) => {
       const pageSize = 1000;
       const allRows: Record<string, unknown>[] = [];
@@ -161,8 +181,8 @@ export default function Analytics() {
           .from(table)
           .select(select)
           .in("status", ["pending", "submitted", "validated", "approved"])
-          .gte("report_date", selectedRange.start)
-          .lte("report_date", selectedRange.end)
+          .gte("report_date", range.startDate)
+          .lte("report_date", range.endDate)
           .order("report_date", { ascending: true })
           .range(page * pageSize, (page + 1) * pageSize - 1);
 
@@ -178,6 +198,8 @@ export default function Analytics() {
       { data: establishmentData, error: establishmentError },
       visitorResult,
       accommodationResult,
+      comparisonVisitorResult,
+      comparisonAccommodationResult,
       aiAnomalyResult,
       aiInsightResult,
     ] = await Promise.all([
@@ -207,6 +229,8 @@ export default function Analytics() {
           establishments (name)
         `,
       ),
+      fetchAllReports("visitor_reports", `establishment_id, report_date, total_guests`, comparisonRange),
+      fetchAllReports("accommodation_reports", `establishment_id, report_date, total_check_ins`, comparisonRange),
       supabase
         .from("ai_anomalies_cache")
         .select("id,anomaly_type,severity,description,recommendation,detected_at,is_resolved,establishments(name)")
@@ -237,6 +261,17 @@ export default function Analytics() {
     const establishments = (establishmentData || []) as Establishment[];
     const visitors = (visitorData || []) as unknown as VisitorReport[];
     const accommodations = (accommodationData || []) as unknown as AccommodationReport[];
+    const comparisonVisitors = (comparisonVisitorResult.data || []) as unknown as VisitorReport[];
+    const comparisonAccommodations = (comparisonAccommodationResult.data || []) as unknown as AccommodationReport[];
+    const currentVisitorTotals = new Map<string, number>();
+    visitors.forEach((item) => currentVisitorTotals.set(item.establishment_id, (currentVisitorTotals.get(item.establishment_id) || 0) + (item.total_guests || 0)));
+    const comparisonVisitorTotals = new Map<string, number>();
+    comparisonVisitors.forEach((item) => comparisonVisitorTotals.set(item.establishment_id, (comparisonVisitorTotals.get(item.establishment_id) || 0) + (item.total_guests || 0)));
+    const comparisonRankings = establishments.map((establishment) => {
+      const current = currentVisitorTotals.get(establishment.id) || 0;
+      const comparison = comparisonVisitorTotals.get(establishment.id) || 0;
+      return { name: establishment.name, current, comparison, change: percentChange(current, comparison) };
+    }).sort((a, b) => b.current - a.current).slice(0, 10);
 
     const performancePeriods: Record<string, PerformanceInputWithMode[]> = {};
     const performancePeriodKeys = Array.from(new Set([
@@ -412,6 +447,8 @@ export default function Analytics() {
         monthlyData[latestMonth]?.visitors || 0,
         monthlyData[previousMonth]?.visitors || 0
       ),
+      comparisonLabel: getComparisonLabel(analyticsPeriod, comparisonYear),
+      comparisonRankings,
     });
 
     setLoading(false);
@@ -428,15 +465,18 @@ export default function Analytics() {
       <PageHero
         eyebrow="Tourism intelligence"
         title="Analytics Dashboard"
-        description={`Data-driven tourism analytics and decision support for ${getAnalyticsYearRange(selectedYear).label}. All charts, rankings, origins, and performance findings use the selected year.`}
+        description={`Data-driven tourism analytics and decision support for the selected reporting period. Rankings, charts, origins, and performance findings use the active filter.`}
         compact
       >
-        <label className="block w-full text-xs font-medium text-slate-200 sm:w-44">
-          Year
-          <select value={selectedYear} onChange={(event) => setSelectedYear(event.target.value)} className="mt-1 w-full rounded-xl border border-white/20 bg-white px-3 py-2.5 text-sm text-gray-900 focus:border-cyan-200 focus:outline-none focus:ring-2 focus:ring-cyan-200/30">
-            {analyticsYears.map((year) => <option key={year} value={year}>{year}</option>)}
-          </select>
-        </label>
+        <div className="w-full space-y-2 sm:w-[28rem]">
+          <ReportPeriodFilter value={analyticsPeriod} availableYears={analyticsYears} onChange={setAnalyticsPeriod} />
+          <label className="flex items-center gap-2 text-xs font-medium text-slate-200">
+            Compare with
+            <select value={comparisonYear} onChange={(event) => setComparisonYear(event.target.value)} className="rounded-xl border border-white/20 bg-white px-3 py-2 text-sm text-gray-900 focus:border-cyan-200 focus:outline-none">
+              {analyticsYears.map((year) => <option key={year} value={year}>{year}</option>)}
+            </select>
+          </label>
+        </div>
       </PageHero>
 
       <AiSectionCard
@@ -492,6 +532,19 @@ export default function Analytics() {
           <p className="mt-1 truncate text-[10px] leading-tight text-orange-600 sm:text-sm lg:mt-2 lg:text-base">{data.growthRate === null ? "Not enough monthly data" : "Month over month"}</p>
         </div>
       </div>
+
+      <section className="rounded-lg border border-gray-200 bg-white p-4 shadow-sm sm:p-6" aria-labelledby="analytics-comparison-title">
+        <div className="flex flex-col gap-1 border-b border-gray-200 pb-4 sm:flex-row sm:items-end sm:justify-between">
+          <div>
+            <h3 id="analytics-comparison-title" className="text-base font-semibold text-gray-900 sm:text-lg">Year-to-year establishment comparison</h3>
+            <p className="mt-1 text-sm text-gray-600">Top establishments by day-tour visitors for the active period compared with {data.comparisonLabel}. This compares reported volume, not overall establishment quality.</p>
+          </div>
+          <span className="text-xs font-medium text-slate-500">Current: {analyticsPeriod.type === "custom" ? `${analyticsPeriod.startDate || "—"} to ${analyticsPeriod.endDate || "—"}` : selectedYear}</span>
+        </div>
+        <div className="mt-4 overflow-x-auto">
+          <table className="w-full min-w-[40rem] text-sm"><thead className="border-b border-gray-200 text-left text-xs uppercase tracking-wide text-gray-500"><tr><th className="px-3 py-2">Rank</th><th className="px-3 py-2">Establishment</th><th className="px-3 py-2">Current period</th><th className="px-3 py-2">{data.comparisonLabel}</th><th className="px-3 py-2">Change</th></tr></thead><tbody className="divide-y divide-gray-100">{data.comparisonRankings.map((row, index) => <tr key={row.name}><td className="px-3 py-2 font-semibold text-gray-500">{index + 1}</td><td className="px-3 py-2 font-medium text-gray-900">{row.name}</td><td className="px-3 py-2">{row.current.toLocaleString()}</td><td className="px-3 py-2">{row.comparison.toLocaleString()}</td><td className={`px-3 py-2 font-semibold ${row.change === null ? "text-gray-500" : row.change >= 0 ? "text-green-600" : "text-red-600"}`}>{row.change === null ? "N/A" : `${row.change >= 0 ? "+" : ""}${row.change.toFixed(1)}%`}</td></tr>)}</tbody></table>
+        </div>
+      </section>
 
       <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4 sm:p-6">
         <h3 className="text-base font-semibold text-gray-900 mb-4 sm:text-lg">Tourism Trends and Seasonal Patterns ({getAnalyticsYearRange(selectedYear).label})</h3>

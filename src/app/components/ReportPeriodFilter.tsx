@@ -13,6 +13,7 @@ const periodOptions: Array<{ value: ReportPeriodType; label: string }> = [
   { value: "quarter", label: "Quarter" },
   { value: "week", label: "Week" },
   { value: "year", label: "Year" },
+  { value: "custom", label: "Custom range" },
 ];
 
 const selectClass = "min-w-0 rounded-2xl border border-[#D2D8E0] bg-[#E8EDF2] px-3 py-2.5 text-sm text-[#3D4852] shadow-[inset_3px_3px_7px_rgba(163,177,198,0.35),inset_-3px_-3px_7px_rgba(255,255,255,0.7)] outline-none transition focus:border-[#8FC9DC] focus:ring-2 focus:ring-[#8FC9DC]/50 sm:px-4";
@@ -21,7 +22,9 @@ export default function ReportPeriodFilter({ value, availableYears, onChange, cl
   const years = availableYears.length > 0 ? availableYears : [value.year];
   const monthValue = periodToMonthValue(value);
 
-  const layoutClass = value.type === "month"
+  const layoutClass = value.type === "custom"
+    ? "grid grid-cols-1 gap-2 sm:grid-cols-[116px_minmax(0,1fr)_minmax(0,1fr)]"
+    : value.type === "month"
     ? "grid grid-cols-[116px_minmax(0,1fr)] gap-2 sm:grid-cols-[116px_190px] lg:grid-cols-[116px_minmax(190px,1fr)]"
     : value.type === "quarter"
       ? "grid grid-cols-[116px_96px_76px] gap-2"
@@ -76,6 +79,11 @@ export default function ReportPeriodFilter({ value, availableYears, onChange, cl
               <option key={week} value={week}>{getReportWeekLabel(value.year, week)}</option>
             ))}
           </select>
+        </>
+      ) : value.type === "custom" ? (
+        <>
+          <input type="date" value={value.startDate || ""} onChange={(event) => onChange({ ...value, startDate: event.target.value })} className={selectClass} aria-label="Custom range start date" />
+          <input type="date" value={value.endDate || ""} onChange={(event) => onChange({ ...value, endDate: event.target.value })} className={selectClass} aria-label="Custom range end date" />
         </>
       ) : (
         <>

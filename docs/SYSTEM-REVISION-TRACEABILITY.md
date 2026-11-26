@@ -9,6 +9,8 @@ Source checklist: `System To do..docx` supplied for this revision.
 - Visitor-volume classifications remain explicitly separate from establishment quality/performance. The percentile method is documented as a volume classification only.
 - Peak-month analytics now select and label the month with the highest **day-tour visitor count**. Day-tour visitors and accommodation guest check-ins are displayed as separate units rather than being added into a misleading combined activity KPI.
 - Seasonal charts retain separate visitor and guest-check-in series.
+- Analytics now uses a shared **reporting-period filter** supporting weekly, monthly, quarterly, yearly, and custom date ranges. The selected range is applied to report queries and therefore drives rankings, visitor statistics, origins, trends, KPIs, and performance inputs consistently.
+- Analytics now provides a **comparison-year selector** and a top-establishment comparison table showing current-period day-tour visitors, comparison-period day-tour visitors, and percentage change. The table explicitly describes volume rather than overall establishment quality.
 
 ## Limitations documented rather than fabricated
 
