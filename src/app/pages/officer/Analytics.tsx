@@ -12,7 +12,7 @@ import {
   Legend,
   ResponsiveContainer,
 } from "recharts";
-import { TrendingUp, TrendingDown, MapPin } from "lucide-react";
+import { AlertTriangle, TrendingUp, TrendingDown, MapPin } from "lucide-react";
 import { supabase } from "../../../lib/supabase";
 import { getEstablishmentReportingMode, type ReportingMode } from "../../../lib/establishmentReportForms";
 import { formatResidencePlace } from "../../../lib/reporting";
@@ -21,6 +21,8 @@ import DataState from "../../components/DataState";
 import { PageHero } from "../../components/vista/PolishedShell";
 import EstablishmentPerformanceDashboard, { type PerformanceInputWithMode } from "../../components/vista/EstablishmentPerformanceDashboard";
 import { useDominantAxisTableScroll } from "../../../hooks/useDominantAxisTableScroll";
+import { AiAnomalyCard, AiEmptyState, AiRecommendationCard, AiSectionCard } from "../../components/vista/AiInsightsDesign";
+import { MAX_AI_ITEMS } from "../../../lib/aiInsights";
 
 interface AnalyticsData {
   seasonalData: { month: string; visitors: number; guestCheckIns: number; guestNights: number }[];
@@ -60,6 +62,26 @@ type AccommodationReport = {
 };
 
 type ResidenceCategory = "THIS_PROVINCE" | "OTHER_PROVINCE" | "FOREIGN";
+
+type AnalyticsAiAnomaly = {
+  id: string;
+  anomaly_type: string;
+  severity: string;
+  description: string;
+  recommendation: string;
+  establishments?: { name: string } | null;
+  detected_at: string;
+  is_resolved: boolean;
+};
+
+type AnalyticsAiInsight = {
+  id: string;
+  title: string;
+  description: string;
+  impact: string;
+  category: string;
+  recommended_action?: string;
+};
 
 const RESIDENCE_CATEGORIES: ResidenceCategory[] = ["THIS_PROVINCE", "OTHER_PROVINCE", "FOREIGN"];
 
@@ -116,6 +138,8 @@ export default function Analytics() {
   const [loading, setLoading] = useState(true);
   const currentDate = new Date();
   const [selectedYear, setSelectedYear] = useState(String(currentDate.getFullYear()));
+  const [aiAnomalies, setAiAnomalies] = useState<AnalyticsAiAnomaly[]>([]);
+  const [aiInsights, setAiInsights] = useState<AnalyticsAiInsight[]>([]);
 
   useEffect(() => {
     fetchAnalytics();
@@ -154,6 +178,8 @@ export default function Analytics() {
       { data: establishmentData, error: establishmentError },
       visitorResult,
       accommodationResult,
+      aiAnomalyResult,
+      aiInsightResult,
     ] = await Promise.all([
       supabase
         .from("establishments")
@@ -181,7 +207,25 @@ export default function Analytics() {
           establishments (name)
         `,
       ),
+      supabase
+        .from("ai_anomalies_cache")
+        .select("id,anomaly_type,severity,description,recommendation,detected_at,is_resolved,establishments(name)")
+        .eq("status", "active")
+        .eq("is_resolved", false)
+        .is("establishment_id", null)
+        .order("detected_at", { ascending: false })
+        .limit(MAX_AI_ITEMS),
+      supabase
+        .from("ai_recommendations")
+        .select("id,title,description,impact,category,recommended_action")
+        .eq("status", "active")
+        .is("establishment_id", null)
+        .order("created_at", { ascending: false })
+        .limit(MAX_AI_ITEMS),
     ]);
+
+    setAiAnomalies((aiAnomalyResult.data || []) as AnalyticsAiAnomaly[]);
+    setAiInsights((aiInsightResult.data || []) as AnalyticsAiInsight[]);
 
     const { data: visitorData, error: visitorError } = visitorResult;
     const { data: accommodationData, error: accError } = accommodationResult;
@@ -394,6 +438,24 @@ export default function Analytics() {
           </select>
         </label>
       </PageHero>
+
+      <AiSectionCard
+        title="Decision support in Analytics"
+        countLabel={`${aiAnomalies.length + aiInsights.length} Active`}
+        icon={<AlertTriangle className="size-5 text-amber-600" />}
+      >
+        <p className="mb-4 text-sm text-gray-600">
+          AI-assisted findings are shown beside the underlying charts and statistics. Review the evidence before taking operational action.
+        </p>
+        <div className="grid grid-cols-1 gap-3 lg:grid-cols-2">
+          {aiAnomalies.length > 0 ? aiAnomalies.slice(0, 4).map((anomaly) => (
+            <AiAnomalyCard key={anomaly.id} {...anomaly} />
+          )) : <AiEmptyState variant="gaps" />}
+          {aiInsights.length > 0 ? aiInsights.slice(0, 4).map((insight) => (
+            <AiRecommendationCard key={insight.id} {...insight} />
+          )) : <AiEmptyState variant="recommendations" />}
+        </div>
+      </AiSectionCard>
 
       <div className="grid grid-cols-3 gap-2 sm:gap-4 lg:gap-6" data-analytics-kpi-row="mobile-one-row">
         <div className="flex min-h-0 flex-col rounded-lg border border-gray-200 bg-white p-2.5 shadow-sm sm:p-5 lg:min-h-[164px] lg:p-6">

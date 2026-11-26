@@ -1,5 +1,12 @@
 export type PerformanceClassification = "HIGH" | "MODERATE" | "LOW" | "INSUFFICIENT_DATA";
 
+/**
+ * Percentile classification is intentionally volume-only. It must not be
+ * presented as an overall establishment-performance score until independently
+ * sourced ratings, accreditation, compliance, growth, and visitor-experience
+ * indicators are available and a weighting methodology is approved.
+ */
+
 export type PerformanceInput = {
   id: string;
   name: string;
