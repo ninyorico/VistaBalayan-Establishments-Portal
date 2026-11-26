@@ -488,9 +488,9 @@ export default function Analytics() {
 
   const analyticsYears = Array.from({ length: 5 }, (_, index) => String(currentDate.getFullYear() - 2 + index));
   const panelFilter = (label: string) => (
-    <div className="mt-3 rounded-2xl border border-slate-200 bg-slate-50 p-3 sm:mt-0 sm:min-w-[24rem]">
-      <p className="mb-2 text-[11px] font-semibold uppercase tracking-[0.14em] text-slate-500">{label}</p>
-      <ReportPeriodFilter value={analyticsPeriod} availableYears={analyticsYears.map(Number)} onChange={setAnalyticsPeriod} />
+    <div className="flex min-w-0 flex-wrap items-center justify-end gap-2 sm:flex-nowrap">
+      <p className="shrink-0 text-[11px] font-semibold uppercase tracking-[0.14em] text-slate-500">{label}</p>
+      <ReportPeriodFilter value={analyticsPeriod} availableYears={analyticsYears.map(Number)} onChange={setAnalyticsPeriod} className="min-w-0" />
     </div>
   );
 
@@ -502,9 +502,8 @@ export default function Analytics() {
         description={`Data-driven tourism analytics and decision support for the selected reporting period. Rankings, charts, origins, and performance findings use the active filter.`}
         compact
       >
-        <div className="w-full space-y-2 sm:w-[28rem]">
-          <ReportPeriodFilter value={analyticsPeriod} availableYears={analyticsYears} onChange={setAnalyticsPeriod} />
-          <label className="flex items-center gap-2 text-xs font-medium text-slate-200">
+        <div className="w-full sm:w-auto">
+          <label className="flex items-center justify-end gap-2 text-xs font-medium text-slate-200">
             Compare with
             <select value={comparisonYear} onChange={(event) => setComparisonYear(event.target.value)} className="rounded-xl border border-white/20 bg-white px-3 py-2 text-sm text-gray-900 focus:border-cyan-200 focus:outline-none">
               {analyticsYears.map((year) => <option key={year} value={year}>{year}</option>)}
