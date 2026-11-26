@@ -7,7 +7,6 @@ import {
   Bed,
   History,
   BarChart3,
-  Brain,
   User,
   LogOut,
   Menu,
@@ -25,7 +24,6 @@ const menuItems = [
   { path: "/staff/submit-accommodation-report", icon: Bed, label: "Accommodation", form: "accommodation" },
   { path: "/staff/submission-history", icon: History, label: "Submission History" },
   { path: "/staff/analytics", icon: BarChart3, label: "Analytics" },
-  { path: "/staff/ai-insights", icon: Brain, label: "AI Insights" },
   { path: "/staff/manage-listing", icon: Building2, label: "Manage Public Listing" },
 ];
 

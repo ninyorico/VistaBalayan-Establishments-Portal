@@ -1,11 +1,14 @@
 import { useEffect, useMemo, useState, type ReactNode } from "react";
-import { BarChart3, BedDouble, Calendar, LineChart as LineChartIcon, Moon, PieChart, TrendingUp, UsersRound } from "lucide-react";
+import { BarChart3, BedDouble, Calendar, LineChart as LineChartIcon, Moon, PieChart, RefreshCw, TrendingUp, UsersRound } from "lucide-react";
 import { Area, AreaChart, Bar, BarChart, CartesianGrid, Cell, Legend, PieChart as RechartsPieChart, Pie as RechartsPie, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 import { supabase } from "../../../lib/supabase";
 import { canSubmitAccommodationReport, canSubmitVisitorReport, getEstablishmentReportingMode } from "../../../lib/establishmentReportForms";
 import { currentMonthKey, currentYear, buildAccommodationMonthlySeries, buildVisitorMonthlySeries, isOfficialReport, residenceTotals, toNumber, type AccommodationReport, type VisitorReport } from "../../../lib/staffAnalytics";
 import { LoadingState, MetricCard, PageHero } from "../../components/vista/PolishedShell";
 import DataState from "../../components/DataState";
+import { AiAnomalyCard, AiRecommendationCard } from "../../components/vista/AiInsightsDesign";
+import { MAX_AI_ITEMS } from "../../../lib/aiInsights";
+import { geminiService } from "../../../services/geminiService";
 
 const chartClass = "rounded-3xl border border-[#AFB3B5]/45 bg-[#F5F8FF]/88 p-4 shadow-tourism sm:p-6";
 
@@ -55,6 +58,41 @@ export default function Analytics() {
   const [visitorReports, setVisitorReports] = useState<VisitorReport[]>([]);
   const [accommodationReports, setAccommodationReports] = useState<AccommodationReport[]>([]);
   const [selectedYear, setSelectedYear] = useState(currentYear());
+  const [aiAnomalies, setAiAnomalies] = useState<any[]>([]);
+  const [aiRecommendations, setAiRecommendations] = useState<any[]>([]);
+  const [aiLoading, setAiLoading] = useState(false);
+  const [aiError, setAiError] = useState<string | null>(null);
+
+  const loadAiFindings = async (establishmentId: string) => {
+    setAiLoading(true);
+    setAiError(null);
+    const [{ data: anomalyData, error: anomalyError }, { data: recommendationData, error: recommendationError }] = await Promise.all([
+      supabase.from("ai_anomalies_cache").select("*").eq("establishment_id", establishmentId).eq("status", "active").eq("is_resolved", false).order("detected_at", { ascending: false }).limit(MAX_AI_ITEMS),
+      supabase.from("ai_recommendations").select("*").eq("establishment_id", establishmentId).eq("status", "active").order("created_at", { ascending: false }).limit(MAX_AI_ITEMS),
+    ]);
+    if (anomalyError || recommendationError) {
+      console.error("Error loading establishment AI findings:", anomalyError || recommendationError);
+      setAiError("AI findings could not be loaded. Retry from this Analytics page.");
+    } else {
+      setAiAnomalies(anomalyData || []);
+      setAiRecommendations(recommendationData || []);
+    }
+    setAiLoading(false);
+  };
+
+  const refreshAiFindings = async () => {
+    if (!establishment?.id) return;
+    setAiLoading(true);
+    setAiError(null);
+    try {
+      await geminiService.generateForEstablishment();
+      await loadAiFindings(establishment.id);
+    } catch (error) {
+      console.error("Error refreshing establishment AI findings:", error);
+      setAiError("AI refresh failed. The saved findings remain available.");
+      setAiLoading(false);
+    }
+  };
 
   useEffect(() => { loadAnalytics(); }, []);
 
@@ -76,7 +114,7 @@ export default function Analytics() {
     }
     if (!profile?.establishment_id) { setLoading(false); return; }
 
-    const { data: establishmentData, error: establishmentError } = await supabase.from("establishments").select("name,type,total_rooms,reporting_mode").eq("id", profile.establishment_id).maybeSingle();
+    const { data: establishmentData, error: establishmentError } = await supabase.from("establishments").select("id,name,type,total_rooms,reporting_mode").eq("id", profile.establishment_id).maybeSingle();
     if (establishmentError) {
       console.error("Error fetching analytics establishment:", establishmentError);
       setLoadError({ kind: "error", message: "The analytics service returned an error. Please retry." });
@@ -96,6 +134,7 @@ export default function Analytics() {
     setEstablishment(establishmentData);
     setVisitorReports(((visitorResult.data || []) as VisitorReport[]).filter(isOfficialReport));
     setAccommodationReports(((accommodationResult.data || []) as AccommodationReport[]).filter(isOfficialReport));
+    await loadAiFindings(profile.establishment_id);
     setLoading(false);
   };
 
@@ -183,6 +222,27 @@ export default function Analytics() {
         </select>
       </PageHero>
 
+      <section className={chartClass} aria-labelledby="staff-analytics-ai-heading">
+        <div className="mb-4 flex flex-wrap items-start justify-between gap-3">
+          <div>
+            <h2 id="staff-analytics-ai-heading" className="text-lg font-semibold text-[#0B2530]">AI findings for this Analytics view</h2>
+            <p className="mt-1 text-sm text-slate-600">Evidence-bound findings for {establishment.name || "this establishment"}. AI remains advisory and does not replace officer review.</p>
+          </div>
+          <button type="button" onClick={refreshAiFindings} disabled={aiLoading} className="inline-flex items-center gap-2 rounded-xl bg-[#193364] px-3 py-2 text-xs font-semibold text-white shadow-sm transition hover:bg-[#0E5A72] disabled:cursor-not-allowed disabled:opacity-60">
+            <RefreshCw className={`size-4 ${aiLoading ? "animate-spin" : ""}`} aria-hidden="true" />
+            {aiLoading ? "Refreshing…" : "Refresh AI analysis"}
+          </button>
+        </div>
+        {aiError && <p role="alert" className="mb-3 rounded-xl border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-800">{aiError}</p>}
+        {!aiError && aiAnomalies.length === 0 && aiRecommendations.length === 0 && <p className="rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-600">No saved AI finding is available for this establishment yet.</p>}
+        {(aiAnomalies.length > 0 || aiRecommendations.length > 0) && <div className="grid grid-cols-1 gap-4 xl:grid-cols-2">
+          {aiAnomalies.map((anomaly) => <AiAnomalyCard key={anomaly.id} {...anomaly} establishments={{ name: establishment.name || "This establishment" }} evidenceHref="#staff-analytics-charts" evidenceLabel="analytics charts" />)}
+          {aiRecommendations.map((recommendation) => <AiRecommendationCard key={recommendation.id} {...recommendation} evidenceHref="#staff-analytics-charts" evidenceLabel="analytics charts" />)}
+        </div>}
+      </section>
+
+      <div id="staff-analytics-charts">
+
       {mode === "visitor" && showVisitorAnalytics && <>
         <MetricGrid metrics={visitorMetrics} />
         <div className={chartClass}><ChartTitle icon={LineChartIcon}>Visitor Count Trends ({year})</ChartTitle><ResponsiveContainer width="100%" height={340}><AreaChart data={visitorMonths}><CartesianGrid strokeDasharray="3 3" vertical={true} horizontal={true} /><XAxis dataKey="month" /><YAxis allowDecimals={false} /><Tooltip /><Legend /><Area type="monotone" dataKey="visitors" stroke="#193364" fill="#193364" fillOpacity={0.28} dot={{ r: 3, strokeWidth: 1, fill: "#193364" }} activeDot={{ r: 5 }} strokeWidth={2} name="Visitors" /><Area type="monotone" dataKey="male" stroke="#193364" fill="#193364" fillOpacity={0.2} dot={{ r: 3, strokeWidth: 1, fill: "#193364" }} activeDot={{ r: 5 }} strokeWidth={2} name="Male" /><Area type="monotone" dataKey="female" stroke="#D69A3A" fill="#D69A3A" fillOpacity={0.18} dot={{ r: 3, strokeWidth: 1, fill: "#D69A3A" }} activeDot={{ r: 5 }} strokeWidth={2} name="Female" /></AreaChart></ResponsiveContainer></div>
@@ -205,6 +265,7 @@ export default function Analytics() {
         <div className={chartClass}><ChartTitle icon={BarChart3}>Monthly Performance Overview ({year})</ChartTitle><ResponsiveContainer width="100%" height={340}><BarChart data={visitorMonths.map((month, index) => ({ month: month.month, dayTour: month.visitors, checkIns: accommodationMonths[index]?.checkIns || 0, guestNights: accommodationMonths[index]?.guestNights || 0 }))}><CartesianGrid strokeDasharray="3 3" vertical={true} horizontal={true} /><XAxis dataKey="month" /><YAxis allowDecimals={false} /><Tooltip /><Legend /><Bar dataKey="dayTour" fill="#193364" name="Day-tour Visitors" /><Bar dataKey="checkIns" fill="#D69A3A" name="Guest Check-ins" /><Bar dataKey="guestNights" fill="#6C9772" name="Guest Nights" /></BarChart></ResponsiveContainer></div>
         <div className={chartClass}><ChartTitle icon={TrendingUp}>Occupancy Rate and Guests per Room Trend ({year})</ChartTitle><ResponsiveContainer width="100%" height={340}><AreaChart data={accommodationMonths}><CartesianGrid strokeDasharray="3 3" vertical={true} horizontal={true} /><XAxis dataKey="month" /><YAxis allowDecimals={false} /><Tooltip /><Legend /><Area type="monotone" dataKey="occupancyRate" stroke="#193364" fill="#193364" fillOpacity={0.2} dot={{ r: 3, strokeWidth: 1, fill: "#193364" }} activeDot={{ r: 5 }} strokeWidth={2} name="Occupancy Rate %" /><Area type="monotone" dataKey="guestsPerRoom" stroke="#D69A3A" fill="#D69A3A" fillOpacity={0.2} dot={{ r: 3, strokeWidth: 1, fill: "#D69A3A" }} activeDot={{ r: 5 }} strokeWidth={2} name="Guests per Room" /></AreaChart></ResponsiveContainer></div>
       </>}
+      </div>
     </div>
   );
 }

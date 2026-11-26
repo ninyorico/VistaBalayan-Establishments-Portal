@@ -22,12 +22,12 @@ import DataState from "../../components/DataState";
 import { PageHero } from "../../components/vista/PolishedShell";
 import EstablishmentPerformanceDashboard, { type PerformanceInputWithMode } from "../../components/vista/EstablishmentPerformanceDashboard";
 import { useDominantAxisTableScroll } from "../../../hooks/useDominantAxisTableScroll";
-import { AiAnomalyCard, type AiDecisionSupport } from "../../components/vista/AiInsightsDesign";
+import { AiAnomalyCard, AiRecommendationCard, type AiDecisionSupport } from "../../components/vista/AiInsightsDesign";
 import { MAX_AI_ITEMS } from "../../../lib/aiInsights";
 import ReportPeriodFilter from "../../components/ReportPeriodFilter";
 import { getReportPeriodRange, type ReportPeriodSelection } from "../../../lib/reportPeriod";
 import { geminiService } from "../../../services/geminiService";
-import { assignRecommendationsToAnomalies } from "../../../lib/aiRecommendationIntegrity";
+import { assignRecommendationsToAnomalies, deduplicateStandaloneRecommendations, isEvidenceBoundRecommendation, recommendationSupportsMetric, recommendationSupportsPeriod } from "../../../lib/aiRecommendationIntegrity";
 
 interface AnalyticsData {
   seasonalData: { month: string; visitors: number; guestCheckIns: number; guestNights: number }[];
@@ -576,21 +576,30 @@ export default function Analytics() {
   );
 
   const renderRelatedAiFindings = (metrics: string[]) => {
-    const related = allAiFindings.filter((anomaly) => {
-      const metric = String(anomaly.input_snapshot?.metric || "");
-      return metrics.includes(metric) && recommendationAssignments.assignments.has(anomaly.id);
-    });
+    const related = allAiFindings.filter((anomaly) => metrics.includes(String(anomaly.input_snapshot?.metric || "")));
+    const standalone = deduplicateStandaloneRecommendations(
+      aiInsights.filter((candidate) => {
+        const metric = String(candidate.input_snapshot?.metric || "");
+        return metrics.includes(metric)
+          && recommendationSupportsMetric(candidate, metric as any)
+          && recommendationSupportsPeriod(candidate)
+          && isEvidenceBoundRecommendation(candidate.recommended_action, metric as any);
+      }),
+      recommendationAssignments.usedCandidateIds,
+      recommendationAssignments.usedActionKeys,
+    );
     const evidenceHref = metrics.includes("visitorOrigins")
       ? "#analytics-origins"
       : metrics.includes("establishmentPerformance")
         ? "#analytics-performance"
         : "#analytics-trends";
+    const totalFindings = related.length + standalone.length;
     return (
       <div className="mt-5 border-t border-slate-200 pt-5" aria-label="AI findings related to this chart">
         <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
           <div>
             <h4 className="text-sm font-semibold text-slate-900">Related AI findings and recommendations</h4>
-            <p className="mt-1 text-xs text-slate-500">Only evidence-matched actions for the active chart and reporting filter are shown.</p>
+            <p className="mt-1 text-xs text-slate-500">All valid evidence-matched findings for the active chart and reporting filter are shown.</p>
           </div>
           <button type="button" onClick={refreshAiInsights} disabled={refreshingAi} className="inline-flex items-center gap-2 rounded-xl bg-[#193364] px-3 py-2 text-xs font-semibold text-white shadow-sm transition hover:bg-[#0E5A72] disabled:cursor-not-allowed disabled:opacity-60">
             <RefreshCw className={`size-4 ${refreshingAi ? "animate-spin" : ""}`} aria-hidden="true" />
@@ -598,15 +607,16 @@ export default function Analytics() {
           </button>
         </div>
         {aiRefreshError && <p role="alert" className="mb-3 rounded-xl border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-800">{aiRefreshError}</p>}
-        {related.length === 0 && !aiRefreshError && <p className="rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-xs text-slate-600">No evidence-matched action is available for this chart yet. Refresh AI analysis to generate a metric-specific recommendation.</p>}
-        {related.length > 0 && (
+        {totalFindings === 0 && !aiRefreshError && <p className="rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-xs text-slate-600">No evidence-matched finding is available for this chart yet. Refresh AI analysis to generate current metric-specific guidance.</p>}
+        {totalFindings > 0 && (
           <>
-            <p className="mb-3 text-[11px] font-semibold uppercase tracking-[0.12em] text-amber-800">{related.length} actionable finding{related.length === 1 ? "" : "s"}</p>
+            <p className="mb-3 text-[11px] font-semibold uppercase tracking-[0.12em] text-amber-800">{totalFindings} finding{totalFindings === 1 ? "" : "s"}</p>
             <div className="grid grid-cols-1 gap-4 xl:grid-cols-2">
               {related.map((anomaly) => {
                 const matchingInsight = recommendationAssignments.assignments.get(anomaly.id);
-                return <AiAnomalyCard key={anomaly.id} {...anomaly} aiRecommendation={matchingInsight?.recommended_action || null} decisionSupport={matchingInsight?.input_snapshot?.decision_support as AiDecisionSupport | undefined} evidenceHref={evidenceHref} evidenceLabel="chart evidence" />;
+                return <AiAnomalyCard key={anomaly.id} {...anomaly} aiRecommendation={matchingInsight?.recommended_action || null} decisionSupport={matchingInsight?.input_snapshot?.decision_support as AiDecisionSupport | undefined} showRecommendationUnavailable={!matchingInsight} evidenceHref={evidenceHref} evidenceLabel="chart evidence" />;
               })}
+              {standalone.map((insight) => <AiRecommendationCard key={insight.id} {...insight} evidenceHref={evidenceHref} evidenceLabel="chart evidence" />)}
             </div>
           </>
         )}

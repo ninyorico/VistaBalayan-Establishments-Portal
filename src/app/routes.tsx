@@ -117,7 +117,6 @@ export const router = createBrowserRouter([
       },
       { path: "submission-history", lazy: async () => ({ Component: (await import("./pages/staff/SubmissionHistory")).default }) },
       { path: "analytics", lazy: async () => ({ Component: (await import("./pages/staff/Analytics")).default }) },
-      { path: "ai-insights", lazy: async () => ({ Component: (await import("./pages/staff/AIInsights")).default }) },
       { path: "profile", lazy: async () => ({ Component: (await import("./pages/staff/Profile")).default }) },
       {
         path: "manage-listing",
