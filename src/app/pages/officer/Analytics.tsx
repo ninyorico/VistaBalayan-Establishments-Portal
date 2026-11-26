@@ -529,9 +529,36 @@ export default function Analytics() {
       overnight_check_in_value: seasonalPeak.guestCheckIns,
     },
   }] : [];
-  const allAiFindings = [...aiAnomalies, ...seasonalFindings];
+  const originPeak = data.visitorOrigins[0];
+  const originFindings: AnalyticsAiAnomaly[] = originPeak ? [{
+    id: `visitor-origins-${selectedYear}`,
+    anomaly_type: "Visitor origin concentration",
+    severity: "low",
+    description: `${originPeak.location} is the largest reported visitor origin in the selected period with ${originPeak.visitors.toLocaleString()} visitors${originPeak.growth === null ? "." : ` and ${originPeak.growth >= 0 ? "growth" : "decline"} of ${Math.abs(originPeak.growth).toFixed(1)}% versus the prior period.`}`,
+    recommendation: "",
+    detected_at: new Date().toISOString(),
+    is_resolved: false,
+    input_snapshot: { metric: "visitorOrigins", current_month: `${selectedYear}-12`, origin: originPeak.location, current_value: originPeak.visitors, growth_percent: originPeak.growth },
+  }] : [];
+  const performanceRows = data.performancePeriods[`${selectedYear}-FULL_YEAR`] || [];
+  const performanceCounts = performanceRows.reduce<Record<string, number>>((counts, row) => {
+    const key = `${row.category}-${row.visitorCount === null ? "INSUFFICIENT_DATA" : row.visitorCount > 0 ? "REPORTED" : "ZERO_REPORTED"}`;
+    counts[key] = (counts[key] || 0) + 1;
+    return counts;
+  }, {});
+  const performanceFindings: AnalyticsAiAnomaly[] = performanceRows.length > 0 ? [{
+    id: `establishment-performance-${selectedYear}`,
+    anomaly_type: "Establishment visitor-volume distribution",
+    severity: "low",
+    description: `The selected year contains ${performanceRows.length} establishment service records across day-tour and overnight categories. The distribution is based on reported volume, not quality or profitability.`,
+    recommendation: "",
+    detected_at: new Date().toISOString(),
+    is_resolved: false,
+    input_snapshot: { metric: "establishmentPerformance", current_month: `${selectedYear}-12`, current_value: performanceRows.length, classification_counts: performanceCounts },
+  }] : [];
+  const allAiFindings = [...aiAnomalies, ...seasonalFindings, ...originFindings, ...performanceFindings];
   const recommendationAssignments = assignRecommendationsToAnomalies(
-    allAiFindings.slice(0, 5).map((anomaly) => ({
+    allAiFindings.map((anomaly) => ({
       id: anomaly.id,
       metric: anomaly.input_snapshot?.metric,
       currentMonth: anomaly.input_snapshot?.current_month,
@@ -682,6 +709,10 @@ export default function Analytics() {
               {anomalyMarkers.filter((item) => item.metric === "overnightGuestCheckIns").map((item) => (
                 <ReferenceDot key={`overnight-${item.anomaly.id}`} x={monthLabel(`${String(item.month)}-01`)} y={item.value} r={7} fill="#B42318" stroke="#fff" strokeWidth={2} isFront label={{ value: "Drop", position: "top", offset: 14, fill: "#B42318", fontSize: 11, fontWeight: 700 }} />
               ))}
+              {seasonalPeak && <>
+                <ReferenceDot x={seasonalPeak.month} y={seasonalPeak.visitors} r={7} fill="#193364" stroke="#fff" strokeWidth={2} isFront label={{ value: "Peak", position: "bottom", offset: 12, fill: "#193364", fontSize: 11, fontWeight: 700 }} />
+                <ReferenceDot x={seasonalPeak.month} y={seasonalPeak.guestCheckIns} r={7} fill="#D69A3A" stroke="#fff" strokeWidth={2} isFront />
+              </>}
             </AreaChart>
             </ResponsiveContainer>
           </div>
@@ -739,10 +770,11 @@ export default function Analytics() {
             </tbody>
           </table>
         </div>
+        {renderRelatedAiFindings(["visitorOrigins"])}
       </div>
 
       <div id="analytics-performance">
-        <EstablishmentPerformanceDashboard periods={data.performancePeriods} year={selectedYear} />
+        <EstablishmentPerformanceDashboard periods={data.performancePeriods} year={selectedYear} aiFindings={renderRelatedAiFindings(["establishmentPerformance"])} />
       </div>
 
     </div>

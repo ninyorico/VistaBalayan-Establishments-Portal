@@ -1,4 +1,4 @@
-export type RecommendationMetric = "dayTourVisitors" | "overnightGuestCheckIns" | "seasonality";
+export type RecommendationMetric = "dayTourVisitors" | "overnightGuestCheckIns" | "seasonality" | "visitorOrigins" | "establishmentPerformance";
 
 export type RecommendationCandidate = {
   id: string;
@@ -44,15 +44,20 @@ export const isEvidenceBoundRecommendation = (action: string | null | undefined,
   const normalized = normalizeAction(action);
   if (!normalized || normalized === "review this trend and take one focused action" || normalized === "review this record manually") return false;
   if (/because of|caused by|due to|weather|festival|event|motivation|guarantee|will increase|will recover/.test(normalized)) return false;
+  if (/promotion|campaign|marketing|capacity|demand|occupancy|amenity|room|lodging/.test(normalized)) return false;
   if (/^(review|investigate|compare|monitor|validate|study|check|prioritize monitoring)\b/.test(normalized)) return false;
   if (!/(contact|assign|set|establish|schedule|coordinate|escalate|prepare|preserve|repeat|adopt|implement|follow up|deadline|planning benchmark|reporting follow-up)/.test(normalized)) return false;
-  const evidenceTerms = /report|reporting|missing|late|submitted|coverage|declin|decreas|check in|check-in|visitor|day tour|overnight guest|guest check/;
+  const evidenceTerms = /report|reporting|missing|late|submitted|coverage|declin|decreas|check in|check-in|visitor|day tour|overnight guest|guest check|origin|growth|volume|establishment|classification|percentile/;
   if (!evidenceTerms.test(normalized)) return false;
   const metricTerms = metric === "overnightGuestCheckIns"
     ? /overnight|accommodation|guest check|report|reporting|missing|late|submitted|coverage/
     : metric === "seasonality"
       ? /season|seasonal|month|peak|visitor|check in|check-in|guest/
-      : /day tour|visitor|tourism|arrival|report|reporting|missing|late|submitted|coverage|origin/;
+      : metric === "visitorOrigins"
+        ? /origin|visitor|growth|location|residence/
+        : metric === "establishmentPerformance"
+          ? /establishment|visitor|volume|classification|percentile|high|low|moderate/
+          : /day tour|visitor|tourism|arrival|report|reporting|missing|late|submitted|coverage|origin/;
   return metricTerms.test(normalized);
 };
 
@@ -66,7 +71,7 @@ export const assignRecommendationsToAnomalies = <T extends RecommendationCandida
 
   for (const anomaly of anomalies) {
     const metric = String(anomaly.metric || "") as RecommendationMetric;
-    if (metric !== "dayTourVisitors" && metric !== "overnightGuestCheckIns" && metric !== "seasonality") continue;
+    if (metric !== "dayTourVisitors" && metric !== "overnightGuestCheckIns" && metric !== "seasonality" && metric !== "visitorOrigins" && metric !== "establishmentPerformance") continue;
     const candidate = candidates.find((item) => {
       const actionKey = recommendationActionKey(item);
       return !usedCandidateIds.has(item.id)

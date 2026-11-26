@@ -42,5 +42,7 @@ describe("AI recommendation integrity", () => {
     expect(isEvidenceBoundRecommendation("Compare June and July 2025 accommodation reports.", "overnightGuestCheckIns")).toBe(false);
     expect(isEvidenceBoundRecommendation("Launch targeted promotions to increase overnight stays.", "overnightGuestCheckIns")).toBe(false);
     expect(isEvidenceBoundRecommendation("Review lodging capacity to match demand.", "overnightGuestCheckIns")).toBe(false);
+    expect(isEvidenceBoundRecommendation("Assign follow-up on visitor origin growth for the next reporting period.", "visitorOrigins")).toBe(true);
+    expect(isEvidenceBoundRecommendation("Coordinate establishment consultations for low reported visitor volume.", "establishmentPerformance")).toBe(true);
   });
 });
