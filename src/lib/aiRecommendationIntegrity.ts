@@ -44,9 +44,12 @@ export const isEvidenceBoundRecommendation = (action: string | null | undefined,
   const normalized = normalizeAction(action);
   if (!normalized || normalized === "review this trend and take one focused action" || normalized === "review this record manually") return false;
   if (/because of|caused by|due to|weather|festival|event|motivation|guarantee|will increase|will recover/.test(normalized)) return false;
+  if (/promotion|campaign|marketing|capacity|demand|occupancy|amenity|room|lodging/.test(normalized)) return false;
+  const evidenceTerms = /report|reporting|missing|late|submitted|coverage|declin|decreas|check in|check-in|visitor|day tour|overnight guest|guest check/;
+  if (!evidenceTerms.test(normalized)) return false;
   const metricTerms = metric === "overnightGuestCheckIns"
-    ? /overnight|accommodation|guest check|room|occupancy|lodging|reporting/
-    : /day tour|visitor|tourism|arrival|reporting|origin/;
+    ? /overnight|accommodation|guest check|report|reporting|missing|late|submitted|coverage/
+    : /day tour|visitor|tourism|arrival|report|reporting|missing|late|submitted|coverage|origin/;
   return metricTerms.test(normalized);
 };
 

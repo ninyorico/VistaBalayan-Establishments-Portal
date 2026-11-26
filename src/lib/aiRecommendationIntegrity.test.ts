@@ -7,8 +7,8 @@ import {
 
 describe("AI recommendation integrity", () => {
   const candidates = [
-    { id: "overnight-1", recommended_action: "Validate missing accommodation reports before planning promotions.", input_snapshot: { metric: "overnightGuestCheckIns" } },
-    { id: "overnight-duplicate", recommended_action: "Validate missing accommodation reports before planning promotions.", input_snapshot: { metric: "overnightGuestCheckIns" } },
+    { id: "overnight-1", recommended_action: "Validate missing accommodation reports before reviewing the affected period.", input_snapshot: { metric: "overnightGuestCheckIns" } },
+    { id: "overnight-duplicate", recommended_action: "Validate missing accommodation reports before reviewing the affected period.", input_snapshot: { metric: "overnightGuestCheckIns" } },
     { id: "day-tour-1", recommended_action: "Review day-tour visitor origins and adjust outreach for declining locations.", input_snapshot: { metric: "dayTourVisitors" } },
     { id: "generic", recommended_action: "Review this trend and take one focused action.", input_snapshot: { metric: "overnightGuestCheckIns" } },
   ];
@@ -38,5 +38,7 @@ describe("AI recommendation integrity", () => {
     expect(isEvidenceBoundRecommendation("Review this trend and take one focused action.", "overnightGuestCheckIns")).toBe(false);
     expect(isEvidenceBoundRecommendation("Visitors declined because of bad weather.", "dayTourVisitors")).toBe(false);
     expect(isEvidenceBoundRecommendation("Validate missing accommodation reports.", "overnightGuestCheckIns")).toBe(true);
+    expect(isEvidenceBoundRecommendation("Launch targeted promotions to increase overnight stays.", "overnightGuestCheckIns")).toBe(false);
+    expect(isEvidenceBoundRecommendation("Review lodging capacity to match demand.", "overnightGuestCheckIns")).toBe(false);
   });
 });
