@@ -68,12 +68,12 @@ const peakMonthName = (monthlyMetrics) => {
   return monthIndex >= 0 && monthIndex < MONTH_NAMES.length ? MONTH_NAMES[monthIndex] : null;
 };
 const normalizePriority = (value, metric, confidence) => {
-  if ((metric === 'dayTourVisitors' || metric === 'overnightGuestCheckIns') && confidence === 'Very Low') return 'High';
+  if (confidence === 'Very Low') return 'Medium';
   const priority = clean(value).toLowerCase();
   return ['critical', 'high', 'medium', 'low'].includes(priority) ? priority[0].toUpperCase() + priority.slice(1) : 'Medium';
 };
 const normalizeActionPriority = (value, metric, confidence, recommendationClass) => {
-  if (confidence === 'Very Low') return recommendationClass === 'Data Validation' ? 'High' : 'Medium';
+  if (confidence === 'Very Low') return 'Medium';
   if (confidence === 'Low') return ['Critical', 'High'].includes(value) ? 'High' : 'Medium';
   const priority = clean(value).toLowerCase();
   return ['critical', 'high', 'medium', 'low'].includes(priority) ? priority[0].toUpperCase() + priority.slice(1) : 'Medium';
@@ -440,7 +440,7 @@ export default async function handler(req, res) {
     if (!apiKey) return sendJson(res, 503, { error: 'AI service is not configured' });
     const data = await getScopedData(supabaseAdmin, profile, scope, analysisPeriod);
     const sourceFingerprint = crypto.createHash('sha256').update(JSON.stringify({ monthlyMetrics: data.monthlyMetrics, originEvidence: data.originEvidence, establishmentEvidence: data.establishmentEvidence })).digest('hex');
-    const generationKey = crypto.createHash('sha256').update(JSON.stringify({ ruleVersion: 'decision-support-v6', scope, establishmentId: profile.establishment_id || null, analysisPeriod, sourceFingerprint })).digest('hex');
+    const generationKey = crypto.createHash('sha256').update(JSON.stringify({ ruleVersion: 'decision-support-v7', scope, establishmentId: profile.establishment_id || null, analysisPeriod, sourceFingerprint })).digest('hex');
     const cachedResults = await findCachedResults(supabaseAdmin, scope, profile.establishment_id, generationKey);
     if (cachedResults) return sendJson(res, 200, cachedResults);
     const results = await generate(apiKey, data, scope);

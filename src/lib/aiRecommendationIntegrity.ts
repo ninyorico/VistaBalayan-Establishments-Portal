@@ -53,12 +53,11 @@ export const isEvidenceBoundRecommendation = (action: string | null | undefined,
   if (!normalized || normalized === "review this trend and take one focused action" || normalized === "review this record manually") return false;
   if (/because of|caused by|due to|weather|festival|event|motivation|guarantee|will increase|will recover/.test(normalized)) return false;
   if (/promotion|campaign|marketing|capacity|demand|occupancy|amenity|room|lodging/.test(normalized)) return false;
-  if (/^(review|investigate|compare|monitor|validate|study|check|prioritize monitoring)\b/.test(normalized)) return false;
   if (!/(contact|assign|set|establish|schedule|coordinate|escalate|prepare|preserve|repeat|adopt|implement|follow up|deadline|reporting follow-up)/.test(normalized)) return false;
   if (metric === "dayTourVisitors" || metric === "overnightGuestCheckIns") {
     if (/planning benchmark|generic|take one focused action|adjust municipal planning/.test(normalized)) return false;
   }
-  if (metric === "visitorOrigins" && !/origin|location|residence|growth/.test(normalized)) return false;
+  if (metric === "visitorOrigins" && !/origin|visitor|growth|location|residence|data|classification|distribution|category/.test(normalized)) return false;
   if (metric === "establishmentPerformance" && !/establishment|volume|classification|percentile/.test(normalized)) return false;
   const evidenceTerms = /report|reporting|missing|late|submitted|coverage|declin|decreas|check in|check-in|visitor|day tour|overnight guest|guest check|origin|growth|volume|establishment|classification|percentile/;
   if (!evidenceTerms.test(normalized)) return false;

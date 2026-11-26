@@ -17,7 +17,7 @@ import { RefreshCw, TrendingUp, TrendingDown, MapPin } from "lucide-react";
 import { supabase } from "../../../lib/supabase";
 import { getEstablishmentReportingMode, type ReportingMode } from "../../../lib/establishmentReportForms";
 import { formatResidencePlace } from "../../../lib/reporting";
-import { aggregateMonthlyMetrics } from "../../../lib/tourismMetrics.js";
+import { aggregateMonthlyMetrics, coverageConfidence } from "../../../lib/tourismMetrics.js";
 import DataState from "../../components/DataState";
 import { PageHero } from "../../components/vista/PolishedShell";
 import EstablishmentPerformanceDashboard, { type PerformanceInputWithMode } from "../../components/vista/EstablishmentPerformanceDashboard";
@@ -575,6 +575,91 @@ export default function Analytics() {
     aiInsights,
   );
 
+  const fallbackDecisionSupport = (anomaly: AnalyticsAiAnomaly): AiDecisionSupport | null => {
+    const evidence = anomaly.input_snapshot || {};
+    const metric = String(evidence.metric || "");
+    const month = String(evidence.current_month || "the selected period");
+    const monthLabel = month.length === 7 ? new Date(`${month}-01T00:00:00Z`).toLocaleDateString("en-US", { month: "long", year: "numeric", timeZone: "UTC" }) : month;
+    const missingReports = Number(evidence.current_missing_reports);
+    const coverage = Number(evidence.current_coverage_percent);
+    const confidence = Number.isFinite(coverage) ? coverageConfidence(coverage) || "Not calculated" : "Not calculated";
+    let action;
+    let limitation = "This action is generated from the verified chart evidence and remains subject to officer review.";
+
+    if (metric === "dayTourVisitors" || metric === "overnightGuestCheckIns") {
+      const metricLabel = metric === "overnightGuestCheckIns" ? "overnight guest check-in" : "day-tour visitor";
+      if (Number.isFinite(missingReports) && missingReports > 0) {
+        action = {
+          action_title: `Follow up on ${missingReports} missing reports`,
+          action_description: `Assign reporting follow-up for the ${missingReports} missing ${metricLabel} reports for ${monthLabel}.`,
+          action_priority: "Medium",
+          action_category: "Reporting Compliance",
+          responsible_entity: "Tourism Operations Assistant",
+          suggested_timeframe: "Within 7 days",
+          success_indicators: [`All ${missingReports} missing ${metricLabel} reports are submitted or documented as unavailable.`],
+          validation_required: true,
+        };
+      } else {
+        action = {
+          action_title: `Assess reported ${metricLabel} decline`,
+          action_description: `Schedule a diagnostic assessment of reported ${metricLabel} volume for ${monthLabel} against ${String(evidence.previous_month || "the previous month")}.`,
+          action_priority: "Medium",
+          action_category: "Operations",
+          responsible_entity: "Municipal Tourism Officer",
+          suggested_timeframe: "Within 14 days",
+          success_indicators: [`A written comparison of the verified ${metricLabel} values is recorded for the selected period.`],
+          validation_required: true,
+        };
+      }
+    } else if (metric === "visitorOrigins") {
+      const origin = String(evidence.origin || "the leading origin category");
+      action = {
+        action_title: "Validate visitor-origin classifications",
+        action_description: `Coordinate a source-record check of the ${origin} visitor-origin classification before using this result for program planning.`,
+        action_priority: "Medium",
+        action_category: "Data Validation",
+        responsible_entity: "Tourism Operations Assistant",
+        suggested_timeframe: "Within 14 days",
+        success_indicators: [`The ${origin} origin total is reconciled against the selected-period source reports.`],
+        validation_required: true,
+      };
+      limitation = "The chart shows reported origin distribution; it does not establish visitor motivation or cause.";
+    } else if (metric === "establishmentPerformance") {
+      action = {
+        action_title: "Validate establishment volume totals",
+        action_description: `Schedule a cross-check of establishment visitor totals for ${selectedYear} before allocating targeted administrative support.`,
+        action_priority: "Medium",
+        action_category: "Data Validation",
+        responsible_entity: "Tourism Operations Assistant",
+        suggested_timeframe: "Within 14 days",
+        success_indicators: ["Establishment totals are reconciled with the corresponding submitted reports."],
+        validation_required: true,
+      };
+      limitation = "The distribution is based on reported volume and does not establish quality, profitability, or cause.";
+    } else if (metric === "seasonality") {
+      const peak = String(evidence.peak_month || monthLabel);
+      action = {
+        action_title: `Prepare monitoring for ${peak}`,
+        action_description: `Prepare a monitoring checklist for the verified ${peak} activity peak during the next reporting period.`,
+        action_priority: "Medium",
+        action_category: "Tourism Planning",
+        responsible_entity: "Municipal Tourism Officer",
+        suggested_timeframe: "Before the anticipated peak season",
+        success_indicators: [`The ${peak} monitoring checklist is approved and used during the next corresponding reporting period.`],
+        validation_required: true,
+      };
+    }
+    if (!action) return null;
+    return {
+      insight_category: action.action_category,
+      data_confidence: confidence,
+      data_limitations: [limitation],
+      decision_implication: "A defined follow-up converts the verified chart finding into a reviewable municipal action without assuming an unsupported cause.",
+      recommended_actions: [action],
+      validation_required: true,
+    };
+  };
+
   const renderRelatedAiFindings = (metrics: string[]) => {
     const related = allAiFindings.filter((anomaly) => metrics.includes(String(anomaly.input_snapshot?.metric || "")));
     const standalone = deduplicateStandaloneRecommendations(
@@ -614,7 +699,8 @@ export default function Analytics() {
             <div className="grid grid-cols-1 gap-4 xl:grid-cols-2">
               {related.map((anomaly) => {
                 const matchingInsight = recommendationAssignments.assignments.get(anomaly.id);
-                return <AiAnomalyCard key={anomaly.id} {...anomaly} aiRecommendation={matchingInsight?.recommended_action || null} decisionSupport={matchingInsight?.input_snapshot?.decision_support as AiDecisionSupport | undefined} showRecommendationUnavailable={!matchingInsight} evidenceHref={evidenceHref} evidenceLabel="chart evidence" />;
+                const fallback = !matchingInsight ? fallbackDecisionSupport(anomaly) : null;
+                return <AiAnomalyCard key={anomaly.id} {...anomaly} aiRecommendation={matchingInsight?.recommended_action || fallback?.recommended_actions?.[0]?.action_description || null} decisionSupport={(matchingInsight?.input_snapshot?.decision_support as AiDecisionSupport | undefined) || fallback} showRecommendationUnavailable={!matchingInsight && !fallback} evidenceHref={evidenceHref} evidenceLabel="chart evidence" />;
               })}
               {standalone.map((insight) => <AiRecommendationCard key={insight.id} {...insight} evidenceHref={evidenceHref} evidenceLabel="chart evidence" />)}
             </div>

@@ -49,6 +49,8 @@ describe("AI recommendation integrity", () => {
     expect(isEvidenceBoundRecommendation("Launch targeted promotions to increase overnight stays.", "overnightGuestCheckIns")).toBe(false);
     expect(isEvidenceBoundRecommendation("Review lodging capacity to match demand.", "overnightGuestCheckIns")).toBe(false);
     expect(isEvidenceBoundRecommendation("Assign follow-up on visitor origin growth for the next reporting period.", "visitorOrigins")).toBe(true);
+    expect(isEvidenceBoundRecommendation("Coordinate visitor data consistency verification for the selected origin category.", "visitorOrigins")).toBe(true);
+    expect(isEvidenceBoundRecommendation("Schedule a diagnostic assessment of reported overnight guest check-in volume for January against December.", "overnightGuestCheckIns")).toBe(true);
     expect(isEvidenceBoundRecommendation("Coordinate establishment consultations for low reported visitor volume.", "establishmentPerformance")).toBe(true);
   });
 });
