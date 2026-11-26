@@ -6,7 +6,6 @@ import {
   MessageSquareWarning,
   FileText,
   BarChart3,
-  Brain,
   Settings,
   LogOut,
   Menu,
@@ -24,7 +23,6 @@ const menuItems = [
   { path: "/officer/reports", icon: FileText, label: "Reports" },
 
   { path: "/officer/analytics", icon: BarChart3, label: "Analytics" },
-  { path: "/officer/ai-insights", icon: Brain, label: "AI Insights" },
 ];
 
 export default function OfficerLayout() {

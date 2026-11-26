@@ -335,7 +335,7 @@ export default function NotificationCenter({ role }: NotificationCenterProps) {
           title: "AI insights updated",
           message: `${recommendations.count} recommendation${recommendations.count === 1 ? "" : "s"} available for this month.`,
           type: "ai",
-          actionPath: "/officer/ai-insights",
+          actionPath: "/officer/analytics",
           createdAt: newestCreatedAt(recommendations.data),
           isRead: false,
         });

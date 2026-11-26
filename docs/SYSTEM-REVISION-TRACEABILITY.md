@@ -4,7 +4,9 @@ Source checklist: `System To do..docx` supplied for this revision.
 
 ## Implemented and verified in source
 
-- Officer **Analytics** already contains cached AI anomaly and recommendation cards directly beside the charts and statistics.
+- Officer **Analytics** contains the municipality-wide AI anomaly and recommendation cards below the KPI, ranking, trend, origin, and performance evidence. The separate officer **AI Insights** page and navigation entry were removed.
+- AI anomaly cards are filtered against the active reporting period when their evidence snapshot includes a month, and each evidence-backed finding links to the related Analytics chart, ranking table, or performance section.
+- AI notification actions now open **Analytics** so the finding is reviewed beside the data that supports it.
 - Deterministic visitor-count decline detection remains evidence-backed with current/previous values, thresholds, reporting coverage, missing reports, late reports, and rule versions.
 - Visitor-volume classifications remain explicitly separate from establishment quality/performance. The percentile method is documented as a volume classification only.
 - Peak-month analytics now select and label the month with the highest **day-tour visitor count**. Day-tour visitors and accommodation guest check-ins are displayed as separate units rather than being added into a misleading combined activity KPI.

@@ -76,6 +76,7 @@ type AnalyticsAiAnomaly = {
   establishments?: { name: string } | null;
   detected_at: string;
   is_resolved: boolean;
+  input_snapshot?: Record<string, unknown> | null;
 };
 
 type AnalyticsAiInsight = {
@@ -137,6 +138,16 @@ const getComparisonPeriod = (period: ReportPeriodSelection, year: number): Repor
 
 const getComparisonLabel = (period: ReportPeriodSelection, comparisonYear: string) =>
   period.type === "year" ? `Year ${comparisonYear}` : `${period.type === "quarter" ? `Q${period.quarter}` : period.type === "month" ? new Date(2000, period.month, 1).toLocaleString("default", { month: "short" }) : period.type === "week" ? `Week ${period.week}` : "Custom range"} ${comparisonYear}`;
+
+const aiFindingMatchesPeriod = (anomaly: AnalyticsAiAnomaly, period: ReportPeriodSelection) => {
+  const month = anomaly.input_snapshot?.current_month;
+  if (typeof month !== "string" || !/^\d{4}-\d{2}$/.test(month)) return true;
+  const monthStart = `${month}-01`;
+  const [year, monthNumber] = month.split("-").map(Number);
+  const monthEnd = new Date(Date.UTC(year, monthNumber, 0)).toISOString().slice(0, 10);
+  const range = getReportPeriodRange(period);
+  return monthStart <= range.endDate && monthEnd >= range.startDate;
+};
 
 export default function Analytics() {
   const { horizontalRef: originsTableRef } = useDominantAxisTableScroll();
@@ -233,7 +244,7 @@ export default function Analytics() {
       fetchAllReports("accommodation_reports", `establishment_id, report_date, total_check_ins`, comparisonRange),
       supabase
         .from("ai_anomalies_cache")
-        .select("id,anomaly_type,severity,description,recommendation,detected_at,is_resolved,establishments(name)")
+        .select("id,anomaly_type,severity,description,recommendation,detected_at,is_resolved,input_snapshot,establishments(name)")
         .eq("status", "active")
         .eq("is_resolved", false)
         .is("establishment_id", null)
@@ -248,7 +259,8 @@ export default function Analytics() {
         .limit(MAX_AI_ITEMS),
     ]);
 
-    setAiAnomalies((aiAnomalyResult.data || []) as AnalyticsAiAnomaly[]);
+    const periodAnomalies = ((aiAnomalyResult.data || []) as AnalyticsAiAnomaly[]).filter((anomaly) => aiFindingMatchesPeriod(anomaly, analyticsPeriod));
+    setAiAnomalies(periodAnomalies);
     setAiInsights((aiInsightResult.data || []) as AnalyticsAiInsight[]);
 
     const { data: visitorData, error: visitorError } = visitorResult;
@@ -479,24 +491,6 @@ export default function Analytics() {
         </div>
       </PageHero>
 
-      <AiSectionCard
-        title="Decision support in Analytics"
-        countLabel={`${aiAnomalies.length + aiInsights.length} Active`}
-        icon={<AlertTriangle className="size-5 text-amber-600" />}
-      >
-        <p className="mb-4 text-sm text-gray-600">
-          AI-assisted findings are shown beside the underlying charts and statistics. Review the evidence before taking operational action.
-        </p>
-        <div className="grid grid-cols-1 gap-3 lg:grid-cols-2">
-          {aiAnomalies.length > 0 ? aiAnomalies.slice(0, 4).map((anomaly) => (
-            <AiAnomalyCard key={anomaly.id} {...anomaly} />
-          )) : <AiEmptyState variant="gaps" />}
-          {aiInsights.length > 0 ? aiInsights.slice(0, 4).map((insight) => (
-            <AiRecommendationCard key={insight.id} {...insight} />
-          )) : <AiEmptyState variant="recommendations" />}
-        </div>
-      </AiSectionCard>
-
       <div className="grid grid-cols-3 gap-2 sm:gap-4 lg:gap-6" data-analytics-kpi-row="mobile-one-row">
         <div className="flex min-h-0 flex-col rounded-lg border border-gray-200 bg-white p-2.5 shadow-sm sm:p-5 lg:min-h-[164px] lg:p-6">
           <div className="mb-1.5 flex items-center justify-between gap-1 lg:mb-3">
@@ -533,7 +527,7 @@ export default function Analytics() {
         </div>
       </div>
 
-      <section className="rounded-lg border border-gray-200 bg-white p-4 shadow-sm sm:p-6" aria-labelledby="analytics-comparison-title">
+      <section id="analytics-rankings" className="rounded-lg border border-gray-200 bg-white p-4 shadow-sm sm:p-6" aria-labelledby="analytics-comparison-title">
         <div className="flex flex-col gap-1 border-b border-gray-200 pb-4 sm:flex-row sm:items-end sm:justify-between">
           <div>
             <h3 id="analytics-comparison-title" className="text-base font-semibold text-gray-900 sm:text-lg">Year-to-year establishment comparison</h3>
@@ -546,7 +540,7 @@ export default function Analytics() {
         </div>
       </section>
 
-      <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4 sm:p-6">
+      <div id="analytics-trends" className="bg-white rounded-lg shadow-sm border border-gray-200 p-4 sm:p-6">
         <h3 className="text-base font-semibold text-gray-900 mb-4 sm:text-lg">Tourism Trends and Seasonal Patterns ({getAnalyticsYearRange(selectedYear).label})</h3>
         {data.seasonalData.length > 0 ? (
           <div className="-mx-2 sm:mx-0">
@@ -591,7 +585,7 @@ export default function Analytics() {
         )}
       </div>
 
-      <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
+      <div id="analytics-origins" className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
         <div className="p-6 border-b border-gray-200">
           <h3 className="text-lg font-semibold text-gray-900">Visitor Origins & Actual Growth</h3>
         </div>
@@ -640,7 +634,30 @@ export default function Analytics() {
         </div>
       </div>
 
-      <EstablishmentPerformanceDashboard periods={data.performancePeriods} year={selectedYear} />
+      <div id="analytics-performance">
+        <EstablishmentPerformanceDashboard periods={data.performancePeriods} year={selectedYear} />
+      </div>
+
+      <AiSectionCard
+        title="Decision support in Analytics"
+        countLabel={`${aiAnomalies.length + aiInsights.length} Active`}
+        icon={<AlertTriangle className="size-5 text-amber-600" />}
+      >
+        <p className="mb-4 text-sm text-gray-600">
+          AI findings are shown after the charts and tables and are limited to the active reporting period where evidence is available. Each detected issue links back to the related dashboard evidence.
+        </p>
+        <div className="grid grid-cols-1 gap-3 lg:grid-cols-2">
+          {aiAnomalies.length > 0 ? aiAnomalies.slice(0, 4).map((anomaly) => {
+            const metric = anomaly.input_snapshot?.metric;
+            const evidenceHref = metric === "overnightGuestCheckIns" ? "#analytics-performance" : metric === "dayTourVisitors" ? "#analytics-trends" : "#analytics-rankings";
+            const evidenceLabel = metric === "overnightGuestCheckIns" ? "accommodation performance" : metric === "dayTourVisitors" ? "visitor trend chart" : "ranking table";
+            return <AiAnomalyCard key={anomaly.id} {...anomaly} evidenceHref={evidenceHref} evidenceLabel={evidenceLabel} />;
+          }) : <AiEmptyState variant="gaps" />}
+          {aiInsights.length > 0 ? aiInsights.slice(0, 4).map((insight) => (
+            <AiRecommendationCard key={insight.id} {...insight} />
+          )) : <AiEmptyState variant="recommendations" />}
+        </div>
+      </AiSectionCard>
     </div>
   );
 }

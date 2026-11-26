@@ -27,6 +27,8 @@ interface AiAnomalyCardProps {
   detected_at: string;
   establishments?: { name: string } | null;
   input_snapshot?: Record<string, unknown> | null;
+  evidenceHref?: string;
+  evidenceLabel?: string;
   className?: string;
 }
 
@@ -274,6 +276,11 @@ export function AiAnomalyCard(anomaly: AiAnomalyCardProps) {
               <span className="font-semibold text-slate-800">Recommendation:</span>{" "}
               <AiFormattedText text={formatAnomalyRecommendation(anomaly)} tone="action" />
             </div>
+          )}
+          {anomaly.evidenceHref && (
+            <a href={anomaly.evidenceHref} className="inline-flex text-sm font-semibold text-[#0E5A72] underline decoration-[#0E5A72]/35 underline-offset-4 hover:text-[#193364]">
+              View related {anomaly.evidenceLabel || "Analytics evidence"}
+            </a>
           )}
         </div>
       </div>
