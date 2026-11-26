@@ -582,12 +582,13 @@ export default function Analytics() {
     const monthLabel = month.length === 7 ? new Date(`${month}-01T00:00:00Z`).toLocaleDateString("en-US", { month: "long", year: "numeric", timeZone: "UTC" }) : month;
     const missingReports = Number(evidence.current_missing_reports);
     const coverage = Number(evidence.current_coverage_percent);
-    const confidence = Number.isFinite(coverage) ? coverageConfidence(coverage) || "Not calculated" : "Not calculated";
+    const confidence = Number.isFinite(coverage) ? coverageConfidence(coverage) || "Not calculated" : undefined;
     let action;
     let limitation = "This action is generated from the verified chart evidence and remains subject to officer review.";
 
     if (metric === "dayTourVisitors" || metric === "overnightGuestCheckIns") {
       const metricLabel = metric === "overnightGuestCheckIns" ? "overnight guest check-in" : "day-tour visitor";
+      const dropPercent = Number(evidence.drop_percent);
       if (Number.isFinite(missingReports) && missingReports > 0) {
         action = {
           action_title: `Follow up on ${missingReports} missing reports`,
@@ -599,12 +600,24 @@ export default function Analytics() {
           success_indicators: [`All ${missingReports} missing ${metricLabel} reports are submitted or documented as unavailable.`],
           validation_required: true,
         };
+      } else if (Number.isFinite(dropPercent) && dropPercent >= 30 && Number.isFinite(coverage) && coverage >= 80) {
+        action = {
+          action_title: "Run a measured visitor-recovery response",
+          action_description: `Coordinate one approved visitor-recovery intervention for the ${monthLabel} decline and compare the next reporting period with the ${evidence.current_value} ${metricLabel} baseline.`,
+          action_priority: "High",
+          action_category: "Tourism Planning",
+          responsible_entity: "Municipal Tourism Officer",
+          suggested_timeframe: "Within 30 days",
+          success_indicators: [`The next reporting period is compared with the ${evidence.current_value} ${metricLabel} baseline and the intervention result is recorded.`],
+          validation_required: false,
+        };
+        limitation = "Reporting coverage is sufficiently complete for a diagnostic intervention, but the data does not establish the decline's cause.";
       } else {
         action = {
           action_title: `Assess reported ${metricLabel} decline`,
           action_description: `Schedule a diagnostic assessment of reported ${metricLabel} volume for ${monthLabel} against ${String(evidence.previous_month || "the previous month")}.`,
           action_priority: "Medium",
-          action_category: "Operations",
+          action_category: "Diagnostic Assessment",
           responsible_entity: "Municipal Tourism Officer",
           suggested_timeframe: "Within 14 days",
           success_indicators: [`A written comparison of the verified ${metricLabel} values is recorded for the selected period.`],
@@ -613,26 +626,30 @@ export default function Analytics() {
       }
     } else if (metric === "visitorOrigins") {
       const origin = String(evidence.origin || "the leading origin category");
+      const growth = Number(evidence.growth_percent);
+      const hasGrowth = Number.isFinite(growth) && growth > 0;
       action = {
-        action_title: "Validate visitor-origin classifications",
-        action_description: `Coordinate a source-record check of the ${origin} visitor-origin classification before using this result for program planning.`,
+        action_title: hasGrowth ? `Target the ${origin} visitor segment` : "Balance visitor-origin outreach",
+        action_description: hasGrowth
+          ? `Prioritize one documented outreach or program-planning response for the growing ${origin} segment, then compare its next-period visitor volume.`
+          : `Design one outreach response for the reported visitor-origin mix and compare next-period origin volumes before expanding it.`,
         action_priority: "Medium",
-        action_category: "Data Validation",
-        responsible_entity: "Tourism Operations Assistant",
-        suggested_timeframe: "Within 14 days",
-        success_indicators: [`The ${origin} origin total is reconciled against the selected-period source reports.`],
+        action_category: "Tourism Promotion",
+        responsible_entity: "Municipal Tourism Officer",
+        suggested_timeframe: "Within 30 days",
+        success_indicators: [`The response is documented and next-period visitor-origin volumes are compared with the selected-period baseline.`],
         validation_required: true,
       };
       limitation = "The chart shows reported origin distribution; it does not establish visitor motivation or cause.";
     } else if (metric === "establishmentPerformance") {
       action = {
-        action_title: "Validate establishment volume totals",
-        action_description: `Schedule a cross-check of establishment visitor totals for ${selectedYear} before allocating targeted administrative support.`,
+        action_title: "Prioritize establishment support by volume",
+        action_description: `Group establishments by reported visitor-volume category for ${selectedYear} and assign one support follow-up to each low-volume group.`,
         action_priority: "Medium",
-        action_category: "Data Validation",
-        responsible_entity: "Tourism Operations Assistant",
-        suggested_timeframe: "Within 14 days",
-        success_indicators: ["Establishment totals are reconciled with the corresponding submitted reports."],
+        action_category: "Resource Allocation",
+        responsible_entity: "Municipal Tourism Officer",
+        suggested_timeframe: "Within 30 days",
+        success_indicators: ["Volume groups and assigned support follow-ups are recorded for the selected year."],
         validation_required: true,
       };
       limitation = "The distribution is based on reported volume and does not establish quality, profitability, or cause.";
