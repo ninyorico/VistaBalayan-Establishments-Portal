@@ -381,7 +381,7 @@ export default function Analytics() {
       .slice(0, 8);
 
     const peakKey = sortedMonthKeys.reduce(
-      (best, key) => ((monthlyData[key].visitors + monthlyData[key].guestCheckIns) > ((monthlyData[best]?.visitors || 0) + (monthlyData[best]?.guestCheckIns || 0)) ? key : best),
+      (best, key) => (monthlyData[key].visitors > (monthlyData[best]?.visitors || 0) ? key : best),
       sortedMonthKeys[0] || ""
     );
     const peakIndex = sortedMonthKeys.indexOf(peakKey);
@@ -396,12 +396,12 @@ export default function Analytics() {
       performancePeriods,
       peakSeason: {
         month: monthlyData[peakKey]?.label || "N/A",
-        activity: (monthlyData[peakKey]?.visitors || 0) + (monthlyData[peakKey]?.guestCheckIns || 0),
+        activity: monthlyData[peakKey]?.visitors || 0,
         visitors: monthlyData[peakKey]?.visitors || 0,
         guestCheckIns: monthlyData[peakKey]?.guestCheckIns || 0,
         growth: percentChange(
-          (monthlyData[peakKey]?.visitors || 0) + (monthlyData[peakKey]?.guestCheckIns || 0),
-          (monthlyData[beforePeakKey]?.visitors || 0) + (monthlyData[beforePeakKey]?.guestCheckIns || 0)
+          monthlyData[peakKey]?.visitors || 0,
+          monthlyData[beforePeakKey]?.visitors || 0
         ) ?? 0,
       },
       topOrigin: {
@@ -460,15 +460,15 @@ export default function Analytics() {
       <div className="grid grid-cols-3 gap-2 sm:gap-4 lg:gap-6" data-analytics-kpi-row="mobile-one-row">
         <div className="flex min-h-0 flex-col rounded-lg border border-gray-200 bg-white p-2.5 shadow-sm sm:p-5 lg:min-h-[164px] lg:p-6">
           <div className="mb-1.5 flex items-center justify-between gap-1 lg:mb-3">
-            <p className="text-[10px] font-medium leading-tight text-gray-600 sm:text-sm lg:text-base">Peak Season Activity</p>
+            <p className="text-[10px] font-medium leading-tight text-gray-600 sm:text-sm lg:text-base">Peak Visitor Month</p>
             <TrendingUp className="h-3.5 w-3.5 shrink-0 text-green-600 sm:h-5 sm:w-5" />
           </div>
           <p className="truncate text-base font-bold leading-tight text-gray-900 sm:text-2xl lg:text-3xl">{data.peakSeason.month || "N/A"}</p>
           <p className="mt-1 truncate text-[10px] leading-tight text-green-600 sm:text-sm lg:mt-2 lg:text-base">
-            {data.peakSeason.activity.toLocaleString()} recorded activities
+            {data.peakSeason.activity.toLocaleString()} day-tour visitors
           </p>
           <p className="mt-1 hidden truncate text-[10px] leading-tight text-gray-500 sm:block sm:text-xs lg:mt-2 lg:text-sm">
-            {data.peakSeason.visitors.toLocaleString()} visitors + {data.peakSeason.guestCheckIns.toLocaleString()} check-ins
+            {data.peakSeason.visitors.toLocaleString()} day-tour visitors · {data.peakSeason.guestCheckIns.toLocaleString()} guest check-ins
           </p>
         </div>
         <div className="flex min-h-0 flex-col rounded-lg border border-gray-200 bg-white p-2.5 shadow-sm sm:p-5 lg:min-h-[164px] lg:p-6">
