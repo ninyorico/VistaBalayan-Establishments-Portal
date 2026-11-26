@@ -487,6 +487,12 @@ export default function Analytics() {
   }
 
   const analyticsYears = Array.from({ length: 5 }, (_, index) => String(currentDate.getFullYear() - 2 + index));
+  const panelFilter = (label: string) => (
+    <div className="mt-3 rounded-2xl border border-slate-200 bg-slate-50 p-3 sm:mt-0 sm:min-w-[24rem]">
+      <p className="mb-2 text-[11px] font-semibold uppercase tracking-[0.14em] text-slate-500">{label}</p>
+      <ReportPeriodFilter value={analyticsPeriod} availableYears={analyticsYears.map(Number)} onChange={setAnalyticsPeriod} />
+    </div>
+  );
 
   return (
     <div className="space-y-6">
@@ -544,12 +550,15 @@ export default function Analytics() {
       </div>
 
       <section id="analytics-rankings" className="rounded-lg border border-gray-200 bg-white p-4 shadow-sm sm:p-6" aria-labelledby="analytics-comparison-title">
-        <div className="flex flex-col gap-1 border-b border-gray-200 pb-4 sm:flex-row sm:items-end sm:justify-between">
+        <div className="flex flex-col gap-1 border-b border-gray-200 pb-4 sm:flex-row sm:items-start sm:justify-between">
           <div>
             <h3 id="analytics-comparison-title" className="text-base font-semibold text-gray-900 sm:text-lg">Year-to-year establishment comparison</h3>
             <p className="mt-1 text-sm text-gray-600">Top establishments by day-tour visitors for the active period compared with {data.comparisonLabel}. This compares reported volume, not overall establishment quality.</p>
           </div>
-          <span className="text-xs font-medium text-slate-500">Current: {analyticsPeriod.type === "custom" ? `${analyticsPeriod.startDate || "—"} to ${analyticsPeriod.endDate || "—"}` : selectedYear}</span>
+          <div className="sm:flex sm:flex-col sm:items-end">
+            <span className="text-xs font-medium text-slate-500">Current: {analyticsPeriod.type === "custom" ? `${analyticsPeriod.startDate || "—"} to ${analyticsPeriod.endDate || "—"}` : selectedYear}</span>
+            {panelFilter("Filter this comparison")}
+          </div>
         </div>
         <div className="mt-4 overflow-x-auto">
           <table className="w-full min-w-[40rem] text-sm"><thead className="border-b border-gray-200 text-left text-xs uppercase tracking-wide text-gray-500"><tr><th className="px-3 py-2">Rank</th><th className="px-3 py-2">Establishment</th><th className="px-3 py-2">Current period</th><th className="px-3 py-2">{data.comparisonLabel}</th><th className="px-3 py-2">Change</th></tr></thead><tbody className="divide-y divide-gray-100">{data.comparisonRankings.map((row, index) => <tr key={row.name}><td className="px-3 py-2 font-semibold text-gray-500">{index + 1}</td><td className="px-3 py-2 font-medium text-gray-900">{row.name}</td><td className="px-3 py-2">{row.current.toLocaleString()}</td><td className="px-3 py-2">{row.comparison.toLocaleString()}</td><td className={`px-3 py-2 font-semibold ${row.change === null ? "text-gray-500" : row.change >= 0 ? "text-green-600" : "text-red-600"}`}>{row.change === null ? "N/A" : `${row.change >= 0 ? "+" : ""}${row.change.toFixed(1)}%`}</td></tr>)}</tbody></table>
@@ -557,7 +566,10 @@ export default function Analytics() {
       </section>
 
       <div id="analytics-trends" className="bg-white rounded-lg shadow-sm border border-gray-200 p-4 sm:p-6">
-        <h3 className="text-base font-semibold text-gray-900 mb-4 sm:text-lg">Tourism Trends and Seasonal Patterns ({getAnalyticsYearRange(selectedYear).label})</h3>
+        <div className="flex flex-col gap-3 border-b border-gray-200 pb-4 sm:flex-row sm:items-start sm:justify-between">
+          <h3 className="text-base font-semibold text-gray-900 sm:text-lg">Tourism Trends and Seasonal Patterns ({getAnalyticsYearRange(selectedYear).label})</h3>
+          {panelFilter("Filter this chart")}
+        </div>
         {data.seasonalData.length > 0 ? (
           <div className="-mx-2 sm:mx-0">
             <ResponsiveContainer width="100%" height={350}>
@@ -638,8 +650,9 @@ export default function Analytics() {
       </div>
 
       <div id="analytics-origins" className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
-        <div className="p-6 border-b border-gray-200">
+        <div className="flex flex-col gap-3 border-b border-gray-200 p-6 sm:flex-row sm:items-start sm:justify-between">
           <h3 className="text-lg font-semibold text-gray-900">Visitor Origins & Actual Growth</h3>
+          {panelFilter("Filter this table")}
         </div>
         <div ref={originsTableRef} className="max-h-[20rem] overflow-auto overscroll-contain touch-none [-webkit-overflow-scrolling:touch]" aria-label="Visitor origins table; scroll to view more than five locations">
           <table className="w-full min-w-[23rem] table-fixed sm:min-w-0">
@@ -687,6 +700,13 @@ export default function Analytics() {
       </div>
 
       <div id="analytics-performance">
+        <div className="mb-3 flex flex-col gap-3 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm sm:flex-row sm:items-start sm:justify-between sm:p-6">
+          <div>
+            <h3 className="text-base font-semibold text-gray-900 sm:text-lg">Establishment performance dashboard</h3>
+            <p className="mt-1 text-sm text-gray-600">Compare performance classifications for the selected reporting period.</p>
+          </div>
+          {panelFilter("Filter this dashboard")}
+        </div>
         <EstablishmentPerformanceDashboard periods={data.performancePeriods} year={selectedYear} />
       </div>
 
