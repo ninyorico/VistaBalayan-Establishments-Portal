@@ -13,7 +13,7 @@ import {
   ReferenceDot,
   ResponsiveContainer,
 } from "recharts";
-import { AlertTriangle, RefreshCw, TrendingUp, TrendingDown, MapPin } from "lucide-react";
+import { RefreshCw, TrendingUp, TrendingDown, MapPin } from "lucide-react";
 import { supabase } from "../../../lib/supabase";
 import { getEstablishmentReportingMode, type ReportingMode } from "../../../lib/establishmentReportForms";
 import { formatResidencePlace } from "../../../lib/reporting";
@@ -22,14 +22,13 @@ import DataState from "../../components/DataState";
 import { PageHero } from "../../components/vista/PolishedShell";
 import EstablishmentPerformanceDashboard, { type PerformanceInputWithMode } from "../../components/vista/EstablishmentPerformanceDashboard";
 import { useDominantAxisTableScroll } from "../../../hooks/useDominantAxisTableScroll";
-import { AiAnomalyCard, AiEmptyState, AiRecommendationCard, AiSectionCard } from "../../components/vista/AiInsightsDesign";
+import { AiAnomalyCard } from "../../components/vista/AiInsightsDesign";
 import { MAX_AI_ITEMS } from "../../../lib/aiInsights";
 import ReportPeriodFilter from "../../components/ReportPeriodFilter";
 import { getReportPeriodRange, type ReportPeriodSelection } from "../../../lib/reportPeriod";
 import { geminiService } from "../../../services/geminiService";
 import {
   assignRecommendationsToAnomalies,
-  deduplicateStandaloneRecommendations,
   isEvidenceBoundRecommendation,
 } from "../../../lib/aiRecommendationIntegrity";
 
@@ -500,9 +499,9 @@ export default function Analytics() {
 
   const analyticsYears = Array.from({ length: 5 }, (_, index) => String(currentDate.getFullYear() - 2 + index));
   const panelFilter = (label: string) => (
-    <div className="flex min-w-0 flex-wrap items-center justify-end gap-2 sm:flex-nowrap">
-      <p className="shrink-0 text-[11px] font-semibold uppercase tracking-[0.14em] text-slate-500">{label}</p>
-      <ReportPeriodFilter value={analyticsPeriod} availableYears={analyticsYears.map(Number)} onChange={setAnalyticsPeriod} className="min-w-0" />
+    <div className="flex w-full min-w-0 flex-col items-stretch gap-1 sm:w-auto sm:flex-row sm:items-center sm:justify-end sm:gap-2">
+      <p className="shrink-0 text-left text-[10px] font-semibold uppercase tracking-[0.14em] text-slate-500 sm:text-right">{label}</p>
+      <ReportPeriodFilter value={analyticsPeriod} availableYears={analyticsYears.map(Number)} onChange={setAnalyticsPeriod} className="w-full sm:w-auto" />
     </div>
   );
 
@@ -514,19 +513,45 @@ export default function Analytics() {
     })),
     aiInsights,
   );
-  const standaloneAiInsights = deduplicateStandaloneRecommendations(
-    aiInsights,
-    recommendationAssignments.usedCandidateIds,
-    recommendationAssignments.usedActionKeys,
-  );
-  const visibleAnomalyCount = Math.min(aiAnomalies.length, 4);
-  const visibleStandaloneCount = Math.min(standaloneAiInsights.length, 4);
   const anomalyMarkers = aiAnomalies.slice(0, 4).map((anomaly) => ({
     anomaly,
     month: anomaly.input_snapshot?.current_month,
     value: Number(anomaly.input_snapshot?.current_value || 0),
     metric: anomaly.input_snapshot?.metric,
   })).filter((item) => typeof item.month === "string" && item.value >= 0);
+
+  const renderRelatedAiFindings = (metrics: string[]) => {
+    const related = aiAnomalies.filter((anomaly) => metrics.includes(String(anomaly.input_snapshot?.metric)));
+    if (related.length === 0 && !aiRefreshError) return null;
+    return (
+      <div className="mt-5 border-t border-slate-200 pt-5" aria-label="AI findings related to this chart">
+        <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
+          <div>
+            <h4 className="text-sm font-semibold text-slate-900">Related AI findings and recommendations</h4>
+            <p className="mt-1 text-xs text-slate-500">Based on the unusual periods marked in this chart and the active reporting filter.</p>
+          </div>
+          <button type="button" onClick={refreshAiInsights} disabled={refreshingAi} className="inline-flex items-center gap-2 rounded-xl bg-[#193364] px-3 py-2 text-xs font-semibold text-white shadow-sm transition hover:bg-[#0E5A72] disabled:cursor-not-allowed disabled:opacity-60">
+            <RefreshCw className={`size-4 ${refreshingAi ? "animate-spin" : ""}`} aria-hidden="true" />
+            {refreshingAi ? "Refreshing…" : "Refresh AI analysis"}
+          </button>
+        </div>
+        {aiRefreshError && <p role="alert" className="mb-3 rounded-xl border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-800">{aiRefreshError}</p>}
+        {related.length > 0 ? (
+          <>
+            <p className="mb-3 text-[11px] font-semibold uppercase tracking-[0.12em] text-amber-800">{related.length} related finding{related.length === 1 ? "" : "s"}</p>
+            <div className="grid grid-cols-1 gap-3 lg:grid-cols-2">
+              {related.map((anomaly) => {
+                const metric = anomaly.input_snapshot?.metric;
+                const matchingInsight = recommendationAssignments.assignments.get(anomaly.id);
+                const fallbackRecommendation = (metric === "dayTourVisitors" || metric === "overnightGuestCheckIns") && isEvidenceBoundRecommendation(anomaly.recommendation, metric) ? anomaly.recommendation : null;
+                return <AiAnomalyCard key={anomaly.id} {...anomaly} aiRecommendation={matchingInsight?.recommended_action || fallbackRecommendation} evidenceHref="#analytics-trends" evidenceLabel="chart evidence" />;
+              })}
+            </div>
+          </>
+        ) : <p className="text-sm text-gray-600">No related AI findings are available for the active chart filter.</p>}
+      </div>
+    );
+  };
 
   return (
     <div className="space-y-6">
@@ -590,7 +615,7 @@ export default function Analytics() {
         </div>
       </section>
 
-      <div id="analytics-trends" className="bg-white rounded-lg shadow-sm border border-gray-200 p-4 sm:p-6">
+      <div id="analytics-trends" className="rounded-lg border border-gray-200 bg-white p-4 shadow-sm sm:p-6">
         <div className="flex flex-col gap-3 border-b border-gray-200 pb-4 sm:flex-row sm:items-start sm:justify-between">
           <div>
             <h3 className="text-base font-semibold text-gray-900 sm:text-lg">Tourism Trends and Seasonal Patterns ({getAnalyticsYearRange(selectedYear).label})</h3>
@@ -624,7 +649,7 @@ export default function Analytics() {
                 name="Visitors"
               />
               {anomalyMarkers.filter((item) => item.metric === "dayTourVisitors").map((item) => (
-                <ReferenceDot key={`day-tour-${item.anomaly.id}`} x={monthLabel(`${String(item.month)}-01`)} y={item.value} r={7} fill="#B42318" stroke="#fff" strokeWidth={2} isFront label="Drop" />
+                <ReferenceDot key={`day-tour-${item.anomaly.id}`} x={monthLabel(`${String(item.month)}-01`)} y={item.value} r={7} fill="#B42318" stroke="#fff" strokeWidth={2} isFront label={{ value: "Drop", position: "top", offset: 14, fill: "#B42318", fontSize: 11, fontWeight: 700 }} />
               ))}
               <Area
                 type="monotone"
@@ -637,7 +662,7 @@ export default function Analytics() {
                 name="Guest check-ins"
               />
               {anomalyMarkers.filter((item) => item.metric === "overnightGuestCheckIns").map((item) => (
-                <ReferenceDot key={`overnight-${item.anomaly.id}`} x={monthLabel(`${String(item.month)}-01`)} y={item.value} r={7} fill="#B42318" stroke="#fff" strokeWidth={2} isFront label="Drop" />
+                <ReferenceDot key={`overnight-${item.anomaly.id}`} x={monthLabel(`${String(item.month)}-01`)} y={item.value} r={7} fill="#B42318" stroke="#fff" strokeWidth={2} isFront label={{ value: "Drop", position: "top", offset: 14, fill: "#B42318", fontSize: 11, fontWeight: 700 }} />
               ))}
             </AreaChart>
             </ResponsiveContainer>
@@ -645,37 +670,8 @@ export default function Analytics() {
         ) : (
           <div className="text-center py-12 text-gray-500">No seasonal data available</div>
         )}
+        {renderRelatedAiFindings(["dayTourVisitors", "overnightGuestCheckIns"])}
       </div>
-
-      <section id="analytics-ai-findings">
-        <AiSectionCard
-          title="AI findings and recommendations"
-          countLabel={`${visibleAnomalyCount + visibleStandaloneCount} Visible`}
-          icon={<AlertTriangle className="size-5 text-amber-600" />}
-          action={(
-            <button type="button" onClick={refreshAiInsights} disabled={refreshingAi} className="inline-flex items-center gap-2 rounded-xl bg-[#193364] px-3 py-2 text-xs font-semibold text-white shadow-sm transition hover:bg-[#0E5A72] disabled:cursor-not-allowed disabled:opacity-60 sm:px-4 sm:text-sm">
-              <RefreshCw className={`size-4 ${refreshingAi ? "animate-spin" : ""}`} aria-hidden="true" />
-              {refreshingAi ? "Refreshing…" : "Refresh AI analysis"}
-            </button>
-          )}
-        >
-          <p className="mb-4 text-sm text-gray-600">
-            These findings are based on the verified trend evidence above. Matching AI actions appear inside the related anomaly card; unrelated recommendations remain in this same section.
-          </p>
-          {aiRefreshError && <p role="alert" className="mb-4 rounded-xl border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-800">{aiRefreshError}</p>}
-          <div className="grid grid-cols-1 gap-3 lg:grid-cols-2">
-            {aiAnomalies.length > 0 ? aiAnomalies.slice(0, 4).map((anomaly) => {
-              const metric = anomaly.input_snapshot?.metric;
-              const matchingInsight = recommendationAssignments.assignments.get(anomaly.id);
-              const fallbackRecommendation = (metric === "dayTourVisitors" || metric === "overnightGuestCheckIns") && isEvidenceBoundRecommendation(anomaly.recommendation, metric) ? anomaly.recommendation : null;
-              return <AiAnomalyCard key={anomaly.id} {...anomaly} aiRecommendation={matchingInsight?.recommended_action || fallbackRecommendation} evidenceHref="#analytics-trends" evidenceLabel="trend chart" />;
-            }) : <AiEmptyState variant="gaps" />}
-            {standaloneAiInsights.length > 0 ? standaloneAiInsights.slice(0, 4).map((insight) => (
-              <AiRecommendationCard key={insight.id} {...insight} />
-            )) : <AiEmptyState variant="recommendations" />}
-          </div>
-        </AiSectionCard>
-      </section>
 
       <div id="analytics-origins" className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
         <div className="flex flex-col gap-3 border-b border-gray-200 p-6 sm:flex-row sm:items-start sm:justify-between">
