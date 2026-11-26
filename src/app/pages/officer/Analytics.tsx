@@ -567,14 +567,22 @@ export default function Analytics() {
   );
 
   const renderRelatedAiFindings = (metrics: string[]) => {
-    const related = allAiFindings.filter((anomaly) => metrics.includes(String(anomaly.input_snapshot?.metric)));
+    const related = allAiFindings.filter((anomaly) => {
+      const metric = String(anomaly.input_snapshot?.metric || "");
+      return metrics.includes(metric) && recommendationAssignments.assignments.has(anomaly.id);
+    });
     if (related.length === 0 && !aiRefreshError) return null;
+    const evidenceHref = metrics.includes("visitorOrigins")
+      ? "#analytics-origins"
+      : metrics.includes("establishmentPerformance")
+        ? "#analytics-performance"
+        : "#analytics-trends";
     return (
       <div className="mt-5 border-t border-slate-200 pt-5" aria-label="AI findings related to this chart">
         <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
           <div>
             <h4 className="text-sm font-semibold text-slate-900">Related AI findings and recommendations</h4>
-            <p className="mt-1 text-xs text-slate-500">Based on verified chart evidence, seasonal patterns, and the active reporting filter.</p>
+            <p className="mt-1 text-xs text-slate-500">Only evidence-matched actions for the active chart and reporting filter are shown.</p>
           </div>
           <button type="button" onClick={refreshAiInsights} disabled={refreshingAi} className="inline-flex items-center gap-2 rounded-xl bg-[#193364] px-3 py-2 text-xs font-semibold text-white shadow-sm transition hover:bg-[#0E5A72] disabled:cursor-not-allowed disabled:opacity-60">
             <RefreshCw className={`size-4 ${refreshingAi ? "animate-spin" : ""}`} aria-hidden="true" />
@@ -582,18 +590,17 @@ export default function Analytics() {
           </button>
         </div>
         {aiRefreshError && <p role="alert" className="mb-3 rounded-xl border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-800">{aiRefreshError}</p>}
-        {related.length > 0 ? (
+        {related.length > 0 && (
           <>
-            <p className="mb-3 text-[11px] font-semibold uppercase tracking-[0.12em] text-amber-800">{related.length} related finding{related.length === 1 ? "" : "s"}</p>
-            <div className="grid grid-cols-1 gap-3 lg:grid-cols-2">
+            <p className="mb-3 text-[11px] font-semibold uppercase tracking-[0.12em] text-amber-800">{related.length} actionable finding{related.length === 1 ? "" : "s"}</p>
+            <div className="grid grid-cols-1 gap-4 xl:grid-cols-2">
               {related.map((anomaly) => {
-                const metric = anomaly.input_snapshot?.metric;
                 const matchingInsight = recommendationAssignments.assignments.get(anomaly.id);
-                return <AiAnomalyCard key={anomaly.id} {...anomaly} aiRecommendation={matchingInsight?.recommended_action || null} decisionSupport={matchingInsight?.input_snapshot?.decision_support as AiDecisionSupport | undefined} showRecommendationUnavailable evidenceHref="#analytics-trends" evidenceLabel="chart evidence" />;
+                return <AiAnomalyCard key={anomaly.id} {...anomaly} aiRecommendation={matchingInsight?.recommended_action || null} decisionSupport={matchingInsight?.input_snapshot?.decision_support as AiDecisionSupport | undefined} evidenceHref={evidenceHref} evidenceLabel="chart evidence" />;
               })}
             </div>
           </>
-        ) : <p className="text-sm text-gray-600">No related AI findings are available for the active chart filter.</p>}
+        )}
       </div>
     );
   };
