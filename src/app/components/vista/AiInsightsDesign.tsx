@@ -27,6 +27,7 @@ interface AiAnomalyCardProps {
   detected_at: string;
   establishments?: { name: string } | null;
   input_snapshot?: Record<string, unknown> | null;
+  aiRecommendation?: string | null;
   evidenceHref?: string;
   evidenceLabel?: string;
   className?: string;
@@ -135,13 +136,6 @@ const formatAnomalyDescription = (anomaly: AiAnomalyCardProps) => {
     : `${lateCount.toLocaleString()} submitted ${isOvernight ? "accommodation" : "day-tour"} report${lateCount === 1 ? "" : "s"} ${lateCount === 1 ? "was" : "were"} entered after the report date.`;
 
   return `Reported ${metricLabel} decreased ${drop}% from ${previousMonth} to ${currentMonth}, ${coverage} ${missing} ${late}`;
-};
-
-const formatAnomalyRecommendation = (anomaly: AiAnomalyCardProps) => {
-  const metric = anomaly.input_snapshot?.metric;
-  if (metric === "dayTourVisitors") return "Validate missing and late day-tour reports before confirming a decline in day-tourism activity.";
-  if (metric === "overnightGuestCheckIns") return "Validate missing and late accommodation reports before confirming a decline in overnight tourism activity.";
-  return anomaly.recommendation;
 };
 
 export function AiInsightsShell({
@@ -276,10 +270,10 @@ export function AiAnomalyCard(anomaly: AiAnomalyCardProps) {
               {formatEvidence(anomaly.input_snapshot)}
             </div>
           )}
-          {formatAnomalyRecommendation(anomaly) && (
+          {anomaly.aiRecommendation && (
             <div className="rounded-2xl border border-slate-200 bg-slate-50/80 p-3 text-justify leading-6 hyphens-auto" data-ai-action-note="editorial-shadcn">
               <span className="font-semibold text-slate-800">Recommendation:</span>{" "}
-              <AiFormattedText text={formatAnomalyRecommendation(anomaly)} tone="action" />
+              <AiFormattedText text={anomaly.aiRecommendation} tone="action" />
             </div>
           )}
           {anomaly.evidenceHref && (

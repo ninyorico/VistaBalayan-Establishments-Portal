@@ -87,6 +87,7 @@ type AnalyticsAiInsight = {
   impact: string;
   category: string;
   recommended_action?: string;
+  input_snapshot?: Record<string, unknown> | null;
 };
 
 const RESIDENCE_CATEGORIES: ResidenceCategory[] = ["THIS_PROVINCE", "OTHER_PROVINCE", "FOREIGN"];
@@ -139,6 +140,33 @@ const getComparisonPeriod = (period: ReportPeriodSelection, year: number): Repor
 
 const getComparisonLabel = (period: ReportPeriodSelection, comparisonYear: string) =>
   period.type === "year" ? `Year ${comparisonYear}` : `${period.type === "quarter" ? `Q${period.quarter}` : period.type === "month" ? new Date(2000, period.month, 1).toLocaleString("default", { month: "short" }) : period.type === "week" ? `Week ${period.week}` : "Custom range"} ${comparisonYear}`;
+
+const recommendationMetric = (insight: AnalyticsAiInsight) => String(insight.input_snapshot?.metric || "").toLowerCase();
+
+const recommendationText = (insight: AnalyticsAiInsight) => `${insight.title} ${insight.description} ${insight.recommended_action || ""} ${insight.category}`.toLowerCase();
+
+const recommendationMatchesAnomaly = (insight: AnalyticsAiInsight, metric: unknown) => {
+  const text = recommendationText(insight);
+  const explicitMetric = recommendationMetric(insight);
+  if (metric === "dayTourVisitors") return explicitMetric === "daytourvisitors" || /day.?tour|visitor|season|origin|marketing/.test(text);
+  if (metric === "overnightGuestCheckIns") return explicitMetric === "overnightguestcheckins" || /overnight|accommodation|guest check|room|occupancy/.test(text);
+  return true;
+};
+
+const evidenceForRecommendation = (insight: AnalyticsAiInsight) => {
+  const metric = recommendationMetric(insight);
+  const text = recommendationText(insight);
+  if (metric === "overnightguestcheckins" || /overnight|accommodation|guest check|room|occupancy/.test(text)) {
+    return { evidenceHref: "#analytics-performance", evidenceLabel: "accommodation performance dashboard" };
+  }
+  if (metric === "visitororigins" || /origin|residence|domestic|foreign/.test(text)) {
+    return { evidenceHref: "#analytics-origins", evidenceLabel: "visitor origins table" };
+  }
+  if (metric === "establishmentperformance" || /establishment|ranking|comparison/.test(text)) {
+    return { evidenceHref: "#analytics-rankings", evidenceLabel: "establishment comparison table" };
+  }
+  return { evidenceHref: "#analytics-trends", evidenceLabel: "visitor trend chart" };
+};
 
 const aiFindingMatchesPeriod = (anomaly: AnalyticsAiAnomaly, period: ReportPeriodSelection) => {
   const month = anomaly.input_snapshot?.current_month;
@@ -255,7 +283,7 @@ export default function Analytics() {
         .limit(MAX_AI_ITEMS),
       supabase
         .from("ai_recommendations")
-        .select("id,title,description,impact,category,recommended_action")
+        .select("id,title,description,impact,category,recommended_action,input_snapshot")
         .eq("status", "active")
         .is("establishment_id", null)
         .order("created_at", { ascending: false })
@@ -610,42 +638,6 @@ export default function Analytics() {
         ) : (
           <div className="text-center py-12 text-gray-500">No seasonal data available</div>
         )}
-      <AiSectionCard
-        title="AI decision support for the trend chart"
-        countLabel={`${aiAnomalies.length + aiInsights.length} Active`}
-        icon={<AlertTriangle className="size-5 text-amber-600" />}
-        action={(
-          <button
-            type="button"
-            onClick={refreshAiInsights}
-            disabled={refreshingAi}
-            className="inline-flex items-center gap-2 rounded-xl bg-[#193364] px-3 py-2 text-xs font-semibold text-white shadow-sm transition hover:bg-[#0E5A72] disabled:cursor-not-allowed disabled:opacity-60 sm:px-4 sm:text-sm"
-          >
-            <RefreshCw className={`size-4 ${refreshingAi ? "animate-spin" : ""}`} aria-hidden="true" />
-            {refreshingAi ? "Refreshing…" : "Refresh AI analysis"}
-          </button>
-        )}
-      >
-        <p className="mb-4 text-sm text-gray-600">
-          These findings are shown directly below the visitor trend chart. Each card identifies the dashboard evidence used as its basis; AI explains the displayed data but does not change the chart, totals, or rankings.
-        </p>
-        {aiRefreshError && (
-          <p role="alert" className="mb-4 rounded-xl border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-800">
-            {aiRefreshError}
-          </p>
-        )}
-        <div className="grid grid-cols-1 gap-3 lg:grid-cols-2">
-          {aiAnomalies.length > 0 ? aiAnomalies.slice(0, 4).map((anomaly) => {
-            const metric = anomaly.input_snapshot?.metric;
-            const evidenceHref = metric === "overnightGuestCheckIns" ? "#analytics-performance" : metric === "dayTourVisitors" ? "#analytics-trends" : "#analytics-rankings";
-            const evidenceLabel = metric === "overnightGuestCheckIns" ? "accommodation performance dashboard" : metric === "dayTourVisitors" ? "visitor trend chart" : "establishment comparison table";
-            return <AiAnomalyCard key={anomaly.id} {...anomaly} evidenceHref={evidenceHref} evidenceLabel={evidenceLabel} />;
-          }) : <AiEmptyState variant="gaps" />}
-          {aiInsights.length > 0 ? aiInsights.slice(0, 4).map((insight) => (
-            <AiRecommendationCard key={insight.id} {...insight} evidenceHref="#analytics-trends" evidenceLabel="visitor trend chart" />
-          )) : <AiEmptyState variant="recommendations" />}
-        </div>
-      </AiSectionCard>
       </div>
 
       <div id="analytics-origins" className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
@@ -708,6 +700,34 @@ export default function Analytics() {
         </div>
         <EstablishmentPerformanceDashboard periods={data.performancePeriods} year={selectedYear} />
       </div>
+      <AiSectionCard
+        title="AI findings and recommendations"
+        countLabel={`${aiAnomalies.length + aiInsights.length} Active`}
+        icon={<AlertTriangle className="size-5 text-amber-600" />}
+        action={(
+          <button type="button" onClick={refreshAiInsights} disabled={refreshingAi} className="inline-flex items-center gap-2 rounded-xl bg-[#193364] px-3 py-2 text-xs font-semibold text-white shadow-sm transition hover:bg-[#0E5A72] disabled:cursor-not-allowed disabled:opacity-60 sm:px-4 sm:text-sm">
+            <RefreshCw className={`size-4 ${refreshingAi ? "animate-spin" : ""}`} aria-hidden="true" />
+            {refreshingAi ? "Refreshing…" : "Refresh AI analysis"}
+          </button>
+        )}
+      >
+        <p className="mb-4 text-sm text-gray-600">
+          These findings summarize active anomalies and generated recommendations across the dashboard. Each card links to the chart, table, or performance dashboard that supports it; AI explains the displayed data but does not change the chart, totals, or rankings.
+        </p>
+        {aiRefreshError && <p role="alert" className="mb-4 rounded-xl border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-800">{aiRefreshError}</p>}
+        <div className="grid grid-cols-1 gap-3 lg:grid-cols-2">
+          {aiAnomalies.length > 0 ? aiAnomalies.slice(0, 4).map((anomaly) => {
+            const metric = anomaly.input_snapshot?.metric;
+            const evidenceHref = metric === "overnightGuestCheckIns" ? "#analytics-performance" : metric === "dayTourVisitors" ? "#analytics-trends" : "#analytics-rankings";
+            const evidenceLabel = metric === "overnightGuestCheckIns" ? "accommodation performance dashboard" : metric === "dayTourVisitors" ? "visitor trend chart" : "establishment comparison table";
+            const matchingInsight = aiInsights.find((insight) => recommendationMatchesAnomaly(insight, metric));
+            return <AiAnomalyCard key={anomaly.id} {...anomaly} aiRecommendation={matchingInsight?.recommended_action || null} evidenceHref={evidenceHref} evidenceLabel={evidenceLabel} />;
+          }) : <AiEmptyState variant="gaps" />}
+          {aiInsights.length > 0 ? aiInsights.slice(0, 4).map((insight) => (
+            <AiRecommendationCard key={insight.id} {...insight} {...evidenceForRecommendation(insight)} />
+          )) : <AiEmptyState variant="recommendations" />}
+        </div>
+      </AiSectionCard>
 
     </div>
   );

@@ -28,6 +28,7 @@ const normalizeInsights = (items) => (Array.isArray(items) ? items : []).slice(0
   impact: clean(item.impact, 'medium').toLowerCase(),
   category: clean(item.category, 'Operations'),
   recommended_action: clean(item.recommended_action || item.action, 'Review this trend and take one focused action.'),
+  input_snapshot: item.metric ? { metric: clean(item.metric) } : null,
 }));
 const normalizeAnomalies = (items) => (Array.isArray(items) ? items : []).slice(0, MAX_AI_ITEMS).map((item) => ({
   type: clean(item.type || item.anomaly_type, 'Operational anomaly'),
@@ -143,7 +144,7 @@ const getScopedData = async (supabaseAdmin, profile, scope) => {
 
 
 const generate = async (apiKey, data, scope) => {
-  const prompt = `You are a tourism data analyst for ${data.establishmentName}. Based only on the verified aggregate values below, return one JSON object with exactly ${scope === 'establishment' ? 3 : 4} concise recommendations. Use this exact shape: {"insights":[{"title":"max 6 words","description":"one sentence max 18 words; do not invent causes or figures","impact":"high|medium|low","category":"Seasonal|Operations|Marketing|Infrastructure","recommended_action":"one action sentence max 14 words"}]}. Total submitted day-tour visitors: ${data.totalVisitors}. Average accommodation occupancy: ${data.avgOccupancy}%. Monthly metrics: ${JSON.stringify(data.monthlyMetrics)}. Do not generate anomaly classifications, numerical claims, causes, or personal data. The server computes anomaly evidence separately.`;
+  const prompt = `You are a tourism data analyst for ${data.establishmentName}. Based only on the verified aggregate values below, return one JSON object with exactly ${scope === 'establishment' ? 3 : 4} concise recommendations. Use this exact shape: {"insights":[{"title":"max 6 words","description":"one sentence max 18 words; do not invent causes or figures","impact":"high|medium|low","category":"Seasonal|Operations|Marketing|Infrastructure","metric":"dayTourVisitors|overnightGuestCheckIns|visitorOrigins|establishmentPerformance|seasonality|general","recommended_action":"one action sentence max 14 words"}]}. Total submitted day-tour visitors: ${data.totalVisitors}. Average accommodation occupancy: ${data.avgOccupancy}%. Monthly metrics: ${JSON.stringify(data.monthlyMetrics)}. Do not generate anomaly classifications, numerical claims, causes, or personal data. The server computes anomaly evidence separately.`;
   const result = await generateContentWithFallback(apiKey, prompt);
   const generated = jsonObject(await result.response.text());
   return {
