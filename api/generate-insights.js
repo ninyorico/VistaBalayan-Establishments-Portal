@@ -19,8 +19,23 @@ const MAX_AI_ITEMS = 10;
 
 const clean = (value, fallback = '') => String(value || fallback).replace(/\s+/g, ' ').trim();
 const jsonObject = (text) => {
-  const match = String(text).match(/\{[\s\S]*\}/);
-  return match ? JSON.parse(match[0]) : {};
+  const raw = String(text || '').replace(/^```(?:json)?\s*/i, '').replace(/\s*```$/i, '').trim();
+  const start = raw.indexOf('{');
+  const end = raw.lastIndexOf('}');
+  if (start < 0 || end <= start) throw new Error('AI response did not contain a JSON object');
+  const candidate = raw.slice(start, end + 1);
+  try {
+    return JSON.parse(candidate);
+  } catch (error) {
+    const repaired = candidate
+      .replace(/,\s*([}\]])/g, '$1');
+    try {
+      return JSON.parse(repaired);
+    } catch {
+      const position = error instanceof SyntaxError && /position (\d+)/.test(error.message) ? error.message.match(/position (\d+)/)?.[1] : 'unknown';
+      throw new Error(`AI response JSON is invalid near position ${position}`);
+    }
+  }
 };
 const normalizeAction = (action) => {
   if (!action || typeof action !== 'object') return null;
