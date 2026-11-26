@@ -58,22 +58,36 @@ const normalizeAction = (action, allowedEvidenceIds = new Set()) => {
   return normalized;
 };
 const confidenceForMetric = (metric, coverageByMetric) => coverageByMetric[metric] || 'Not calculated';
+const MONTH_NAMES = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
+const peakMonthName = (monthlyMetrics) => {
+  const peak = (Array.isArray(monthlyMetrics) ? monthlyMetrics : []).reduce((best, row) => {
+    const score = Number(row?.totalVisitors || 0) + Number(row?.totalGuestCheckIns || 0);
+    return !best || score > best.score ? { month: row?.month, score } : best;
+  }, null);
+  const monthIndex = typeof peak?.month === 'string' ? Number(peak.month.slice(5, 7)) - 1 : -1;
+  return monthIndex >= 0 && monthIndex < MONTH_NAMES.length ? MONTH_NAMES[monthIndex] : null;
+};
 const normalizePriority = (value, metric, confidence) => {
   if ((metric === 'dayTourVisitors' || metric === 'overnightGuestCheckIns') && confidence === 'Very Low') return 'High';
   const priority = clean(value).toLowerCase();
   return ['critical', 'high', 'medium', 'low'].includes(priority) ? priority[0].toUpperCase() + priority.slice(1) : 'Medium';
 };
-const gateActions = (actions, metric, confidence) => actions.filter((action) => {
-  const text = `${action.recommendation_class} ${action.action_category} ${action.action_title} ${action.action_description}`.toLowerCase();
+const gateActions = (actions, metric, confidence, monthlyMetrics = []) => actions.filter((action) => {
+  const text = `${action.recommendation_class} ${action.action_category} ${action.action_title} ${action.action_description} ${action.success_indicators.join(' ')}`.toLowerCase();
   const strategic = /strategic|promotion|tourism development|tourism planning|resource allocation|accommodation development|campaign|package|partnership/.test(text);
   if (strategic && confidence === 'Very Low' && !action.validation_required) return false;
   if (/tourism statistics officer|tourism statistics unit|tourism data analyst|tourism policy committee/.test(text)) return false;
+  if (metric === 'seasonality') {
+    const peak = peakMonthName(monthlyMetrics);
+    const referencedMonths = MONTH_NAMES.filter((month) => text.includes(month.toLowerCase()));
+    if (referencedMonths.length && (!peak || referencedMonths.some((month) => month !== peak))) return false;
+  }
   return true;
 });
 
-const normalizeInsights = (items, coverageByMetric = {}, analysisPeriod = null, allowedEvidenceIds = new Set()) => (Array.isArray(items) ? items : []).slice(0, MAX_AI_ITEMS).map((item) => {
+const normalizeInsights = (items, coverageByMetric = {}, analysisPeriod = null, allowedEvidenceIds = new Set(), monthlyMetrics = []) => (Array.isArray(items) ? items : []).slice(0, MAX_AI_ITEMS).map((item) => {
   const confidence = confidenceForMetric(item.metric, coverageByMetric);
-  const actions = gateActions((Array.isArray(item.recommended_actions) ? item.recommended_actions : [item.recommended_action || item.action]).map((action) => normalizeAction(action, allowedEvidenceIds)).filter((action) => action?.action_description).slice(0, 4), item.metric, confidence);
+  const actions = gateActions((Array.isArray(item.recommended_actions) ? item.recommended_actions : [item.recommended_action || item.action]).map((action) => normalizeAction(action, allowedEvidenceIds)).filter((action) => action?.action_description).slice(0, 4), item.metric, confidence, monthlyMetrics);
   const decisionSupport = {
     insight_category: clean(item.insight_category || item.category, 'Operations'),
     priority: normalizePriority(item.priority || item.impact, item.metric, confidenceForMetric(item.metric, coverageByMetric)),
@@ -278,15 +292,21 @@ const generate = async (apiKey, data, scope) => {
     ...data.establishmentEvidence.map((item) => ({ id: `establishment-performance:${item.establishment_id}`, metric: 'establishmentPerformance', evidence: item })),
   ];
   const allowedEvidenceIds = new Set(evidenceCatalog.map((item) => item.id));
+  const monthlyCoverage = data.monthlyMetrics.map((row) => row.coveragePercent).filter((value) => value != null).reduce((minimum, value) => Math.min(minimum, value), 100);
+  const accommodationCoverage = data.monthlyMetrics.map((row) => row.accommodationCoveragePercent).filter((value) => value != null).reduce((minimum, value) => Math.min(minimum, value), 100);
+  const combinedCoverage = Math.min(monthlyCoverage, accommodationCoverage);
   const coverageByMetric = {
-    dayTourVisitors: coverageConfidence(data.monthlyMetrics.map((row) => row.coveragePercent).filter((value) => value != null).reduce((minimum, value) => Math.min(minimum, value), 100)),
-    overnightGuestCheckIns: coverageConfidence(data.monthlyMetrics.map((row) => row.accommodationCoveragePercent).filter((value) => value != null).reduce((minimum, value) => Math.min(minimum, value), 100)),
+    dayTourVisitors: coverageConfidence(monthlyCoverage),
+    overnightGuestCheckIns: coverageConfidence(accommodationCoverage),
+    seasonality: coverageConfidence(combinedCoverage),
+    visitorOrigins: coverageConfidence(monthlyCoverage),
+    establishmentPerformance: coverageConfidence(monthlyCoverage),
   };
   const prompt = `You are a tourism data analyst for ${data.establishmentName}. This is a decision-support system for a municipal tourism officer. Based only on the verified aggregate values below, return one JSON object with 2 to 5 concise insights. For municipality scope, generate only evidence-supported domains: consolidate shared reporting completeness into one insight when needed, then add distinct diagnostic or conditional strategic insights for dayTourVisitors, overnightGuestCheckIns, seasonality, visitorOrigins, or establishmentPerformance; do not force every metric or spend multiple insights on the same reporting-compliance issue. Use this exact shape: {"insights":[{"title":"max 6 words","description":"one sentence max 30 words; describe only supplied evidence","impact":"high|medium|low","insight_category":"Reporting Compliance|Data Validation|Tourism Planning|Tourism Promotion|Accommodation Development|Resource Allocation|Comparative Tourism Assessment|Policy and Program Evaluation","metric":"dayTourVisitors|overnightGuestCheckIns|seasonality|visitorOrigins|establishmentPerformance","analysis_period":"selected period","geographic_scope":"Balayan municipality","data_confidence":"Very Low|Low|Moderate|High","data_limitations":["specific limitation"],"decision_implication":"why this matters for a municipal decision, max 35 words","recommended_actions":[{"action_title":"max 8 words","action_description":"specific action with an owner or target, max 28 words","action_priority":"Critical|High|Medium|Low","action_category":"Operations|Reporting Compliance|Tourism Planning|Tourism Promotion|Accommodation Development|Resource Allocation","responsible_entity":"suggested entity","suggested_timeframe":"Immediate|Within 7 days|Within 14 days|Within 30 days|Within 30–60 days|Before the anticipated peak season|During the next reporting period","supporting_evidence_ids":["evidence key"],"prerequisites":["required condition"],"success_indicators":["measurable result"],"validation_required":true}],"responsible_entities":["suggested entity"],"suggested_timeframe":"suggested timeframe","expected_outcome":"intended benefit, max 25 words","success_indicators":["measurable result"],"validation_required":true,"related_evidence_ids":["evidence key"]}]}. Each action must include primary_objective, recommendation_class (Data Validation, Diagnostic Assessment, Strategic Tourism Intervention, or Outcome Evaluation), a verified responsible entity, a timeframe, at least one measurable success indicator, supporting evidence IDs from the supplied evidence, and validation_required. Missing required fields make the action unusable and it must not be persisted. Generate 2 to 4 concrete actions per insight. Actions must help the officer decide what to do next: name a concrete operational step such as contacting responsible establishments, assigning follow-up, setting a completion deadline, coordinating a response, escalating a verified issue, or using a confirmed seasonal peak as a planning benchmark. Do not begin with or consist only of review, investigate, compare, monitor, validate, or study. State the evidence-supported decision purpose. For dayTourVisitors and overnightGuestCheckIns, use only supplied reported values, reporting coverage, missing reports, entered-after-report-date counts (never call these late without a configured deadline), and period-to-period changes. For seasonality, use only repeated monthly visitor or check-in patterns and the observed peak month; a single peak is only a potential seasonal pattern. Do not recommend promotions, campaigns, marketing, capacity, rooms, lodging expansion, occupancy changes, pricing, events, weather responses, or causes unless those exact values are supplied. Do not invent causes, figures, establishments, or personal data. Confidence must reflect coverage and limitations: below 25% is Very Low, 25% to below 50% Low, 50% to below 80% Moderate, and 80% or higher High. These are internal decision-support thresholds, not official standards. Do not reference any period, month, year, establishment, report type, or value outside the verified analysis context. Analysis context: ${JSON.stringify(data.analysisPeriod || { label: 'full available period' })}. Total submitted day-tour visitors: ${data.totalVisitors}. Average accommodation occupancy: ${data.avgOccupancy}%. Monthly metrics: ${JSON.stringify(data.monthlyMetrics)}. Verified anomaly evidence: ${JSON.stringify(anomalies.map((item) => item.evidence))}. Verified visitor-origin totals: ${JSON.stringify(data.originEvidence)}. Verified establishment visitor-volume totals: ${JSON.stringify(data.establishmentEvidence)}. Allowed evidence IDs: ${JSON.stringify([...allowedEvidenceIds])}. Use only these IDs.`;
   const result = await generateContentWithFallback(apiKey, prompt);
   const generated = jsonObject(await result.response.text());
   return {
-    insights: deduplicateInsightActions(normalizeInsights(generated.insights, coverageByMetric, data.analysisPeriod, allowedEvidenceIds)),
+    insights: deduplicateInsightActions(normalizeInsights(generated.insights, coverageByMetric, data.analysisPeriod, allowedEvidenceIds, data.monthlyMetrics)),
     anomalies,
     modelName: result.modelName,
   };
