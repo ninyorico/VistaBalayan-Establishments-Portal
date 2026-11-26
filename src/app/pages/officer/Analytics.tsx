@@ -599,8 +599,6 @@ export default function Analytics() {
         ) : (
           <div className="text-center py-12 text-gray-500">No seasonal data available</div>
         )}
-      </div>
-
       <AiSectionCard
         title="AI decision support for the trend chart"
         countLabel={`${aiAnomalies.length + aiInsights.length} Active`}
@@ -637,6 +635,7 @@ export default function Analytics() {
           )) : <AiEmptyState variant="recommendations" />}
         </div>
       </AiSectionCard>
+      </div>
 
       <div id="analytics-origins" className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
         <div className="p-6 border-b border-gray-200">
