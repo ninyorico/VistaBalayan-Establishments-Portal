@@ -14,6 +14,9 @@ export type VisitorOriginMetric = OriginMetricInput & {
   marketShare: number;
   previousMarketShare: number | null;
   classification: OriginClassification;
+  isDominant: boolean;
+  growthDirection: "Growing" | "Declining" | "Stable" | "Insufficient Data";
+  developmentStatus: "Emerging" | "Newly observed" | "Established";
 };
 
 export type OriginMetricResult = {
@@ -72,6 +75,17 @@ export function buildVisitorOriginMetrics(inputs: OriginMetricInput[], totals: {
       const growthRate = previousVisitors > 0 ? (absoluteChange / previousVisitors) * 100 : null;
       const marketShare = currentKnownVisitors > 0 ? (currentVisitors / currentKnownVisitors) * 100 : 0;
       const previousMarketShare = previousKnownVisitors > 0 ? (previousVisitors / previousKnownVisitors) * 100 : null;
+      const isDominant = marketShare >= 30;
+      const growthDirection: VisitorOriginMetric["growthDirection"] = previousVisitors === 0
+        ? "Insufficient Data"
+        : growthRate !== null && growthRate >= 20 && Math.abs(absoluteChange) >= 100
+          ? "Growing"
+          : growthRate !== null && growthRate <= -20 && Math.abs(absoluteChange) >= 100
+            ? "Declining"
+            : growthRate !== null && Math.abs(growthRate) <= 5 ? "Stable" : "Insufficient Data";
+      const developmentStatus: VisitorOriginMetric["developmentStatus"] = previousVisitors === 0
+        ? currentVisitors >= 100 ? "Emerging" : "Newly observed"
+        : "Established";
       return {
         ...input,
         currentVisitors,
@@ -81,6 +95,9 @@ export function buildVisitorOriginMetrics(inputs: OriginMetricInput[], totals: {
         marketShare,
         previousMarketShare,
         classification: classifyOriginMetric({ currentVisitors, previousVisitors, marketShare }),
+        isDominant,
+        growthDirection,
+        developmentStatus,
       };
     })
     .sort((a, b) => b.currentVisitors - a.currentVisitors || a.origin.localeCompare(b.origin));

@@ -29,7 +29,7 @@ export function selectTourismRecommendationStrategies(evidence = {}, options = {
   const highCoverage = coverage != null && coverage >= 80;
   const establishmentScope = options.scope === "establishment" || Boolean(options.establishmentId || evidence.establishment_id);
   const establishmentName = options.establishmentName || evidence.establishment_name || "the affected establishment";
-  const period = options.periodLabel || evidence.current_month || "the selected reporting period";
+  const period = options.periodLabel || evidence.period_label || evidence.current_month || "the selected reporting period";
   const comparison = evidence.previous_month || "the comparable reporting period";
   const feedbackCount = numberOrNull(evidence.eligible_feedback_count ?? evidence.feedback_count) || 0;
   const recurringComplaints = evidence.recurring_customer_complaints === true || (Array.isArray(evidence.feedback_themes) && evidence.feedback_themes.length > 0 && evidence.customer_satisfaction_score != null && Number(evidence.customer_satisfaction_score) < 70);
@@ -79,8 +79,8 @@ export function selectTourismRecommendationStrategies(evidence = {}, options = {
   if (metric === "establishmentPerformance") {
     const recordCount = numberOrNull(evidence.current_value) || 0;
     actions.push(action({
-      action_title: `Review ${recordCount.toLocaleString()} establishment service records`,
-      action_description: `Review the selected-year establishment-volume distribution across ${recordCount.toLocaleString()} reported service records and assign follow-up only to groups supported by the displayed volume evidence.`,
+      action_title: "Prioritize evidence-supported establishment actions",
+      action_description: `Use the selected service cohort and comparison period to prioritize only establishments with supported score, volume, growth, rating, or reporting evidence; do not treat service-record count as a performance outcome.`,
       action_category: "Establishment Performance Review",
       primary_objective: "Evidence Review",
       responsible_entity: "Municipal Tourism Officer",

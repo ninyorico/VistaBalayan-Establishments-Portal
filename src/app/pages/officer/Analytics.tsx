@@ -656,16 +656,30 @@ export default function Analytics() {
       },
     });
 
-    const performanceScoreInputs = (performancePeriods[`${selectedYear}-FULL_YEAR`] || []).map((row) => {
+    const activePerformanceKey = `${selectedRange.startDate}:${selectedRange.endDate}`;
+    const activePerformanceRows = establishments.flatMap((establishment) => {
+      const mode = getEstablishmentReportingMode(establishment);
+      const rows: PerformanceInputWithMode[] = [];
+      if (mode === "visitor" || mode === "both") {
+        const hasReport = visitors.some((item) => item.establishment_id === establishment.id);
+        rows.push({ id: establishment.id, name: establishment.name, serviceType: mode, category: "daytour", visitorCount: hasReport ? visitors.filter((item) => item.establishment_id === establishment.id).reduce((sum, item) => sum + Number(item.total_guests || 0), 0) : null });
+      }
+      if (mode === "accommodation" || mode === "both") {
+        const hasReport = accommodations.some((item) => item.establishment_id === establishment.id);
+        rows.push({ id: establishment.id, name: establishment.name, serviceType: mode, category: "overnight", visitorCount: hasReport ? accommodations.filter((item) => item.establishment_id === establishment.id).reduce((sum, item) => sum + Number(item.total_check_ins || 0), 0) : null });
+      }
+      return rows;
+    });
+    performancePeriods[activePerformanceKey] = activePerformanceRows;
+    const performanceScoreInputs = activePerformanceRows.map((row) => {
       const sourceRows = row.category === "daytour" ? visitors : accommodations;
       const comparisonRows = row.category === "daytour" ? comparisonVisitors : comparisonAccommodations;
-      const currentRows = sourceRows.filter((item) => item.establishment_id === row.id && item.report_date.startsWith(`${selectedYear}-`));
+      const currentRows = sourceRows.filter((item) => item.establishment_id === row.id);
       const priorRows = comparisonRows.filter((item) => item.establishment_id === row.id);
       const currentValue = currentRows.reduce((sum, item) => sum + Number(row.category === "daytour" ? (item as VisitorReport).total_guests || 0 : (item as AccommodationReport).total_check_ins || 0), 0);
       const priorValue = priorRows.reduce((sum, item) => sum + Number(row.category === "daytour" ? (item as VisitorReport).total_guests || 0 : (item as AccommodationReport).total_check_ins || 0), 0);
       const feedback = feedbackSummaryRows.find((item) => item.establishment_id === row.id);
-      const expectedEnd = selectedYear === todayInManila().slice(0, 4) ? (todayInManila() < `${selectedYear}-12-31` ? todayInManila() : `${selectedYear}-12-31`) : `${selectedYear}-12-31`;
-      const expectedReports = Math.max(0, daysInRange(`${selectedYear}-01-01`, expectedEnd));
+      const expectedReports = Math.max(0, daysInRange(selectedRange.startDate, selectedRange.endDate));
       const submittedReports = new Set(currentRows.map((item) => item.report_date.slice(0, 10))).size;
       return {
         id: row.id,
@@ -800,18 +814,23 @@ export default function Analytics() {
     const today = todayInManila();
     return endDate > today && selectedYear === today.slice(0, 4) ? today.slice(0, 7) : endDate.slice(0, 7);
   })();
+  const activeEvidenceRange = getReportPeriodRange(analyticsPeriod);
+  const activeEvidenceLabel = analyticsPeriod.type === "year"
+    ? `YTD ${selectedYear} (${activeEvidenceRange.startDate} to ${activeEvidenceRange.endDate})`
+    : `${activeEvidenceRange.startDate} to ${activeEvidenceRange.endDate}`;
   const originPeak = data.visitorOrigins[0];
   const originFindings: AnalyticsAiAnomaly[] = originPeak ? [{
     id: `visitor-origins-${selectedYear}`,
     anomaly_type: "Visitor origin market pattern",
     severity: "low",
-    description: `${originPeak.origin} is the largest reported known-origin market in the selected period with ${originPeak.currentVisitors.toLocaleString()} visitors, ${originPeak.marketShare.toFixed(1)}% of known origins, and ${originPeak.growthRate === null ? "no comparable prior-origin baseline" : `${originPeak.growthRate >= 0 ? "growth" : "decline"} of ${Math.abs(originPeak.growthRate).toFixed(1)}%`}.`,
+    description: `${originPeak.origin} is the largest reported known-origin market for ${activeEvidenceLabel} with ${originPeak.currentVisitors.toLocaleString()} visitors, ${originPeak.marketShare.toFixed(1)}% of known origins, and ${originPeak.growthRate === null ? "no comparable prior-origin baseline" : `${originPeak.growthRate >= 0 ? "growth" : "decline"} of ${Math.abs(originPeak.growthRate).toFixed(1)}%`}.`,
     recommendation: "",
     detected_at: new Date().toISOString(),
     is_resolved: false,
-    input_snapshot: { metric: "visitorOrigins", current_month: evidenceMonth, origin: originPeak.origin, current_value: originPeak.currentVisitors, previous_value: originPeak.previousVisitors, growth_percent: originPeak.growthRate, market_share: originPeak.marketShare, origin_coverage_percent: data.originSummary.currentOriginCoverage, unknown_origin_visitors: data.originSummary.currentUnknownVisitors, classification: originPeak.classification },
+    input_snapshot: { metric: "visitorOrigins", ...(analyticsPeriod.type === "month" ? { current_month: evidenceMonth } : {}), period_label: activeEvidenceLabel, analysis_period: { type: analyticsPeriod.type, selectedStartDate: activeEvidenceRange.startDate, selectedEndDate: activeEvidenceRange.endDate }, origin: originPeak.origin, current_value: originPeak.currentVisitors, previous_value: originPeak.previousVisitors, growth_percent: originPeak.growthRate, market_share: originPeak.marketShare, origin_coverage_percent: data.originSummary.currentOriginCoverage, unknown_origin_visitors: data.originSummary.currentUnknownVisitors, classification: originPeak.classification },
   }] : [];
-  const performanceRows = data.performancePeriods[`${selectedYear}-FULL_YEAR`] || [];
+  const activePerformanceKey = `${getReportPeriodRange(analyticsPeriod).startDate}:${getReportPeriodRange(analyticsPeriod).endDate}`;
+  const performanceRows = data.performancePeriods[activePerformanceKey] || [];
   const establishmentNames = new Map(performanceRows.map((row) => [row.id, row.name]));
   const feedbackRows = [...data.customerFeedback]
     .map((row) => ({ ...row, establishmentName: establishmentNames.get(row.establishment_id) || row.establishment_id }))
@@ -828,11 +847,11 @@ export default function Analytics() {
     id: `establishment-performance-${selectedYear}`,
     anomaly_type: "Establishment visitor-volume distribution",
     severity: "low",
-    description: `The selected year contains ${performanceRows.length} establishment service records across day-tour and overnight categories. The distribution is based on reported volume, not quality or profitability.`,
+    description: `The active ${activeEvidenceLabel} contains ${performanceRows.length} establishment service records across day-tour and overnight categories. The distribution is based on reported volume, not quality or profitability.`,
     recommendation: "",
     detected_at: new Date().toISOString(),
     is_resolved: false,
-    input_snapshot: { metric: "establishmentPerformance", current_month: evidenceMonth, current_value: performanceRows.length, classification_counts: performanceCounts },
+    input_snapshot: { metric: "establishmentPerformance", ...(analyticsPeriod.type === "month" ? { current_month: evidenceMonth } : {}), period_label: activeEvidenceLabel, analysis_period: { type: analyticsPeriod.type, selectedStartDate: activeEvidenceRange.startDate, selectedEndDate: activeEvidenceRange.endDate }, current_value: performanceRows.length, classification_counts: performanceCounts },
   }] : [];
   const feedbackDecisionSegments = classifyFeedbackDecisionSegments(feedbackRows.map((row) => {
     const performance = performanceRows.find((item) => item.id === row.establishment_id);
@@ -1226,7 +1245,7 @@ export default function Analytics() {
                 <td className="px-2 py-2 text-xs text-gray-600 sm:px-4 sm:py-3">{origin.previousVisitors.toLocaleString()}</td>
                 <td className={`px-2 py-2 text-xs font-medium sm:px-4 sm:py-3 ${origin.absoluteChange >= 0 ? "text-green-600" : "text-red-600"}`}>{origin.absoluteChange >= 0 ? "+" : ""}{origin.absoluteChange.toLocaleString()} {origin.growthRate === null ? "(N/A)" : `(${origin.growthRate >= 0 ? "+" : ""}${origin.growthRate.toFixed(1)}%)`}</td>
                 <td className="px-2 py-2 text-xs text-gray-900 sm:px-4 sm:py-3">{origin.marketShare.toFixed(1)}%</td>
-                <td className="px-2 py-2 text-xs font-semibold text-gray-700 sm:px-4 sm:py-3">{origin.classification}</td>
+                <td className="px-2 py-2 text-xs font-semibold text-gray-700 sm:px-4 sm:py-3"><div className="flex flex-wrap gap-1"><span>{origin.classification}</span>{origin.isDominant && <span className="rounded-full bg-slate-100 px-1.5 py-0.5 text-[10px] text-slate-700">Dominant {origin.marketShare.toFixed(1)}%</span>}{origin.growthDirection !== "Insufficient Data" && origin.growthDirection !== origin.classification && <span className="rounded-full bg-emerald-50 px-1.5 py-0.5 text-[10px] text-emerald-700">{origin.growthDirection}</span>}{origin.developmentStatus === "Newly observed" && <span className="rounded-full bg-amber-50 px-1.5 py-0.5 text-[10px] text-amber-700">Newly observed</span>}</div></td>
               </tr>) : <tr><td colSpan={7} className="px-6 py-8 text-center text-gray-500">No visitor-origin market matches the selected filters.</td></tr>}
             </tbody>
           </table>
@@ -1235,7 +1254,7 @@ export default function Analytics() {
       </div>
 
       <div id="analytics-performance">
-        <EstablishmentPerformanceDashboard periods={data.performancePeriods} year={selectedYear} performanceScores={data.performanceScores} aiFindings={renderRelatedAiFindings(["establishmentPerformance"])} />
+        <EstablishmentPerformanceDashboard periods={data.performancePeriods} activePeriodKey={activePerformanceKey} activePeriodLabel={`${getReportPeriodRange(analyticsPeriod).startDate} to ${getReportPeriodRange(analyticsPeriod).endDate}`} performanceScores={data.performanceScores} aiFindings={renderRelatedAiFindings(["establishmentPerformance"])} />
       </div>
 
     </div>
