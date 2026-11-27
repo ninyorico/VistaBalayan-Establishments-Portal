@@ -841,7 +841,7 @@ export default function Analytics() {
     return {
       insight_category: selected.actions[0].action_category,
       data_confidence: Number.isFinite(Number(evidence.current_coverage_percent)) ? coverageConfidence(Number(evidence.current_coverage_percent)) || "Not calculated" : undefined,
-      data_limitations: ["This deterministic strategy is based only on verified evidence and remains advisory; it does not establish a cause.", ...(selected.dataLimitations || [])],
+      data_limitations: ["This deterministic strategy is based only on verified evidence and remains advisory; it does not establish a cause", ...(selected.dataLimitations || [])],
       decision_implication: selected.decisionImplication,
       recommended_actions: selected.actions.slice(0, 2),
       validation_required: selected.actions.slice(0, 2).some((action) => action.validation_required),

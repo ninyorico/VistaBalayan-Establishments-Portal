@@ -144,7 +144,7 @@ export default function Analytics() {
     if (!firstAction) return null;
     return {
       insight_category: firstAction.action_category,
-      data_limitations: ["This action uses verified report evidence and does not establish a cause.", ...(selected.dataLimitations || [])],
+      data_limitations: ["This action uses verified report evidence and does not establish a cause", ...(selected.dataLimitations || [])],
       decision_implication: selected.decisionImplication,
       recommended_actions: selected.actions.slice(0, 2),
       validation_required: selected.actions.slice(0, 2).some((action) => action.validation_required),

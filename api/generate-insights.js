@@ -413,7 +413,7 @@ const buildDeterministicFallback = (data, scope) => {
     const decisionSupport = {
       insight_category: selected.actions[0]?.action_category || 'Diagnostic Assessment',
       data_confidence: coverageConfidence(Number(item.evidence?.current_coverage_percent)) || 'Not calculated',
-      data_limitations: ['Deterministic fallback based only on verified evidence; it does not establish a cause.', ...(selected.dataLimitations || [])],
+      data_limitations: ['Deterministic fallback based only on verified evidence; it does not establish a cause', ...(selected.dataLimitations || [])],
       decision_implication: selected.decisionImplication,
       recommended_actions: selected.actions.slice(0, 2),
                     validation_required: selected.actions.slice(0, 2).some((action) => action.validation_required),
@@ -508,7 +508,7 @@ const insertResults = async (supabaseAdmin, results, scope, establishmentId, req
             return {
               insight_category: selected.actions[0]?.action_category || 'Diagnostic Assessment',
               data_confidence: coverageConfidence(Number(item.evidence?.current_coverage_percent)) || 'Not calculated',
-              data_limitations: ["Deterministic evidence is advisory and does not establish a cause.", ...(selected.dataLimitations || [])],
+              data_limitations: ["Deterministic evidence is advisory and does not establish a cause", ...(selected.dataLimitations || [])],
                       decision_implication: selected.decisionImplication,
                       recommended_actions: selected.actions.slice(0, 2),
                                     validation_required: selected.actions.slice(0, 2).some((action) => action.validation_required),
