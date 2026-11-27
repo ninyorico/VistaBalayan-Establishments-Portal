@@ -51,12 +51,12 @@ Status values: `TODO`, `IN PROGRESS`, `BLOCKED`, `DONE`, `PARTIAL`
 
 ## GOAL 7 — Evidence-aware AI recommendation enhancement
 
-- [DONE] Coverage-aware deterministic strategy selection: low coverage prioritizes validation; high-coverage substantial declines produce diagnostic assessment, conditional strategic intervention, and outcome evaluation.
+- [DONE] Coverage-aware deterministic strategy selection: below 60% prioritizes material reporting reliability; 60% to below 80% combines submission assistance with low-risk development; 80% to below 100% uses a campaign plus operational-efficiency action; 100% uses acquisition plus retention actions. These are internal strategy bands, not official statistical standards.
 - [DONE] High-coverage establishment decline behavior: zero missing reports no longer produces missing-report follow-up as the primary action; establishment-specific historical, peer, recovery, and evaluation actions are available where evidence supports them.
 - [DONE] Evidence-conditioned strategy selection: eligible feedback concerns, comparable-establishment declines, recurring seasonal declines, and verified temporary closures select different advisory strategy families; unsupported causes remain unasserted.
-- [DONE] Deterministic server fallback and Gemini guard: missing/unavailable Gemini or reporting-only high-coverage output uses the verified deterministic strategy plan; cache rule version advanced to `decision-support-v10`; anomaly cards now carry the evidence-bound action plan and duplicate recommendation cards are suppressed.
+- [DONE] Deterministic server fallback and Gemini guard: missing/unavailable Gemini uses the verified deterministic strategy plan; cache rule version advanced to `decision-support-v12`; anomaly cards now carry up to two distinct evidence-bound actions and duplicate recommendation cards are suppressed.
 - [DONE] Establishment-account action rendering: structured scoped action plans now render with prerequisites, responsible role, timeframe, decision implication, and measurable indicators.
-- [DONE] Fresh live verification of the updated high-coverage establishment card and establishment-account action rendering: production deployment `dpl_BRhJRNYYQwPaPtNk7HnoN78MND5t` served `[TEST FIXTURE] Balayan Sunset Cove Resort` at `/staff/analytics`; the authenticated page displayed the scoped demand assessment, targeted recovery assistance, structured prerequisites, responsible role, timeframe, success indicators, and evidence-bound decision implication.
+- [PARTIAL] Authenticated establishment-account action rendering: local authenticated `/staff/analytics` verification displayed distinct 100% and 90% coverage actions, structured prerequisites, responsible role, timeframe, success indicators, limitations, and evidence-bound decision implications. Production post-deploy verification remains required for this v12 release.
 
 ## GOAL 8 — Security and reliability
 
@@ -104,3 +104,4 @@ Status values: `TODO`, `IN PROGRESS`, `BLOCKED`, `DONE`, `PARTIAL`
 - [DONE] Integrate verified analytics findings, coverage/severity/pattern filters, multi-establishment scope, dynamic reporting-year lookup, and multiple-decline summary into officer Analytics.
 - [PARTIAL/BLOCKED] Authenticated live chart interaction and database read-back for the new analytics controls: blocked pending an approved officer fixture/account; existing fixture batch has no successful officer account.
 - [PARTIAL] Full acceptance matrix from the analytics enhancement prompt: deterministic filtering and evidence table are implemented; heatmap, click drill-down, filtered export, full cross-year comparison, and presentation-only chart-type controls remain.
+- [DONE] Targeted AI action-quality revision: traced the duplicated action to the strategy selector's diagnostic-first three-action list combined with API/UI `slice(0, 1)`; replaced it with coverage-banded practical strategies, added data-limitations metadata, increased the canonical display to up to two distinct actions, and added regression coverage for 100%, 90%, 70%, 45%, and 20% cases.

@@ -22,6 +22,7 @@ export type TourismRecommendationAction = {
 
 export type TourismRecommendationStrategy = {
   actions: TourismRecommendationAction[];
+  dataLimitations?: string[];
   decisionImplication: string;
 };
 

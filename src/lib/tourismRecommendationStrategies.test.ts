@@ -8,11 +8,12 @@ describe('selectTourismRecommendationStrategies', () => {
       previous_value: 3000, current_value: 248, drop_percent: 91.7,
       current_month: '2026-10', previous_month: '2026-09',
     }, { scope: 'establishment', establishmentName: 'Fixture Resort' });
-    expect(result.actions.map((action) => action.primary_objective)).toEqual([
-      'Diagnostic Assessment', 'Strategic Intervention', 'Outcome Evaluation',
-    ]);
+    expect(result.actions.length).toBe(2);
+    expect(result.actions[0].primary_objective).toBe('Visitor Acquisition');
+    expect(result.actions[1].primary_objective).toBe('Visitor Retention');
     expect(result.actions.some((action) => action.action_category === 'Reporting Compliance')).toBe(false);
     expect(result.decisionImplication).toContain('100% reporting coverage');
+    expect(result.actions[0].action_description).toMatch(/implement|launch|promot/i);
   });
 
   it('keeps validation as supporting context when coverage is high but incomplete', () => {
@@ -21,9 +22,11 @@ describe('selectTourismRecommendationStrategies', () => {
       previous_value: 3100, current_value: 270, drop_percent: 91.3,
       current_month: '2026-11', previous_month: '2026-10',
     }, { scope: 'establishment', establishmentName: 'Fixture Resort' });
-    expect(result.actions[0].primary_objective).toBe('Diagnostic Assessment');
-    expect(result.actions.some((action) => action.primary_objective === 'Reporting Compliance')).toBe(false);
-    expect(result.actions.some((action) => action.primary_objective === 'Strategic Intervention')).toBe(true);
+    expect(result.actions[0].primary_objective).toBe('Visitor Acquisition');
+    expect(result.actions.some((action) => action.action_category === 'Tourism Promotion')).toBe(true);
+    expect(result.actions.some((action) => action.primary_objective === 'Operational Efficiency')).toBe(true);
+    expect(result.actions.every((action) => !/assess|review|monitor/i.test(action.action_title))).toBe(true);
+    expect(result.actions[0].action_description).toMatch(/campaign|recovery/i);
   });
 
   it('prioritizes validation under very low coverage without selecting an unsupported promotion', () => {
@@ -35,6 +38,36 @@ describe('selectTourismRecommendationStrategies', () => {
     expect(result.actions.some((action) => action.primary_objective === 'Strategic Intervention')).toBe(false);
   });
 
+  it('keeps a materially incomplete mid-coverage decline focused on data reliability', () => {
+    const result = selectTourismRecommendationStrategies({
+      metric: 'dayTourVisitors', current_coverage_percent: 45, current_missing_reports: 22,
+      previous_value: 5000, current_value: 1500, drop_percent: 70,
+    }, { scope: 'municipality' });
+    expect(result.actions).toHaveLength(1);
+    expect(result.actions[0].primary_objective).toBe('Data Validation');
+    expect(result.actions[0].action_description).toMatch(/submission|report/i);
+  });
+
+  it('combines reporting assistance with a low-risk development action at 70% coverage', () => {
+    const result = selectTourismRecommendationStrategies({
+      metric: 'dayTourVisitors', current_coverage_percent: 70, current_missing_reports: 12,
+      previous_value: 5000, current_value: 1500, drop_percent: 70,
+    }, { scope: 'municipality' });
+    expect(result.actions).toHaveLength(2);
+    expect(result.actions[0].primary_objective).toBe('Data Validation');
+    expect(result.actions[1].primary_objective).toBe('Visitor Acquisition');
+    expect(result.actions[1].action_description).toMatch(/public listing|low-cost|promotion/i);
+  });
+
+  it('does not add a reporting task for a complete evidence case', () => {
+    const result = selectTourismRecommendationStrategies({
+      metric: 'dayTourVisitors', current_coverage_percent: 100, current_missing_reports: 0,
+      previous_value: 3000, current_value: 248, drop_percent: 91.7,
+    }, { scope: 'establishment', establishmentName: 'Fixture Resort' });
+    expect(result.actions.every((action) => action.primary_objective !== 'Data Validation')).toBe(true);
+    expect(result.actions.every((action) => !/assess|review|monitor/i.test(action.action_title))).toBe(true);
+  });
+
   it('selects service improvement only when eligible feedback concerns are available', () => {
     const result = selectTourismRecommendationStrategies({
       metric: 'dayTourVisitors', current_coverage_percent: 100, current_missing_reports: 0,
@@ -42,8 +75,9 @@ describe('selectTourismRecommendationStrategies', () => {
       eligible_feedback_count: 8, customer_satisfaction_score: 58,
       feedback_themes: ['service'],
     }, { scope: 'establishment', establishmentName: 'Fixture Resort' });
-    expect(result.actions[1].action_category).toBe('Customer Experience');
-    expect(result.actions[1].action_description).toContain('eligible published feedback');
+    expect(result.actions).toHaveLength(1);
+    expect(result.actions[0].action_category).toBe('Customer Experience');
+    expect(result.actions[0].action_description).toContain('eligible published feedback');
   });
 
   it('selects a broader response only when comparable establishments also decline', () => {
@@ -52,8 +86,9 @@ describe('selectTourismRecommendationStrategies', () => {
       previous_value: 5000, current_value: 3000, drop_percent: 40,
       comparable_establishments_declining: true,
     }, { scope: 'municipality' });
-    expect(result.actions[1].action_category).toBe('Tourism Promotion');
-    expect(result.actions[1].action_description).toContain('multiple comparable establishments');
+    expect(result.actions).toHaveLength(1);
+    expect(result.actions[0].action_category).toBe('Tourism Promotion');
+    expect(result.actions[0].action_description).toContain('affected comparable establishments');
   });
 
   it('does not recommend a missing-report action when there are no missing reports', () => {

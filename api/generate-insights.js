@@ -413,10 +413,10 @@ const buildDeterministicFallback = (data, scope) => {
     const decisionSupport = {
       insight_category: selected.actions[0]?.action_category || 'Diagnostic Assessment',
       data_confidence: coverageConfidence(Number(item.evidence?.current_coverage_percent)) || 'Not calculated',
-      data_limitations: ['Deterministic fallback based only on verified evidence; it does not establish a cause.'],
+      data_limitations: ['Deterministic fallback based only on verified evidence; it does not establish a cause.', ...(selected.dataLimitations || [])],
       decision_implication: selected.decisionImplication,
-      recommended_actions: selected.actions.slice(0, 1),
-                    validation_required: selected.actions.slice(0, 1).some((action) => action.validation_required),
+      recommended_actions: selected.actions.slice(0, 2),
+                    validation_required: selected.actions.slice(0, 2).some((action) => action.validation_required),
     };
     return {
       title: item.type || 'Verified tourism finding',
@@ -456,7 +456,7 @@ const insertResults = async (supabaseAdmin, results, scope, establishmentId, req
     if (supersedeError) throw new Error('Unable to supersede stale recommendations');
     const rows = results.insights.map((item) => ({
       ...item,
-      input_snapshot: { ...(item.input_snapshot || {}), rule_version: 'decision-support-v11', generation_key: generationKey, source_fingerprint: sourceFingerprint },
+      input_snapshot: { ...(item.input_snapshot || {}), rule_version: 'decision-support-v12', generation_key: generationKey, source_fingerprint: sourceFingerprint },
       model_name: modelName,
       establishment_id: scope === 'establishment' ? establishmentId : null,
       status: 'active',
@@ -502,16 +502,16 @@ const insertResults = async (supabaseAdmin, results, scope, establishmentId, req
         model_name: 'deterministic-rule-v1',
         input_snapshot: {
           ...item.evidence,
-          rule_version: 'decision-support-v11',
+          rule_version: 'decision-support-v12',
           decision_support: (() => {
             const selected = selectTourismRecommendationStrategies(item.evidence, { scope, establishmentName: scope === 'establishment' ? 'this establishment' : 'affected establishments' });
             return {
               insight_category: selected.actions[0]?.action_category || 'Diagnostic Assessment',
               data_confidence: coverageConfidence(Number(item.evidence?.current_coverage_percent)) || 'Not calculated',
-              data_limitations: ['Deterministic evidence is advisory and does not establish a cause.'],
-              decision_implication: selected.decisionImplication,
-              recommended_actions: selected.actions.slice(0, 1),
-                            validation_required: selected.actions.slice(0, 1).some((action) => action.validation_required),
+              data_limitations: ["Deterministic evidence is advisory and does not establish a cause.", ...(selected.dataLimitations || [])],
+                      decision_implication: selected.decisionImplication,
+                      recommended_actions: selected.actions.slice(0, 2),
+                                    validation_required: selected.actions.slice(0, 2).some((action) => action.validation_required),
             };
           })(),
         },
@@ -573,7 +573,7 @@ export default async function handler(req, res) {
     const apiKey = process.env.GEMINI_API_KEY;
     const data = await getScopedData(supabaseAdmin, effectiveProfile, scope, analysisPeriod);
     const sourceFingerprint = crypto.createHash('sha256').update(JSON.stringify({ monthlyMetrics: data.monthlyMetrics, originEvidence: data.originEvidence, establishmentEvidence: data.establishmentEvidence, feedbackEvidence: data.feedbackEvidence, feedbackThemes: data.feedbackThemes })).digest('hex');
-    const generationKey = crypto.createHash('sha256').update(JSON.stringify({ ruleVersion: 'decision-support-v11', scope, establishmentId: effectiveEstablishmentId, analysisPeriod, sourceFingerprint })).digest('hex');
+    const generationKey = crypto.createHash('sha256').update(JSON.stringify({ ruleVersion: 'decision-support-v12', scope, establishmentId: effectiveEstablishmentId, analysisPeriod, sourceFingerprint })).digest('hex');
     const cachedResults = await findCachedResults(supabaseAdmin, scope, effectiveEstablishmentId, generationKey);
     if (cachedResults) return sendJson(res, 200, cachedResults);
     let results;

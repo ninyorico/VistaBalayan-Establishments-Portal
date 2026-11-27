@@ -11,7 +11,7 @@ import { MAX_AI_ITEMS } from "../../../lib/aiInsights";
 import { geminiService } from "../../../services/geminiService";
 import { selectTourismRecommendationStrategies } from "../../../lib/tourismRecommendationStrategies.js";
 
-const AI_RULE_VERSION = "decision-support-v11";
+const AI_RULE_VERSION = "decision-support-v12";
 
 const chartClass = "rounded-3xl border border-[#AFB3B5]/45 bg-[#F5F8FF]/88 p-4 shadow-tourism sm:p-6";
 
@@ -144,10 +144,10 @@ export default function Analytics() {
     if (!firstAction) return null;
     return {
       insight_category: firstAction.action_category,
-      data_limitations: ["This action uses verified report evidence and does not establish a cause."],
+      data_limitations: ["This action uses verified report evidence and does not establish a cause.", ...(selected.dataLimitations || [])],
       decision_implication: selected.decisionImplication,
-      recommended_actions: [firstAction],
-      validation_required: true,
+      recommended_actions: selected.actions.slice(0, 2),
+      validation_required: selected.actions.slice(0, 2).some((action) => action.validation_required),
     };
   };
 
