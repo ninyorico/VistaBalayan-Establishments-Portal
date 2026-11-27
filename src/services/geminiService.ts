@@ -22,6 +22,7 @@ type AnalysisContext = {
   comparisonStartDate?: string
   comparisonEndDate?: string
   label?: string
+  establishmentId?: string
 }
 
 const callGenerationApi = async (scope: 'municipality' | 'establishment', analysisContext?: AnalysisContext) => {
@@ -36,7 +37,7 @@ const callGenerationApi = async (scope: 'municipality' | 'establishment', analys
       'Content-Type': 'application/json',
       Authorization: `Bearer ${accessToken}`,
     },
-    body: JSON.stringify({ scope, request_id: requestId, analysis_period: analysisContext }),
+    body: JSON.stringify({ scope, request_id: requestId, establishment_id: analysisContext?.establishmentId || null, analysis_period: analysisContext }),
   })
   const result = await response.json().catch(() => ({}))
   if (!response.ok) throw new Error(result.error || 'AI generation failed')
@@ -45,7 +46,7 @@ const callGenerationApi = async (scope: 'municipality' | 'establishment', analys
 
 export const geminiService = {
   async refreshAllData(analysisContext?: AnalysisContext) {
-    return callGenerationApi('municipality', analysisContext)
+    return callGenerationApi(analysisContext?.establishmentId ? 'establishment' : 'municipality', analysisContext)
   },
 
   async generateForEstablishment() {

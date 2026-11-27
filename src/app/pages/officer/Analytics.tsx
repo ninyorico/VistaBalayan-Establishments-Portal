@@ -28,6 +28,8 @@ import ReportPeriodFilter from "../../components/ReportPeriodFilter";
 import { getReportPeriodRange, type ReportPeriodSelection } from "../../../lib/reportPeriod";
 import { geminiService } from "../../../services/geminiService";
 import { assignRecommendationsToAnomalies, deduplicateStandaloneRecommendations, isEvidenceBoundRecommendation, recommendationSupportsMetric, recommendationSupportsPeriod } from "../../../lib/aiRecommendationIntegrity";
+import { classifyFeedbackThemes, type FeedbackTheme } from "../../../lib/customerFeedbackThemes";
+import { classifyFeedbackDecisionSegments } from "../../../lib/customerFeedbackDecisionSupport";
 
 interface AnalyticsData {
   seasonalData: { month: string; visitors: number; guestCheckIns: number; guestNights: number }[];
@@ -38,6 +40,10 @@ interface AnalyticsData {
   growthRate: number | null;
   comparisonLabel: string;
   comparisonRankings: { name: string; current: number; comparison: number; change: number | null }[];
+  customerFeedback: CustomerFeedbackRow[];
+  feedbackThemes: FeedbackTheme[];
+  feedbackCurrentSatisfaction: Record<string, number | null>;
+  feedbackPriorSatisfaction: Record<string, number | null>;
 }
 
 type Establishment = {
@@ -47,6 +53,15 @@ type Establishment = {
   total_rooms?: number | null;
   reporting_mode?: ReportingMode | null;
   status?: string | null;
+};
+
+type CustomerFeedbackRow = {
+  establishment_id: string;
+  average_rating: number | null;
+  rating_count: number;
+  positive_rating_percentage: number | null;
+  customer_satisfaction_score: number | null;
+  feedback_eligibility: string;
 };
 
 type VisitorReport = {
@@ -164,6 +179,10 @@ export default function Analytics() {
     growthRate: null,
     comparisonLabel: "",
     comparisonRankings: [],
+    customerFeedback: [],
+    feedbackThemes: [],
+    feedbackCurrentSatisfaction: {},
+    feedbackPriorSatisfaction: {},
   });
   const [loading, setLoading] = useState(true);
   const currentDate = new Date();
@@ -174,10 +193,13 @@ export default function Analytics() {
   const [aiInsights, setAiInsights] = useState<AnalyticsAiInsight[]>([]);
   const [refreshingAi, setRefreshingAi] = useState(false);
   const [aiRefreshError, setAiRefreshError] = useState<string | null>(null);
+  const [feedbackSort, setFeedbackSort] = useState<"satisfaction" | "rating" | "positive" | "count">("satisfaction");
+  const [selectedEstablishmentId, setSelectedEstablishmentId] = useState<string>("");
+  const [availableEstablishments, setAvailableEstablishments] = useState<Establishment[]>([]);
 
   useEffect(() => {
     fetchAnalytics();
-  }, [analyticsPeriod, comparisonYear]);
+  }, [analyticsPeriod, comparisonYear, selectedEstablishmentId]);
 
   const fetchAnalytics = async () => {
     setLoading(true);
@@ -194,14 +216,15 @@ export default function Analytics() {
       const allRows: Record<string, unknown>[] = [];
 
       for (let page = 0; ; page += 1) {
-        const { data, error } = await supabase
+        let query = supabase
           .from(table)
           .select(select)
           .in("status", ["pending", "submitted", "validated", "approved"])
           .gte("report_date", range.startDate)
           .lte("report_date", range.endDate)
-          .order("report_date", { ascending: true })
-          .range(page * pageSize, (page + 1) * pageSize - 1);
+          .order("report_date", { ascending: true });
+        if (selectedEstablishmentId) query = query.eq("establishment_id", selectedEstablishmentId);
+        const { data, error } = await query.range(page * pageSize, (page + 1) * pageSize - 1);
 
         if (error) return { data: null, error };
         allRows.push(...((data || []) as unknown as Record<string, unknown>[]));
@@ -211,6 +234,47 @@ export default function Analytics() {
       return { data: allRows, error: null };
     };
 
+    const fetchAllFeedbackRows = async (
+      table: "establishment_rating_reviews" | "establishment_rating_period_summaries",
+      select: string,
+      orderColumn: "created_at" | "period_start",
+    ) => {
+      const pageSize = 1000;
+      const allRows: Record<string, unknown>[] = [];
+      for (let page = 0; ; page += 1) {
+        let query = supabase
+          .from(table)
+          .select(select)
+          .order(orderColumn, { ascending: true });
+        if (selectedEstablishmentId) query = query.eq("establishment_id", selectedEstablishmentId);
+        const { data, error } = await query.range(page * pageSize, (page + 1) * pageSize - 1);
+        if (error) return { data: null, error };
+        allRows.push(...((data || []) as unknown as Record<string, unknown>[]));
+        if (!data || data.length < pageSize) break;
+      }
+      return { data: allRows, error: null };
+    };
+
+    const aiAnomalyQuery = supabase
+      .from("ai_anomalies_cache")
+      .select("id,anomaly_type,severity,description,recommendation,detected_at,is_resolved,input_snapshot,establishments(name)")
+      .eq("status", "active")
+      .eq("is_resolved", false)
+      .order("detected_at", { ascending: false })
+      .limit(MAX_AI_ITEMS);
+    const scopedAiAnomalyQuery = selectedEstablishmentId ? aiAnomalyQuery.eq("establishment_id", selectedEstablishmentId) : aiAnomalyQuery.is("establishment_id", null);
+    const aiInsightQuery = supabase
+      .from("ai_recommendations")
+      .select("id,title,description,impact,category,recommended_action,input_snapshot")
+      .eq("status", "active")
+      .gt("expires_at", new Date().toISOString())
+      .order("created_at", { ascending: false })
+      .limit(MAX_AI_ITEMS);
+    const scopedAiInsightQuery = selectedEstablishmentId ? aiInsightQuery.eq("establishment_id", selectedEstablishmentId) : aiInsightQuery.is("establishment_id", null);
+    const feedbackSummaryQuery = selectedEstablishmentId
+      ? supabase.from("establishment_rating_summaries").select("establishment_id,average_rating,rating_count,positive_rating_percentage,customer_satisfaction_score,feedback_eligibility").eq("establishment_id", selectedEstablishmentId)
+      : supabase.from("establishment_rating_summaries").select("establishment_id,average_rating,rating_count,positive_rating_percentage,customer_satisfaction_score,feedback_eligibility");
+
     const [
       { data: establishmentData, error: establishmentError },
       visitorResult,
@@ -219,6 +283,9 @@ export default function Analytics() {
       comparisonAccommodationResult,
       aiAnomalyResult,
       aiInsightResult,
+      customerFeedbackResult,
+      feedbackThemeResult,
+      feedbackPeriodResult,
     ] = await Promise.all([
       supabase
         .from("establishments")
@@ -248,22 +315,11 @@ export default function Analytics() {
       ),
       fetchAllReports("visitor_reports", `establishment_id, report_date, total_guests`, comparisonRange),
       fetchAllReports("accommodation_reports", `establishment_id, report_date, total_check_ins`, comparisonRange),
-      supabase
-        .from("ai_anomalies_cache")
-        .select("id,anomaly_type,severity,description,recommendation,detected_at,is_resolved,input_snapshot,establishments(name)")
-        .eq("status", "active")
-        .eq("is_resolved", false)
-        .is("establishment_id", null)
-        .order("detected_at", { ascending: false })
-        .limit(MAX_AI_ITEMS),
-      supabase
-        .from("ai_recommendations")
-        .select("id,title,description,impact,category,recommended_action,input_snapshot")
-        .eq("status", "active")
-        .gt("expires_at", new Date().toISOString())
-        .is("establishment_id", null)
-        .order("created_at", { ascending: false })
-        .limit(MAX_AI_ITEMS),
+      scopedAiAnomalyQuery,
+      scopedAiInsightQuery,
+      feedbackSummaryQuery,
+      fetchAllFeedbackRows("establishment_rating_reviews", "establishment_id,comment,verified_account", "created_at"),
+      fetchAllFeedbackRows("establishment_rating_period_summaries", "establishment_id,period_start,customer_satisfaction_score,rating_count", "period_start"),
     ]);
 
     const periodAnomalies = (aiAnomalyResult.data || [])
@@ -283,6 +339,7 @@ export default function Analytics() {
     if (accError) console.error("Error fetching accommodation data:", accError);
 
     const establishments = (establishmentData || []) as Establishment[];
+    setAvailableEstablishments(establishments);
     const visitors = (visitorData || []) as unknown as VisitorReport[];
     const accommodations = (accommodationData || []) as unknown as AccommodationReport[];
     const comparisonVisitors = (comparisonVisitorResult.data || []) as unknown as VisitorReport[];
@@ -449,6 +506,38 @@ export default function Analytics() {
     const totalVisitors = visitors.reduce((sum, item) => sum + (item.total_guests || 0), 0);
     const [topLocation, topVisitors] = Object.entries(originCounts).sort((a, b) => b[1] - a[1])[0] || ["", 0];
 
+    if (customerFeedbackResult.error) console.warn("Customer feedback summary unavailable:", customerFeedbackResult.error.message);
+    const customerFeedback = ((customerFeedbackResult.data || []) as CustomerFeedbackRow[]).map((row) => ({
+      ...row,
+      average_rating: row.average_rating == null ? null : Number(row.average_rating),
+      rating_count: Number(row.rating_count || 0),
+      positive_rating_percentage: row.positive_rating_percentage == null ? null : Number(row.positive_rating_percentage),
+      customer_satisfaction_score: row.customer_satisfaction_score == null ? null : Number(row.customer_satisfaction_score),
+    }));
+
+    const periodRows = (feedbackPeriodResult.data || []) as Array<{ establishment_id: string; period_start: string; customer_satisfaction_score?: number | null; rating_count?: number | null }>;
+    const aggregatePeriodSatisfaction = (year: string) => {
+      const grouped = new Map<string, { weighted: number; count: number }>();
+      for (const row of periodRows) {
+        if (!row.period_start.startsWith(`${year}-`) || row.customer_satisfaction_score == null) continue;
+        const count = Number(row.rating_count || 0);
+        const current = grouped.get(row.establishment_id) || { weighted: 0, count: 0 };
+        current.weighted += Number(row.customer_satisfaction_score) * count;
+        current.count += count;
+        grouped.set(row.establishment_id, current);
+      }
+      return Object.fromEntries([...grouped.entries()].map(([id, value]) => [id, value.count ? Number((value.weighted / value.count).toFixed(2)) : null]));
+    };
+    const currentPeriodSatisfaction = aggregatePeriodSatisfaction(selectedYear);
+    const feedbackPriorSatisfaction = aggregatePeriodSatisfaction(comparisonYear);
+
+    const feedbackThemes = classifyFeedbackThemes(((feedbackThemeResult.data || []) as Array<{ comment?: string | null; verified_account?: boolean }>).map((row) => ({
+      comment: row.comment,
+      verified: row.verified_account === true,
+      status: "published",
+      suspicious: false,
+    })));
+
     setData({
       seasonalData,
       visitorOrigins,
@@ -473,6 +562,10 @@ export default function Analytics() {
       ),
       comparisonLabel: getComparisonLabel(analyticsPeriod, comparisonYear),
       comparisonRankings,
+      customerFeedback,
+      feedbackThemes,
+      feedbackCurrentSatisfaction: currentPeriodSatisfaction,
+      feedbackPriorSatisfaction,
     });
 
     setLoading(false);
@@ -489,6 +582,7 @@ export default function Analytics() {
         selectedEndDate: selectedRange.endDate,
         comparisonStartDate: comparisonRange.startDate,
         comparisonEndDate: comparisonRange.endDate,
+        establishmentId: selectedEstablishmentId || undefined,
         label: analyticsPeriod.type === "year" ? `Year ${selectedYear} compared with ${comparisonYear}` : `${selectedRange.startDate} to ${selectedRange.endDate} compared with ${comparisonRange.startDate} to ${comparisonRange.endDate}`,
       });
       await fetchAnalytics();
@@ -506,6 +600,11 @@ export default function Analytics() {
   const analyticsYears = Array.from({ length: 5 }, (_, index) => String(currentDate.getFullYear() - 2 + index));
   const panelFilter = (label: string) => (
     <div className="flex w-full min-w-0 flex-col items-stretch gap-1 sm:w-auto sm:flex-row sm:items-center sm:justify-end sm:gap-2">
+      <p className="shrink-0 text-left text-[10px] font-semibold uppercase tracking-[0.14em] text-slate-500 sm:text-right">Scope</p>
+      <select aria-label="Analytics establishment scope" value={selectedEstablishmentId} onChange={(event) => setSelectedEstablishmentId(event.target.value)} className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-700 sm:w-64">
+        <option value="">All establishments — municipality</option>
+        {availableEstablishments.filter((establishment) => establishment.status === "active").sort((a, b) => a.name.localeCompare(b.name)).map((establishment) => <option key={establishment.id} value={establishment.id}>{establishment.name}</option>)}
+      </select>
       <p className="shrink-0 text-left text-[10px] font-semibold uppercase tracking-[0.14em] text-slate-500 sm:text-right">{label}</p>
       <ReportPeriodFilter value={analyticsPeriod} availableYears={analyticsYears.map(Number)} onChange={setAnalyticsPeriod} className="w-full sm:w-auto" />
     </div>
@@ -550,6 +649,13 @@ export default function Analytics() {
     input_snapshot: { metric: "visitorOrigins", current_month: `${selectedYear}-12`, origin: originPeak.location, current_value: originPeak.visitors, growth_percent: originPeak.growth },
   }] : [];
   const performanceRows = data.performancePeriods[`${selectedYear}-FULL_YEAR`] || [];
+  const establishmentNames = new Map(performanceRows.map((row) => [row.id, row.name]));
+  const feedbackRows = [...data.customerFeedback]
+    .map((row) => ({ ...row, establishmentName: establishmentNames.get(row.establishment_id) || row.establishment_id }))
+    .sort((a, b) => {
+      const value = (row: typeof a) => feedbackSort === "rating" ? (row.average_rating ?? -1) : feedbackSort === "positive" ? (row.positive_rating_percentage ?? -1) : feedbackSort === "count" ? row.rating_count : (row.customer_satisfaction_score ?? -1);
+      return value(b) - value(a);
+    });
   const performanceCounts = performanceRows.reduce<Record<string, number>>((counts, row) => {
     const key = `${row.category}-${row.visitorCount === null ? "INSUFFICIENT_DATA" : row.visitorCount > 0 ? "REPORTED" : "ZERO_REPORTED"}`;
     counts[key] = (counts[key] || 0) + 1;
@@ -565,7 +671,33 @@ export default function Analytics() {
     is_resolved: false,
     input_snapshot: { metric: "establishmentPerformance", current_month: `${selectedYear}-12`, current_value: performanceRows.length, classification_counts: performanceCounts },
   }] : [];
-  const allAiFindings = [...aiAnomalies, ...seasonalFindings, ...originFindings, ...performanceFindings];
+  const feedbackDecisionSegments = classifyFeedbackDecisionSegments(feedbackRows.map((row) => {
+    const performance = performanceRows.find((item) => item.id === row.establishment_id);
+    return {
+      establishmentId: row.establishment_id,
+      establishmentName: establishmentNames.get(row.establishment_id) || row.establishment_id,
+      visitorVolume: performance?.visitorCount ?? null,
+      satisfaction: data.feedbackCurrentSatisfaction[row.establishment_id] ?? row.customer_satisfaction_score,
+      priorSatisfaction: data.feedbackPriorSatisfaction[row.establishment_id] ?? null,
+      ratingCount: row.rating_count,
+      eligibility: row.feedback_eligibility,
+    };
+  }));
+  const feedbackSegmentCounts = feedbackDecisionSegments.reduce<Record<string, number>>((counts, decision) => {
+    counts[decision.segment] = (counts[decision.segment] || 0) + 1;
+    return counts;
+  }, {});
+  const feedbackFindings: AnalyticsAiAnomaly[] = feedbackRows.length > 0 ? [{
+    id: `customer-feedback-${selectedYear}`,
+    anomaly_type: "Published verified customer feedback",
+    severity: feedbackRows.some((row) => (row.customer_satisfaction_score ?? 100) < 70) ? "medium" : "low",
+    description: `Customer feedback is available for ${feedbackRows.length} establishments. Results include only published, eligible reviews and are not proof of visitor volume or establishment cause.`,
+    recommendation: "",
+    detected_at: new Date().toISOString(),
+    is_resolved: false,
+    input_snapshot: { metric: "customerFeedback", current_month: `${selectedYear}-FULL_YEAR`, current_value: feedbackRows.length, feedback_count: feedbackRows.reduce((sum, row) => sum + row.rating_count, 0), low_satisfaction_count: feedbackRows.filter((row) => (row.customer_satisfaction_score ?? 100) < 70).length, segment_counts: feedbackSegmentCounts },
+  }] : [];
+  const allAiFindings = [...aiAnomalies, ...seasonalFindings, ...originFindings, ...performanceFindings, ...feedbackFindings];
   const recommendationAssignments = assignRecommendationsToAnomalies(
     allAiFindings.map((anomaly) => ({
       id: anomaly.id,
@@ -665,6 +797,19 @@ export default function Analytics() {
         success_indicators: [`The ${peak} monitoring checklist is approved and used during the next corresponding reporting period.`],
         validation_required: true,
       };
+    } else if (metric === "customerFeedback") {
+      const reviewCount = Number(evidence.feedback_count);
+      const segmentCounts = (evidence.segment_counts || {}) as Record<string, number>;
+      const segment = Object.entries(segmentCounts).find(([, count]) => Number(count) > 0)?.[0] || "insufficient_feedback";
+      const actionBySegment = {
+        high_volume_low_satisfaction: { action_title: "Coordinate service-improvement review", action_description: "Review recurring published feedback themes with the establishment operator and document an approved service-improvement assessment for high-volume, low-satisfaction establishments.", action_priority: "High", action_category: "Customer Experience", responsible_entity: "Municipal Tourism Officer", suggested_timeframe: "Within 30 days", success_indicators: ["The feedback themes, operator consultation, and agreed service-improvement assessment are documented."], validation_required: true },
+        low_volume_high_satisfaction: { action_title: "Assess promotional exposure", action_description: "Assess whether a high-satisfaction, low-volume establishment should receive additional public-portal or municipal tourism campaign exposure.", action_priority: "Medium", action_category: "Tourism Promotion", responsible_entity: "Municipal Tourism Officer", suggested_timeframe: "Within 45 days", success_indicators: ["A promotion decision and next-period visitor comparison are documented without promising a specific outcome."], validation_required: true },
+        declining_satisfaction: { action_title: "Compare satisfaction periods", action_description: "Compare eligible feedback across equivalent periods, review recurring themes, and document an appropriate service-improvement assessment.", action_priority: "High", action_category: "Customer Experience", responsible_entity: "Municipal Tourism Officer", suggested_timeframe: "Within 30 days", success_indicators: ["Equivalent-period satisfaction values and recurring themes are documented with a reviewable follow-up."], validation_required: true },
+        consistently_positive: { action_title: "Share positive service practices", action_description: "Consider the establishment for tourism knowledge-sharing and document which published feedback themes support the consideration.", action_priority: "Low", action_category: "Tourism Knowledge Sharing", responsible_entity: "Municipal Tourism Officer", suggested_timeframe: "During the next tourism planning cycle", success_indicators: ["Any knowledge-sharing activity identifies the supporting aggregate feedback evidence."], validation_required: true },
+        insufficient_feedback: { action_title: "Encourage unbiased visitor feedback", action_description: "Encourage voluntary and unbiased feedback collection without requiring positive ratings or offering incentives only for favorable reviews.", action_priority: "Low", action_category: "Customer Feedback", responsible_entity: "Municipal Tourism Officer", suggested_timeframe: "During the next public-engagement cycle", success_indicators: [`The establishment remains marked as insufficient until the approved review threshold is reached; current eligible review count is ${reviewCount}.`], validation_required: true },
+      };
+      action = actionBySegment[segment as keyof typeof actionBySegment] || actionBySegment.insufficient_feedback;
+      limitation = "Verified account status does not prove that a reviewer visited the establishment; feedback is advisory and must not be treated as proof of cause.";
     }
     if (!action) return null;
     return {
@@ -905,6 +1050,25 @@ export default function Analytics() {
       <div id="analytics-performance">
         <EstablishmentPerformanceDashboard periods={data.performancePeriods} year={selectedYear} aiFindings={renderRelatedAiFindings(["establishmentPerformance"])} />
       </div>
+
+      <section className="rounded-[2rem] border border-white/70 bg-[#E0E5EC] p-5 shadow-[9px_9px_16px_rgba(163,177,198,.6),-9px_-9px_16px_rgba(255,255,255,.55)]" aria-labelledby="customer-feedback-heading">
+        <div className="flex flex-wrap items-start justify-between gap-3">
+          <div>
+            <p className="text-xs font-bold uppercase tracking-[0.14em] text-[#6474A5]">Customer feedback</p>
+            <h2 id="customer-feedback-heading" className="mt-1 text-xl font-bold text-[#193364]">Verified satisfaction indicators</h2>
+            <p className="mt-1 max-w-3xl text-sm leading-6 text-slate-600">Published, verified, non-suspicious reviews only. “Insufficient feedback” is not treated as a zero score, and the proposed composite model is not an official ranking until approved.</p>
+          </div>
+          <select value={feedbackSort} onChange={(event) => setFeedbackSort(event.target.value as typeof feedbackSort)} aria-label="Sort customer feedback rankings" className="rounded-2xl border border-white/70 bg-[#E0E5EC] px-3 py-2 text-sm font-semibold text-[#193364] shadow-[inset_4px_4px_8px_rgba(163,177,198,.42),inset_-4px_-4px_8px_rgba(255,255,255,.72)]">
+            <option value="satisfaction">Highest satisfaction score</option>
+            <option value="rating">Highest average rating</option>
+            <option value="positive">Highest positive percentage</option>
+            <option value="count">Most reviewed</option>
+          </select>
+        </div>
+        {feedbackRows.length === 0 ? <p className="mt-5 rounded-2xl bg-[#F5F8FF] p-4 text-sm text-slate-600">No customer-feedback summary is available yet.</p> : <div className="mt-5 overflow-x-auto rounded-2xl bg-[#F5F8FF] p-2"><table className="min-w-full text-left text-sm"><thead><tr className="border-b border-slate-200 text-xs uppercase tracking-wide text-slate-500"><th className="px-3 py-3">Establishment</th><th className="px-3 py-3">Average</th><th className="px-3 py-3">Positive</th><th className="px-3 py-3">Satisfaction</th><th className="px-3 py-3">Reviews</th><th className="px-3 py-3">Eligibility</th></tr></thead><tbody>{feedbackRows.map((row) => <tr key={row.establishment_id} className="border-b border-slate-100 last:border-0"><td className="px-3 py-3 font-semibold text-[#193364]">{row.establishmentName}</td><td className="px-3 py-3">{row.average_rating == null ? "No ratings yet" : `${row.average_rating.toFixed(2)} / 5`}</td><td className="px-3 py-3">{row.positive_rating_percentage == null ? "—" : `${row.positive_rating_percentage.toFixed(1)}%`}</td><td className="px-3 py-3">{row.customer_satisfaction_score == null ? "—" : `${row.customer_satisfaction_score.toFixed(1)} / 100`}</td><td className="px-3 py-3">{row.rating_count}</td><td className="px-3 py-3"><span className={`rounded-full px-2.5 py-1 text-xs font-semibold ${row.feedback_eligibility === "eligible" ? "bg-emerald-100 text-emerald-800" : "bg-amber-100 text-amber-800"}`}>{row.feedback_eligibility === "eligible" ? "Eligible" : "Insufficient Customer Feedback"}</span></td></tr>)}</tbody></table></div>}
+        {data.feedbackThemes.length > 0 && <div className="mt-5 rounded-2xl bg-[#F5F8FF] p-4"><h3 className="text-sm font-bold uppercase tracking-wide text-[#193364]">Recurring published-review themes</h3><div className="mt-3 grid gap-2 sm:grid-cols-2">{data.feedbackThemes.slice(0, 6).map((theme) => <div key={theme.key} className="flex items-center justify-between rounded-xl bg-white/70 px-3 py-2 text-sm"><span className="font-semibold text-slate-700">{theme.label}</span><span className="text-slate-500">{theme.count} · {theme.share.toFixed(1)}%</span></div>)}</div><p className="mt-3 text-xs text-slate-500">Themes are deterministic keyword aggregates from eligible published comments; they do not establish cause or reviewer identity.</p></div>}
+        {renderRelatedAiFindings(["customerFeedback"])}
+      </section>
 
     </div>
   );

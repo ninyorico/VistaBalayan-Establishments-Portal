@@ -1,16 +1,21 @@
 import { useCallback, useEffect, useState } from "react";
 import { AlertTriangle, Eye, EyeOff, Filter, Flag, Loader2, RefreshCw, ShieldAlert, X } from "lucide-react";
 import { supabase } from "../../../lib/supabase";
+import { detectReviewAnomalies } from "../../../lib/reviewAnomalyDetection";
 
 type ModerationReview = {
   id: string;
   establishment_id: string;
   establishment_name: string;
+  user_id: string | null;
   rating: number;
   reviewer_name: string | null;
   comment: string | null;
   created_at: string;
   is_hidden: boolean;
+  moderation_status: string | null;
+  suspicious_flag: boolean;
+  suspicious_reason: string | null;
   moderation_reason: string | null;
   report_count: number;
   latest_report_reason: string | null;
@@ -115,6 +120,23 @@ export default function ReviewModeration() {
     if (reviewFilter === "removed") return review.is_hidden;
     return true;
   });
+  const anomalyFlags = detectReviewAnomalies(reviews.map((review) => ({
+    id: review.id,
+    establishmentId: review.establishment_id,
+    userId: review.user_id,
+    rating: review.rating,
+    comment: review.comment,
+    createdAt: review.created_at,
+    suspiciousFlag: review.suspicious_flag,
+    moderationStatus: review.moderation_status,
+  })));
+  const anomalyLabels: Record<string, string> = {
+    rating_burst: "Unusually large rating increase",
+    repetitive_content: "Repetitive review content",
+    multiple_account_submissions: "Multiple submissions from one account",
+    average_rating_shift: "Unexpected average-rating change",
+    repeated_manipulation_attempt: "Repeated manipulation signal",
+  };
 
   return (
     <div className="space-y-6">
@@ -141,6 +163,11 @@ export default function ReviewModeration() {
       </div>
 
       {error && <div role="alert" className="rounded-2xl border border-red-200/70 bg-[#F7E6E8] px-4 py-3 text-sm text-[#8B3442] shadow-[inset_3px_3px_7px_rgba(181,107,120,.12),inset_-3px_-3px_7px_rgba(255,255,255,.65)]">{error}</div>}
+
+      {anomalyFlags.length > 0 && <section className="rounded-[2rem] border border-[#E7A93B]/45 bg-[#F7EAC7] p-5 shadow-[inset_4px_4px_9px_rgba(190,157,75,.14),inset_-4px_-4px_9px_rgba(255,255,255,.65)]" aria-labelledby="review-anomaly-heading">
+        <div className="flex items-start gap-3"><AlertTriangle className="mt-0.5 h-5 w-5 shrink-0 text-[#745B22]" /><div><h2 id="review-anomaly-heading" className="font-semibold text-[#745B22]">Signals requiring human review</h2><p className="mt-1 text-sm leading-6 text-[#745B22]">These deterministic patterns are review signals, not automatic fraud findings. Review the underlying comments and moderation history before taking action.</p></div></div>
+        <ul className="mt-4 space-y-2">{anomalyFlags.map((flag, index) => <li key={`${flag.type}-${flag.establishmentId}-${index}`} className="rounded-2xl bg-[#F5E4B9] px-4 py-3 text-sm text-[#745B22]"><span className="font-semibold">{anomalyLabels[flag.type] || flag.type}</span><span className="ml-2">for {reviews.find((review) => review.establishment_id === flag.establishmentId)?.establishment_name || "an establishment"}; {flag.reviewIds.length} review{flag.reviewIds.length === 1 ? "" : "s"} in the signal.</span></li>)}</ul>
+      </section>}
 
       {filteredReviews.length === 0 ? (
         <div className="rounded-[2rem] border border-white/70 bg-[#E0E5EC] p-10 text-center shadow-[8px_8px_18px_rgba(163,177,198,.5),-8px_-8px_18px_rgba(255,255,255,.76)]"><div className="mx-auto flex h-16 w-16 items-center justify-center rounded-2xl bg-[#E0E5EC] text-[#6474A5] shadow-[inset_4px_4px_8px_rgba(163,177,198,.45),inset_-4px_-4px_8px_rgba(255,255,255,.72)]"><ShieldAlert className="h-8 w-8" /></div><h2 className="mt-4 text-lg font-semibold text-[#193364]">No matching reviews</h2><p className="mt-1 text-sm text-[#5D6F73]">Try another moderation filter.</p></div>
