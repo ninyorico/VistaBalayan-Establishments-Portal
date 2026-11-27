@@ -695,7 +695,11 @@ export default function Analytics() {
   const panelFilter = (label: string) => (
     <div className="flex w-full min-w-0 flex-col items-stretch gap-1 sm:w-auto sm:flex-row sm:items-center sm:justify-end sm:gap-2">
       <p className="shrink-0 text-left text-[10px] font-semibold uppercase tracking-[0.14em] text-slate-500 sm:text-right">Scope</p>
-      <select aria-label="Analytics establishment scope" multiple value={selectedEstablishmentIds} onChange={(event) => setSelectedEstablishmentIds(Array.from(event.target.selectedOptions, (option) => option.value))} className="min-h-10 w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-700 sm:w-64">
+      <select aria-label="Analytics establishment scope" multiple value={selectedEstablishmentIds.length > 0 ? selectedEstablishmentIds : ["__ALL_ESTABLISHMENTS__"]} onChange={(event) => {
+        const values = Array.from(event.target.selectedOptions, (option) => option.value);
+        setSelectedEstablishmentIds(values.includes("__ALL_ESTABLISHMENTS__") || values.length === 0 ? [] : values);
+      }} className="min-h-10 w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-700 sm:w-64">
+        <option value="__ALL_ESTABLISHMENTS__">All establishments</option>
         {availableEstablishments.filter((establishment) => establishment.status === "active").sort((a, b) => a.name.localeCompare(b.name)).map((establishment) => <option key={establishment.id} value={establishment.id}>{establishment.name}</option>)}
       </select>
       <p className="shrink-0 text-left text-[10px] font-semibold uppercase tracking-[0.14em] text-slate-500 sm:text-right">{label}</p>
@@ -815,8 +819,8 @@ export default function Analytics() {
       data_confidence: Number.isFinite(Number(evidence.current_coverage_percent)) ? coverageConfidence(Number(evidence.current_coverage_percent)) || "Not calculated" : undefined,
       data_limitations: ["This deterministic strategy is based only on verified evidence and remains advisory; it does not establish a cause."],
       decision_implication: selected.decisionImplication,
-      recommended_actions: selected.actions,
-      validation_required: selected.actions.some((action) => action.validation_required),
+      recommended_actions: selected.actions.slice(0, 1),
+      validation_required: selected.actions.slice(0, 1).some((action) => action.validation_required),
     };
   };
 
@@ -974,8 +978,9 @@ export default function Analytics() {
             <div className="grid grid-cols-1 gap-4 xl:grid-cols-2">
               {related.map((anomaly) => {
                 const matchingInsight = recommendationAssignments.assignments.get(anomaly.id);
-                const fallback = !matchingInsight ? evidenceAwareFallbackDecisionSupport(anomaly) : null;
-                return <AiAnomalyCard key={anomaly.id} {...anomaly} aiRecommendation={matchingInsight?.recommended_action || fallback?.recommended_actions?.[0]?.action_description || null} decisionSupport={(matchingInsight?.input_snapshot?.decision_support as AiDecisionSupport | undefined) || fallback} showRecommendationUnavailable={!matchingInsight && !fallback} evidenceHref={evidenceHref} evidenceLabel="chart evidence" />;
+                const fallback = evidenceAwareFallbackDecisionSupport(anomaly);
+                const trustedCachedInsight = matchingInsight && isEvidenceBoundRecommendation(matchingInsight.recommended_action, String(anomaly.input_snapshot?.metric || "") as any) ? matchingInsight : null;
+                return <AiAnomalyCard key={anomaly.id} {...anomaly} aiRecommendation={fallback?.recommended_actions?.[0]?.action_description || trustedCachedInsight?.recommended_action || null} decisionSupport={fallback || (trustedCachedInsight?.input_snapshot?.decision_support as AiDecisionSupport | undefined)} showRecommendationUnavailable={!fallback && !trustedCachedInsight} evidenceHref={evidenceHref} evidenceLabel="chart evidence" />;
               })}
               {standalone.map((insight) => <AiRecommendationCard key={insight.id} {...insight} evidenceHref={evidenceHref} evidenceLabel="chart evidence" />)}
             </div>
@@ -999,6 +1004,21 @@ export default function Analytics() {
     { value: "zero-activity", label: "Zero visitor activity" },
     { value: "multiple-establishment-decline", label: "Multiple establishment decline" },
   ];
+  const chartFindingMonths = new Set(filteredAnalysisFindings.map((finding) => finding.current.startDate.slice(0, 7)));
+  const chartPeakIndex = data.seasonalData.reduce((best, item, index, values) => {
+    const score = analysisCategory === "overnight" ? item.guestCheckIns : item.visitors;
+    const bestScore = analysisCategory === "overnight" ? values[best]?.guestCheckIns || 0 : values[best]?.visitors || 0;
+    return score > bestScore ? index : best;
+  }, 0);
+  const positiveSeasonalIndexes = data.seasonalData.map((item, index) => ({ index, value: analysisCategory === "overnight" ? item.guestCheckIns : item.visitors })).filter((item) => item.value > 0);
+  const chartLowIndex = positiveSeasonalIndexes.sort((a, b) => a.value - b.value)[0]?.index;
+  const chartData = analysisPattern === "all"
+    ? data.seasonalData
+    : data.seasonalData.map((item, index) => {
+      const month = `${selectedYear}-${String(index + 1).padStart(2, "0")}`;
+      const isSeasonalMatch = analysisPattern === "seasonal-peak" ? index === chartPeakIndex : analysisPattern === "seasonal-low" ? index === chartLowIndex : chartFindingMonths.has(month);
+      return isSeasonalMatch ? item : { ...item, visitors: null, guestCheckIns: null };
+    });
 
   return (
     <div className="space-y-6">
@@ -1046,37 +1066,6 @@ export default function Analytics() {
         </div>
       </div>
 
-      <section className="rounded-[2rem] border border-white/70 bg-[#E0E5EC] p-4 shadow-[9px_9px_16px_rgba(163,177,198,.6),-9px_-9px_16px_rgba(255,255,255,.55)]" aria-labelledby="analytics-evidence-controls">
-        <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
-          <div>
-            <p className="text-xs font-bold uppercase tracking-[0.14em] text-[#6474A5]">Verified chart evidence</p>
-            <h2 id="analytics-evidence-controls" className="mt-1 text-lg font-bold text-[#193364]">Investigate patterns without changing the source calculation</h2>
-            <p className="mt-1 max-w-3xl text-sm text-slate-600">Findings use valid submitted report dates, applicable expected reports, and deterministic comparison rules. Missing reports are not converted to zero visitors.</p>
-          </div>
-          <button type="button" onClick={() => { setAnalysisPattern("all"); setCoverageFilter("all"); setSeverityFilter("all"); setAnalysisCategory("daytour"); }} className="rounded-2xl bg-[#E0E5EC] px-3 py-2 text-sm font-semibold text-[#193364] shadow-[5px_5px_10px_rgba(163,177,198,.6),-5px_-5px_10px_rgba(255,255,255,.52)]">Reset analysis filters</button>
-        </div>
-        <div className="mt-4 flex flex-wrap gap-2" role="group" aria-label="Tourism pattern filter">
-          {patternOptions.map((option) => <button key={option.value} type="button" aria-pressed={analysisPattern === option.value} onClick={() => setAnalysisPattern(option.value)} className={`rounded-full px-3 py-2 text-xs font-semibold transition ${analysisPattern === option.value ? "bg-[#6C63FF] text-white shadow-inner" : "bg-[#E0E5EC] text-slate-700 shadow-[3px_3px_7px_rgba(163,177,198,.55),-3px_-3px_7px_rgba(255,255,255,.6)]"}`}>{option.label}</button>)}
-        </div>
-        <div className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-5">
-          <label className="text-xs font-semibold text-slate-600">Reporting category<select value={analysisCategory} onChange={(event) => setAnalysisCategory(event.target.value as AnalyticsCategory)} className="mt-1 w-full rounded-2xl bg-[#E0E5EC] px-3 py-2 text-sm text-slate-800 shadow-[inset_4px_4px_8px_rgba(163,177,198,.42),inset_-4px_-4px_8px_rgba(255,255,255,.72)]"><option value="daytour">Day-tour visitors</option><option value="overnight">Overnight check-ins</option></select></label>
-          <label className="text-xs font-semibold text-slate-600">Reporting completeness<select value={coverageFilter} onChange={(event) => setCoverageFilter(event.target.value as CoverageFilter)} className="mt-1 w-full rounded-2xl bg-[#E0E5EC] px-3 py-2 text-sm text-slate-800 shadow-[inset_4px_4px_8px_rgba(163,177,198,.42),inset_-4px_-4px_8px_rgba(255,255,255,.72)]"><option value="all">All statuses</option><option value="complete">Complete — 100%</option><option value="incomplete">Incomplete — above 0%</option><option value="none">No reports — 0%</option><option value="below-25">Below 25%</option><option value="25-50">25% to below 50%</option><option value="50-80">50% to below 80%</option><option value="80-100">80% to below 100%</option></select></label>
-          <label className="text-xs font-semibold text-slate-600">Anomaly severity<select value={severityFilter} onChange={(event) => setSeverityFilter(event.target.value as AnomalySeverity | "all")} className="mt-1 w-full rounded-2xl bg-[#E0E5EC] px-3 py-2 text-sm text-slate-800 shadow-[inset_4px_4px_8px_rgba(163,177,198,.42),inset_-4px_-4px_8px_rgba(255,255,255,.72)]"><option value="all">All severities</option><option value="low">Low</option><option value="medium">Medium</option><option value="high">High</option><option value="critical">Critical</option></select></label>
-          <label className="text-xs font-semibold text-slate-600">Results mode<select value={highlightMode} onChange={(event) => setHighlightMode(event.target.value as "highlight" | "filtered")} className="mt-1 w-full rounded-2xl bg-[#E0E5EC] px-3 py-2 text-sm text-slate-800 shadow-[inset_4px_4px_8px_rgba(163,177,198,.42),inset_-4px_-4px_8px_rgba(255,255,255,.72)]"><option value="highlight">Highlight in context</option><option value="filtered">Filtered results only</option></select></label>
-          <div className="flex items-end gap-3 pb-1 text-xs font-semibold text-slate-600"><label className="flex items-center gap-2"><input type="checkbox" checked={showAnomalies} onChange={(event) => setShowAnomalies(event.target.checked)} /> Show anomalies</label><label className="flex items-center gap-2"><input type="checkbox" checked={showCoverage} onChange={(event) => setShowCoverage(event.target.checked)} /> Coverage</label></div>
-        </div>
-        <div className="mt-4 grid gap-3 sm:grid-cols-4" aria-label="Multiple establishment decline summary">
-          <div className="rounded-2xl bg-[#F5F8FF] p-3"><p className="text-xs text-slate-500">Eligible comparable</p><p className="text-xl font-bold text-[#193364]">{analysisSummary.eligibleEstablishments}</p></div>
-          <div className="rounded-2xl bg-[#F5F8FF] p-3"><p className="text-xs text-slate-500">Qualifying declines</p><p className="text-xl font-bold text-[#B42318]">{analysisSummary.affectedEstablishments}</p></div>
-          <div className="rounded-2xl bg-[#F5F8FF] p-3"><p className="text-xs text-slate-500">Affected percentage</p><p className="text-xl font-bold text-[#193364]">{analysisSummary.affectedPercentage == null ? "N/A" : `${analysisSummary.affectedPercentage.toFixed(1)}%`}</p></div>
-          <div className="rounded-2xl bg-[#F5F8FF] p-3"><p className="text-xs text-slate-500">Insufficient data</p><p className="text-xl font-bold text-[#A15C00]">{analysisSummary.insufficientEstablishments}</p></div>
-        </div>
-        <div className="mt-4 overflow-x-auto rounded-2xl bg-[#F5F8FF] p-2">
-          <table className="w-full min-w-[50rem] text-left text-sm"><thead><tr className="border-b border-slate-200 text-xs uppercase tracking-wide text-slate-500"><th className="px-3 py-2">Establishment</th><th className="px-3 py-2">Current</th><th className="px-3 py-2">Previous</th><th className="px-3 py-2">Change</th><th className="px-3 py-2">Coverage</th><th className="px-3 py-2">Severity</th><th className="px-3 py-2">Evidence</th></tr></thead><tbody>{filteredAnalysisFindings.length === 0 ? <tr><td colSpan={7} className="px-3 py-6 text-center text-slate-500">No verified finding matches the active filters.</td></tr> : filteredAnalysisFindings.map((finding) => <tr key={finding.id} className="border-b border-slate-100 last:border-0"><td className="px-3 py-2 font-semibold text-[#193364]">{finding.establishmentName || "Multiple establishments"}</td><td className="px-3 py-2">{finding.current.value == null ? "No report" : finding.current.value.toLocaleString()}</td><td className="px-3 py-2">{finding.previous.value == null ? "No report" : finding.previous.value.toLocaleString()}</td><td className={`px-3 py-2 font-semibold ${finding.percentChange == null ? "text-slate-500" : finding.percentChange < 0 ? "text-[#B42318]" : "text-emerald-700"}`}>{finding.percentChange == null ? "N/A" : `${finding.percentChange >= 0 ? "+" : ""}${finding.percentChange.toFixed(1)}%`}</td><td className="px-3 py-2">{showCoverage ? `${formatCoverage(finding.current.coveragePercent)} / ${formatCoverage(finding.previous.coveragePercent)}` : "Hidden"}</td><td className="px-3 py-2 capitalize">{showAnomalies ? finding.severity : "Hidden"}</td><td className="max-w-[22rem] px-3 py-2 text-xs text-slate-600">{finding.explanation}</td></tr>)}</tbody></table>
-        </div>
-        {highlightMode === "filtered" && <p className="mt-3 text-xs font-semibold text-[#193364]">Filtered results mode is active: the evidence table shows only matching findings. Historical chart baselines remain calculated from the complete selected dataset.</p>}
-      </section>
-
       <section id="analytics-rankings" className="rounded-lg border border-gray-200 bg-white p-4 shadow-sm sm:p-6" aria-labelledby="analytics-comparison-title">
         <div className="flex flex-col gap-1 border-b border-gray-200 pb-4 sm:flex-row sm:items-start sm:justify-between">
           <div>
@@ -1101,10 +1090,25 @@ export default function Analytics() {
           </div>
           {panelFilter("Filter this chart")}
         </div>
-        {data.seasonalData.length > 0 ? (
+        <div className="mt-3 rounded-2xl bg-slate-50 p-3" aria-label="Tourism pattern chart filter">
+          <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
+            <p className="text-xs font-semibold uppercase tracking-[0.12em] text-slate-500">Show pattern on this chart</p>
+            <button type="button" onClick={() => { setAnalysisPattern("all"); setCoverageFilter("all"); setSeverityFilter("all"); setAnalysisCategory("daytour"); }} className="text-xs font-semibold text-[#193364] underline underline-offset-2">Reset chart filters</button>
+          </div>
+          <div className="flex flex-wrap gap-2" role="group" aria-label="Tourism pattern filter">
+            {patternOptions.map((option) => <button key={option.value} type="button" aria-pressed={analysisPattern === option.value} onClick={() => setAnalysisPattern(option.value)} className={`rounded-full px-3 py-2 text-xs font-semibold transition ${analysisPattern === option.value ? "bg-[#6C63FF] text-white shadow-inner" : "bg-white text-slate-700 shadow-sm"}`}>{option.label}</button>)}
+          </div>
+          <div className="mt-3 flex flex-wrap gap-3 text-xs font-semibold text-slate-600">
+            <label>Category<select value={analysisCategory} onChange={(event) => setAnalysisCategory(event.target.value as AnalyticsCategory)} className="ml-2 rounded-lg border border-slate-200 bg-white px-2 py-1"><option value="daytour">Day-tour visitors</option><option value="overnight">Overnight check-ins</option></select></label>
+            <label>Completeness<select value={coverageFilter} onChange={(event) => setCoverageFilter(event.target.value as CoverageFilter)} className="ml-2 rounded-lg border border-slate-200 bg-white px-2 py-1"><option value="all">All statuses</option><option value="complete">Complete — 100%</option><option value="incomplete">Incomplete — above 0%</option><option value="none">No reports — 0%</option><option value="below-25">Below 25%</option><option value="25-50">25% to below 50%</option><option value="50-80">50% to below 80%</option><option value="80-100">80% to below 100%</option></select></label>
+            <label>Severity<select value={severityFilter} onChange={(event) => setSeverityFilter(event.target.value as AnomalySeverity | "all")} className="ml-2 rounded-lg border border-slate-200 bg-white px-2 py-1"><option value="all">All severities</option><option value="low">Low</option><option value="medium">Medium</option><option value="high">High</option><option value="critical">Critical</option></select></label>
+            <label className="flex items-center gap-1"><input type="checkbox" checked={showAnomalies} onChange={(event) => setShowAnomalies(event.target.checked)} /> Show markers</label>
+          </div>
+        </div>
+        {chartData.length > 0 ? (
           <div className="-mx-2 sm:mx-0">
             <ResponsiveContainer width="100%" height={350}>
-              <AreaChart data={data.seasonalData} margin={{ top: 8, right: 4, left: 4, bottom: 8 }}>
+              <AreaChart data={chartData} margin={{ top: 8, right: 4, left: 4, bottom: 8 }}>
                 <defs>
                   <linearGradient id="analyticsVisitorFill" x1="0" y1="0" x2="0" y2="1">
                     <stop offset="5%" stopColor="#193364" stopOpacity={0.34} />
@@ -1126,7 +1130,7 @@ export default function Analytics() {
                 activeDot={{ r: 5 }}
                 name="Visitors"
               />
-              {anomalyMarkers.filter((item) => item.metric === "dayTourVisitors").map((item) => (
+              {showAnomalies && anomalyMarkers.filter((item) => item.metric === "dayTourVisitors").map((item) => (
                 <ReferenceDot key={`day-tour-${item.anomaly.id}`} x={monthLabel(`${String(item.month)}-01`)} y={item.value} r={7} fill="#B42318" stroke="#fff" strokeWidth={2} isFront label={{ value: "Drop", position: "top", offset: 14, fill: "#B42318", fontSize: 11, fontWeight: 700 }} />
               ))}
               <Area
@@ -1139,7 +1143,7 @@ export default function Analytics() {
                 activeDot={{ r: 5 }}
                 name="Guest check-ins"
               />
-              {anomalyMarkers.filter((item) => item.metric === "overnightGuestCheckIns").map((item) => (
+              {showAnomalies && anomalyMarkers.filter((item) => item.metric === "overnightGuestCheckIns").map((item) => (
                 <ReferenceDot key={`overnight-${item.anomaly.id}`} x={monthLabel(`${String(item.month)}-01`)} y={item.value} r={7} fill="#B42318" stroke="#fff" strokeWidth={2} isFront label={{ value: "Drop", position: "top", offset: 14, fill: "#B42318", fontSize: 11, fontWeight: 700 }} />
               ))}
               {seasonalPeak && <>

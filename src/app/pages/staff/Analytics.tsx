@@ -9,8 +9,9 @@ import DataState from "../../components/DataState";
 import { AiAnomalyCard, AiRecommendationCard } from "../../components/vista/AiInsightsDesign";
 import { MAX_AI_ITEMS } from "../../../lib/aiInsights";
 import { geminiService } from "../../../services/geminiService";
+import { selectTourismRecommendationStrategies } from "../../../lib/tourismRecommendationStrategies.js";
 
-const AI_RULE_VERSION = "decision-support-v10";
+const AI_RULE_VERSION = "decision-support-v11";
 
 const chartClass = "rounded-3xl border border-[#AFB3B5]/45 bg-[#F5F8FF]/88 p-4 shadow-tourism sm:p-6";
 
@@ -128,6 +129,26 @@ export default function Analytics() {
       setAiError("AI refresh failed. The saved findings remain available.");
       setAiLoading(false);
     }
+  };
+
+  const evidenceBoundDecisionSupport = (anomaly: any) => {
+    const evidence = anomaly.input_snapshot || {};
+    const selected = selectTourismRecommendationStrategies(evidence, {
+      scope: "establishment",
+      establishmentId: establishment?.id,
+      establishmentName: establishment?.name,
+      metric: String(evidence.metric || ""),
+      periodLabel: String(evidence.current_month || "the selected reporting period"),
+    });
+    const firstAction = selected.actions[0];
+    if (!firstAction) return null;
+    return {
+      insight_category: firstAction.action_category,
+      data_limitations: ["This action uses verified report evidence and does not establish a cause."],
+      decision_implication: selected.decisionImplication,
+      recommended_actions: [firstAction],
+      validation_required: true,
+    };
   };
 
   useEffect(() => { loadAnalytics(); }, []);
@@ -275,7 +296,10 @@ export default function Analytics() {
         {aiError && <p role="alert" className="mb-3 rounded-xl border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-800">{aiError}</p>}
         {!aiError && aiAnomalies.length === 0 && aiRecommendations.length === 0 && <p className="rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-600">No saved AI finding is available for this establishment yet.</p>}
         {(aiAnomalies.length > 0 || aiRecommendations.length > 0) && <div className="grid grid-cols-1 gap-4 xl:grid-cols-2">
-          {aiAnomalies.map((anomaly) => <AiAnomalyCard key={anomaly.id} {...anomaly} establishments={{ name: establishment.name || "This establishment" }} evidenceHref="#staff-analytics-charts" evidenceLabel="analytics charts" />)}
+          {aiAnomalies.map((anomaly) => {
+            const decisionSupport = evidenceBoundDecisionSupport(anomaly);
+            return <AiAnomalyCard key={anomaly.id} {...anomaly} establishments={{ name: establishment.name || "This establishment" }} decisionSupport={decisionSupport} aiRecommendation={decisionSupport?.recommended_actions?.[0]?.action_description || null} showRecommendationUnavailable={!decisionSupport} evidenceHref="#staff-analytics-charts" evidenceLabel="analytics charts" />;
+          })}
           {aiRecommendations.map((recommendation) => <AiRecommendationCard key={recommendation.id} {...recommendation} evidenceHref="#staff-analytics-charts" evidenceLabel="analytics charts" />)}
         </div>}
       </section>
