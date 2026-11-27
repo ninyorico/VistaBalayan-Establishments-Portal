@@ -10,6 +10,8 @@ import { AiAnomalyCard, AiRecommendationCard } from "../../components/vista/AiIn
 import { MAX_AI_ITEMS } from "../../../lib/aiInsights";
 import { geminiService } from "../../../services/geminiService";
 
+const AI_RULE_VERSION = "decision-support-v9";
+
 const chartClass = "rounded-3xl border border-[#AFB3B5]/45 bg-[#F5F8FF]/88 p-4 shadow-tourism sm:p-6";
 
 type AnalyticsMetric = { label: string; value: ReactNode; helper: string; icon: typeof UsersRound; tone: string };
@@ -63,13 +65,29 @@ export default function Analytics() {
   const [aiLoading, setAiLoading] = useState(false);
   const [aiError, setAiError] = useState<string | null>(null);
 
-  const loadAiFindings = async (establishmentId: string) => {
+  const loadAiFindings = async (establishmentId: string, allowStaleRefresh = true) => {
     setAiLoading(true);
     setAiError(null);
     const [{ data: anomalyData, error: anomalyError }, { data: recommendationData, error: recommendationError }] = await Promise.all([
       supabase.from("ai_anomalies_cache").select("*").eq("establishment_id", establishmentId).eq("status", "active").eq("is_resolved", false).order("detected_at", { ascending: false }).limit(MAX_AI_ITEMS),
       supabase.from("ai_recommendations").select("*").eq("establishment_id", establishmentId).eq("status", "active").order("created_at", { ascending: false }).limit(MAX_AI_ITEMS),
     ]);
+    if (!anomalyError && !recommendationError && allowStaleRefresh && ((anomalyData || []).length > 0 || (recommendationData || []).length > 0)) {
+      const hasCurrentRule = [...(anomalyData || []), ...(recommendationData || [])].some((row: any) => row.input_snapshot?.rule_version === AI_RULE_VERSION);
+      if (!hasCurrentRule) {
+        try {
+          await geminiService.generateForEstablishment();
+          return loadAiFindings(establishmentId, false);
+        } catch (error) {
+          console.error("Error refreshing stale establishment AI findings:", error);
+          setAiAnomalies([]);
+          setAiRecommendations([]);
+          setAiError("Saved AI findings are outdated and could not be refreshed. Retry the analysis.");
+          setAiLoading(false);
+          return;
+        }
+      }
+    }
     if (anomalyError || recommendationError) {
       console.error("Error loading establishment AI findings:", anomalyError || recommendationError);
       setAiError("AI findings could not be loaded. Retry from this Analytics page.");

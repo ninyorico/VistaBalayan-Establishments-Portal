@@ -436,7 +436,7 @@ const insertResults = async (supabaseAdmin, results, scope, establishmentId, req
     if (supersedeError) throw new Error('Unable to supersede stale recommendations');
     const rows = results.insights.map((item) => ({
       ...item,
-      input_snapshot: { ...(item.input_snapshot || {}), generation_key: generationKey, source_fingerprint: sourceFingerprint },
+      input_snapshot: { ...(item.input_snapshot || {}), rule_version: 'decision-support-v9', generation_key: generationKey, source_fingerprint: sourceFingerprint },
       model_name: modelName,
       establishment_id: scope === 'establishment' ? establishmentId : null,
       status: 'active',
@@ -480,7 +480,7 @@ const insertResults = async (supabaseAdmin, results, scope, establishmentId, req
         recommendation: item.recommendation,
         establishment_id: scope === 'establishment' ? establishmentId : null,
         model_name: 'deterministic-rule-v1',
-        input_snapshot: item.evidence,
+        input_snapshot: { ...item.evidence, rule_version: 'decision-support-v9' },
         status: 'active',
         is_resolved: false,
         detected_at: new Date().toISOString(),
