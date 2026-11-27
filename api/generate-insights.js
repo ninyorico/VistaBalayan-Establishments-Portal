@@ -456,7 +456,7 @@ const insertResults = async (supabaseAdmin, results, scope, establishmentId, req
     if (supersedeError) throw new Error('Unable to supersede stale recommendations');
     const rows = results.insights.map((item) => ({
       ...item,
-      input_snapshot: { ...(item.input_snapshot || {}), rule_version: 'decision-support-v12', generation_key: generationKey, source_fingerprint: sourceFingerprint },
+      input_snapshot: { ...(item.input_snapshot || {}), rule_version: 'decision-support-v13', generation_key: generationKey, source_fingerprint: sourceFingerprint },
       model_name: modelName,
       establishment_id: scope === 'establishment' ? establishmentId : null,
       status: 'active',
@@ -502,7 +502,7 @@ const insertResults = async (supabaseAdmin, results, scope, establishmentId, req
         model_name: 'deterministic-rule-v1',
         input_snapshot: {
           ...item.evidence,
-          rule_version: 'decision-support-v12',
+          rule_version: 'decision-support-v13',
           decision_support: (() => {
             const selected = selectTourismRecommendationStrategies(item.evidence, { scope, establishmentName: scope === 'establishment' ? 'this establishment' : 'affected establishments' });
             return {
@@ -573,7 +573,7 @@ export default async function handler(req, res) {
     const apiKey = process.env.GEMINI_API_KEY;
     const data = await getScopedData(supabaseAdmin, effectiveProfile, scope, analysisPeriod);
     const sourceFingerprint = crypto.createHash('sha256').update(JSON.stringify({ monthlyMetrics: data.monthlyMetrics, originEvidence: data.originEvidence, establishmentEvidence: data.establishmentEvidence, feedbackEvidence: data.feedbackEvidence, feedbackThemes: data.feedbackThemes })).digest('hex');
-    const generationKey = crypto.createHash('sha256').update(JSON.stringify({ ruleVersion: 'decision-support-v12', scope, establishmentId: effectiveEstablishmentId, analysisPeriod, sourceFingerprint })).digest('hex');
+    const generationKey = crypto.createHash('sha256').update(JSON.stringify({ ruleVersion: 'decision-support-v13', scope, establishmentId: effectiveEstablishmentId, analysisPeriod, sourceFingerprint })).digest('hex');
     const cachedResults = await findCachedResults(supabaseAdmin, scope, effectiveEstablishmentId, generationKey);
     if (cachedResults) return sendJson(res, 200, cachedResults);
     let results;

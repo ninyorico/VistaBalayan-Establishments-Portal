@@ -33,6 +33,8 @@ import { classifyFeedbackThemes, type FeedbackTheme } from "../../../lib/custome
 import { classifyFeedbackDecisionSegments } from "../../../lib/customerFeedbackDecisionSupport";
 import { buildAnalyticsAnalysis, filterAnalyticsFindings, formatCoverage, type AnalyticsFinding, type AnalyticsPattern, type AnomalySeverity, type CoverageFilter, type AnalysisEstablishment, type AnalyticsCategory, type PeriodEvidence } from "../../../lib/analyticsAnalysis";
 
+const AI_RULE_VERSION = "decision-support-v13";
+
 interface AnalyticsData {
   seasonalData: { month: string; visitors: number; guestCheckIns: number; guestNights: number }[];
   visitorOrigins: { location: string; visitors: number; growth: number | null }[];
@@ -344,9 +346,6 @@ export default function Analytics() {
       comparisonAccommodationResult,
       aiAnomalyResult,
       aiInsightResult,
-      customerFeedbackResult,
-      feedbackThemeResult,
-      feedbackPeriodResult,
       availableYearsResult,
     ] = await Promise.all([
       supabase
@@ -379,20 +378,19 @@ export default function Analytics() {
       fetchAllReports("accommodation_reports", `establishment_id, report_date, total_check_ins`, comparisonRange),
       scopedAiAnomalyQuery,
       scopedAiInsightQuery,
-      feedbackSummaryQuery,
-      fetchAllFeedbackRows("establishment_rating_reviews", "establishment_id,comment,verified_account", "created_at"),
-      fetchAllFeedbackRows("establishment_rating_period_summaries", "establishment_id,period_start,customer_satisfaction_score,rating_count", "period_start"),
       fetchAvailableReportYears(),
     ]);
 
-    const periodAnomalies = (aiAnomalyResult.data || [])
+    const currentRuleAnomalies = (aiAnomalyResult.data || []).filter((row) => row.input_snapshot?.rule_version === AI_RULE_VERSION);
+    const currentRuleInsights = (aiInsightResult.data || []).filter((row) => row.input_snapshot?.rule_version === AI_RULE_VERSION);
+    const periodAnomalies = currentRuleAnomalies
       .map((anomaly) => ({
         ...anomaly,
         establishments: Array.isArray(anomaly.establishments) ? anomaly.establishments[0] || null : anomaly.establishments,
       }))
       .filter((anomaly) => aiFindingMatchesPeriod(anomaly as AnalyticsAiAnomaly, analyticsPeriod)) as AnalyticsAiAnomaly[];
     setAiAnomalies(periodAnomalies);
-    setAiInsights((aiInsightResult.data || []) as AnalyticsAiInsight[]);
+    setAiInsights(currentRuleInsights as AnalyticsAiInsight[]);
 
     const { data: visitorData, error: visitorError } = visitorResult;
     const { data: accommodationData, error: accError } = accommodationResult;
@@ -570,16 +568,8 @@ export default function Analytics() {
     const totalVisitors = visitors.reduce((sum, item) => sum + (item.total_guests || 0), 0);
     const [topLocation, topVisitors] = Object.entries(originCounts).sort((a, b) => b[1] - a[1])[0] || ["", 0];
 
-    if (customerFeedbackResult.error) console.warn("Customer feedback summary unavailable:", customerFeedbackResult.error.message);
-    const customerFeedback = ((customerFeedbackResult.data || []) as CustomerFeedbackRow[]).map((row) => ({
-      ...row,
-      average_rating: row.average_rating == null ? null : Number(row.average_rating),
-      rating_count: Number(row.rating_count || 0),
-      positive_rating_percentage: row.positive_rating_percentage == null ? null : Number(row.positive_rating_percentage),
-      customer_satisfaction_score: row.customer_satisfaction_score == null ? null : Number(row.customer_satisfaction_score),
-    }));
-
-    const periodRows = (feedbackPeriodResult.data || []) as Array<{ establishment_id: string; period_start: string; customer_satisfaction_score?: number | null; rating_count?: number | null }>;
+    const customerFeedback: CustomerFeedbackRow[] = [];
+    const periodRows: Array<{ establishment_id: string; period_start: string; customer_satisfaction_score?: number | null; rating_count?: number | null }> = [];
     const aggregatePeriodSatisfaction = (year: string) => {
       const grouped = new Map<string, { weighted: number; count: number }>();
       for (const row of periodRows) {
@@ -595,13 +585,7 @@ export default function Analytics() {
     const currentPeriodSatisfaction = aggregatePeriodSatisfaction(selectedYear);
     const feedbackPriorSatisfaction = aggregatePeriodSatisfaction(comparisonYear);
 
-    const feedbackThemes = classifyFeedbackThemes(((feedbackThemeResult.data || []) as Array<{ comment?: string | null; verified_account?: boolean }>).map((row) => ({
-      comment: row.comment,
-      verified: row.verified_account === true,
-      status: "published",
-      suspicious: false,
-    })));
-
+    const feedbackThemes: FeedbackTheme[] = [];
     const daysInRange = (startDate: string, endDate: string) => {
       if (!startDate || !endDate) return 0;
       const start = new Date(`${startDate}T00:00:00Z`).getTime();

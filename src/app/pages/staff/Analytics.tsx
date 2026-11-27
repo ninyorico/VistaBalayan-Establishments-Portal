@@ -11,7 +11,7 @@ import { MAX_AI_ITEMS } from "../../../lib/aiInsights";
 import { geminiService } from "../../../services/geminiService";
 import { selectTourismRecommendationStrategies } from "../../../lib/tourismRecommendationStrategies.js";
 
-const AI_RULE_VERSION = "decision-support-v12";
+const AI_RULE_VERSION = "decision-support-v13";
 
 const chartClass = "rounded-3xl border border-[#AFB3B5]/45 bg-[#F5F8FF]/88 p-4 shadow-tourism sm:p-6";
 
