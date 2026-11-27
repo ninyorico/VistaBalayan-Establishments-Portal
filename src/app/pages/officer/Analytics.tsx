@@ -32,13 +32,17 @@ import { selectTourismRecommendationStrategies } from "../../../lib/tourismRecom
 import { classifyFeedbackThemes, type FeedbackTheme } from "../../../lib/customerFeedbackThemes";
 import { classifyFeedbackDecisionSegments } from "../../../lib/customerFeedbackDecisionSupport";
 import { buildAnalyticsAnalysis, filterAnalyticsFindings, formatCoverage, type AnalyticsFinding, type AnalyticsPattern, type AnomalySeverity, type CoverageFilter, type AnalysisEstablishment, type AnalyticsCategory, type PeriodEvidence } from "../../../lib/analyticsAnalysis";
+import { buildVisitorOriginMetrics, type OriginClassification, type OriginScope, type VisitorOriginMetric } from "../../../lib/visitorOriginMetrics";
+import { buildPerformanceScores, type PerformanceScoreRow } from "../../../lib/establishmentPerformanceScores";
 
 const AI_RULE_VERSION = "decision-support-v13";
 
 interface AnalyticsData {
   seasonalData: { month: string; visitors: number; guestCheckIns: number; guestNights: number }[];
-  visitorOrigins: { location: string; visitors: number; growth: number | null }[];
+  visitorOrigins: VisitorOriginMetric[];
+  originSummary: ReturnType<typeof buildVisitorOriginMetrics>;
   performancePeriods: Record<string, PerformanceInputWithMode[]>;
+  performanceScores: PerformanceScoreRow[];
   peakSeason: { month: string; activity: number; visitors: number; guestCheckIns: number; growth: number };
   topOrigin: { location: string; percentage: number };
   growthRate: number | null;
@@ -147,6 +151,7 @@ const performanceColors = ["#193364", "#0E5A72", "#D69A3A", "#E9C98A", "#6C63FF"
 
 const monthKey = (date: string) => date.slice(0, 7);
 const todayInManila = () => new Intl.DateTimeFormat("en-CA", { timeZone: "Asia/Manila", year: "numeric", month: "2-digit", day: "2-digit" }).format(new Date());
+const isFutureAnalyticsMonth = (month: string) => /^\d{4}-\d{2}$/.test(month) && month > todayInManila().slice(0, 7);
 
 const percentChange = (current: number, previous: number) =>
   previous > 0 ? ((current - previous) / previous) * 100 : null;
@@ -169,6 +174,7 @@ const getComparisonLabel = (period: ReportPeriodSelection, comparisonYear: strin
 const aiFindingMatchesPeriod = (anomaly: AnalyticsAiAnomaly, period: ReportPeriodSelection) => {
   const month = anomaly.input_snapshot?.current_month;
   if (typeof month !== "string" || !/^\d{4}-\d{2}$/.test(month)) return true;
+  if (isFutureAnalyticsMonth(month)) return false;
   const monthStart = `${month}-01`;
   const [year, monthNumber] = month.split("-").map(Number);
   const monthEnd = new Date(Date.UTC(year, monthNumber, 0)).toISOString().slice(0, 10);
@@ -180,6 +186,7 @@ const aiRecommendationMatchesPeriod = (insight: AnalyticsAiInsight, period: Repo
   const snapshot = insight.input_snapshot || {};
   const month = snapshot.current_month;
   if (typeof month === "string" && /^\d{4}-\d{2}$/.test(month)) {
+    if (isFutureAnalyticsMonth(month)) return false;
     const monthStart = `${month}-01`;
     const [year, monthNumber] = month.split("-").map(Number);
     const monthEnd = new Date(Date.UTC(year, monthNumber, 0)).toISOString().slice(0, 10);
@@ -204,7 +211,9 @@ export default function Analytics() {
   const [data, setData] = useState<AnalyticsData>({
     seasonalData: [],
     visitorOrigins: [],
+    originSummary: buildVisitorOriginMetrics([], { currentTotalVisitors: 0, previousTotalVisitors: 0 }),
     performancePeriods: {},
+    performanceScores: [],
     peakSeason: { month: "", activity: 0, visitors: 0, guestCheckIns: 0, growth: 0 },
     topOrigin: { location: "", percentage: 0 },
     growthRate: null,
@@ -236,6 +245,8 @@ export default function Analytics() {
   const [availableEstablishments, setAvailableEstablishments] = useState<Establishment[]>([]);
   const [availableYears, setAvailableYears] = useState<number[]>([currentDate.getFullYear() - 2, currentDate.getFullYear() - 1, currentDate.getFullYear()]);
   const [analysisPattern, setAnalysisPattern] = useState<AnalyticsPattern>("all");
+  const [originFilter, setOriginFilter] = useState<OriginClassification | "ALL">("ALL");
+  const [originScopeFilter, setOriginScopeFilter] = useState<OriginScope | "ALL">("ALL");
 
 
   useEffect(() => {
@@ -347,6 +358,7 @@ export default function Analytics() {
       comparisonAccommodationResult,
       aiAnomalyResult,
       aiInsightResult,
+      feedbackSummaryResult,
       availableYearsResult,
     ] = await Promise.all([
       supabase
@@ -375,10 +387,11 @@ export default function Analytics() {
           establishments (name)
         `,
       ),
-      fetchAllReports("visitor_reports", `establishment_id, report_date, total_guests`, comparisonRange),
+      fetchAllReports("visitor_reports", `establishment_id, report_date, total_guests, residence_type, place_of_residence`, comparisonRange),
       fetchAllReports("accommodation_reports", `establishment_id, report_date, total_check_ins`, comparisonRange),
       scopedAiAnomalyQuery,
       scopedAiInsightQuery,
+      feedbackSummaryQuery,
       fetchAvailableReportYears(),
     ]);
 
@@ -532,32 +545,42 @@ export default function Analytics() {
     const latestMonth = visitorMonthKeys[visitorMonthKeys.length - 1] || "";
     const previousMonth = visitorMonthKeys[visitorMonthKeys.length - 2] || "";
 
-    const originByMonth: Record<string, Record<string, number>> = {};
-    const originCounts: Record<string, number> = {};
-    visitors.forEach((item) => {
-      const category = normalizeResidenceCategory(item);
-      const origin = category
-        ? getSpecificOriginLabel(item, category) || (
-          category === "THIS_PROVINCE" ? "Batangas" : category === "OTHER_PROVINCE" ? "Other Province" : "Foreign Residence"
-        )
-        : "Unknown";
-      originCounts[origin] = (originCounts[origin] || 0) + (item.total_guests || 0);
-      const key = monthKey(item.report_date);
-      if (!originByMonth[origin]) originByMonth[origin] = {};
-      originByMonth[origin][key] = (originByMonth[origin][key] || 0) + (item.total_guests || 0);
+    const aggregateOrigins = (rows: VisitorReport[]) => {
+      const counts = new Map<string, { origin: string; scope: Exclude<OriginScope, "Unknown">; visitors: number }>();
+      let total = 0;
+      let unknown = 0;
+      rows.forEach((item) => {
+        const visitors = Number(item.total_guests || 0);
+        total += visitors;
+        const category = normalizeResidenceCategory(item);
+        if (!category) {
+          unknown += visitors;
+          return;
+        }
+        const origin = getSpecificOriginLabel(item, category) || (category === "THIS_PROVINCE" ? "Batangas" : category === "OTHER_PROVINCE" ? "Other Province" : "Foreign Residence");
+        const scope: Exclude<OriginScope, "Unknown"> = category === "FOREIGN" ? "International" : "Domestic";
+        const key = `${scope}:${origin}`;
+        const current = counts.get(key) || { origin, scope, visitors: 0 };
+        current.visitors += visitors;
+        counts.set(key, current);
+      });
+      return { counts, total, unknown };
+    };
+    const currentOrigins = aggregateOrigins(visitors);
+    const previousOrigins = aggregateOrigins(comparisonVisitors);
+    const originKeys = new Set([...currentOrigins.counts.keys(), ...previousOrigins.counts.keys()]);
+    const originMetrics = buildVisitorOriginMetrics([...originKeys].map((key) => {
+      const current = currentOrigins.counts.get(key);
+      const previous = previousOrigins.counts.get(key);
+      return { origin: current?.origin || previous?.origin || key, scope: current?.scope || previous?.scope || "Domestic", currentVisitors: current?.visitors || 0, previousVisitors: previous?.visitors || 0 };
+    }), {
+      currentTotalVisitors: currentOrigins.total,
+      previousTotalVisitors: previousOrigins.total,
+      currentUnknownVisitors: currentOrigins.unknown,
+      previousUnknownVisitors: previousOrigins.unknown,
     });
-
-    const visitorOrigins = Object.entries(originCounts)
-      .map(([location, total]) => ({
-        location,
-        visitors: total,
-        growth: percentChange(
-          originByMonth[location]?.[latestMonth] || 0,
-          originByMonth[location]?.[previousMonth] || 0
-        ),
-      }))
-      .sort((a, b) => b.visitors - a.visitors)
-      .slice(0, 8);
+    const visitorOrigins = originMetrics.rows;
+    const originCounts: Record<string, number> = Object.fromEntries(visitorOrigins.map((row) => [row.origin, row.currentVisitors]));
 
     const peakKey = sortedMonthKeys.reduce(
       (best, key) => (monthlyData[key].visitors > (monthlyData[best]?.visitors || 0) ? key : best),
@@ -566,10 +589,11 @@ export default function Analytics() {
     const peakIndex = sortedMonthKeys.indexOf(peakKey);
     const beforePeakKey = peakIndex > 0 ? sortedMonthKeys[peakIndex - 1] : "";
 
-    const totalVisitors = visitors.reduce((sum, item) => sum + (item.total_guests || 0), 0);
     const [topLocation, topVisitors] = Object.entries(originCounts).sort((a, b) => b[1] - a[1])[0] || ["", 0];
 
-    const customerFeedback: CustomerFeedbackRow[] = [];
+    const feedbackSummaryRows = (feedbackSummaryResult.data || []) as CustomerFeedbackRow[];
+    if (feedbackSummaryResult.error) console.error("Error fetching feedback summaries:", feedbackSummaryResult.error);
+    const customerFeedback: CustomerFeedbackRow[] = feedbackSummaryRows;
     const periodRows: Array<{ establishment_id: string; period_start: string; customer_satisfaction_score?: number | null; rating_count?: number | null }> = [];
     const aggregatePeriodSatisfaction = (year: string) => {
       const grouped = new Map<string, { weighted: number; count: number }>();
@@ -632,10 +656,38 @@ export default function Analytics() {
       },
     });
 
+    const performanceScoreInputs = (performancePeriods[`${selectedYear}-FULL_YEAR`] || []).map((row) => {
+      const sourceRows = row.category === "daytour" ? visitors : accommodations;
+      const comparisonRows = row.category === "daytour" ? comparisonVisitors : comparisonAccommodations;
+      const currentRows = sourceRows.filter((item) => item.establishment_id === row.id && item.report_date.startsWith(`${selectedYear}-`));
+      const priorRows = comparisonRows.filter((item) => item.establishment_id === row.id);
+      const currentValue = currentRows.reduce((sum, item) => sum + Number(row.category === "daytour" ? (item as VisitorReport).total_guests || 0 : (item as AccommodationReport).total_check_ins || 0), 0);
+      const priorValue = priorRows.reduce((sum, item) => sum + Number(row.category === "daytour" ? (item as VisitorReport).total_guests || 0 : (item as AccommodationReport).total_check_ins || 0), 0);
+      const feedback = feedbackSummaryRows.find((item) => item.establishment_id === row.id);
+      const expectedEnd = selectedYear === todayInManila().slice(0, 4) ? (todayInManila() < `${selectedYear}-12-31` ? todayInManila() : `${selectedYear}-12-31`) : `${selectedYear}-12-31`;
+      const expectedReports = Math.max(0, daysInRange(`${selectedYear}-01-01`, expectedEnd));
+      const submittedReports = new Set(currentRows.map((item) => item.report_date.slice(0, 10))).size;
+      return {
+        id: row.id,
+        name: row.name,
+        category: row.category,
+        currentVisitors: currentRows.length ? currentValue : null,
+        previousVisitors: priorRows.length ? priorValue : null,
+        averageRating: feedback?.average_rating ?? null,
+        ratingCount: Number(feedback?.rating_count || 0),
+        feedbackEligible: feedback?.feedback_eligibility === "eligible",
+        submittedReports,
+        expectedReports,
+      };
+    });
+    const performanceScores = buildPerformanceScores(performanceScoreInputs);
+
     setData({
       seasonalData,
       visitorOrigins,
+      originSummary: originMetrics,
       performancePeriods,
+      performanceScores,
       peakSeason: {
         month: monthlyData[peakKey]?.label || "N/A",
         activity: monthlyData[peakKey]?.visitors || 0,
@@ -648,7 +700,7 @@ export default function Analytics() {
       },
       topOrigin: {
         location: topLocation,
-        percentage: totalVisitors > 0 ? Math.round((topVisitors / totalVisitors) * 100) : 0,
+        percentage: originMetrics.currentKnownVisitors > 0 ? Math.round((topVisitors / originMetrics.currentKnownVisitors) * 100) : 0,
       },
       growthRate: percentChange(
         monthlyData[latestMonth]?.visitors || 0,
@@ -743,16 +795,21 @@ export default function Analytics() {
       overnight_check_in_value: seasonalPeak.guestCheckIns,
     },
   }] : [];
+  const evidenceMonth = (() => {
+    const endDate = getReportPeriodRange(analyticsPeriod).endDate;
+    const today = todayInManila();
+    return endDate > today && selectedYear === today.slice(0, 4) ? today.slice(0, 7) : endDate.slice(0, 7);
+  })();
   const originPeak = data.visitorOrigins[0];
   const originFindings: AnalyticsAiAnomaly[] = originPeak ? [{
     id: `visitor-origins-${selectedYear}`,
-    anomaly_type: "Visitor origin concentration",
+    anomaly_type: "Visitor origin market pattern",
     severity: "low",
-    description: `${originPeak.location} is the largest reported visitor origin in the selected period with ${originPeak.visitors.toLocaleString()} visitors${originPeak.growth === null ? "." : ` and ${originPeak.growth >= 0 ? "growth" : "decline"} of ${Math.abs(originPeak.growth).toFixed(1)}% versus the prior period.`}`,
+    description: `${originPeak.origin} is the largest reported known-origin market in the selected period with ${originPeak.currentVisitors.toLocaleString()} visitors, ${originPeak.marketShare.toFixed(1)}% of known origins, and ${originPeak.growthRate === null ? "no comparable prior-origin baseline" : `${originPeak.growthRate >= 0 ? "growth" : "decline"} of ${Math.abs(originPeak.growthRate).toFixed(1)}%`}.`,
     recommendation: "",
     detected_at: new Date().toISOString(),
     is_resolved: false,
-    input_snapshot: { metric: "visitorOrigins", current_month: `${selectedYear}-12`, origin: originPeak.location, current_value: originPeak.visitors, growth_percent: originPeak.growth },
+    input_snapshot: { metric: "visitorOrigins", current_month: evidenceMonth, origin: originPeak.origin, current_value: originPeak.currentVisitors, previous_value: originPeak.previousVisitors, growth_percent: originPeak.growthRate, market_share: originPeak.marketShare, origin_coverage_percent: data.originSummary.currentOriginCoverage, unknown_origin_visitors: data.originSummary.currentUnknownVisitors, classification: originPeak.classification },
   }] : [];
   const performanceRows = data.performancePeriods[`${selectedYear}-FULL_YEAR`] || [];
   const establishmentNames = new Map(performanceRows.map((row) => [row.id, row.name]));
@@ -775,7 +832,7 @@ export default function Analytics() {
     recommendation: "",
     detected_at: new Date().toISOString(),
     is_resolved: false,
-    input_snapshot: { metric: "establishmentPerformance", current_month: `${selectedYear}-12`, current_value: performanceRows.length, classification_counts: performanceCounts },
+    input_snapshot: { metric: "establishmentPerformance", current_month: evidenceMonth, current_value: performanceRows.length, classification_counts: performanceCounts },
   }] : [];
   const feedbackDecisionSegments = classifyFeedbackDecisionSegments(feedbackRows.map((row) => {
     const performance = performanceRows.find((item) => item.id === row.establishment_id);
@@ -1015,6 +1072,7 @@ export default function Analytics() {
       const month = `${selectedYear}-${String(index + 1).padStart(2, "0")}`;
       return verifiedChartMonths.has(month) ? item : { ...item, visitors: null, guestCheckIns: null };
     });
+  const filteredOriginRows = data.visitorOrigins.filter((row) => (originFilter === "ALL" || row.classification === originFilter) && (originScopeFilter === "ALL" || row.scope === originScopeFilter));
 
   return (
     <div className="space-y-6">
@@ -1135,49 +1193,41 @@ export default function Analytics() {
 
       <div id="analytics-origins" className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
         <div className="flex flex-col gap-3 border-b border-gray-200 p-6 sm:flex-row sm:items-start sm:justify-between">
-          <h3 className="text-lg font-semibold text-gray-900">Visitor Origins & Actual Growth</h3>
-          {panelFilter("Filter this table")}
+          <div>
+            <h3 className="text-lg font-semibold text-gray-900">Visitor Origins & Actual Growth</h3>
+            <p className="mt-1 text-xs text-gray-500">Known-origin share excludes unknown origins; growth compares the selected period with its configured comparable period.</p>
+          </div>
+          <div className="flex flex-wrap gap-2">
+            <select value={originFilter} onChange={(event) => setOriginFilter(event.target.value as OriginClassification | "ALL")} className="rounded-lg border border-gray-300 bg-white px-2 py-1.5 text-xs" aria-label="Filter visitor-origin market classification">
+              <option value="ALL">All markets</option><option value="Dominant">Dominant</option><option value="Growing">Growing</option><option value="Declining">Declining</option><option value="Emerging">Emerging</option><option value="Stable">Stable</option><option value="Insufficient Data">Insufficient data</option>
+            </select>
+            <select value={originScopeFilter} onChange={(event) => setOriginScopeFilter(event.target.value as OriginScope | "ALL")} className="rounded-lg border border-gray-300 bg-white px-2 py-1.5 text-xs" aria-label="Filter domestic or international visitor origins">
+              <option value="ALL">Domestic & international</option><option value="Domestic">Domestic</option><option value="International">International</option>
+            </select>
+          </div>
         </div>
-        <div ref={originsTableRef} className="max-h-[20rem] overflow-auto overscroll-contain touch-none [-webkit-overflow-scrolling:touch]" aria-label="Visitor origins table; scroll to view more than five locations">
-          <table className="w-full min-w-[23rem] table-fixed sm:min-w-0">
-                      <colgroup>
-                        <col className="w-[6rem] sm:w-1/4" />
-                        <col className="w-[5rem] sm:w-1/4" />
-                        <col className="w-[6rem] sm:w-1/4" />
-                        <col className="w-[6rem] sm:w-1/4" />
-            </colgroup>
-            <thead className="sticky top-0 z-10 bg-gray-50 border-b border-gray-200">
-              <tr>
-                <th className="sticky left-0 z-20 bg-gray-50 px-2 py-1.5 text-left text-[9px] font-semibold uppercase tracking-wider text-gray-700 shadow-[2px_0_4px_rgba(148,163,184,0.24)] sm:px-6 sm:py-3 sm:text-xs">Location</th>
-                <th className="px-2 py-1.5 text-left text-[9px] font-semibold uppercase tracking-wider text-gray-700 sm:px-6 sm:py-3 sm:text-xs">Visitors</th>
-                <th className="px-2 py-1.5 text-left text-[9px] font-semibold uppercase tracking-wider text-gray-700 sm:px-6 sm:py-3 sm:text-xs">Growth Rate</th>
-                <th className="px-2 py-1.5 text-left text-[9px] font-semibold uppercase tracking-wider text-gray-700 sm:px-6 sm:py-3 sm:text-xs">Trend</th>
-              </tr>
-            </thead>
+        <div className="grid grid-cols-2 gap-3 border-b border-gray-200 p-4 text-xs sm:grid-cols-4">
+          <div><span className="text-gray-500">Known-origin coverage</span><strong className="mt-1 block text-gray-900">{data.originSummary.currentOriginCoverage === null ? "N/A" : `${data.originSummary.currentOriginCoverage.toFixed(1)}%`}</strong></div>
+          <div><span className="text-gray-500">Known visitors</span><strong className="mt-1 block text-gray-900">{data.originSummary.currentKnownVisitors.toLocaleString()}</strong></div>
+          <div><span className="text-gray-500">Unknown visitors</span><strong className="mt-1 block text-gray-900">{data.originSummary.currentUnknownVisitors.toLocaleString()}</strong></div>
+          <div><span className="text-gray-500">Comparison coverage</span><strong className="mt-1 block text-gray-900">{data.originSummary.previousOriginCoverage === null ? "N/A" : `${data.originSummary.previousOriginCoverage.toFixed(1)}%`}</strong></div>
+        </div>
+        <div ref={originsTableRef} className="max-h-[24rem] overflow-auto overscroll-contain touch-none [-webkit-overflow-scrolling:touch]" aria-label="Visitor origins table">
+          <table className="w-full min-w-[52rem] table-fixed">
+            <colgroup><col className="w-[18%]" /><col className="w-[12%]" /><col className="w-[12%]" /><col className="w-[12%]" /><col className="w-[12%]" /><col className="w-[12%]" /><col className="w-[22%]" /></colgroup>
+            <thead className="sticky top-0 z-10 bg-gray-50 border-b border-gray-200"><tr>
+              {['Origin', 'Scope', 'Current', 'Prior', 'Change', 'Share', 'Market classification'].map((label) => <th key={label} className="px-2 py-2 text-left text-[9px] font-semibold uppercase tracking-wider text-gray-700 sm:px-4 sm:py-3 sm:text-xs">{label}</th>)}
+            </tr></thead>
             <tbody className="divide-y divide-gray-200">
-              {data.visitorOrigins.length > 0 ? (
-                data.visitorOrigins.map((origin, index) => (
-                  <tr key={index} className="group hover:bg-gray-50">
-                    <td className="sticky left-0 z-10 bg-white px-2 py-1.5 text-[10px] font-medium text-gray-900 shadow-[2px_0_4px_rgba(148,163,184,0.18)] group-hover:bg-gray-50 sm:px-6 sm:py-4 sm:text-sm">{origin.location}</td>
-                    <td className="px-2 py-1.5 text-[10px] text-gray-900 sm:px-6 sm:py-4 sm:text-sm">{origin.visitors.toLocaleString()}</td>
-                    <td className="px-2 py-1.5 sm:px-6 sm:py-4">
-                      <span className={`text-[10px] font-medium sm:text-sm ${origin.growth === null ? "text-gray-500" : origin.growth >= 0 ? "text-green-600" : "text-red-600"}`}>
-                        {origin.growth === null ? "N/A" : `${origin.growth >= 0 ? "+" : ""}${origin.growth.toFixed(1)}%`}
-                      </span>
-                    </td>
-                    <td className="px-2 py-1.5 text-[10px] sm:px-6 sm:py-4 sm:text-sm">
-                      <div className={`flex items-center gap-1 ${origin.growth === null ? "text-gray-500" : origin.growth >= 0 ? "text-green-600" : "text-red-600"}`}>
-                        {origin.growth === null ? null : origin.growth >= 0 ? <TrendingUp className="h-3.5 w-3.5 sm:h-4 sm:w-4" /> : <TrendingDown className="h-3.5 w-3.5 sm:h-4 sm:w-4" />}
-                        <span className="text-[10px] font-medium sm:text-sm">{origin.growth === null ? "No prior-period data" : origin.growth >= 0 ? "Growing" : "Declining"}</span>
-                      </div>
-                    </td>
-                  </tr>
-                ))
-              ) : (
-                <tr>
-                  <td colSpan={4} className="px-6 py-8 text-center text-gray-500">No visitor origin data available</td>
-                </tr>
-              )}
+              {filteredOriginRows.length > 0 ? filteredOriginRows.map((origin) => <tr key={`${origin.scope}-${origin.origin}`} className="hover:bg-gray-50">
+                <td className="px-2 py-2 text-xs font-medium text-gray-900 sm:px-4 sm:py-3">{origin.origin}</td>
+                <td className="px-2 py-2 text-xs text-gray-600 sm:px-4 sm:py-3">{origin.scope}</td>
+                <td className="px-2 py-2 text-xs text-gray-900 sm:px-4 sm:py-3">{origin.currentVisitors.toLocaleString()}</td>
+                <td className="px-2 py-2 text-xs text-gray-600 sm:px-4 sm:py-3">{origin.previousVisitors.toLocaleString()}</td>
+                <td className={`px-2 py-2 text-xs font-medium sm:px-4 sm:py-3 ${origin.absoluteChange >= 0 ? "text-green-600" : "text-red-600"}`}>{origin.absoluteChange >= 0 ? "+" : ""}{origin.absoluteChange.toLocaleString()} {origin.growthRate === null ? "(N/A)" : `(${origin.growthRate >= 0 ? "+" : ""}${origin.growthRate.toFixed(1)}%)`}</td>
+                <td className="px-2 py-2 text-xs text-gray-900 sm:px-4 sm:py-3">{origin.marketShare.toFixed(1)}%</td>
+                <td className="px-2 py-2 text-xs font-semibold text-gray-700 sm:px-4 sm:py-3">{origin.classification}</td>
+              </tr>) : <tr><td colSpan={7} className="px-6 py-8 text-center text-gray-500">No visitor-origin market matches the selected filters.</td></tr>}
             </tbody>
           </table>
         </div>
@@ -1185,7 +1235,7 @@ export default function Analytics() {
       </div>
 
       <div id="analytics-performance">
-        <EstablishmentPerformanceDashboard periods={data.performancePeriods} year={selectedYear} aiFindings={renderRelatedAiFindings(["establishmentPerformance"])} />
+        <EstablishmentPerformanceDashboard periods={data.performancePeriods} year={selectedYear} performanceScores={data.performanceScores} aiFindings={renderRelatedAiFindings(["establishmentPerformance"])} />
       </div>
 
     </div>

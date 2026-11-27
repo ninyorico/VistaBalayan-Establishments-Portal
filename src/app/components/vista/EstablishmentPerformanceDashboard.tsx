@@ -3,6 +3,7 @@ import { useEffect, useMemo, useState } from "react";
 import { Bar, BarChart, CartesianGrid, Cell, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 import { BarChart3, ChevronRight, Search, X } from "lucide-react";
 import { classifyPerformance, type PerformanceClassification, type PerformanceInput } from "../../../lib/performanceClassification";
+import type { PerformanceScoreRow } from "../../../lib/establishmentPerformanceScores";
 import type { ReportingMode } from "../../../lib/establishmentReportForms";
 import { useDominantAxisTableScroll } from "../../../hooks/useDominantAxisTableScroll";
 
@@ -16,6 +17,7 @@ export type PerformanceInputWithMode = PerformanceInput & {
 type Props = {
   periods: Record<string, PerformanceInputWithMode[]>;
   year: string;
+  performanceScores?: PerformanceScoreRow[];
   aiFindings?: ReactNode;
 };
 
@@ -37,7 +39,7 @@ const monthLabel = (key: string) => new Date(`${key}-01T00:00:00`).toLocaleStrin
 const fullYearKey = (year: string) => `${year}-FULL_YEAR`;
 const periodLabel = (key: string) => key.endsWith("-FULL_YEAR") ? `Full Year ${key.slice(0, 4)}` : monthLabel(key);
 
-export default function EstablishmentPerformanceDashboard({ periods, year, aiFindings }: Props) {
+export default function EstablishmentPerformanceDashboard({ periods, year, performanceScores = [], aiFindings }: Props) {
   const monthlyPeriods = Object.keys(periods).filter((period) => period.startsWith(`${year}-`) && !period.endsWith("-FULL_YEAR")).sort();
   const periodOptions = [...monthlyPeriods, fullYearKey(year)];
   const [category, setCategory] = useState<Category>("daytour");
@@ -53,6 +55,7 @@ export default function EstablishmentPerformanceDashboard({ periods, year, aiFin
 
   const selectedPeriod = periodOptions.includes(period) ? period : monthlyPeriods[monthlyPeriods.length - 1] || fullYearKey(year);
   const categoryRows = (periods[selectedPeriod] || []).filter((row) => row.category === category);
+  const scoreRows = performanceScores.filter((row) => row.category === category).sort((a, b) => (a.rank ?? Number.MAX_SAFE_INTEGER) - (b.rank ?? Number.MAX_SAFE_INTEGER) || a.name.localeCompare(b.name));
   const result = useMemo(() => classifyPerformance(categoryRows), [categoryRows]);
   const visibleRows = result.rows
     .filter((row) => row.name.toLowerCase().includes(query.toLowerCase().trim()))
@@ -109,6 +112,14 @@ export default function EstablishmentPerformanceDashboard({ periods, year, aiFin
         </div>
         <div className="rounded-lg border border-gray-200 bg-white p-4 shadow-sm"><div className="flex items-center gap-2"><BarChart3 className="h-4 w-4 text-[#0E5A72]" /><h4 className="font-semibold text-gray-900">Performance Distribution</h4></div><div className="mt-4 h-56"><ResponsiveContainer width="100%" height="100%"><BarChart data={chartData} layout="vertical" margin={{ left: 8, right: 12 }}><CartesianGrid strokeDasharray="3 3" horizontal={false} /><XAxis type="number" allowDecimals={false} /><YAxis type="category" dataKey="name" width={96} tick={{ fontSize: 11 }} /><Tooltip /><Bar dataKey="count" name="Establishments">{chartData.map((entry) => <Cell key={entry.name} fill={entry.fill} />)}</Bar></BarChart></ResponsiveContainer></div><div className="mt-2 space-y-1">{chartData.map((entry) => <div key={entry.name} className="flex justify-between text-xs text-gray-600"><span>{entry.name}</span><strong>{entry.count} ({result.rows.length ? Math.round((entry.count / result.rows.length) * 100) : 0}%)</strong></div>)}</div></div>
       </div>
+
+      <section className="rounded-lg border border-gray-200 bg-white p-4 shadow-sm sm:p-5" aria-labelledby="overall-performance-ranking-title">
+        <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
+          <div><h4 id="overall-performance-ranking-title" className="font-semibold text-gray-900">Overall Performance Ranking</h4><p className="text-[11px] text-gray-500">Separate from visitor-volume classification. Preliminary four-indicator score: volume 30%, growth 20%, eligible rating 35%, reporting completeness 15%. Missing indicators withhold the score.</p></div>
+          <span className="text-xs font-semibold text-gray-600">{scoreRows.filter((row) => row.eligible).length} eligible · {scoreRows.length} assessed</span>
+        </div>
+        <div className="mt-4 overflow-x-auto"><table className="w-full min-w-[52rem] text-left text-xs"><thead className="border-b border-gray-200 text-gray-600"><tr>{['Rank', 'Establishment', 'Volume', 'Growth', 'Rating', 'Completeness', 'Score', 'Eligibility'].map((label) => <th key={label} className="px-2 py-2 font-semibold">{label}</th>)}</tr></thead><tbody className="divide-y divide-gray-100">{scoreRows.map((row) => <tr key={`score-${row.id}`}><td className="px-2 py-2 font-semibold">{row.rank ?? '—'}</td><td className="px-2 py-2 font-semibold text-gray-900">{row.name}</td><td className="px-2 py-2">{row.volumeScore === null ? '—' : row.volumeScore.toFixed(2)}</td><td className="px-2 py-2">{row.growthScore === null ? '—' : row.growthScore.toFixed(2)}</td><td className="px-2 py-2">{row.satisfactionScore === null ? '—' : row.satisfactionScore.toFixed(2)} <span className="text-gray-400">({row.ratingCount})</span></td><td className="px-2 py-2">{row.completenessScore === null ? '—' : `${row.completenessScore.toFixed(2)}%`}</td><td className="px-2 py-2 font-bold text-[#193364]">{row.score === null ? 'Withheld' : row.score.toFixed(2)}</td><td className="max-w-[14rem] px-2 py-2 text-gray-600">{row.eligibilityReason}</td></tr>)}</tbody></table></div>
+      </section>
 
       {aiFindings}
 
