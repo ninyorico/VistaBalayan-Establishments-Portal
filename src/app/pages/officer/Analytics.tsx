@@ -803,7 +803,8 @@ export default function Analytics() {
     is_resolved: false,
     input_snapshot: { metric: "customerFeedback", current_month: `${selectedYear}-FULL_YEAR`, current_value: feedbackRows.length, feedback_count: feedbackRows.reduce((sum, row) => sum + row.rating_count, 0), low_satisfaction_count: feedbackRows.filter((row) => (row.customer_satisfaction_score ?? 100) < 70).length, segment_counts: feedbackSegmentCounts },
   }] : [];
-  const allAiFindings = [...aiAnomalies, ...seasonalFindings, ...originFindings, ...performanceFindings, ...feedbackFindings];
+  const hasAiAnalysis = aiAnomalies.length > 0 || aiInsights.length > 0;
+  const allAiFindings = hasAiAnalysis ? [...aiAnomalies, ...seasonalFindings, ...originFindings, ...performanceFindings, ...feedbackFindings] : [];
   const recommendationAssignments = assignRecommendationsToAnomalies(
     allAiFindings.map((anomaly) => ({
       id: anomaly.id,
