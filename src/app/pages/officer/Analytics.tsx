@@ -210,12 +210,7 @@ export default function Analytics() {
   const [availableEstablishments, setAvailableEstablishments] = useState<Establishment[]>([]);
   const [availableYears, setAvailableYears] = useState<number[]>([currentDate.getFullYear() - 2, currentDate.getFullYear() - 1, currentDate.getFullYear()]);
   const [analysisPattern, setAnalysisPattern] = useState<AnalyticsPattern>("all");
-  const [coverageFilter, setCoverageFilter] = useState<CoverageFilter>("all");
-  const [severityFilter, setSeverityFilter] = useState<AnomalySeverity | "all">("all");
-  const [analysisCategory, setAnalysisCategory] = useState<AnalyticsCategory>("daytour");
-  const [highlightMode, setHighlightMode] = useState<"highlight" | "filtered">("highlight");
-  const [showAnomalies, setShowAnomalies] = useState(true);
-  const [showCoverage, setShowCoverage] = useState(true);
+
 
   useEffect(() => {
     fetchAnalytics();
@@ -692,20 +687,26 @@ export default function Analytics() {
   }
 
   const analyticsYears = availableYears;
-  const panelFilter = (label: string) => (
-    <div className="flex w-full min-w-0 flex-col items-stretch gap-1 sm:w-auto sm:flex-row sm:items-center sm:justify-end sm:gap-2">
-      <p className="shrink-0 text-left text-[10px] font-semibold uppercase tracking-[0.14em] text-slate-500 sm:text-right">Scope</p>
-      <select aria-label="Analytics establishment scope" multiple value={selectedEstablishmentIds.length > 0 ? selectedEstablishmentIds : ["__ALL_ESTABLISHMENTS__"]} onChange={(event) => {
-        const values = Array.from(event.target.selectedOptions, (option) => option.value);
-        setSelectedEstablishmentIds(values.includes("__ALL_ESTABLISHMENTS__") || values.length === 0 ? [] : values);
-      }} className="min-h-10 w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-700 sm:w-64">
-        <option value="__ALL_ESTABLISHMENTS__">All establishments</option>
-        {availableEstablishments.filter((establishment) => establishment.status === "active").sort((a, b) => a.name.localeCompare(b.name)).map((establishment) => <option key={establishment.id} value={establishment.id}>{establishment.name}</option>)}
-      </select>
-      <p className="shrink-0 text-left text-[10px] font-semibold uppercase tracking-[0.14em] text-slate-500 sm:text-right">{label}</p>
-      <ReportPeriodFilter value={analyticsPeriod} availableYears={analyticsYears.map(Number)} onChange={setAnalyticsPeriod} className="w-full sm:w-auto" />
-    </div>
-  );
+  const panelFilter = (label: string) => {
+    const activeEstablishments = availableEstablishments.filter((establishment) => establishment.status === "active").sort((a, b) => a.name.localeCompare(b.name));
+    const scopeLabel = selectedEstablishmentIds.length === 0 ? "All establishments" : `${selectedEstablishmentIds.length} establishment${selectedEstablishmentIds.length === 1 ? "" : "s"} selected`;
+    return (
+      <div className="flex w-full min-w-0 flex-col items-stretch gap-1 sm:w-auto sm:flex-row sm:items-center sm:justify-end sm:gap-2">
+        <p className="shrink-0 text-left text-[10px] font-semibold uppercase tracking-[0.14em] text-slate-500 sm:text-right">Scope</p>
+        <details className="group relative w-full sm:w-64">
+          <summary className="flex min-h-10 cursor-pointer list-none items-center justify-between rounded-lg border border-slate-200 bg-white px-3 py-2 text-left text-sm text-slate-700 shadow-sm [&::-webkit-details-marker]:hidden">
+            <span className="truncate">{scopeLabel}</span><span aria-hidden="true" className="ml-2 text-slate-400 transition group-open:rotate-180">▾</span>
+          </summary>
+          <div className="absolute right-0 z-30 mt-1 max-h-72 w-full overflow-y-auto rounded-lg border border-slate-200 bg-white p-2 shadow-xl">
+            <label className="flex cursor-pointer items-center gap-2 rounded-md px-2 py-2 text-sm font-semibold text-slate-800 hover:bg-slate-50"><input type="checkbox" checked={selectedEstablishmentIds.length === 0} onChange={() => setSelectedEstablishmentIds([])} /> All establishments</label>
+            {activeEstablishments.map((establishment) => <label key={establishment.id} className="flex cursor-pointer items-center gap-2 rounded-md px-2 py-2 text-sm text-slate-700 hover:bg-slate-50"><input type="checkbox" checked={selectedEstablishmentIds.includes(establishment.id)} onChange={(event) => setSelectedEstablishmentIds(event.target.checked ? [...selectedEstablishmentIds, establishment.id] : selectedEstablishmentIds.filter((id) => id !== establishment.id))} /> <span className="truncate">{establishment.name}</span></label>)}
+          </div>
+        </details>
+        <p className="shrink-0 text-left text-[10px] font-semibold uppercase tracking-[0.14em] text-slate-500 sm:text-right">{label}</p>
+        <ReportPeriodFilter value={analyticsPeriod} availableYears={analyticsYears.map(Number)} onChange={setAnalyticsPeriod} className="w-full sm:w-auto" />
+      </div>
+    );
+  };
 
   const anomalyMarkers = aiAnomalies.slice(0, 4).map((anomaly) => ({
     anomaly,
@@ -990,40 +991,19 @@ export default function Analytics() {
     );
   };
 
-  const filteredAnalysisFindings = filterAnalyticsFindings(data.analysisFindings, analysisPattern, coverageFilter, severityFilter).filter((finding) => finding.category === analysisCategory);
-  const analysisSummary = data.multipleDecline[analysisCategory];
   const patternOptions: Array<{ value: AnalyticsPattern; label: string }> = [
     { value: "all", label: "All patterns" },
     { value: "unusual-decline", label: "Unusual visitor decline" },
-    { value: "unusual-increase", label: "Unusual visitor increase" },
-    { value: "sustained-decline", label: "Sustained visitor decline" },
-    { value: "sustained-growth", label: "Sustained visitor growth" },
-    { value: "seasonal-peak", label: "Seasonal peak" },
-    { value: "seasonal-low", label: "Seasonal low" },
-    { value: "seasonal-shift", label: "Seasonal pattern shift" },
-    { value: "zero-activity", label: "Zero visitor activity" },
-    { value: "multiple-establishment-decline", label: "Multiple establishment decline" },
+    { value: "seasonal-peak", label: "Seasonal pattern" },
   ];
-  const verifiedChartMonths = new Set(anomalyMarkers
-    .filter((item) => analysisCategory === "daytour" ? item.metric === "dayTourVisitors" : item.metric === "overnightGuestCheckIns")
-    .map((item) => String(item.month)));
-  const declineChartPatterns = new Set<AnalyticsPattern>(["unusual-decline", "sustained-decline", "multiple-establishment-decline"]);
-  const chartFindingMonths = declineChartPatterns.has(analysisPattern)
-    ? verifiedChartMonths
-    : new Set(filteredAnalysisFindings.map((finding) => finding.current.startDate.slice(0, 7)));
-  const chartPeakIndex = data.seasonalData.reduce((best, item, index, values) => {
-    const score = analysisCategory === "overnight" ? item.guestCheckIns : item.visitors;
-    const bestScore = analysisCategory === "overnight" ? values[best]?.guestCheckIns || 0 : values[best]?.visitors || 0;
-    return score > bestScore ? index : best;
-  }, 0);
-  const positiveSeasonalIndexes = data.seasonalData.map((item, index) => ({ index, value: analysisCategory === "overnight" ? item.guestCheckIns : item.visitors })).filter((item) => item.value > 0);
-  const chartLowIndex = positiveSeasonalIndexes.sort((a, b) => a.value - b.value)[0]?.index;
+  const verifiedChartMonths = new Set(anomalyMarkers.map((item) => String(item.month)));
   const chartData = analysisPattern === "all"
     ? data.seasonalData
+    : analysisPattern === "seasonal-peak"
+      ? data.seasonalData
     : data.seasonalData.map((item, index) => {
       const month = `${selectedYear}-${String(index + 1).padStart(2, "0")}`;
-      const isSeasonalMatch = analysisPattern === "seasonal-peak" ? index === chartPeakIndex : analysisPattern === "seasonal-low" ? index === chartLowIndex : chartFindingMonths.has(month);
-      return isSeasonalMatch ? item : { ...item, visitors: null, guestCheckIns: null };
+      return verifiedChartMonths.has(month) ? item : { ...item, visitors: null, guestCheckIns: null };
     });
 
   return (
@@ -1099,16 +1079,10 @@ export default function Analytics() {
         <div className="mt-3 rounded-2xl bg-slate-50 p-3" aria-label="Tourism pattern chart filter">
           <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
             <p className="text-xs font-semibold uppercase tracking-[0.12em] text-slate-500">Show pattern on this chart</p>
-            <button type="button" onClick={() => { setAnalysisPattern("all"); setCoverageFilter("all"); setSeverityFilter("all"); setAnalysisCategory("daytour"); }} className="text-xs font-semibold text-[#193364] underline underline-offset-2">Reset chart filters</button>
+            <button type="button" onClick={() => setAnalysisPattern("all")} className="text-xs font-semibold text-[#193364] underline underline-offset-2">Reset chart filter</button>
           </div>
           <div className="flex flex-wrap gap-2" role="group" aria-label="Tourism pattern filter">
             {patternOptions.map((option) => <button key={option.value} type="button" aria-pressed={analysisPattern === option.value} onClick={() => setAnalysisPattern(option.value)} className={`rounded-full px-3 py-2 text-xs font-semibold transition ${analysisPattern === option.value ? "bg-[#6C63FF] text-white shadow-inner" : "bg-white text-slate-700 shadow-sm"}`}>{option.label}</button>)}
-          </div>
-          <div className="mt-3 flex flex-wrap gap-3 text-xs font-semibold text-slate-600">
-            <label>Category<select value={analysisCategory} onChange={(event) => setAnalysisCategory(event.target.value as AnalyticsCategory)} className="ml-2 rounded-lg border border-slate-200 bg-white px-2 py-1"><option value="daytour">Day-tour visitors</option><option value="overnight">Overnight check-ins</option></select></label>
-            <label>Completeness<select value={coverageFilter} onChange={(event) => setCoverageFilter(event.target.value as CoverageFilter)} className="ml-2 rounded-lg border border-slate-200 bg-white px-2 py-1"><option value="all">All statuses</option><option value="complete">Complete — 100%</option><option value="incomplete">Incomplete — above 0%</option><option value="none">No reports — 0%</option><option value="below-25">Below 25%</option><option value="25-50">25% to below 50%</option><option value="50-80">50% to below 80%</option><option value="80-100">80% to below 100%</option></select></label>
-            <label>Severity<select value={severityFilter} onChange={(event) => setSeverityFilter(event.target.value as AnomalySeverity | "all")} className="ml-2 rounded-lg border border-slate-200 bg-white px-2 py-1"><option value="all">All severities</option><option value="low">Low</option><option value="medium">Medium</option><option value="high">High</option><option value="critical">Critical</option></select></label>
-            <label className="flex items-center gap-1"><input type="checkbox" checked={showAnomalies} onChange={(event) => setShowAnomalies(event.target.checked)} /> Show markers</label>
           </div>
         </div>
         {chartData.length > 0 ? (
@@ -1136,7 +1110,7 @@ export default function Analytics() {
                 activeDot={{ r: 5 }}
                 name="Visitors"
               />
-              {showAnomalies && anomalyMarkers.filter((item) => item.metric === "dayTourVisitors").map((item) => (
+              {(analysisPattern === "all" || analysisPattern === "unusual-decline") && anomalyMarkers.filter((item) => item.metric === "dayTourVisitors").map((item) => (
                 <ReferenceDot key={`day-tour-${item.anomaly.id}`} x={monthLabel(`${String(item.month)}-01`)} y={item.value} r={7} fill="#B42318" stroke="#fff" strokeWidth={2} isFront label={{ value: "Drop", position: "top", offset: 14, fill: "#B42318", fontSize: 11, fontWeight: 700 }} />
               ))}
               <Area
@@ -1149,10 +1123,10 @@ export default function Analytics() {
                 activeDot={{ r: 5 }}
                 name="Guest check-ins"
               />
-              {showAnomalies && anomalyMarkers.filter((item) => item.metric === "overnightGuestCheckIns").map((item) => (
+              {(analysisPattern === "all" || analysisPattern === "unusual-decline") && anomalyMarkers.filter((item) => item.metric === "overnightGuestCheckIns").map((item) => (
                 <ReferenceDot key={`overnight-${item.anomaly.id}`} x={monthLabel(`${String(item.month)}-01`)} y={item.value} r={7} fill="#B42318" stroke="#fff" strokeWidth={2} isFront label={{ value: "Drop", position: "top", offset: 14, fill: "#B42318", fontSize: 11, fontWeight: 700 }} />
               ))}
-              {seasonalPeak && <>
+              {seasonalPeak && (analysisPattern === "all" || analysisPattern === "seasonal-peak") && <>
                 <ReferenceDot x={seasonalPeak.month} y={seasonalPeak.visitors} r={7} fill="#193364" stroke="#fff" strokeWidth={2} isFront label={{ value: "Peak", position: "bottom", offset: 12, fill: "#193364", fontSize: 11, fontWeight: 700 }} />
                 <ReferenceDot x={seasonalPeak.month} y={seasonalPeak.guestCheckIns} r={7} fill="#D69A3A" stroke="#fff" strokeWidth={2} isFront />
               </>}
