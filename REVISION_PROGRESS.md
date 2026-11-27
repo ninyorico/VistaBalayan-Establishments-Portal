@@ -56,7 +56,7 @@ Status values: `TODO`, `IN PROGRESS`, `BLOCKED`, `DONE`, `PARTIAL`
 - [DONE] Evidence-conditioned strategy selection: eligible feedback concerns, comparable-establishment declines, recurring seasonal declines, and verified temporary closures select different advisory strategy families; unsupported causes remain unasserted.
 - [DONE] Deterministic server fallback and Gemini guard: missing/unavailable Gemini uses the verified deterministic strategy plan; cache rule version advanced to `decision-support-v12`; anomaly cards now carry up to two distinct evidence-bound actions and duplicate recommendation cards are suppressed.
 - [DONE] Establishment-account action rendering: structured scoped action plans now render with prerequisites, responsible role, timeframe, decision implication, and measurable indicators.
-- [PARTIAL] Authenticated establishment-account action rendering: local authenticated `/staff/analytics` verification displayed distinct 100% and 90% coverage actions, structured prerequisites, responsible role, timeframe, success indicators, limitations, and evidence-bound decision implications. Production post-deploy verification remains required for this v12 release.
+- [DONE] Authenticated establishment-account action rendering: local and production authenticated `/staff/analytics` verification displayed distinct 100% and 90% coverage actions, structured prerequisites, responsible role, timeframe, success indicators, limitations, and evidence-bound decision implications. Production deployment `dpl_3ozWWvLtGpq8UL6Yiez25HxiK7op` was verified through the canonical alias.
 
 ## GOAL 8 — Security and reliability
 
