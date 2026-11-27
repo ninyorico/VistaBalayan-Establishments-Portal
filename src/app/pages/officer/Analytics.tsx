@@ -173,6 +173,29 @@ const aiFindingMatchesPeriod = (anomaly: AnalyticsAiAnomaly, period: ReportPerio
   return monthStart <= range.endDate && monthEnd >= range.startDate;
 };
 
+const aiRecommendationMatchesPeriod = (insight: AnalyticsAiInsight, period: ReportPeriodSelection) => {
+  const snapshot = insight.input_snapshot || {};
+  const month = snapshot.current_month;
+  if (typeof month === "string" && /^\d{4}-\d{2}$/.test(month)) {
+    const monthStart = `${month}-01`;
+    const [year, monthNumber] = month.split("-").map(Number);
+    const monthEnd = new Date(Date.UTC(year, monthNumber, 0)).toISOString().slice(0, 10);
+    const range = getReportPeriodRange(period);
+    if (!(monthStart <= range.endDate && monthEnd >= range.startDate)) return false;
+  }
+  const analysisPeriod = snapshot.analysis_period;
+  if (analysisPeriod && typeof analysisPeriod === "object") {
+    const saved = analysisPeriod as Record<string, unknown>;
+    const savedStart = String(saved.selectedStartDate || saved.queryStart || "");
+    const savedEnd = String(saved.selectedEndDate || saved.queryEnd || "");
+    if (savedStart && savedEnd) {
+      const range = getReportPeriodRange(period);
+      if (savedEnd < range.startDate || savedStart > range.endDate) return false;
+    }
+  }
+  return true;
+};
+
 export default function Analytics() {
   const { horizontalRef: originsTableRef } = useDominantAxisTableScroll();
   const [data, setData] = useState<AnalyticsData>({
@@ -948,6 +971,7 @@ export default function Analytics() {
         return metrics.includes(metric)
           && recommendationSupportsMetric(candidate, metric as any)
           && recommendationSupportsPeriod(candidate)
+          && aiRecommendationMatchesPeriod(candidate, analyticsPeriod)
           && isEvidenceBoundRecommendation(candidate.recommended_action, metric as any);
       }),
       recommendationAssignments.usedCandidateIds,
@@ -976,7 +1000,7 @@ export default function Analytics() {
         {totalFindings > 0 && (
           <>
             <p className="mb-3 text-[11px] font-semibold uppercase tracking-[0.12em] text-amber-800">{totalFindings} finding{totalFindings === 1 ? "" : "s"}</p>
-            <div className="grid grid-cols-1 gap-4 xl:grid-cols-2">
+            <div className={`grid grid-cols-1 gap-4 ${totalFindings > 1 ? "xl:grid-cols-2" : ""}`}>
               {related.map((anomaly) => {
                 const matchingInsight = recommendationAssignments.assignments.get(anomaly.id);
                 const fallback = evidenceAwareFallbackDecisionSupport(anomaly);
@@ -1051,22 +1075,6 @@ export default function Analytics() {
           <p className="mt-1 truncate text-[10px] leading-tight text-orange-600 sm:text-sm lg:mt-2 lg:text-base">{data.growthRate === null ? "Not enough monthly data" : "Month over month"}</p>
         </div>
       </div>
-
-      <section id="analytics-rankings" className="rounded-lg border border-gray-200 bg-white p-4 shadow-sm sm:p-6" aria-labelledby="analytics-comparison-title">
-        <div className="flex flex-col gap-1 border-b border-gray-200 pb-4 sm:flex-row sm:items-start sm:justify-between">
-          <div>
-            <h3 id="analytics-comparison-title" className="text-base font-semibold text-gray-900 sm:text-lg">Year-to-year establishment comparison</h3>
-            <p className="mt-1 text-sm text-gray-600">Top establishments by day-tour visitors for the active period compared with {data.comparisonLabel}. This compares reported volume, not overall establishment quality.</p>
-          </div>
-          <div className="sm:flex sm:flex-col sm:items-end">
-            <span className="text-xs font-medium text-slate-500">Current: {analyticsPeriod.type === "custom" ? `${analyticsPeriod.startDate || "—"} to ${analyticsPeriod.endDate || "—"}` : selectedYear}</span>
-            {panelFilter("Filter this comparison")}
-          </div>
-        </div>
-        <div className="mt-4 overflow-x-auto">
-          <table className="w-full min-w-[40rem] text-sm"><thead className="border-b border-gray-200 text-left text-xs uppercase tracking-wide text-gray-500"><tr><th className="px-3 py-2">Rank</th><th className="px-3 py-2">Establishment</th><th className="px-3 py-2">Current period</th><th className="px-3 py-2">{data.comparisonLabel}</th><th className="px-3 py-2">Change</th></tr></thead><tbody className="divide-y divide-gray-100">{data.comparisonRankings.map((row, index) => <tr key={row.name}><td className="px-3 py-2 font-semibold text-gray-500">{index + 1}</td><td className="px-3 py-2 font-medium text-gray-900">{row.name}</td><td className="px-3 py-2">{row.current.toLocaleString()}</td><td className="px-3 py-2">{row.comparison.toLocaleString()}</td><td className={`px-3 py-2 font-semibold ${row.change === null ? "text-gray-500" : row.change >= 0 ? "text-green-600" : "text-red-600"}`}>{row.change === null ? "N/A" : `${row.change >= 0 ? "+" : ""}${row.change.toFixed(1)}%`}</td></tr>)}</tbody></table>
-        </div>
-      </section>
 
       <div id="analytics-trends" className="rounded-lg border border-gray-200 bg-white p-4 shadow-sm sm:p-6">
         <div className="flex flex-col gap-3 border-b border-gray-200 pb-4 sm:flex-row sm:items-start sm:justify-between">
@@ -1193,25 +1201,6 @@ export default function Analytics() {
       <div id="analytics-performance">
         <EstablishmentPerformanceDashboard periods={data.performancePeriods} year={selectedYear} aiFindings={renderRelatedAiFindings(["establishmentPerformance"])} />
       </div>
-
-      <section className="rounded-[2rem] border border-white/70 bg-[#E0E5EC] p-5 shadow-[9px_9px_16px_rgba(163,177,198,.6),-9px_-9px_16px_rgba(255,255,255,.55)]" aria-labelledby="customer-feedback-heading">
-        <div className="flex flex-wrap items-start justify-between gap-3">
-          <div>
-            <p className="text-xs font-bold uppercase tracking-[0.14em] text-[#6474A5]">Customer feedback</p>
-            <h2 id="customer-feedback-heading" className="mt-1 text-xl font-bold text-[#193364]">Verified satisfaction indicators</h2>
-            <p className="mt-1 max-w-3xl text-sm leading-6 text-slate-600">Published, verified, non-suspicious reviews only. “Insufficient feedback” is not treated as a zero score, and the proposed composite model is not an official ranking until approved.</p>
-          </div>
-          <select value={feedbackSort} onChange={(event) => setFeedbackSort(event.target.value as typeof feedbackSort)} aria-label="Sort customer feedback rankings" className="rounded-2xl border border-white/70 bg-[#E0E5EC] px-3 py-2 text-sm font-semibold text-[#193364] shadow-[inset_4px_4px_8px_rgba(163,177,198,.42),inset_-4px_-4px_8px_rgba(255,255,255,.72)]">
-            <option value="satisfaction">Highest satisfaction score</option>
-            <option value="rating">Highest average rating</option>
-            <option value="positive">Highest positive percentage</option>
-            <option value="count">Most reviewed</option>
-          </select>
-        </div>
-        {feedbackRows.length === 0 ? <p className="mt-5 rounded-2xl bg-[#F5F8FF] p-4 text-sm text-slate-600">No customer-feedback summary is available yet.</p> : <div className="mt-5 overflow-x-auto rounded-2xl bg-[#F5F8FF] p-2"><table className="min-w-full text-left text-sm"><thead><tr className="border-b border-slate-200 text-xs uppercase tracking-wide text-slate-500"><th className="px-3 py-3">Establishment</th><th className="px-3 py-3">Average</th><th className="px-3 py-3">Positive</th><th className="px-3 py-3">Satisfaction</th><th className="px-3 py-3">Reviews</th><th className="px-3 py-3">Eligibility</th></tr></thead><tbody>{feedbackRows.map((row) => <tr key={row.establishment_id} className="border-b border-slate-100 last:border-0"><td className="px-3 py-3 font-semibold text-[#193364]">{row.establishmentName}</td><td className="px-3 py-3">{row.average_rating == null ? "No ratings yet" : `${row.average_rating.toFixed(2)} / 5`}</td><td className="px-3 py-3">{row.positive_rating_percentage == null ? "—" : `${row.positive_rating_percentage.toFixed(1)}%`}</td><td className="px-3 py-3">{row.customer_satisfaction_score == null ? "—" : `${row.customer_satisfaction_score.toFixed(1)} / 100`}</td><td className="px-3 py-3">{row.rating_count}</td><td className="px-3 py-3"><span className={`rounded-full px-2.5 py-1 text-xs font-semibold ${row.feedback_eligibility === "eligible" ? "bg-emerald-100 text-emerald-800" : "bg-amber-100 text-amber-800"}`}>{row.feedback_eligibility === "eligible" ? "Eligible" : "Insufficient Customer Feedback"}</span></td></tr>)}</tbody></table></div>}
-        {data.feedbackThemes.length > 0 && <div className="mt-5 rounded-2xl bg-[#F5F8FF] p-4"><h3 className="text-sm font-bold uppercase tracking-wide text-[#193364]">Recurring published-review themes</h3><div className="mt-3 grid gap-2 sm:grid-cols-2">{data.feedbackThemes.slice(0, 6).map((theme) => <div key={theme.key} className="flex items-center justify-between rounded-xl bg-white/70 px-3 py-2 text-sm"><span className="font-semibold text-slate-700">{theme.label}</span><span className="text-slate-500">{theme.count} · {theme.share.toFixed(1)}%</span></div>)}</div><p className="mt-3 text-xs text-slate-500">Themes are deterministic keyword aggregates from eligible published comments; they do not establish cause or reviewer identity.</p></div>}
-        {renderRelatedAiFindings(["customerFeedback"])}
-      </section>
 
     </div>
   );

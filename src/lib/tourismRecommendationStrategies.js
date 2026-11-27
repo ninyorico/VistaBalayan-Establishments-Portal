@@ -39,6 +39,71 @@ export function selectTourismRecommendationStrategies(evidence = {}, options = {
   const recurringSeasonalDecline = evidence.recurring_seasonal_decline === true;
   const actions = [];
 
+  if (metric === "visitorOrigins") {
+    const origin = String(evidence.origin || "the leading visitor origin");
+    const growth = numberOrNull(evidence.growth_percent);
+    const visitors = numberOrNull(evidence.current_value);
+    const isGrowing = growth != null && growth > 0;
+    actions.push(action({
+      action_title: isGrowing ? `Monitor ${origin} origin growth` : `Review ${origin} origin change`,
+      action_description: isGrowing
+        ? `Track the reported ${origin} visitor segment at ${formatNumber(visitors)} visitors and ${growth.toFixed(1)}% growth for ${period}; compare its next-period volume before expanding outreach.`
+        : `Review the reported ${origin} visitor segment at ${formatNumber(visitors)} visitors for ${period}; compare its next-period volume before changing outreach.` ,
+      action_category: "Visitor Origin Monitoring",
+      primary_objective: "Evidence Review",
+      responsible_entity: establishmentScope ? "Establishment operator and Tourism Office" : "Municipal Tourism Officer",
+      suggested_timeframe: "During the next reporting period",
+      success_indicators: [`The ${origin} segment is compared with the next equivalent reporting period using the same origin definition.`],
+    }));
+    return { actions, decisionImplication: `The reported visitor-origin distribution identifies ${origin} as a segment to monitor; it does not establish visitor motivation or cause.` };
+  }
+
+  if (metric === "seasonality") {
+    const peak = String(evidence.peak_month || period);
+    actions.push(action({
+      action_title: `Prepare ${peak} seasonal monitoring`,
+      action_description: `Prepare a monitoring checklist for the verified ${peak} activity peak and compare the next equivalent period using reported visitor and check-in values.`,
+      action_category: "Seasonal Monitoring",
+      primary_objective: "Seasonal Planning",
+      responsible_entity: establishmentScope ? "Establishment operator and Tourism Office" : "Municipal Tourism Officer",
+      suggested_timeframe: "Before the next equivalent period",
+      success_indicators: [`The ${peak} seasonal baseline and next equivalent-period results are recorded.`],
+    }));
+    return { actions, decisionImplication: `The selected data shows a ${peak} activity pattern; recurrence and cause require equivalent historical periods.` };
+  }
+
+  if (metric === "establishmentPerformance") {
+    const recordCount = numberOrNull(evidence.current_value) || 0;
+    actions.push(action({
+      action_title: `Review ${recordCount.toLocaleString()} establishment service records`,
+      action_description: `Review the selected-year establishment-volume distribution across ${recordCount.toLocaleString()} reported service records and assign follow-up only to groups supported by the displayed volume evidence.`,
+      action_category: "Establishment Performance Review",
+      primary_objective: "Evidence Review",
+      responsible_entity: "Municipal Tourism Officer",
+      suggested_timeframe: "During the next planning cycle",
+      success_indicators: ["Volume groups and evidence-supported follow-ups are documented for the selected year."],
+    }));
+    return { actions, decisionImplication: "Reported volume distribution supports prioritization review only; it does not establish quality, profitability, or cause." };
+  }
+
+  if (metric === "customerFeedback") {
+    const feedbackCount = numberOrNull(evidence.feedback_count) || 0;
+    const lowSatisfactionCount = numberOrNull(evidence.low_satisfaction_count) || 0;
+    const actionTitle = lowSatisfactionCount > 0 ? `Review ${lowSatisfactionCount} low-satisfaction indicators` : `Monitor ${feedbackCount} eligible feedback records`;
+    actions.push(action({
+      action_title: actionTitle,
+      action_description: lowSatisfactionCount > 0
+        ? `Review the published feedback themes associated with ${lowSatisfactionCount} low-satisfaction indicator${lowSatisfactionCount === 1 ? "" : "s"} among ${feedbackCount} eligible records, then document an establishment follow-up.`
+        : `Monitor the ${feedbackCount} eligible feedback records and compare the next period before making a service recommendation.`,
+      action_category: "Customer Experience",
+      primary_objective: "Feedback Review",
+      responsible_entity: establishmentScope ? "Establishment operator and Tourism Office" : "Municipal Tourism Officer",
+      suggested_timeframe: "Within 30 days",
+      success_indicators: ["The feedback count, themes, and documented follow-up are reviewed without treating feedback as proof of cause."],
+    }));
+    return { actions, decisionImplication: "Published feedback is advisory evidence; it does not prove visitor volume, reviewer identity, or cause." };
+  }
+
   if (lowCoverage) {
     if (missing != null && missing > 0) {
       actions.push(action({

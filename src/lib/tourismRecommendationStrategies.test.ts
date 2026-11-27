@@ -63,4 +63,23 @@ describe('selectTourismRecommendationStrategies', () => {
     }, { scope: 'establishment' });
     expect(result.actions.every((action) => !/missing report/i.test(`${action.action_title} ${action.action_description}`))).toBe(true);
   });
+
+  it('uses a visitor-origin-specific action instead of a demand-decline template', () => {
+    const result = selectTourismRecommendationStrategies({
+      metric: 'visitorOrigins', origin: 'Batangas', current_value: 10800, growth_percent: 10.7,
+      current_month: '2026-06',
+    }, { scope: 'municipality' });
+    expect(result.actions).toHaveLength(1);
+    expect(result.actions[0].action_title).toContain('Batangas');
+    expect(result.actions[0].action_category).toBe('Visitor Origin Monitoring');
+  });
+
+  it('uses a feedback-specific action when feedback evidence is the finding', () => {
+    const result = selectTourismRecommendationStrategies({
+      metric: 'customerFeedback', feedback_count: 12, low_satisfaction_count: 3,
+    }, { scope: 'municipality' });
+    expect(result.actions).toHaveLength(1);
+    expect(result.actions[0].action_title).toContain('3 low-satisfaction indicators');
+    expect(result.actions[0].action_category).toBe('Customer Experience');
+  });
 });
