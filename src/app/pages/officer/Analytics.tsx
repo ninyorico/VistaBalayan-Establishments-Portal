@@ -28,6 +28,7 @@ import ReportPeriodFilter from "../../components/ReportPeriodFilter";
 import { getReportPeriodRange, type ReportPeriodSelection } from "../../../lib/reportPeriod";
 import { geminiService } from "../../../services/geminiService";
 import { assignRecommendationsToAnomalies, deduplicateStandaloneRecommendations, isEvidenceBoundRecommendation, recommendationSupportsMetric, recommendationSupportsPeriod } from "../../../lib/aiRecommendationIntegrity";
+import { selectTourismRecommendationStrategies } from "../../../lib/tourismRecommendationStrategies.js";
 import { classifyFeedbackThemes, type FeedbackTheme } from "../../../lib/customerFeedbackThemes";
 import { classifyFeedbackDecisionSegments } from "../../../lib/customerFeedbackDecisionSupport";
 
@@ -707,6 +708,26 @@ export default function Analytics() {
     aiInsights,
   );
 
+  const evidenceAwareFallbackDecisionSupport = (anomaly: AnalyticsAiAnomaly): AiDecisionSupport | null => {
+    const evidence = anomaly.input_snapshot || {};
+    const selected = selectTourismRecommendationStrategies(evidence, {
+      scope: selectedEstablishmentId ? "establishment" : "municipality",
+      establishmentId: selectedEstablishmentId || undefined,
+      establishmentName: availableEstablishments.find((item) => item.id === selectedEstablishmentId)?.name || undefined,
+      metric: String(evidence.metric || ""),
+      periodLabel: String(evidence.current_month || "the selected reporting period"),
+    });
+    if (!selected.actions.length) return null;
+    return {
+      insight_category: selected.actions[0].action_category,
+      data_confidence: Number.isFinite(Number(evidence.current_coverage_percent)) ? coverageConfidence(Number(evidence.current_coverage_percent)) || "Not calculated" : undefined,
+      data_limitations: ["This deterministic strategy is based only on verified evidence and remains advisory; it does not establish a cause."],
+      decision_implication: selected.decisionImplication,
+      recommended_actions: selected.actions,
+      validation_required: selected.actions.some((action) => action.validation_required),
+    };
+  };
+
   const fallbackDecisionSupport = (anomaly: AnalyticsAiAnomaly): AiDecisionSupport | null => {
     const evidence = anomaly.input_snapshot || {};
     const metric = String(evidence.metric || "");
@@ -861,7 +882,7 @@ export default function Analytics() {
             <div className="grid grid-cols-1 gap-4 xl:grid-cols-2">
               {related.map((anomaly) => {
                 const matchingInsight = recommendationAssignments.assignments.get(anomaly.id);
-                const fallback = !matchingInsight ? fallbackDecisionSupport(anomaly) : null;
+                const fallback = !matchingInsight ? evidenceAwareFallbackDecisionSupport(anomaly) : null;
                 return <AiAnomalyCard key={anomaly.id} {...anomaly} aiRecommendation={matchingInsight?.recommended_action || fallback?.recommended_actions?.[0]?.action_description || null} decisionSupport={(matchingInsight?.input_snapshot?.decision_support as AiDecisionSupport | undefined) || fallback} showRecommendationUnavailable={!matchingInsight && !fallback} evidenceHref={evidenceHref} evidenceLabel="chart evidence" />;
               })}
               {standalone.map((insight) => <AiRecommendationCard key={insight.id} {...insight} evidenceHref={evidenceHref} evidenceLabel="chart evidence" />)}

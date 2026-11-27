@@ -68,6 +68,7 @@ interface AiRecommendationCardProps {
   impact: string;
   category: string;
   recommended_action?: string | null;
+  input_snapshot?: Record<string, unknown> | null;
   evidenceHref?: string;
   evidenceLabel?: string;
 }
@@ -347,6 +348,8 @@ export function AiAnomalyCard(anomaly: AiAnomalyCardProps) {
 export function AiRecommendationCard(insight: AiRecommendationCardProps) {
   const { summary, action } = splitAiRecommendation(insight.description, insight.recommended_action || undefined);
   const tone = severityTone(insight.impact);
+  const decisionSupport = insight.input_snapshot?.decision_support as AiDecisionSupport | undefined;
+  const actionPlan = decisionSupport?.recommended_actions?.filter((item) => item.action_description) || [];
 
   return (
     <article className="group relative isolate h-full overflow-hidden rounded-2xl border border-slate-200 bg-white p-0 shadow-[0_14px_40px_rgba(15,23,42,0.05)] transition-all duration-500 hover:-translate-y-0.5 hover:shadow-[0_18px_55px_rgba(15,23,42,0.08)] sm:p-0" data-ai-card-layout="shadcn-recommendation-editorial">
@@ -374,7 +377,26 @@ export function AiRecommendationCard(insight: AiRecommendationCardProps) {
         <p className="text-justify text-sm leading-6 text-slate-600 hyphens-auto indent-5" data-ai-text-spacing="editorial-justified-indent">
           <AiFormattedText text={summary} />
         </p>
-        {action && (
+        {actionPlan.length > 0 && (
+          <div className="mt-3 space-y-3" data-ai-action-plan="establishment-decision-support">
+            <div className="flex items-center justify-between gap-2">
+              <span className="font-semibold text-slate-800">Recommended actions</span>
+              {decisionSupport?.data_confidence && <Badge variant="outline" className="rounded-full border-slate-300 text-xs text-slate-600">{decisionSupport.data_confidence} confidence</Badge>}
+            </div>
+            <ol className="space-y-3">
+              {actionPlan.map((item, index) => <li key={`${item.action_title || "action"}-${index}`} className="rounded-2xl border border-slate-200 bg-slate-50/80 p-3">
+                <div className="flex items-start justify-between gap-3"><p className="font-semibold text-slate-800">{index + 1}. {cleanAiText(item.action_title || "Recommended action")}</p>{item.action_priority && <span className="shrink-0 text-[10px] font-bold uppercase tracking-[0.12em] text-amber-700">{item.action_priority}</span>}</div>
+                <p className="mt-1 text-sm leading-6 text-slate-700"><AiFormattedText text={item.action_description || ""} tone="action" /></p>
+                {(item.responsible_entity || item.suggested_timeframe) && <p className="mt-2 text-xs font-medium text-slate-500">Responsible role/office: {item.responsible_entity || "To be assigned"} · Timeframe: {item.suggested_timeframe || "To be scheduled"}</p>}
+                {item.prerequisites?.length ? <p className="mt-2 text-xs leading-5 text-slate-600"><span className="font-semibold text-slate-700">Prerequisites:</span> {item.prerequisites.join("; ")}</p> : null}
+                {item.success_indicators?.length ? <p className="mt-2 text-xs leading-5 text-slate-600"><span className="font-semibold text-slate-700">Success indicators:</span> {item.success_indicators.join("; ")}</p> : null}
+              </li>)}
+            </ol>
+            {decisionSupport?.decision_implication && <p className="rounded-xl border border-blue-100 bg-blue-50/70 p-3 text-sm leading-6 text-blue-900"><span className="font-semibold">Decision implication:</span> {decisionSupport.decision_implication}</p>}
+            {decisionSupport?.data_limitations?.length ? <p className="text-xs leading-5 text-slate-500"><span className="font-semibold text-slate-700">Limitations:</span> {decisionSupport.data_limitations.join("; ")}</p> : null}
+          </div>
+        )}
+        {!actionPlan.length && action && (
           <div className="mt-3 rounded-2xl border border-slate-200 bg-slate-50/80 p-3 text-justify text-sm leading-6 text-slate-800 hyphens-auto" data-ai-action-note="editorial-shadcn">
             <span className="font-semibold text-slate-800">Action:</span>{" "}
             <AiFormattedText text={action} tone="action" />

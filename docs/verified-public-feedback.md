@@ -106,4 +106,18 @@ npm test
 npm run build
 ```
 
-The latest verified results were 12 portal test files / 51 tests passed, public tests 7/7 passed, both production builds passed, and both diff checks passed. Build output contains existing Browserslist, empty-font-file, and chunk-size warnings but no build errors.
+The latest verified results were 16 portal test files / 68 tests passed, public tests 7/7 passed, both production builds passed, and both diff checks passed. Build output contains existing Browserslist, empty-font-file, and chunk-size warnings but no build errors.
+
+## High-confidence decline strategy selection
+
+`src/lib/tourismRecommendationStrategies.js` is the deterministic strategy selector shared by the server and Analytics fallback path. It evaluates the verified metric, absolute decline, percentage decline, current reporting coverage, missing reports, establishment scope, comparable-establishment evidence, recurring seasonal evidence, temporary-closure evidence, and eligible customer-feedback evidence.
+
+- Very low or low coverage prioritizes data validation and a scoped diagnostic comparison; tourism interventions remain conditional.
+- High coverage with a substantial decline produces distinct diagnostic assessment, conditional strategic intervention, and outcome-evaluation actions.
+- Zero missing reports cannot produce a missing-report recommendation.
+- Verified feedback concerns select service-improvement assessment; multiple comparable declines can select a broader municipal response; isolated establishment declines select establishment-specific assistance.
+- The selector never treats reporting coverage as proof of accuracy or a cause, and it does not infer closures, marketing failure, weather, facilities, or seasonality without supporting evidence.
+
+The backend prompt now receives this deterministic strategy guidance. If Gemini is unavailable, unconfigured, or returns no usable action plan, the endpoint persists a deterministic `deterministic-strategy-v1` fallback. If Gemini returns only reporting-compliance actions for a high-coverage substantial decline, the deterministic plan replaces that weak output before persistence. The rule version is `decision-support-v9`, so prior cached recommendations are not reused.
+
+Establishment Analytics now renders structured action plans from `input_snapshot.decision_support`, including diagnostic, strategic, prerequisite, responsible-role, timeframe, and outcome-indicator fields. Establishment users remain restricted to their own establishment scope; municipality-wide officer findings and other establishments' data are not exposed.

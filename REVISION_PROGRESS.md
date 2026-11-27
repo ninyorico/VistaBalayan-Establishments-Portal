@@ -49,6 +49,15 @@ Status values: `TODO`, `IN PROGRESS`, `BLOCKED`, `DONE`, `PARTIAL`
 - [DONE] 6.11 Actionable feedback-based recommendations for high-volume/low-satisfaction, low-volume/high-satisfaction, declining satisfaction, positive feedback, and insufficient feedback: deterministic segment classification, period-aware satisfaction comparison, advisory action templates, and server-generated scoped AI delivery now exist; human validation remains required.
 - [DONE] 6.11 Evidence-bound actions with responsible role, timeframe, measurable outcome, and advisory labeling.
 
+## GOAL 7 — Evidence-aware AI recommendation enhancement
+
+- [DONE] Coverage-aware deterministic strategy selection: low coverage prioritizes validation; high-coverage substantial declines produce diagnostic assessment, conditional strategic intervention, and outcome evaluation.
+- [DONE] High-coverage establishment decline behavior: zero missing reports no longer produces missing-report follow-up as the primary action; establishment-specific historical, peer, recovery, and evaluation actions are available where evidence supports them.
+- [DONE] Evidence-conditioned strategy selection: eligible feedback concerns, comparable-establishment declines, recurring seasonal declines, and verified temporary closures select different advisory strategy families; unsupported causes remain unasserted.
+- [DONE] Deterministic server fallback and Gemini guard: missing/unavailable Gemini or reporting-only high-coverage output uses the verified deterministic strategy plan; cache rule version advanced to `decision-support-v9`.
+- [DONE] Establishment-account action rendering: structured scoped action plans now render with prerequisites, responsible role, timeframe, decision implication, and measurable indicators.
+- [PARTIAL] Fresh live verification of the updated high-coverage establishment card and establishment-account action rendering remains pending after deployment.
+
 ## GOAL 8 — Security and reliability
 
 - [PARTIAL] Supabase authentication, OAuth, verification, recovery, and secure sessions: repository and migration paths exist; Google provider and live negative tests remain.

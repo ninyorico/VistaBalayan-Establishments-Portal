@@ -2,6 +2,7 @@ import crypto from 'node:crypto';
 import { GoogleGenerativeAI } from '@google/generative-ai';
 import { getBearerToken, getSupabaseAdmin, readBody, sendJson } from './_utils/emailjs.js';
 import { aggregateMonthlyMetrics, buildDeterministicAnomalies, coverageConfidence, hasConsistentAnomalyEvidence } from '../src/lib/tourismMetrics.js';
+import { selectTourismRecommendationStrategies } from '../src/lib/tourismRecommendationStrategies.js';
 
 const MODEL_NAMES = Array.from(new Set([
   process.env.GEMINI_MODEL || 'gemini-3.5-flash-lite',
@@ -361,14 +362,52 @@ const generate = async (apiKey, data, scope) => {
     establishmentPerformance: coverageConfidence(combinedCoverage),
     customerFeedback: feedbackConfidence,
   };
-  const prompt = `You are a tourism data analyst for ${data.establishmentName}. This is a decision-support system for a municipal tourism officer. Based only on the verified aggregate values below, return one JSON object with 2 to 5 concise insights. For municipality scope, generate only evidence-supported domains: consolidate shared reporting completeness into one insight when needed, then add distinct diagnostic or conditional strategic insights for dayTourVisitors, overnightGuestCheckIns, seasonality, visitorOrigins, or establishmentPerformance, or customerFeedback; do not force every metric or spend multiple insights on the same reporting-compliance issue. Use this exact shape: {"insights":[{"title":"max 6 words","description":"one sentence max 30 words; describe only supplied evidence","impact":"high|medium|low","insight_category":"Reporting Compliance|Data Validation|Tourism Planning|Tourism Promotion|Accommodation Development|Resource Allocation|Comparative Tourism Assessment|Policy and Program Evaluation","metric":"dayTourVisitors|overnightGuestCheckIns|seasonality|visitorOrigins|establishmentPerformance|customerFeedback","analysis_period":"selected period","geographic_scope":"Balayan municipality","data_confidence":"Very Low|Low|Moderate|High","data_limitations":["specific limitation"],"decision_implication":"why this matters for a municipal decision, max 35 words","recommended_actions":[{"action_title":"max 8 words","action_description":"specific action with an owner or target, max 28 words","action_priority":"Critical|High|Medium|Low","action_category":"Operations|Reporting Compliance|Tourism Planning|Tourism Promotion|Accommodation Development|Resource Allocation","responsible_entity":"suggested entity","suggested_timeframe":"Immediate|Within 7 days|Within 14 days|Within 30 days|Within 30–60 days|Before the anticipated peak season|During the next reporting period","supporting_evidence_ids":["evidence key"],"prerequisites":["required condition"],"success_indicators":["measurable result"],"validation_required":true}],"responsible_entities":["suggested entity"],"suggested_timeframe":"suggested timeframe","expected_outcome":"intended benefit, max 25 words","success_indicators":["measurable result"],"validation_required":true,"related_evidence_ids":["evidence key"]}]}. Each action must include primary_objective, recommendation_class (Data Validation, Diagnostic Assessment, Strategic Tourism Intervention, or Outcome Evaluation), a verified responsible entity, a timeframe, at least one measurable success indicator, supporting evidence IDs from the supplied evidence, and validation_required. Missing required fields make the action unusable and it must not be persisted. Generate 2 to 4 concrete actions per insight. Actions must help the officer decide what to do next: name a concrete operational step such as contacting responsible establishments, assigning follow-up, setting a completion deadline, coordinating a response, escalating a verified issue, or using a confirmed seasonal peak as a planning benchmark. Do not begin with or consist only of review, investigate, compare, monitor, validate, or study. State the evidence-supported decision purpose. For dayTourVisitors and overnightGuestCheckIns, use only supplied reported values, reporting coverage, missing reports, entered-after-report-date counts (never call these late without a configured deadline), and period-to-period changes. For seasonality, use only repeated monthly visitor or check-in patterns and the observed peak month; a single peak is only a potential seasonal pattern. Do not recommend promotions, campaigns, marketing, capacity, rooms, lodging expansion, occupancy changes, pricing, events, weather responses, or causes unless those exact values are supplied. Do not invent causes, figures, establishments, or personal data. Confidence must reflect coverage and limitations: below 25% is Very Low, 25% to below 50% Low, 50% to below 80% Moderate, and 80% or higher High. These are internal decision-support thresholds, not official standards. Do not reference any period, month, year, establishment, report type, or value outside the verified analysis context. Analysis context: ${JSON.stringify(data.analysisPeriod || { label: 'full available period' })}. Total submitted day-tour visitors: ${data.totalVisitors}. Average accommodation occupancy: ${data.avgOccupancy}%. Monthly metrics: ${JSON.stringify(data.monthlyMetrics)}. Verified anomaly evidence: ${JSON.stringify(anomalies.map((item) => item.evidence))}. Verified visitor-origin totals: ${JSON.stringify(data.originEvidence)}. Verified establishment visitor-volume totals: ${JSON.stringify(data.establishmentEvidence)}. Verified customer-feedback summaries: ${JSON.stringify(data.feedbackEvidence)}. Verified customer-feedback themes: ${JSON.stringify(data.feedbackThemes)}. Eligible customer comments: ${data.eligibleCommentCount}. Feedback is aggregate decision-support evidence only; account verification does not prove a physical visit, themes do not prove sentiment or causation, and insufficient or ineligible feedback must not support a recommendation. Allowed evidence IDs: ${JSON.stringify([...allowedEvidenceIds])}. Use only these IDs.`;
+  const strategyGuidance = anomalies.map((item) => ({ metric: item.evidence?.metric, period: item.evidence?.current_month, strategy: selectTourismRecommendationStrategies(item.evidence, { scope, establishmentName: data.establishmentName }) }));
+  const prompt = `You are a tourism data analyst for ${data.establishmentName}. This is a decision-support system for a municipal tourism officer. Based only on the verified aggregate values below, return one JSON object with 2 to 5 concise insights. Deterministic strategy guidance is supplied below: ${JSON.stringify(strategyGuidance)}. For high coverage (80% or more) with a substantial decline, include distinct diagnostic assessment, conditional strategic intervention, and outcome evaluation actions when justified; do not make missing-report follow-up the only action when missing reports are zero. For low coverage, prioritize validation and keep tourism interventions conditional. Never state an unsupported cause. For municipality scope, generate only evidence-supported domains: consolidate shared reporting completeness into one insight when needed, then add distinct diagnostic or conditional strategic insights for dayTourVisitors, overnightGuestCheckIns, seasonality, visitorOrigins, or establishmentPerformance, or customerFeedback; do not force every metric or spend multiple insights on the same reporting-compliance issue. Use this exact shape: {"insights":[{"title":"max 6 words","description":"one sentence max 30 words; describe only supplied evidence","impact":"high|medium|low","insight_category":"Reporting Compliance|Data Validation|Tourism Planning|Tourism Promotion|Accommodation Development|Resource Allocation|Comparative Tourism Assessment|Policy and Program Evaluation","metric":"dayTourVisitors|overnightGuestCheckIns|seasonality|visitorOrigins|establishmentPerformance|customerFeedback","analysis_period":"selected period","geographic_scope":"Balayan municipality","data_confidence":"Very Low|Low|Moderate|High","data_limitations":["specific limitation"],"decision_implication":"why this matters for a municipal decision, max 35 words","recommended_actions":[{"action_title":"max 8 words","action_description":"specific action with an owner or target, max 28 words","action_priority":"Critical|High|Medium|Low","action_category":"Operations|Reporting Compliance|Tourism Planning|Tourism Promotion|Accommodation Development|Resource Allocation","responsible_entity":"suggested entity","suggested_timeframe":"Immediate|Within 7 days|Within 14 days|Within 30 days|Within 30–60 days|Before the anticipated peak season|During the next reporting period","supporting_evidence_ids":["evidence key"],"prerequisites":["required condition"],"success_indicators":["measurable result"],"validation_required":true}],"responsible_entities":["suggested entity"],"suggested_timeframe":"suggested timeframe","expected_outcome":"intended benefit, max 25 words","success_indicators":["measurable result"],"validation_required":true,"related_evidence_ids":["evidence key"]}]}. Each action must include primary_objective, recommendation_class (Data Validation, Diagnostic Assessment, Strategic Tourism Intervention, or Outcome Evaluation), a verified responsible entity, a timeframe, at least one measurable success indicator, supporting evidence IDs from the supplied evidence, and validation_required. Missing required fields make the action unusable and it must not be persisted. Generate 2 to 4 concrete actions per insight. Actions must help the officer decide what to do next: name a concrete operational step such as contacting responsible establishments, assigning follow-up, setting a completion deadline, coordinating a response, escalating a verified issue, or using a confirmed seasonal peak as a planning benchmark. Do not begin with or consist only of review, investigate, compare, monitor, validate, or study. State the evidence-supported decision purpose. For dayTourVisitors and overnightGuestCheckIns, use only supplied reported values, reporting coverage, missing reports, entered-after-report-date counts (never call these late without a configured deadline), and period-to-period changes. For seasonality, use only repeated monthly visitor or check-in patterns and the observed peak month; a single peak is only a potential seasonal pattern. Do not recommend promotions, campaigns, marketing, capacity, rooms, lodging expansion, occupancy changes, pricing, events, weather responses, or causes unless those exact values are supplied. Do not invent causes, figures, establishments, or personal data. Confidence must reflect coverage and limitations: below 25% is Very Low, 25% to below 50% Low, 50% to below 80% Moderate, and 80% or higher High. These are internal decision-support thresholds, not official standards. Do not reference any period, month, year, establishment, report type, or value outside the verified analysis context. Analysis context: ${JSON.stringify(data.analysisPeriod || { label: 'full available period' })}. Total submitted day-tour visitors: ${data.totalVisitors}. Average accommodation occupancy: ${data.avgOccupancy}%. Monthly metrics: ${JSON.stringify(data.monthlyMetrics)}. Verified anomaly evidence: ${JSON.stringify(anomalies.map((item) => item.evidence))}. Verified visitor-origin totals: ${JSON.stringify(data.originEvidence)}. Verified establishment visitor-volume totals: ${JSON.stringify(data.establishmentEvidence)}. Verified customer-feedback summaries: ${JSON.stringify(data.feedbackEvidence)}. Verified customer-feedback themes: ${JSON.stringify(data.feedbackThemes)}. Eligible customer comments: ${data.eligibleCommentCount}. Feedback is aggregate decision-support evidence only; account verification does not prove a physical visit, themes do not prove sentiment or causation, and insufficient or ineligible feedback must not support a recommendation. Allowed evidence IDs: ${JSON.stringify([...allowedEvidenceIds])}. Use only these IDs.`;
   const result = await generateContentWithFallback(apiKey, prompt);
   const generated = jsonObject(await result.response.text());
+  const normalizedInsights = deduplicateInsightActions(normalizeInsights(generated.insights, coverageByMetric, data.analysisPeriod, allowedEvidenceIds, data.monthlyMetrics));
+  const deterministicInsights = buildDeterministicFallback(data, scope).insights;
+  const insights = normalizedInsights.map((insight) => {
+    const metric = insight.input_snapshot?.metric;
+    const evidence = anomalies.find((item) => item.evidence?.metric === metric)?.evidence;
+    const coverage = Number(evidence?.current_coverage_percent);
+    const dropPercent = Number(evidence?.drop_percent);
+    const substantialHighCoverage = Number.isFinite(coverage) && coverage >= 80 && Number.isFinite(dropPercent) && dropPercent >= 30;
+    const actions = insight.input_snapshot?.decision_support?.recommended_actions || [];
+    const onlyReportingActions = actions.length > 0 && actions.every((action) => /report|coverage|missing|submission/i.test(`${action.action_category || ''} ${action.action_title || ''} ${action.action_description || ''}`));
+    const deterministic = deterministicInsights.find((candidate) => candidate.input_snapshot?.metric === metric && (!insight.input_snapshot?.current_month || candidate.input_snapshot?.current_month === insight.input_snapshot.current_month)) || deterministicInsights.find((candidate) => candidate.input_snapshot?.metric === metric);
+    return deterministic && (actions.length === 0 || (substantialHighCoverage && onlyReportingActions)) ? deterministic : insight;
+  });
   return {
-    insights: deduplicateInsightActions(normalizeInsights(generated.insights, coverageByMetric, data.analysisPeriod, allowedEvidenceIds, data.monthlyMetrics)),
+    insights,
     anomalies,
     modelName: result.modelName,
   };
+};
+
+const buildDeterministicFallback = (data, scope) => {
+  const anomalies = buildDeterministicAnomalies(data.monthlyMetrics);
+  const insights = anomalies.map((item) => {
+    const selected = selectTourismRecommendationStrategies(item.evidence, { scope, establishmentName: data.establishmentName });
+    const decisionSupport = {
+      insight_category: selected.actions[0]?.action_category || 'Diagnostic Assessment',
+      data_confidence: coverageConfidence(Number(item.evidence?.current_coverage_percent)) || 'Not calculated',
+      data_limitations: ['Deterministic fallback based only on verified evidence; it does not establish a cause.'],
+      decision_implication: selected.decisionImplication,
+      recommended_actions: selected.actions,
+      validation_required: selected.actions.some((action) => action.validation_required),
+    };
+    return {
+      title: item.type || 'Verified tourism finding',
+      description: item.description || 'A verified tourism finding requires scoped decision support.',
+      impact: item.severity || 'medium',
+      category: decisionSupport.insight_category,
+      recommended_action: selected.actions[0]?.action_description || '',
+      input_snapshot: { ...item.evidence, metric: item.evidence?.metric, current_month: item.evidence?.current_month, decision_support: decisionSupport },
+    };
+  }).filter((item) => item.recommended_action);
+  return { insights, anomalies, modelName: 'deterministic-strategy-v1' };
 };
 
 const findCachedResults = async (supabaseAdmin, scope, establishmentId, generationKey) => {
@@ -495,13 +534,22 @@ export default async function handler(req, res) {
     }
     const effectiveProfile = { ...profile, establishment_id: effectiveEstablishmentId };
     const apiKey = process.env.GEMINI_API_KEY;
-    if (!apiKey) return sendJson(res, 503, { error: 'AI service is not configured' });
     const data = await getScopedData(supabaseAdmin, effectiveProfile, scope, analysisPeriod);
     const sourceFingerprint = crypto.createHash('sha256').update(JSON.stringify({ monthlyMetrics: data.monthlyMetrics, originEvidence: data.originEvidence, establishmentEvidence: data.establishmentEvidence, feedbackEvidence: data.feedbackEvidence, feedbackThemes: data.feedbackThemes })).digest('hex');
-    const generationKey = crypto.createHash('sha256').update(JSON.stringify({ ruleVersion: 'decision-support-v8', scope, establishmentId: effectiveEstablishmentId, analysisPeriod, sourceFingerprint })).digest('hex');
+    const generationKey = crypto.createHash('sha256').update(JSON.stringify({ ruleVersion: 'decision-support-v9', scope, establishmentId: effectiveEstablishmentId, analysisPeriod, sourceFingerprint })).digest('hex');
     const cachedResults = await findCachedResults(supabaseAdmin, scope, effectiveEstablishmentId, generationKey);
     if (cachedResults) return sendJson(res, 200, cachedResults);
-    const results = await generate(apiKey, data, scope);
+    let results;
+    if (apiKey) {
+      try {
+        results = await generate(apiKey, data, scope);
+      } catch (error) {
+        if (error?.statusCode !== 503) throw error;
+        results = buildDeterministicFallback(data, scope);
+      }
+    } else {
+      results = buildDeterministicFallback(data, scope);
+    }
     await insertResults(supabaseAdmin, results, scope, effectiveEstablishmentId, requestId, generationKey, sourceFingerprint);
     return sendJson(res, 200, results);
   } catch (error) {
