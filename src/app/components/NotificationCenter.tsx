@@ -249,7 +249,6 @@ export default function NotificationCenter({ role }: NotificationCenterProps) {
         recommendations,
         recentEstablishments,
         pendingEstablishments,
-        recentReviews,
       ] = await Promise.all([
         supabase.from("visitor_reports").select("id,created_at", { count: "exact" }).in("status", ["pending", "under_review"]).order("created_at", { ascending: false }).limit(1),
         supabase.from("accommodation_reports").select("id,created_at", { count: "exact" }).in("status", ["pending", "under_review"]).order("created_at", { ascending: false }).limit(1),
@@ -258,14 +257,12 @@ export default function NotificationCenter({ role }: NotificationCenterProps) {
         supabase.from("ai_recommendations").select("id,created_at", { count: "exact" }).gte("created_at", monthStart).order("created_at", { ascending: false }).limit(1),
         supabase.from("establishments").select("id,name,created_at", { count: "exact" }).gte("created_at", recentCutoffIso).order("created_at", { ascending: false }).limit(3),
         supabase.from("establishments").select("id,name,created_at", { count: "exact" }).eq("status", "pending").order("created_at", { ascending: false }).limit(3),
-        supabase.from("establishment_rating_reviews").select("establishment_id,created_at", { count: "exact" }).gte("created_at", recentCutoffIso).order("created_at", { ascending: false }).limit(1),
       ]);
 
       const pendingTotal = countOf(pendingVisitor, pendingAccommodation);
       const holdTotal = countOf(holdVisitor, holdAccommodation);
       const recentEstablishmentCount = recentEstablishments.count || 0;
       const pendingEstablishmentCount = pendingEstablishments.count || 0;
-      const reviewCount = recentReviews.count || 0;
 
       if (pendingTotal > 0) {
         dynamic.push({
@@ -313,18 +310,6 @@ export default function NotificationCenter({ role }: NotificationCenterProps) {
           type: "info",
           actionPath: "/officer/establishments",
           createdAt: newestCreatedAt(recentEstablishments.data),
-          isRead: false,
-        });
-      }
-      if (reviewCount > 0) {
-        dynamic.push({
-          id: `officer-reviews-${reviewCount}-${newestCreatedAt(recentReviews.data)}`,
-          source: "system",
-          title: "New visitor reviews",
-          message: `${reviewCount} review${reviewCount === 1 ? "" : "s"} posted in the last 7 days.`,
-          type: "info",
-          actionPath: "/officer/establishments",
-          createdAt: newestCreatedAt(recentReviews.data),
           isRead: false,
         });
       }
