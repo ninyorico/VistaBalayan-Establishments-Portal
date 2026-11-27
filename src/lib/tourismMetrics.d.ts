@@ -32,6 +32,7 @@ export function aggregateMonthlyMetrics(
   eligibleVisitorEstablishments?: number,
   eligibleAccommodationEstablishments?: number,
   period?: { startDate?: string; endDate?: string } | null,
+  asOfDate?: string | null,
 ): TourismMonthlyMetric[];
 
 export function deriveReportEvidence(

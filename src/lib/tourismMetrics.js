@@ -11,6 +11,16 @@ const daysInMonth = (key) => {
   return new Date(Date.UTC(year, month, 0)).getUTCDate()
 }
 
+const dueDaysInMonth = (key, asOfDate) => {
+  const total = daysInMonth(key)
+  if (!asOfDate) return total
+  const cutoff = String(asOfDate).slice(0, 10)
+  const cutoffMonth = cutoff.slice(0, 7)
+  if (key > cutoffMonth) return 0
+  if (key < cutoffMonth) return total
+  return Math.min(total, Math.max(0, Number(cutoff.slice(8, 10)) || 0))
+}
+
 export const deriveReportEvidence = (submittedReports, expectedReports) => {
   const submitted = Number(submittedReports)
   const expected = Number(expectedReports)
@@ -69,7 +79,7 @@ const monthKeysBetween = (startDate, endDate) => {
  * Visitor rows may be one row per residence/category, so coverage uses
  * distinct establishment/date pairs rather than raw row count.
  */
-export const aggregateMonthlyMetrics = (visitorRows = [], accommodationRows = [], eligibleVisitorEstablishments = 0, eligibleAccommodationEstablishments = 0, period = null) => {
+export const aggregateMonthlyMetrics = (visitorRows = [], accommodationRows = [], eligibleVisitorEstablishments = 0, eligibleAccommodationEstablishments = 0, period = null, asOfDate = null) => {
   const byMonth = new Map()
   const ensure = (key) => {
     if (!byMonth.has(key)) {
@@ -124,8 +134,9 @@ export const aggregateMonthlyMetrics = (visitorRows = [], accommodationRows = []
   return [...byMonth.values()]
     .sort((a, b) => a.month.localeCompare(b.month))
     .map((item) => {
-      const expectedVisitorReports = eligibleVisitorEstablishments > 0
-        ? eligibleVisitorEstablishments * daysInMonth(item.month)
+      const visitorDueDays = dueDaysInMonth(item.month, asOfDate)
+      const expectedVisitorReports = eligibleVisitorEstablishments > 0 && visitorDueDays > 0
+        ? eligibleVisitorEstablishments * visitorDueDays
         : null
       const submittedVisitorReports = item.visitorSubmissionDays.size
       const enteredAfterReportDateVisitorReports = item.enteredAfterReportDateVisitorSubmissionDays.size
@@ -133,8 +144,9 @@ export const aggregateMonthlyMetrics = (visitorRows = [], accommodationRows = []
       const visitorEvidence = deriveReportEvidence(submittedVisitorReports, expectedVisitorReports)
       const coveragePercent = visitorEvidence.coveragePercent
       const missingVisitorReports = visitorEvidence.missingReports
-      const expectedAccommodationReports = eligibleAccommodationEstablishments > 0
-        ? eligibleAccommodationEstablishments * daysInMonth(item.month)
+      const accommodationDueDays = dueDaysInMonth(item.month, asOfDate)
+      const expectedAccommodationReports = eligibleAccommodationEstablishments > 0 && accommodationDueDays > 0
+        ? eligibleAccommodationEstablishments * accommodationDueDays
         : null
       const submittedAccommodationReports = item.accommodationSubmissionDays.size
       const enteredAfterReportDateAccommodationReports = item.enteredAfterReportDateAccommodationSubmissionDays.size

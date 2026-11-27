@@ -190,4 +190,18 @@ describe("tourism monthly metrics", () => {
       current_entered_after_report_date: 1,
     });
   });
+
+  it("does not create expected reports for future months after the Manila cutoff", () => {
+    const metrics = aggregateMonthlyMetrics(
+      [{ report_date: "2026-11-01", establishment_id: "a", total_guests: 2400 }],
+      [],
+      1,
+      0,
+      { startDate: "2026-11-01", endDate: "2026-12-31" },
+      "2026-11-27",
+    );
+    expect(metrics.find((row) => row.month === "2026-11")).toMatchObject({ expectedVisitorReports: 27 });
+    expect(metrics.find((row) => row.month === "2026-12")).toMatchObject({ expectedVisitorReports: null, missingVisitorReports: null, coveragePercent: null });
+    expect(buildDeterministicAnomalies(metrics)).toHaveLength(0);
+  });
 });

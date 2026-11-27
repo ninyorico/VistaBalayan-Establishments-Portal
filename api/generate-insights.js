@@ -19,6 +19,7 @@ const MAX_REQUESTS_PER_WINDOW = 5;
 const MAX_AI_ITEMS = 10;
 
 const clean = (value, fallback = '') => String(value || fallback).replace(/\s+/g, ' ').trim();
+const todayInManila = () => new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Manila', year: 'numeric', month: '2-digit', day: '2-digit' }).format(new Date());
 const jsonObject = (text) => {
   const raw = String(text || '').replace(/^```(?:json)?\s*/i, '').replace(/\s*```$/i, '').trim();
   const start = raw.indexOf('{');
@@ -275,7 +276,7 @@ const getScopedData = async (supabaseAdmin, profile, scope, analysisPeriod = nul
     eligibleAccommodationEstablishments = accommodationRows.length > 0 ? 1 : 0;
   }
 
-  const monthlyMetrics = aggregateMonthlyMetrics(visitorRows, accommodationRows, eligibleVisitorEstablishments, eligibleAccommodationEstablishments, analysisPeriod ? { startDate: analysisPeriod.queryStart, endDate: analysisPeriod.queryEnd } : null);
+  const monthlyMetrics = aggregateMonthlyMetrics(visitorRows, accommodationRows, eligibleVisitorEstablishments, eligibleAccommodationEstablishments, analysisPeriod ? { startDate: analysisPeriod.queryStart, endDate: analysisPeriod.queryEnd } : null, todayInManila());
   const totalVisitors = visitorRows.reduce((sum, row) => sum + Number(row.total_guests || 0), 0);
   const totalRooms = accommodationRows.reduce((sum, row) => sum + Number(row.total_rooms || 0), 0);
   const totalOccupied = accommodationRows.reduce((sum, row) => sum + Number(row.total_occupied_rooms || 0), 0);

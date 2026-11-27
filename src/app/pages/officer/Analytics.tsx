@@ -146,6 +146,7 @@ const seasonalTickLabel = (value: string, index: number) => {
 const performanceColors = ["#193364", "#0E5A72", "#D69A3A", "#E9C98A", "#6C63FF", "#E65355"];
 
 const monthKey = (date: string) => date.slice(0, 7);
+const todayInManila = () => new Intl.DateTimeFormat("en-CA", { timeZone: "Asia/Manila", year: "numeric", month: "2-digit", day: "2-digit" }).format(new Date());
 
 const percentChange = (current: number, previous: number) =>
   previous > 0 ? ((current - previous) / previous) * 100 : null;
@@ -470,7 +471,7 @@ export default function Analytics() {
       });
     });
     const monthlyData = Object.fromEntries(
-      aggregateMonthlyMetrics(visitors, accommodations, 0, 0, { startDate: selectedRange.startDate, endDate: selectedRange.endDate }).map((item) => [item.month, {
+      aggregateMonthlyMetrics(visitors, accommodations, 0, 0, { startDate: selectedRange.startDate, endDate: selectedRange.endDate }, todayInManila()).map((item) => [item.month, {
         label: monthLabel(`${item.month}-01`),
         visitors: item.dayTourVisitors,
         guestCheckIns: item.guestCheckIns,
