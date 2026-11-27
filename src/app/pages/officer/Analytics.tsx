@@ -1004,7 +1004,13 @@ export default function Analytics() {
     { value: "zero-activity", label: "Zero visitor activity" },
     { value: "multiple-establishment-decline", label: "Multiple establishment decline" },
   ];
-  const chartFindingMonths = new Set(filteredAnalysisFindings.map((finding) => finding.current.startDate.slice(0, 7)));
+  const verifiedChartMonths = new Set(anomalyMarkers
+    .filter((item) => analysisCategory === "daytour" ? item.metric === "dayTourVisitors" : item.metric === "overnightGuestCheckIns")
+    .map((item) => String(item.month)));
+  const declineChartPatterns = new Set<AnalyticsPattern>(["unusual-decline", "sustained-decline", "multiple-establishment-decline"]);
+  const chartFindingMonths = declineChartPatterns.has(analysisPattern)
+    ? verifiedChartMonths
+    : new Set(filteredAnalysisFindings.map((finding) => finding.current.startDate.slice(0, 7)));
   const chartPeakIndex = data.seasonalData.reduce((best, item, index, values) => {
     const score = analysisCategory === "overnight" ? item.guestCheckIns : item.visitors;
     const bestScore = analysisCategory === "overnight" ? values[best]?.guestCheckIns || 0 : values[best]?.visitors || 0;
