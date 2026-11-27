@@ -56,7 +56,7 @@ Status values: `TODO`, `IN PROGRESS`, `BLOCKED`, `DONE`, `PARTIAL`
 - [DONE] Evidence-conditioned strategy selection: eligible feedback concerns, comparable-establishment declines, recurring seasonal declines, and verified temporary closures select different advisory strategy families; unsupported causes remain unasserted.
 - [DONE] Deterministic server fallback and Gemini guard: missing/unavailable Gemini or reporting-only high-coverage output uses the verified deterministic strategy plan; cache rule version advanced to `decision-support-v9`.
 - [DONE] Establishment-account action rendering: structured scoped action plans now render with prerequisites, responsible role, timeframe, decision implication, and measurable indicators.
-- [PARTIAL] Fresh live verification of the updated high-coverage establishment card and establishment-account action rendering remains pending after deployment.
+- [DONE] Fresh live verification of the updated high-coverage establishment card and establishment-account action rendering: production deployment `dpl_BRhJRNYYQwPaPtNk7HnoN78MND5t` served `[TEST FIXTURE] Balayan Sunset Cove Resort` at `/staff/analytics`; the authenticated page displayed the scoped demand assessment, targeted recovery assistance, structured prerequisites, responsible role, timeframe, success indicators, and evidence-bound decision implication.
 
 ## GOAL 8 — Security and reliability
 
