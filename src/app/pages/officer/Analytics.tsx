@@ -31,6 +31,7 @@ import { assignRecommendationsToAnomalies, deduplicateStandaloneRecommendations,
 import { selectTourismRecommendationStrategies } from "../../../lib/tourismRecommendationStrategies.js";
 import { classifyFeedbackThemes, type FeedbackTheme } from "../../../lib/customerFeedbackThemes";
 import { classifyFeedbackDecisionSegments } from "../../../lib/customerFeedbackDecisionSupport";
+import { buildAnalyticsAnalysis, filterAnalyticsFindings, formatCoverage, type AnalyticsFinding, type AnalyticsPattern, type AnomalySeverity, type CoverageFilter, type AnalysisEstablishment, type AnalyticsCategory, type PeriodEvidence } from "../../../lib/analyticsAnalysis";
 
 interface AnalyticsData {
   seasonalData: { month: string; visitors: number; guestCheckIns: number; guestNights: number }[];
@@ -45,6 +46,9 @@ interface AnalyticsData {
   feedbackThemes: FeedbackTheme[];
   feedbackCurrentSatisfaction: Record<string, number | null>;
   feedbackPriorSatisfaction: Record<string, number | null>;
+  analysisRows: AnalysisEstablishment[];
+  analysisFindings: AnalyticsFinding[];
+  multipleDecline: ReturnType<typeof buildAnalyticsAnalysis>["multipleDecline"];
 }
 
 type Establishment = {
@@ -184,6 +188,12 @@ export default function Analytics() {
     feedbackThemes: [],
     feedbackCurrentSatisfaction: {},
     feedbackPriorSatisfaction: {},
+    analysisRows: [],
+    analysisFindings: [],
+    multipleDecline: {
+      daytour: { eligibleEstablishments: 0, affectedEstablishments: 0, stableEstablishments: 0, increasingEstablishments: 0, insufficientEstablishments: 0, affectedPercentage: null, combinedDecrease: 0 },
+      overnight: { eligibleEstablishments: 0, affectedEstablishments: 0, stableEstablishments: 0, increasingEstablishments: 0, insufficientEstablishments: 0, affectedPercentage: null, combinedDecrease: 0 },
+    },
   });
   const [loading, setLoading] = useState(true);
   const currentDate = new Date();
@@ -195,12 +205,21 @@ export default function Analytics() {
   const [refreshingAi, setRefreshingAi] = useState(false);
   const [aiRefreshError, setAiRefreshError] = useState<string | null>(null);
   const [feedbackSort, setFeedbackSort] = useState<"satisfaction" | "rating" | "positive" | "count">("satisfaction");
-  const [selectedEstablishmentId, setSelectedEstablishmentId] = useState<string>("");
+  const [selectedEstablishmentIds, setSelectedEstablishmentIds] = useState<string[]>([]);
+  const selectedEstablishmentId = selectedEstablishmentIds.length === 1 ? selectedEstablishmentIds[0] : "";
   const [availableEstablishments, setAvailableEstablishments] = useState<Establishment[]>([]);
+  const [availableYears, setAvailableYears] = useState<number[]>([currentDate.getFullYear() - 2, currentDate.getFullYear() - 1, currentDate.getFullYear()]);
+  const [analysisPattern, setAnalysisPattern] = useState<AnalyticsPattern>("all");
+  const [coverageFilter, setCoverageFilter] = useState<CoverageFilter>("all");
+  const [severityFilter, setSeverityFilter] = useState<AnomalySeverity | "all">("all");
+  const [analysisCategory, setAnalysisCategory] = useState<AnalyticsCategory>("daytour");
+  const [highlightMode, setHighlightMode] = useState<"highlight" | "filtered">("highlight");
+  const [showAnomalies, setShowAnomalies] = useState(true);
+  const [showCoverage, setShowCoverage] = useState(true);
 
   useEffect(() => {
     fetchAnalytics();
-  }, [analyticsPeriod, comparisonYear, selectedEstablishmentId]);
+  }, [analyticsPeriod, comparisonYear, selectedEstablishmentIds]);
 
   const fetchAnalytics = async () => {
     setLoading(true);
@@ -224,7 +243,8 @@ export default function Analytics() {
           .gte("report_date", range.startDate)
           .lte("report_date", range.endDate)
           .order("report_date", { ascending: true });
-        if (selectedEstablishmentId) query = query.eq("establishment_id", selectedEstablishmentId);
+        if (selectedEstablishmentIds.length === 1) query = query.eq("establishment_id", selectedEstablishmentIds[0]);
+        if (selectedEstablishmentIds.length > 1) query = query.in("establishment_id", selectedEstablishmentIds);
         const { data, error } = await query.range(page * pageSize, (page + 1) * pageSize - 1);
 
         if (error) return { data: null, error };
@@ -247,13 +267,35 @@ export default function Analytics() {
           .from(table)
           .select(select)
           .order(orderColumn, { ascending: true });
-        if (selectedEstablishmentId) query = query.eq("establishment_id", selectedEstablishmentId);
+        if (selectedEstablishmentIds.length === 1) query = query.eq("establishment_id", selectedEstablishmentIds[0]);
+        if (selectedEstablishmentIds.length > 1) query = query.in("establishment_id", selectedEstablishmentIds);
         const { data, error } = await query.range(page * pageSize, (page + 1) * pageSize - 1);
         if (error) return { data: null, error };
         allRows.push(...((data || []) as unknown as Record<string, unknown>[]));
         if (!data || data.length < pageSize) break;
       }
       return { data: allRows, error: null };
+    };
+
+    const fetchAvailableReportYears = async () => {
+      const years = new Set<number>();
+      for (const table of ["visitor_reports", "accommodation_reports"] as const) {
+        for (let page = 0; ; page += 1) {
+          const { data, error } = await supabase
+            .from(table)
+            .select("report_date")
+            .in("status", ["pending", "submitted", "validated", "approved"])
+            .order("report_date", { ascending: true })
+            .range(page * 1000, (page + 1) * 1000 - 1);
+          if (error) return [];
+          (data || []).forEach((row) => {
+            const year = Number(String(row.report_date || "").slice(0, 4));
+            if (Number.isInteger(year) && year > 1900) years.add(year);
+          });
+          if (!data || data.length < 1000) break;
+        }
+      }
+      return [...years].sort((a, b) => a - b);
     };
 
     const aiAnomalyQuery = supabase
@@ -287,6 +329,7 @@ export default function Analytics() {
       customerFeedbackResult,
       feedbackThemeResult,
       feedbackPeriodResult,
+      availableYearsResult,
     ] = await Promise.all([
       supabase
         .from("establishments")
@@ -321,6 +364,7 @@ export default function Analytics() {
       feedbackSummaryQuery,
       fetchAllFeedbackRows("establishment_rating_reviews", "establishment_id,comment,verified_account", "created_at"),
       fetchAllFeedbackRows("establishment_rating_period_summaries", "establishment_id,period_start,customer_satisfaction_score,rating_count", "period_start"),
+      fetchAvailableReportYears(),
     ]);
 
     const periodAnomalies = (aiAnomalyResult.data || [])
@@ -341,6 +385,7 @@ export default function Analytics() {
 
     const establishments = (establishmentData || []) as Establishment[];
     setAvailableEstablishments(establishments);
+    if (availableYearsResult.length > 0) setAvailableYears(availableYearsResult);
     const visitors = (visitorData || []) as unknown as VisitorReport[];
     const accommodations = (accommodationData || []) as unknown as AccommodationReport[];
     const comparisonVisitors = (comparisonVisitorResult.data || []) as unknown as VisitorReport[];
@@ -539,6 +584,51 @@ export default function Analytics() {
       suspicious: false,
     })));
 
+    const daysInRange = (startDate: string, endDate: string) => {
+      if (!startDate || !endDate) return 0;
+      const start = new Date(`${startDate}T00:00:00Z`).getTime();
+      const end = new Date(`${endDate}T00:00:00Z`).getTime();
+      return start <= end ? Math.floor((end - start) / 86400000) + 1 : 0;
+    };
+    const buildEvidence = <T extends { establishment_id: string; report_date: string }>(
+      rows: T[],
+      establishmentId: string,
+      startDate: string,
+      endDate: string,
+      valueOf: (row: T) => number | null | undefined,
+      applicable: boolean,
+    ): PeriodEvidence => {
+      const matchingRows = rows.filter((row) => row.establishment_id === establishmentId);
+      const submittedDates = new Set(matchingRows.map((row) => row.report_date.slice(0, 10)));
+      const submittedReports = submittedDates.size;
+      const value = submittedReports > 0 ? matchingRows.reduce((sum, row) => sum + Number(valueOf(row) || 0), 0) : null;
+      const expectedReports = applicable ? daysInRange(startDate, endDate) : null;
+      const coveragePercent = expectedReports && expectedReports > 0 ? Math.min(100, (submittedReports / expectedReports) * 100) : null;
+      return { startDate, endDate, value, submittedReports, expectedReports, coveragePercent };
+    };
+    const analysisRows = establishments.map((establishment): AnalysisEstablishment => {
+      const mode = getEstablishmentReportingMode(establishment);
+      return {
+        id: establishment.id,
+        name: establishment.name,
+        reportingMode: mode,
+        current: {
+          daytour: buildEvidence(visitors, establishment.id, selectedRange.startDate, selectedRange.endDate, (row) => row.total_guests, mode === "visitor" || mode === "both"),
+          overnight: buildEvidence(accommodations, establishment.id, selectedRange.startDate, selectedRange.endDate, (row) => row.total_check_ins, mode === "accommodation" || mode === "both"),
+        },
+        previous: {
+          daytour: buildEvidence(comparisonVisitors, establishment.id, comparisonRange.startDate, comparisonRange.endDate, (row) => row.total_guests, mode === "visitor" || mode === "both"),
+          overnight: buildEvidence(comparisonAccommodations, establishment.id, comparisonRange.startDate, comparisonRange.endDate, (row) => row.total_check_ins, mode === "accommodation" || mode === "both"),
+        },
+      };
+    });
+    const analysisResult = buildAnalyticsAnalysis(analysisRows, {
+      seasonalValues: {
+        daytour: seasonalData.map((item) => item.visitors),
+        overnight: seasonalData.map((item) => item.guestCheckIns),
+      },
+    });
+
     setData({
       seasonalData,
       visitorOrigins,
@@ -567,6 +657,9 @@ export default function Analytics() {
       feedbackThemes,
       feedbackCurrentSatisfaction: currentPeriodSatisfaction,
       feedbackPriorSatisfaction,
+      analysisRows,
+      analysisFindings: analysisResult.findings,
+      multipleDecline: analysisResult.multipleDecline,
     });
 
     setLoading(false);
@@ -598,12 +691,11 @@ export default function Analytics() {
     return <DataState state="loading" message="Retrieving analytics data..." />;
   }
 
-  const analyticsYears = Array.from({ length: 5 }, (_, index) => String(currentDate.getFullYear() - 2 + index));
+  const analyticsYears = availableYears;
   const panelFilter = (label: string) => (
     <div className="flex w-full min-w-0 flex-col items-stretch gap-1 sm:w-auto sm:flex-row sm:items-center sm:justify-end sm:gap-2">
       <p className="shrink-0 text-left text-[10px] font-semibold uppercase tracking-[0.14em] text-slate-500 sm:text-right">Scope</p>
-      <select aria-label="Analytics establishment scope" value={selectedEstablishmentId} onChange={(event) => setSelectedEstablishmentId(event.target.value)} className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-700 sm:w-64">
-        <option value="">All establishments — municipality</option>
+      <select aria-label="Analytics establishment scope" multiple value={selectedEstablishmentIds} onChange={(event) => setSelectedEstablishmentIds(Array.from(event.target.selectedOptions, (option) => option.value))} className="min-h-10 w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-700 sm:w-64">
         {availableEstablishments.filter((establishment) => establishment.status === "active").sort((a, b) => a.name.localeCompare(b.name)).map((establishment) => <option key={establishment.id} value={establishment.id}>{establishment.name}</option>)}
       </select>
       <p className="shrink-0 text-left text-[10px] font-semibold uppercase tracking-[0.14em] text-slate-500 sm:text-right">{label}</p>
@@ -893,6 +985,21 @@ export default function Analytics() {
     );
   };
 
+  const filteredAnalysisFindings = filterAnalyticsFindings(data.analysisFindings, analysisPattern, coverageFilter, severityFilter).filter((finding) => finding.category === analysisCategory);
+  const analysisSummary = data.multipleDecline[analysisCategory];
+  const patternOptions: Array<{ value: AnalyticsPattern; label: string }> = [
+    { value: "all", label: "All patterns" },
+    { value: "unusual-decline", label: "Unusual visitor decline" },
+    { value: "unusual-increase", label: "Unusual visitor increase" },
+    { value: "sustained-decline", label: "Sustained visitor decline" },
+    { value: "sustained-growth", label: "Sustained visitor growth" },
+    { value: "seasonal-peak", label: "Seasonal peak" },
+    { value: "seasonal-low", label: "Seasonal low" },
+    { value: "seasonal-shift", label: "Seasonal pattern shift" },
+    { value: "zero-activity", label: "Zero visitor activity" },
+    { value: "multiple-establishment-decline", label: "Multiple establishment decline" },
+  ];
+
   return (
     <div className="space-y-6">
       <PageHero
@@ -938,6 +1045,37 @@ export default function Analytics() {
           <p className="mt-1 truncate text-[10px] leading-tight text-orange-600 sm:text-sm lg:mt-2 lg:text-base">{data.growthRate === null ? "Not enough monthly data" : "Month over month"}</p>
         </div>
       </div>
+
+      <section className="rounded-[2rem] border border-white/70 bg-[#E0E5EC] p-4 shadow-[9px_9px_16px_rgba(163,177,198,.6),-9px_-9px_16px_rgba(255,255,255,.55)]" aria-labelledby="analytics-evidence-controls">
+        <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
+          <div>
+            <p className="text-xs font-bold uppercase tracking-[0.14em] text-[#6474A5]">Verified chart evidence</p>
+            <h2 id="analytics-evidence-controls" className="mt-1 text-lg font-bold text-[#193364]">Investigate patterns without changing the source calculation</h2>
+            <p className="mt-1 max-w-3xl text-sm text-slate-600">Findings use valid submitted report dates, applicable expected reports, and deterministic comparison rules. Missing reports are not converted to zero visitors.</p>
+          </div>
+          <button type="button" onClick={() => { setAnalysisPattern("all"); setCoverageFilter("all"); setSeverityFilter("all"); setAnalysisCategory("daytour"); }} className="rounded-2xl bg-[#E0E5EC] px-3 py-2 text-sm font-semibold text-[#193364] shadow-[5px_5px_10px_rgba(163,177,198,.6),-5px_-5px_10px_rgba(255,255,255,.52)]">Reset analysis filters</button>
+        </div>
+        <div className="mt-4 flex flex-wrap gap-2" role="group" aria-label="Tourism pattern filter">
+          {patternOptions.map((option) => <button key={option.value} type="button" aria-pressed={analysisPattern === option.value} onClick={() => setAnalysisPattern(option.value)} className={`rounded-full px-3 py-2 text-xs font-semibold transition ${analysisPattern === option.value ? "bg-[#6C63FF] text-white shadow-inner" : "bg-[#E0E5EC] text-slate-700 shadow-[3px_3px_7px_rgba(163,177,198,.55),-3px_-3px_7px_rgba(255,255,255,.6)]"}`}>{option.label}</button>)}
+        </div>
+        <div className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-5">
+          <label className="text-xs font-semibold text-slate-600">Reporting category<select value={analysisCategory} onChange={(event) => setAnalysisCategory(event.target.value as AnalyticsCategory)} className="mt-1 w-full rounded-2xl bg-[#E0E5EC] px-3 py-2 text-sm text-slate-800 shadow-[inset_4px_4px_8px_rgba(163,177,198,.42),inset_-4px_-4px_8px_rgba(255,255,255,.72)]"><option value="daytour">Day-tour visitors</option><option value="overnight">Overnight check-ins</option></select></label>
+          <label className="text-xs font-semibold text-slate-600">Reporting completeness<select value={coverageFilter} onChange={(event) => setCoverageFilter(event.target.value as CoverageFilter)} className="mt-1 w-full rounded-2xl bg-[#E0E5EC] px-3 py-2 text-sm text-slate-800 shadow-[inset_4px_4px_8px_rgba(163,177,198,.42),inset_-4px_-4px_8px_rgba(255,255,255,.72)]"><option value="all">All statuses</option><option value="complete">Complete — 100%</option><option value="incomplete">Incomplete — above 0%</option><option value="none">No reports — 0%</option><option value="below-25">Below 25%</option><option value="25-50">25% to below 50%</option><option value="50-80">50% to below 80%</option><option value="80-100">80% to below 100%</option></select></label>
+          <label className="text-xs font-semibold text-slate-600">Anomaly severity<select value={severityFilter} onChange={(event) => setSeverityFilter(event.target.value as AnomalySeverity | "all")} className="mt-1 w-full rounded-2xl bg-[#E0E5EC] px-3 py-2 text-sm text-slate-800 shadow-[inset_4px_4px_8px_rgba(163,177,198,.42),inset_-4px_-4px_8px_rgba(255,255,255,.72)]"><option value="all">All severities</option><option value="low">Low</option><option value="medium">Medium</option><option value="high">High</option><option value="critical">Critical</option></select></label>
+          <label className="text-xs font-semibold text-slate-600">Results mode<select value={highlightMode} onChange={(event) => setHighlightMode(event.target.value as "highlight" | "filtered")} className="mt-1 w-full rounded-2xl bg-[#E0E5EC] px-3 py-2 text-sm text-slate-800 shadow-[inset_4px_4px_8px_rgba(163,177,198,.42),inset_-4px_-4px_8px_rgba(255,255,255,.72)]"><option value="highlight">Highlight in context</option><option value="filtered">Filtered results only</option></select></label>
+          <div className="flex items-end gap-3 pb-1 text-xs font-semibold text-slate-600"><label className="flex items-center gap-2"><input type="checkbox" checked={showAnomalies} onChange={(event) => setShowAnomalies(event.target.checked)} /> Show anomalies</label><label className="flex items-center gap-2"><input type="checkbox" checked={showCoverage} onChange={(event) => setShowCoverage(event.target.checked)} /> Coverage</label></div>
+        </div>
+        <div className="mt-4 grid gap-3 sm:grid-cols-4" aria-label="Multiple establishment decline summary">
+          <div className="rounded-2xl bg-[#F5F8FF] p-3"><p className="text-xs text-slate-500">Eligible comparable</p><p className="text-xl font-bold text-[#193364]">{analysisSummary.eligibleEstablishments}</p></div>
+          <div className="rounded-2xl bg-[#F5F8FF] p-3"><p className="text-xs text-slate-500">Qualifying declines</p><p className="text-xl font-bold text-[#B42318]">{analysisSummary.affectedEstablishments}</p></div>
+          <div className="rounded-2xl bg-[#F5F8FF] p-3"><p className="text-xs text-slate-500">Affected percentage</p><p className="text-xl font-bold text-[#193364]">{analysisSummary.affectedPercentage == null ? "N/A" : `${analysisSummary.affectedPercentage.toFixed(1)}%`}</p></div>
+          <div className="rounded-2xl bg-[#F5F8FF] p-3"><p className="text-xs text-slate-500">Insufficient data</p><p className="text-xl font-bold text-[#A15C00]">{analysisSummary.insufficientEstablishments}</p></div>
+        </div>
+        <div className="mt-4 overflow-x-auto rounded-2xl bg-[#F5F8FF] p-2">
+          <table className="w-full min-w-[50rem] text-left text-sm"><thead><tr className="border-b border-slate-200 text-xs uppercase tracking-wide text-slate-500"><th className="px-3 py-2">Establishment</th><th className="px-3 py-2">Current</th><th className="px-3 py-2">Previous</th><th className="px-3 py-2">Change</th><th className="px-3 py-2">Coverage</th><th className="px-3 py-2">Severity</th><th className="px-3 py-2">Evidence</th></tr></thead><tbody>{filteredAnalysisFindings.length === 0 ? <tr><td colSpan={7} className="px-3 py-6 text-center text-slate-500">No verified finding matches the active filters.</td></tr> : filteredAnalysisFindings.map((finding) => <tr key={finding.id} className="border-b border-slate-100 last:border-0"><td className="px-3 py-2 font-semibold text-[#193364]">{finding.establishmentName || "Multiple establishments"}</td><td className="px-3 py-2">{finding.current.value == null ? "No report" : finding.current.value.toLocaleString()}</td><td className="px-3 py-2">{finding.previous.value == null ? "No report" : finding.previous.value.toLocaleString()}</td><td className={`px-3 py-2 font-semibold ${finding.percentChange == null ? "text-slate-500" : finding.percentChange < 0 ? "text-[#B42318]" : "text-emerald-700"}`}>{finding.percentChange == null ? "N/A" : `${finding.percentChange >= 0 ? "+" : ""}${finding.percentChange.toFixed(1)}%`}</td><td className="px-3 py-2">{showCoverage ? `${formatCoverage(finding.current.coveragePercent)} / ${formatCoverage(finding.previous.coveragePercent)}` : "Hidden"}</td><td className="px-3 py-2 capitalize">{showAnomalies ? finding.severity : "Hidden"}</td><td className="max-w-[22rem] px-3 py-2 text-xs text-slate-600">{finding.explanation}</td></tr>)}</tbody></table>
+        </div>
+        {highlightMode === "filtered" && <p className="mt-3 text-xs font-semibold text-[#193364]">Filtered results mode is active: the evidence table shows only matching findings. Historical chart baselines remain calculated from the complete selected dataset.</p>}
+      </section>
 
       <section id="analytics-rankings" className="rounded-lg border border-gray-200 bg-white p-4 shadow-sm sm:p-6" aria-labelledby="analytics-comparison-title">
         <div className="flex flex-col gap-1 border-b border-gray-200 pb-4 sm:flex-row sm:items-start sm:justify-between">

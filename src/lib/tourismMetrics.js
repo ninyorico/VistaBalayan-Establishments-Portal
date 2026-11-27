@@ -198,7 +198,7 @@ export const buildDeterministicAnomalies = (monthlyMetrics = [], options = {}) =
     const current = monthlyMetrics[index]
     if (previousCalendarMonth(current.month) !== previous.month) continue
     const changePercent = percentChange(current.dayTourVisitors, previous.dayTourVisitors)
-    const dayTourEligible = changePercent !== null && previous.dayTourVisitors >= minimumPreviousVisitors && changePercent <= -thresholdPercent
+    const dayTourEligible = current.submittedVisitorReports > 0 && previous.submittedVisitorReports > 0 && changePercent !== null && previous.dayTourVisitors >= minimumPreviousVisitors && changePercent <= -thresholdPercent;
 
     if (dayTourEligible) {
       const dropPercent = Math.abs(changePercent)
@@ -246,7 +246,7 @@ export const buildDeterministicAnomalies = (monthlyMetrics = [], options = {}) =
     }
 
     const overnightChangePercent = percentChange(current.guestCheckIns, previous.guestCheckIns)
-    if (overnightChangePercent !== null && previous.guestCheckIns >= minimumPreviousOvernightCheckIns && overnightChangePercent <= -thresholdPercent) {
+    if (current.submittedAccommodationReports > 0 && previous.submittedAccommodationReports > 0 && overnightChangePercent !== null && previous.guestCheckIns >= minimumPreviousOvernightCheckIns && overnightChangePercent <= -thresholdPercent) {
       const overnightDropPercent = Math.abs(overnightChangePercent)
       const overnightCoverageNote = current.accommodationCoveragePercent === null
         ? 'Accommodation reporting coverage was unavailable.'

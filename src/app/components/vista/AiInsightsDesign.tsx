@@ -262,7 +262,8 @@ export function AiSectionCard({
 
 export function AiAnomalyCard(anomaly: AiAnomalyCardProps) {
   const tone = severityTone(anomaly.severity);
-  const actionPlan = anomaly.decisionSupport?.recommended_actions?.filter((action) => action.action_description) || [];
+  const decisionSupport = anomaly.decisionSupport || anomaly.input_snapshot?.decision_support as AiDecisionSupport | undefined;
+  const actionPlan = decisionSupport?.recommended_actions?.filter((action) => action.action_description) || [];
 
   return (
     <article className={cn("group relative h-full overflow-hidden rounded-2xl border border-slate-200 bg-white p-0 shadow-[0_14px_40px_rgba(15,23,42,0.05)] transition-all duration-500 hover:-translate-y-0.5 hover:shadow-[0_18px_55px_rgba(15,23,42,0.08)]", anomaly.className)} data-ai-card-layout="shadcn-anomaly-editorial">
@@ -305,7 +306,7 @@ export function AiAnomalyCard(anomaly: AiAnomalyCardProps) {
             <div className="space-y-3" data-ai-action-plan="decision-support">
               <div className="flex items-center justify-between gap-2">
                 <span className="font-semibold text-slate-800">Recommended actions</span>
-                {anomaly.decisionSupport?.data_confidence && <Badge variant="outline" className="rounded-full border-slate-300 text-xs text-slate-600">{anomaly.decisionSupport.data_confidence} confidence</Badge>}
+                {decisionSupport?.data_confidence && <Badge variant="outline" className="rounded-full border-slate-300 text-xs text-slate-600">{decisionSupport.data_confidence} confidence</Badge>}
               </div>
               <ol className="space-y-3">
                 {actionPlan.map((action, index) => (
@@ -320,9 +321,9 @@ export function AiAnomalyCard(anomaly: AiAnomalyCardProps) {
                   </li>
                 ))}
               </ol>
-              {anomaly.decisionSupport?.decision_implication && <p className="rounded-xl border border-blue-100 bg-blue-50/70 p-3 text-sm leading-6 text-blue-900"><span className="font-semibold">Decision implication:</span> {anomaly.decisionSupport.decision_implication}</p>}
-              {anomaly.decisionSupport?.expected_outcome && <p className="text-sm leading-6 text-slate-600"><span className="font-semibold text-slate-800">Expected outcome:</span> {anomaly.decisionSupport.expected_outcome}</p>}
-              {anomaly.decisionSupport?.data_limitations?.length ? <p className="text-xs leading-5 text-slate-500"><span className="font-semibold text-slate-700">Limitations:</span> {anomaly.decisionSupport.data_limitations.join("; ")}</p> : null}
+              {decisionSupport?.decision_implication && <p className="rounded-xl border border-blue-100 bg-blue-50/70 p-3 text-sm leading-6 text-blue-900"><span className="font-semibold">Decision implication:</span> {decisionSupport.decision_implication}</p>}
+              {decisionSupport?.expected_outcome && <p className="text-sm leading-6 text-slate-600"><span className="font-semibold text-slate-800">Expected outcome:</span> {decisionSupport.expected_outcome}</p>}
+              {decisionSupport?.data_limitations?.length ? <p className="text-xs leading-5 text-slate-500"><span className="font-semibold text-slate-700">Limitations:</span> {decisionSupport.data_limitations.join("; ")}</p> : null}
             </div>
           ) : anomaly.aiRecommendation ? (
             <div className="rounded-2xl border border-slate-200 bg-slate-50/80 p-3 text-justify leading-6 hyphens-auto" data-ai-action-note="editorial-shadcn">

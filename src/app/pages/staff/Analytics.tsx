@@ -10,7 +10,7 @@ import { AiAnomalyCard, AiRecommendationCard } from "../../components/vista/AiIn
 import { MAX_AI_ITEMS } from "../../../lib/aiInsights";
 import { geminiService } from "../../../services/geminiService";
 
-const AI_RULE_VERSION = "decision-support-v9";
+const AI_RULE_VERSION = "decision-support-v10";
 
 const chartClass = "rounded-3xl border border-[#AFB3B5]/45 bg-[#F5F8FF]/88 p-4 shadow-tourism sm:p-6";
 
@@ -76,7 +76,11 @@ export default function Analytics() {
       const hasCurrentRule = [...(anomalyData || []), ...(recommendationData || [])].some((row: any) => row.input_snapshot?.rule_version === AI_RULE_VERSION);
       if (!hasCurrentRule) {
         try {
-          await geminiService.generateForEstablishment();
+          await geminiService.generateForEstablishment({
+            selectedStartDate: `${selectedYear}-01-01`,
+            selectedEndDate: `${selectedYear}-12-31`,
+            label: `Year ${selectedYear}`,
+          });
           return loadAiFindings(establishmentId, false);
         } catch (error) {
           console.error("Error refreshing stale establishment AI findings:", error);
@@ -92,8 +96,18 @@ export default function Analytics() {
       console.error("Error loading establishment AI findings:", anomalyError || recommendationError);
       setAiError("AI findings could not be loaded. Retry from this Analytics page.");
     } else {
-      setAiAnomalies(anomalyData || []);
-      setAiRecommendations(recommendationData || []);
+      const visibleAnomalies = (anomalyData || []).filter((row: any) => {
+        const month = String(row.input_snapshot?.current_month || "");
+        return !month || month.startsWith(String(selectedYear));
+      });
+      const visibleRecommendations = (recommendationData || []).filter((row: any) => {
+        const snapshot = row.input_snapshot || {};
+        const sameFinding = visibleAnomalies.some((anomaly: any) => String(anomaly.input_snapshot?.metric || "") === String(snapshot.metric || "") && String(anomaly.input_snapshot?.current_month || "") === String(snapshot.current_month || ""));
+        const title = String(row.title || "").toLowerCase();
+        return !sameFinding && !/complete reporting compliance maintained|reporting compliance maintained/.test(title);
+      });
+      setAiAnomalies(visibleAnomalies);
+      setAiRecommendations(visibleRecommendations);
     }
     setAiLoading(false);
   };
@@ -103,7 +117,11 @@ export default function Analytics() {
     setAiLoading(true);
     setAiError(null);
     try {
-      await geminiService.generateForEstablishment();
+      await geminiService.generateForEstablishment({
+        selectedStartDate: `${selectedYear}-01-01`,
+        selectedEndDate: `${selectedYear}-12-31`,
+        label: `Year ${selectedYear}`,
+      });
       await loadAiFindings(establishment.id);
     } catch (error) {
       console.error("Error refreshing establishment AI findings:", error);
@@ -113,6 +131,9 @@ export default function Analytics() {
   };
 
   useEffect(() => { loadAnalytics(); }, []);
+  useEffect(() => {
+    if (establishment?.id) loadAiFindings(establishment.id, false);
+  }, [selectedYear, establishment?.id]);
 
   const loadAnalytics = async () => {
     setLoading(true);

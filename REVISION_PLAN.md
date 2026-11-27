@@ -470,3 +470,29 @@ Use eligible customer feedback as an additional source of establishment performa
 Document authentication architecture, database changes, security policies, review moderation rules, rating calculations, performance scoring integration, testing results, and remaining limitations.
 
 Preserve all previously established VistaBalayan revision goals.
+
+---
+
+# Additional Requirements for GOAL 10: Interactive Analytics and Comparative Tourism Analysis
+
+The officer Analytics module must provide deterministic, evidence-bound chart filtering and comparison support. The implementation must preserve existing reports and must not treat missing reports as zero activity.
+
+## 10.1 Interactive analytical scope
+
+Support reporting period selection through the existing period control, dynamically load available reporting years from valid report dates, and allow single- or multi-establishment scope selection. Day-tour visitors and overnight guest check-ins must remain separate categories.
+
+## 10.2 Deterministic finding filters
+
+Provide chart-level controls for tourism pattern, reporting completeness, anomaly severity, reporting category, and highlight-versus-filtered-results mode. Pattern findings must originate from verified report evidence and deterministic rules; Gemini may interpret findings but must not assign authoritative anomaly classifications.
+
+## 10.3 Evidence and comparison integrity
+
+For each finding, retain current and comparable-period values, absolute and percentage changes, submitted and expected report counts, coverage, evidence status, and severity. Expected reports must be based only on establishments applicable to the selected reporting category. No-report and not-applicable states must remain distinct from zero visitor activity.
+
+## 10.4 Multiple-establishment decline analysis
+
+Calculate eligible comparable establishments, qualifying declines, stable activity, increases, insufficient evidence, affected-establishment percentage, and combined reported decrease. Do not label a pattern municipality-wide without a configurable minimum count and proportion, and do not infer a common cause from simultaneous declines.
+
+## 10.5 Remaining analytics scope
+
+Further work remains for full multi-period chart series, equivalent-period multi-year comparison, heatmaps, click-through drill-down to source records, synchronized chart-specific AI evidence links, filtered analytics export, and authenticated browser verification using approved officer credentials.

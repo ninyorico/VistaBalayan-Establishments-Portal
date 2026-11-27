@@ -49,8 +49,8 @@ export const geminiService = {
     return callGenerationApi(analysisContext?.establishmentId ? 'establishment' : 'municipality', analysisContext)
   },
 
-  async generateForEstablishment() {
-    return callGenerationApi('establishment')
+  async generateForEstablishment(analysisContext?: AnalysisContext) {
+    return callGenerationApi('establishment', analysisContext)
   },
 
   async generateAndSaveInsightsForEstablishment(_establishmentData: unknown) {

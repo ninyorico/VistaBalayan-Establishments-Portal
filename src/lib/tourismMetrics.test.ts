@@ -102,6 +102,17 @@ describe("tourism monthly metrics", () => {
     });
   });
 
+  it("does not classify a zero-report month as a visitor decline", () => {
+    const metrics = aggregateMonthlyMetrics(
+      [{ report_date: "2026-11-01", establishment_id: "a", total_guests: 2400 }],
+      [],
+      1,
+      0,
+      { startDate: "2026-11-01", endDate: "2026-12-31" },
+    );
+    expect(metrics[1].submittedVisitorReports).toBe(0);
+    expect(buildDeterministicAnomalies(metrics)).toHaveLength(0);
+  });
   it("does not compare non-adjacent months as if they were consecutive", () => {
     const metrics = aggregateMonthlyMetrics(
       [
