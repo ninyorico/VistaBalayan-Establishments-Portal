@@ -4,32 +4,32 @@
   --font-size: 16px;
 
   /* Unified Vista Balayan Neumorphic Color System */
-  --ocean-blue: #193364;
-  --navy-blue: #193364;
-  --teal-blue: #0E5A72;
-  --cyan-teal: #0E5A72;
-  --bright-cyan: #0E5A72;
-  --coastal-sand: #E9C98A;
-  --sunlit-foam: #F1F5F9;
-  --mist-blue: #D9E0E8;
-  --mangrove-green: #6C9772;
-  --sunset-coral: #E9C98A;
+  --ocean-blue: #6C63FF;
+  --navy-blue: #3D4852;
+  --teal-blue: #38B2AC;
+  --cyan-teal: #38B2AC;
+  --bright-cyan: #38B2AC;
+  --coastal-sand: #E7A93B;
+  --sunlit-foam: #F7F9FC;
+  --mist-blue: #D2D8E0;
+  --mangrove-green: #38B2AC;
+  --sunset-coral: #E35D6A;
 
   /* Unified neumorphic surfaces and text */
-  --pure-white: #E8EDF3;
-  --light-gray-bg: #E8EDF3;
-  --border-gray: #D9E0E8;
-  --text-secondary: #52616F;
-  --text-dark-navy: #263442;
-  --muted-helper: #7B8794;
+  --pure-white: #E0E5EC;
+  --light-gray-bg: #E0E5EC;
+  --border-gray: #CAD2DD;
+  --text-secondary: #6B7280;
+  --text-dark-navy: #3D4852;
+  --muted-helper: #6B7280;
 
   /* Semantic colors */
-  --success-green: #6C9772;
-  --warning-orange: #D69A3A;
-  --alert-yellow: #D69A3A;
+  --success-green: #38B2AC;
+  --warning-orange: #E7A93B;
+  --alert-yellow: #E7A93B;
   --soft-purple: #6C63FF;
-  --info-blue: #0E5A72;
-  --danger-red: #E65355;
+  --info-blue: #6C63FF;
+  --danger-red: #E35D6A;
 
   /* Application Variables */
   --background: var(--light-gray-bg);
@@ -57,11 +57,11 @@
   --ring: var(--teal-blue);
 
   /* Chart colors: restrained, mostly coastal monochrome */
-  --chart-1: #193364;
-  --chart-2: #6C9772;
-  --chart-3: #E9C98A;
-  --chart-4: #D69A3A;
-  --chart-5: #0E5A72;
+  --chart-1: #6C63FF;
+  --chart-2: #38B2AC;
+  --chart-3: #E7A93B;
+  --chart-4: #E35D6A;
+  --chart-5: #3D4852;
 
   --radius: 1rem;
   --sidebar: var(--pure-white);
@@ -115,7 +115,7 @@
 
   body {
     min-height: 100dvh;
-    background: #E8EDF3;
+    background: #E0E5EC;
     color: var(--foreground);
     font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
     font-feature-settings: "cv02", "cv03", "cv04", "tnum";
@@ -154,18 +154,18 @@
 
 @layer components {
   .tourism-shell {
-    background: #E8EDF3;
+    background: #E0E5EC;
   }
 
   .tourism-card {
     border: 0;
-    background: #E8EDF3;
-    box-shadow: 8px 8px 16px rgba(174, 184, 196, 0.65), -8px -8px 16px rgba(255, 255, 255, 0.88);
+    background: #E0E5EC;
+    box-shadow: 8px 8px 16px rgba(163,177,198,.60), -8px -8px 16px rgba(255,255,255,.55);
     backdrop-filter: none;
   }
 
   .tourism-panel-dark {
-    background: linear-gradient(135deg, #193364 0%, #0E5A72 100%);
+    background: #E0E5EC;
   }
 
   .tourism-button {
@@ -216,11 +216,11 @@
 /* Dashboard-only Controlled Neumorphism */
 @layer components {
   .dashboard-neumorphic {
-    --neu-surface: #E8EDF3;
-    --neu-text: #263442;
-    --neu-muted: #7B8794;
+    --neu-surface: #E0E5EC;
+    --neu-text: #3D4852;
+    --neu-muted: #6B7280;
     --neu-violet: #6c63ff;
-    --neu-teal: #0E5A72;
+    --neu-teal: #38B2AC;
     background: var(--neu-surface) !important;
     color: var(--neu-text) !important;
   }

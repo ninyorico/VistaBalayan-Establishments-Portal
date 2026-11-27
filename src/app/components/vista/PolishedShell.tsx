@@ -28,18 +28,16 @@ export function PageHero({
   compact = false,
 }: PageHeroProps & { compact?: boolean }) {
   return (
-    <section className={cn("overflow-hidden rounded-[2rem] border border-white/20 tourism-panel-dark shadow-[0_28px_90px_rgba(7,59,76,0.22)]", compact && "rounded-3xl")}>
+    <section className={cn("overflow-hidden rounded-[2rem] tourism-panel-dark shadow-[9px_9px_16px_rgba(163,177,198,0.60),-9px_-9px_16px_rgba(255,255,255,0.55)]", compact && "rounded-3xl")}>
       <div className={cn("relative", compact ? "p-3 sm:p-5 lg:p-6" : "p-6 sm:p-8 lg:p-10")}>
-        <div className="absolute right-0 top-0 h-56 w-56 rounded-full bg-cyan-300/16 blur-3xl" />
-        <div className="absolute bottom-0 left-1/4 h-44 w-72 rounded-full bg-white/8 blur-3xl" />
         <div className={cn("relative flex flex-col lg:flex-row lg:items-end lg:justify-between", compact ? "gap-3 sm:gap-4" : "gap-6")}>
           <div className="max-w-3xl">
-            <p className="text-sm font-semibold uppercase tracking-[0.16em] text-cyan-100">{eyebrow}</p>
-            <h1 className={cn("font-semibold tracking-[-0.04em] text-white text-balance", compact ? "mt-2 text-xl leading-tight sm:text-3xl lg:text-4xl" : "mt-3 text-3xl sm:text-4xl lg:text-5xl")}>
+            <p className="text-sm font-semibold uppercase tracking-[0.16em] text-[#6C63FF]">{eyebrow}</p>
+            <h1 className={cn("font-bold tracking-[-0.04em] text-[#3D4852] text-balance", compact ? "mt-2 text-xl leading-tight sm:text-3xl lg:text-4xl" : "mt-3 text-3xl sm:text-4xl lg:text-5xl")}>
               {title}
             </h1>
             {description && (
-              <p className={cn("max-w-2xl text-slate-200", compact ? "mt-2 text-xs leading-5 sm:text-base sm:leading-6" : "mt-4 text-sm leading-6 sm:text-base")}>
+              <p className={cn("max-w-2xl text-[#6B7280]", compact ? "mt-2 text-xs leading-5 sm:text-base sm:leading-6" : "mt-4 text-sm leading-6 sm:text-base")}>
                 {description}
               </p>
             )}
@@ -48,8 +46,8 @@ export function PageHero({
           {(metricLabel && metricValue) || (actionLabel && onAction) || children ? (
             <div className="flex flex-col gap-3 sm:flex-row lg:flex-col lg:items-stretch">
               {metricLabel && metricValue && (
-                <div className={cn("rounded-2xl border border-white/12 bg-white/10 text-white shadow-[inset_0_1px_0_rgba(255,255,255,0.12)] backdrop-blur-xl", compact ? "p-3 sm:p-4" : "p-4")}>
-                  <p className={cn("font-semibold uppercase tracking-[0.14em] text-slate-300", compact ? "text-[10px] sm:text-xs" : "text-xs")}>{metricLabel}</p>
+                <div className={cn("rounded-2xl bg-[#E0E5EC] text-[#3D4852] shadow-[inset_6px_6px_10px_rgba(163,177,198,0.60),inset_-6px_-6px_10px_rgba(255,255,255,0.55)]", compact ? "p-3 sm:p-4" : "p-4")}>
+                  <p className={cn("font-semibold uppercase tracking-[0.14em] text-[#6B7280]", compact ? "text-[10px] sm:text-xs" : "text-xs")}>{metricLabel}</p>
                   <p className={cn("mt-1 font-semibold tracking-[-0.03em]", compact ? "text-2xl sm:mt-2 sm:text-3xl" : "mt-2 text-3xl")}>{metricValue}</p>
                 </div>
               )}
@@ -57,7 +55,7 @@ export function PageHero({
                 <Button
                   type="button"
                   onClick={onAction}
-                  className="h-10 rounded-2xl bg-white px-4 text-sm text-[#0B2530] shadow-none hover:bg-cyan-50 active:translate-y-[1px] sm:h-12 sm:px-5"
+                  className="h-10 rounded-2xl bg-[#6C63FF] px-4 text-sm text-white shadow-[6px_6px_12px_rgba(163,177,198,0.62),-6px_-6px_12px_rgba(255,255,255,0.88)] hover:bg-[#8B84FF] active:translate-y-[1px] sm:h-12 sm:px-5"
                 >
                   {actionLabel}
                 </Button>

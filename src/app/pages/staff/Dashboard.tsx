@@ -1,12 +1,13 @@
 import { useEffect, useState, type ReactNode } from "react";
 import { useNavigate } from "react-router";
-import { ArrowRight, Bed, Calendar, FileUp, History, Moon, Percent, UsersRound, TrendingUp } from "lucide-react";
+import { ArrowRight, Bed, Calendar, CheckCircle2, Clock3, FileUp, History, Moon, Percent, UsersRound, TrendingUp } from "lucide-react";
 import { Area, AreaChart, CartesianGrid, Legend, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 import { supabase } from "../../../lib/supabase";
 import { calculateAccommodationOccupancy, groupStaffSubmissions } from "../../../lib/reportMetrics";
 import { canSubmitAccommodationReport, canSubmitVisitorReport, getEstablishmentReportingMode } from "../../../lib/establishmentReportForms";
 import { average, buildAccommodationHistoricalSeries, buildVisitorHistoricalSeries, isOfficialReport, toNumber, type AccommodationReport, type VisitorReport } from "../../../lib/staffAnalytics";
 import { EmptyState, LoadingState, MetricCard, PageHero, PanelCard } from "../../components/vista/PolishedShell";
+import { Button } from "../../components/ui/button";
 import DataState from "../../components/DataState";
 
 const statusStyles = { submitted: "bg-emerald-50 text-emerald-700 ring-emerald-200" };
@@ -35,6 +36,7 @@ export default function StaffDashboard() {
   const [recentSubmissions, setRecentSubmissions] = useState<any[]>([]);
   const [historicalVisitors, setHistoricalVisitors] = useState<ReturnType<typeof buildVisitorHistoricalSeries>>([]);
   const [historicalAccommodation, setHistoricalAccommodation] = useState<ReturnType<typeof buildAccommodationHistoricalSeries>>([]);
+  const [todayReportStatus, setTodayReportStatus] = useState<{ date: string; submitted: boolean; type: string }>({ date: "", submitted: false, type: "report" });
 
   useEffect(() => { loadUserAndData(); }, []);
 
@@ -88,6 +90,14 @@ export default function StaffDashboard() {
 
     const visitorReports = ((visitorResult.data || []) as VisitorReport[]).filter(isOfficialReport);
     const accommodationReports = ((accommodationResult.data || []) as AccommodationReport[]).filter(isOfficialReport);
+    const today = new Intl.DateTimeFormat("en-CA", { timeZone: "Asia/Manila", year: "numeric", month: "2-digit", day: "2-digit" }).format(new Date());
+    const todayVisitor = visitorReports.some((report) => report.report_date === today);
+    const todayAccommodation = accommodationReports.some((report) => report.report_date === today);
+    setTodayReportStatus({
+      date: today,
+      submitted: todayVisitor || todayAccommodation,
+      type: todayVisitor && todayAccommodation ? "day-tour and accommodation reports" : todayVisitor ? "day-tour report" : todayAccommodation ? "accommodation report" : getEstablishmentReportingMode(establishmentData) === "accommodation" ? "accommodation report" : getEstablishmentReportingMode(establishmentData) === "both" ? "day-tour and accommodation reports" : "day-tour report",
+    });
     const totalCheckIns = accommodationReports.reduce((sum, report) => sum + toNumber(report.total_check_ins), 0);
     const totalGuestNights = accommodationReports.reduce((sum, report) => sum + toNumber(report.total_guest_nights), 0);
     const totalOccupiedRooms = accommodationReports.reduce((sum, report) => sum + toNumber(report.total_occupied_rooms), 0);
@@ -157,9 +167,30 @@ export default function StaffDashboard() {
   const metrics = mode === "visitor" ? visitorMetrics : mode === "accommodation" ? accommodationMetrics : combinedMetrics;
   const metricsTitle = mode === "visitor" ? "Day-tour performance" : mode === "accommodation" ? "Accommodation performance" : "Day-tour and accommodation performance";
 
+  const reportDestination = mode === "accommodation" ? "/staff/submit-accommodation-report" : "/staff/submit-visitor-report";
+
   return (
     <div className="space-y-7">
       <PageHero eyebrow="Establishment portal" title="Submit your assigned tourism reports." description="Submit day-tour and accommodation reports for Balayan tourism monitoring." actionLabel="View history" onAction={() => navigate("/staff/submission-history")} compact />
+
+      <section className="rounded-[28px] bg-[#E0E5EC] p-5 shadow-[9px_9px_16px_rgba(163,177,198,0.60),-9px_-9px_16px_rgba(255,255,255,0.55)] sm:p-7" aria-labelledby="today-report-status">
+        <div className="flex flex-col gap-5 sm:flex-row sm:items-center sm:justify-between">
+          <div className="flex items-start gap-4">
+            <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-[#E0E5EC] text-[#38B2AC] shadow-[inset_6px_6px_10px_rgba(163,177,198,0.60),inset_-6px_-6px_10px_rgba(255,255,255,0.55)]">
+              {todayReportStatus.submitted ? <CheckCircle2 aria-hidden="true" className="h-7 w-7" /> : <Clock3 aria-hidden="true" className="h-7 w-7" />}
+            </div>
+            <div>
+              <p className="text-xs font-semibold uppercase tracking-[0.14em] text-[#6C63FF]">Today&apos;s reporting status</p>
+              <h2 id="today-report-status" className="mt-1 text-xl font-bold text-[#3D4852]">{todayReportStatus.submitted ? "Report submitted" : "Report still needed"}</h2>
+              <p className="mt-1 text-sm text-[#6B7280]">{todayReportStatus.date} · {todayReportStatus.type}</p>
+            </div>
+          </div>
+          <div className="flex flex-wrap gap-2">
+            {!todayReportStatus.submitted && showVisitorForm && <Button type="button" onClick={() => navigate(reportDestination)} className="min-h-11 rounded-2xl bg-[#6C63FF] px-5 text-white shadow-[6px_6px_12px_rgba(163,177,198,0.62),-6px_-6px_12px_rgba(255,255,255,0.88)] hover:bg-[#8B84FF]">Submit today&apos;s report</Button>}
+            {todayReportStatus.submitted && <Button type="button" onClick={() => navigate("/staff/submission-history")} className="min-h-11 rounded-2xl bg-[#38B2AC] px-5 text-white shadow-[6px_6px_12px_rgba(163,177,198,0.62),-6px_-6px_12px_rgba(255,255,255,0.88)] hover:bg-[#2f9d98]">View report history</Button>}
+          </div>
+        </div>
+      </section>
 
       <section className={`grid gap-2 sm:gap-4 ${showVisitorForm && showAccommodationForm ? "grid-cols-2 md:grid-cols-2" : "grid-cols-1"}`}>
         {showVisitorForm && <button type="button" onClick={() => navigate("/staff/submit-visitor-report")} className="group min-h-28 rounded-3xl border border-[#d7e5e2] bg-white/90 p-3 text-left shadow-tourism backdrop-blur-xl transition hover:-translate-y-0.5 hover:border-[#0E5A72]/30 hover:shadow-tourism-hover active:scale-[0.99] sm:min-h-32 sm:p-7 lg:min-h-40 lg:p-10"><div className="flex items-start justify-between gap-2 sm:gap-4"><div className="flex min-w-0 items-center gap-2 sm:gap-4"><div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-[#0E5A72] text-white shadow-lg shadow-cyan-950/15 sm:h-14 sm:w-14"><FileUp className="h-5 w-5 sm:h-7 sm:w-7" /></div><div className="min-w-0"><h3 className="text-sm font-bold text-[#0B2530] sm:text-lg">Day-tour</h3><p className="mt-1 text-[11px] leading-4 text-[#5D6F73] sm:text-sm sm:leading-5">Submit resort visitor arrivals by origin and count.</p></div></div><ArrowRight className="h-4 w-4 shrink-0 text-slate-400 transition group-hover:translate-x-1 group-hover:text-[#0E5A72] sm:h-5 sm:w-5" /></div></button>}
